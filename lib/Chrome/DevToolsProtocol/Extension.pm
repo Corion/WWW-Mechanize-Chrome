@@ -91,7 +91,7 @@ sub eval {
     my ($h,$r) = $self->post(
            "(function(){return $js}).apply(null,$json_args)",
     );
-    warn "Evaluated JS";
+    #warn "Evaluated JS";
     ($h,$r) = $self->push_read()->recv;
     $r->{data}->{success}
 };

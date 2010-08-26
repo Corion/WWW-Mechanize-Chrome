@@ -24,6 +24,8 @@ diag "Attaching to tab $target_tab->[1]";
 #);
 
 my $tab = $c->attach( $target_tab->[0] );
+my $res = $tab->eval('1+1');
+is $res, 2, "Simple expressions work in tab";
 
 isa_ok $tab, 'Chrome::DevToolsProtocol::Tab';
 
@@ -36,9 +38,29 @@ isa_ok $tab, 'Chrome::DevToolsProtocol::Tab';
 
 diag "Evaluating JS code";
 
-my $eval = $c->extension('hagaipaehpgaphmpdpacmboogmjfgpmi');
+my $ext_id = 'jmpeoiheiamlhddpmfekgdicpmajdjoj';
+                         #
+my $eval = $c->extension($ext_id);
 my $res = $eval->eval('1+1');
 is $res, 2, "Simple expressions work";
+
+#$res = $eval->eval('chrome.tabs');
+#is ref $res, 'HASH', "We can access the 'tabs' object";
+
+# XXX How can we return asynchronous results?
+# XXX We need to send an event through the repl extension
+$res = $eval->eval(<<JS);
+    chrome.tabs.create({}, function(tab){
+        console.log("Created new tab "+tab.id);
+        var p=chrome.extension.connect("$ext_id",{});
+        p.postMessage({'new_tab':tab.id});
+        //chrome.extension.sendRequest("$ext_id",{'new_tab': tab.id}, function(any response) {});
+        console.log("Created new tab (2)");
+    })
+JS
+
+is $res, 2, "Simple expressions work";
+
 
 # Read some more events
 AnyEvent->condvar->recv;

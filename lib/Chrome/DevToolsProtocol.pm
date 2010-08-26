@@ -74,7 +74,9 @@ sub handle_packet {
     warn "Received packet: " . Dumper [$headers,$payload];
     # Now dispatch to the proper Destination
     # Empty destination means "connection"
-    my $dest = $headers->{ Destination } || '';
+    my $dest = defined $headers->{ Destination } 
+               ? $headers->{ Destination } 
+               : '';
     my $tool = $headers->{ Tool } || '';
     
     # Dispatch simply based on all headers
@@ -126,22 +128,19 @@ sub request {
     my $tool = $headers->{Tool} || '';
     my $got = $self->queue_response($headers->{Destination}, $headers->{Tool});
     $self->write_request( $headers, $body );
-    print "Waiting for reply from '$tool/$repl_sender'\n";
+    #print "Waiting for reply from '$tool/$repl_sender'\n";
     my @data = $got->recv;
-    #warn Dumper \@data;
+    #print "Got reply from '$tool/$repl_sender'\n";
     @data
 };
 
 sub queue_response {
     my ($self, $destination, $tool) = @_;
-    #warn "Discarding response handler for '$destination'"
-    #    if ($self->{receivers}->{$destination});
     my $got = AnyEvent->condvar;
     $destination //= ''; # //
-    warn "Listening on $tool/$destination";
+    #warn "Listening on $tool/$destination";
     $self->{receivers}->{$tool} ||= {};
     $self->{receivers}->{$tool}->{$destination} ||= AnyEvent->condvar;
-    #$got
 };
 
 sub extension {
@@ -218,7 +217,7 @@ use Data::Dumper;
 
 sub new {
     my ($class, %args) = @_;
-    $args{ outstanding } ||= [];
+    $args{ outstanding } ||= []; # XXX rename to 'queue'
     $args{ seq } ||= 0;
     bless \%args => $class;
 };
@@ -227,17 +226,18 @@ sub handle_packet {
     my ($self,$headers,$payload) = @_;
     if ('attach' eq $payload->{ command }) {
         # we just got connected
-        warn "Just connected";
-    } elsif ('response' eq $payload->{ data }->{type}) {
+        warn "Tab just connected";
+    } elsif ('response' eq $payload->{ data }->{type}
+         or  'event'    eq $payload->{ data }->{type}) {
         my $handler = shift @{ $self->{outstanding} };
         if ($handler) {
             $handler->send( $headers, $payload );
         } else {
-            warn "Ignoring reply";
+            warn "Tab: Ignoring reply";
             warn Dumper [$headers, $payload];
         };
     } else {
-        warn "Event for $self->{id}";
+        warn "Event for Tab $self->{id}";
         warn Dumper [$headers, $payload];
     };
 };
@@ -248,14 +248,29 @@ sub request {
          Tool => 'V8Debugger',
          Destination => $self->{id},
     };
-    $payload->{ command } = 'debugger_command';
+    $payload->{ command } ||= 'debugger_command';
     $payload->{ data }->{ seq } = $self->{ seq }++;
     $payload->{ data }->{ type } = 'request';
     
     my $reply = AnyEvent->condvar;
     push @{ $self->{outstanding} }, $reply;
+    #warn "Sending debugger request " . Dumper $payload;
     $self->{ connection }->request( $headers, $payload );
     $reply->recv;
+};
+
+# Unfortunately, this has no return type :-/
+sub eval {
+    my ($self,$expr) = @_;
+    $self->request({
+        command => 'evaluate_javascript',
+        data => {
+            arguments => $expr,
+            frame => 0, # always take the current stack frame
+            global => 0,
+            disable_break => 1,
+        },
+    });
 };
 
 1;
