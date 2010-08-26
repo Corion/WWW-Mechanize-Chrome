@@ -20,7 +20,10 @@ sub new {
     $args{ host } ||= 'localhost';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
-    $args{ sequence_number } ||= 1;
+    #$args{ sequence_number } ||= 1;
+    # XXX Make receivers multi-level on Tool+Destination
+    # XXX Make receivers store callbacks instead of one-shot condvars?
+    
     $args{ receivers } ||= {};
     
     # Kick off the connect
@@ -47,8 +50,6 @@ sub new {
     # Kick off the continous polling
     $self->{chrome}->on_read( sub {
         my $fh = $_[0];
-        #print "Data available\n";
-        #my $complete = AnyEvent->condvar();
         $fh->push_read( line => "\r\n\r\n", sub {
             #print "Headers consumed\n";
             # Deparse headers
@@ -61,7 +62,6 @@ sub new {
                 #$complete->send($headers, $payload);
             });
         });
-        #my ($headers,$payload) = $complete->recv;
     });
     
     $self
@@ -75,32 +75,24 @@ sub handle_packet {
     # Now dispatch to the proper Destination
     # Empty destination means "connection"
     my $dest = $headers->{ Destination } || '';
-    #warn Dumper $self->{receivers};
+    my $tool = $headers->{ Tool } || '';
     
-    if (defined( my $recv = delete $self->{receivers}->{ $dest })) {
-        warn "Sending to Destination $dest";
-        $recv->send( $headers, $payload );
+    # Dispatch simply based on all headers
+    # Also, discriminate between coderef and condvar
+    # Only delete condvars, keep coderefs
+    my $handler = $self->{receivers}->{$tool}->{$dest};
+    if ($handler) {
+        if ('CODE' eq (ref $handler)) {
+            $handler->( $headers, $payload );
+        } else {
+            # If it's a CondVar, remove it from the list
+            delete $self->{receivers}->{$tool}->{$dest};
+            $handler->send( $headers, $payload );
+        };
     } else {
-        warn "Unknown response destination '$dest', ignored";
+        warn "Unknown response destination '$tool/$dest', ignored";
         warn Dumper [$headers,$payload];
     };
-    #if (ref $payload->{data}) {
-    #    my $t = $payload->{data}->{type};
-    #    if ('response' eq $t) {
-    #        my $id = $payload->{request_seq};
-    #        my $catch = delete ($self->{outstanding}->{ $id });
-    #        if ($catch) {
-    #            $catch->send($headers,$payload);
-    #        } else {
-    #            warn "Discarding response for unknown request " . Dumper [$headers,$payload];
-    #        };
-    #        delete ($self->{outstanding}->{ $id })->send($headers,$payload);
-    #    } elsif ('event' eq $t) {
-    #        warn "Ignoring event " . Dumper [$headers, $payload];
-    #    } else {
-    #        warn "Unknown type '$t'";
-    #    };
-    #};
 };
 
 sub write_request {
@@ -115,6 +107,8 @@ sub write_request {
     };
     $fh->push_write("\r\n");
     $fh->push_write($json);
+    #warn "Wrote " . Dumper $headers;
+    #warn "Wrote $json";
 };
 
 sub next_sequence {
@@ -127,22 +121,26 @@ sub current_sequence {
 
 sub request {
     my ($self, $headers, $body) = @_;
+    #$headers->{Destination} ||= '';
+    my $repl_sender = $headers->{Destination} || '';
+    my $tool = $headers->{Tool} || '';
+    my $got = $self->queue_response($headers->{Destination}, $headers->{Tool});
     $self->write_request( $headers, $body );
-    #my $res = $self->read_response_async();
-    # Enqueue our condvar with our handle_packets    
-    my $got = $self->queue_response($headers->{Destination});
-    print "Waiting for reply from $headers->{Destination}\n";
+    print "Waiting for reply from '$tool/$repl_sender'\n";
     my @data = $got->recv;
-    warn Dumper \@data;
+    #warn Dumper \@data;
     @data
 };
 
 sub queue_response {
-    my ($self, $destination) = @_;
+    my ($self, $destination, $tool) = @_;
     #warn "Discarding response handler for '$destination'"
     #    if ($self->{receivers}->{$destination});
     my $got = AnyEvent->condvar;
-    $self->{receivers}->{$destination} ||= AnyEvent->condvar;
+    $destination //= ''; # //
+    warn "Listening on $tool/$destination";
+    $self->{receivers}->{$tool} ||= {};
+    $self->{receivers}->{$tool}->{$destination} ||= AnyEvent->condvar;
     #$got
 };
 
@@ -172,7 +170,7 @@ sub list_tabs {
 };
 
 sub attach {
-    my ($self, $tab_id, $handler) = @_;
+    my ($self, $tab_id) = @_;
     my $tab = Chrome::DevToolsProtocol::Tab->new(
         connection => $self, # should be weakened
         id => $tab_id,
@@ -187,11 +185,11 @@ sub attach {
         # Reinstate the callback
         $cv = AnyEvent->condvar;
         $cv->cb( $forward );
-        $self->{receivers}->{$tab_id} = $cv;
+        $self->{receivers}->{V8Debugger}->{$tab_id} = $cv;
     };
     $cv = AnyEvent->condvar;
     $cv->cb( $forward );
-    $self->{receivers}->{$tab_id} = $cv;
+    $self->{receivers}->{V8Debugger}->{$tab_id} = $cv;
 
     #warn "Requesting attach to $tab_id";
     my ($d,$h) = $self->request(
@@ -202,6 +200,17 @@ sub attach {
     # Do we really want to?    
     $tab
 };
+
+#sub extension {
+#    my ($self,$name) = @_;
+#    my $ext = Chrome::DevToolsProtocol::Extension->new(
+#        id => $name,
+#        client => $self, # weaken this ...
+#        port => 9,
+#    );
+#    $ext->connect($name);
+#    $ext
+#};
 
 package Chrome::DevToolsProtocol::Tab;
 use strict;
@@ -216,7 +225,10 @@ sub new {
 
 sub handle_packet {
     my ($self,$headers,$payload) = @_;
-    if ('response' eq $payload->{ data }->{type}) {
+    if ('attach' eq $payload->{ command }) {
+        # we just got connected
+        warn "Just connected";
+    } elsif ('response' eq $payload->{ data }->{type}) {
         my $handler = shift @{ $self->{outstanding} };
         if ($handler) {
             $handler->send( $headers, $payload );
@@ -245,5 +257,5 @@ sub request {
     $self->{ connection }->request( $headers, $payload );
     $reply->recv;
 };
-    
+
 1;

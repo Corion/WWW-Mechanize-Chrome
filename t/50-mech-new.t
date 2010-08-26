@@ -10,26 +10,20 @@ isa_ok $c, 'Chrome::DevToolsProtocol';
 cmp_ok $c->protocol_version, '>=', '0.1', "We have a protocol version";
 
 diag "Open tabs";
-#warn Dumper $c->request(
-#    {Tool => 'DevToolsService' }, { command => 'list_tabs' },
-#);
 
 my ($h,$d) = $c->request(
     {Tool => 'DevToolsService' }, { command => 'list_tabs' },
 );
 my @tabs = @{ $d->{data} };
 
-my $target_tab = $tabs[ -1 ];
+my $target_tab = $tabs[ 0 ];
 diag "Attaching to tab $target_tab->[1]";
 
 #warn Dumper $c->request(
 #    {Tool => 'V8Debugger', Destination => $target_tab->[0], }, { command => 'attach' },
 #);
 
-my $tab = $c->attach( $tabs[-1]->[0] => sub {
-    warn "Tab event\n";
-    warn Dumper \@_;
-});
+my $tab = $c->attach( $target_tab->[0] );
 
 isa_ok $tab, 'Chrome::DevToolsProtocol::Tab';
 
@@ -41,19 +35,10 @@ isa_ok $tab, 'Chrome::DevToolsProtocol::Tab';
 #);
 
 diag "Evaluating JS code";
-warn Dumper $tab->request({
-    data => {
-           'command' => 'evaluate',
-           'arguments' => ['function(){alert("Hello")}.apply(null)'],
-    },
-});
 
-#sleep 1;
-#warn Dumper $c->read_response;
+my $eval = $c->extension('hagaipaehpgaphmpdpacmboogmjfgpmi');
+my $res = $eval->eval('1+1');
+is $res, 2, "Simple expressions work";
 
-#warn Dumper $c->request( $seq++,
-#    {Tool => 'V8Debugger', Destination => 4, }, { command => 'detach' },
-#);
-
-#my $e = $c->extension('xxx');
-#$e->eval();
+# Read some more events
+AnyEvent->condvar->recv;
