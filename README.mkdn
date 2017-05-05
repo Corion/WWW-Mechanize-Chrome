@@ -1,0 +1,1163 @@
+
+[![Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://github.com/Corion/WWW-Mechanize-Chrome)
+
+# NAME
+
+WWW::Mechanize::Chrome - automate the Chrome browser
+
+# SYNOPSIS
+
+    use WWW::Mechanize::Chrome;
+    my $mech = WWW::Mechanize::Chrome->new();
+    $mech->get('http://google.com');
+
+    $mech->eval_in_page('alert("Hello Chrome")');
+    my $png= $mech->content_as_png();
+
+## `WWW::Mechanize::Chrome->new %options`
+
+    my $mech = WWW::Mechanize::Chrome->new();
+
+- **autodie**
+
+    Control whether HTTP errors are fatal.
+
+        autodie => 0, # make HTTP errors non-fatal
+
+    The default is to have HTTP errors fatal,
+    as that makes debugging much easier than expecting
+    you to actually check the results of every action.
+
+- **port**
+
+    Specify the port where Chrome should listen
+
+        port => 9222
+
+- **log**
+
+    Specify the log level of Chrome
+
+        log => 'OFF'   # Also INFO, WARN, DEBUG
+
+- **launch\_exe**
+
+    Specify the path to the Chrome executable.
+
+    The default is `chrome` as found via `$ENV{PATH}`.
+    You can also provide this information from the outside
+    by setting `$ENV{chrome_EXE}`.
+
+- **launch\_ghostdriver**
+
+    Filename of the `ghostdriver` Javascript code
+    to launch. The default is the file distributed with this module.
+
+        launch_ghostdriver => "devel/my/ghostdriver/main.js",
+
+- **launch\_arg**
+
+    Specify additional parameters to the Ghostdriver script.
+
+        launch_arg => [ "--some-new-parameter=foo" ],
+
+- **cookie\_file**
+
+    Cookies are not directly persisted. If you pass in a path here,
+    that file will be used to store or retrieve cookies.
+
+- **driver**
+
+    A premade [Selenium::Remote::Driver](https://metacpan.org/pod/Selenium::Remote::Driver) object.
+
+- **report\_js\_errors**
+
+    If set to 1, after each request tests for Javascript errors and warns. Useful
+    for testing with `use warnings qw(fatal)`.
+
+## `$mech->Chrome_version`
+
+    print $mech->Chrome_version;
+
+Returns the version of the Chrome executable that is used.
+
+## `$mech->ghostdriver_version`
+
+    print $mech->ghostdriver_version;
+
+Returns the version of the ghostdriver script that is used.
+
+## `$mech->driver`
+
+    my $selenium= $mech->driver
+
+Access the [Selenium::Driver::Remote](https://metacpan.org/pod/Selenium::Driver::Remote) instance connecting to Chrome.
+
+## `$mech->js_alerts()`
+
+    print for $mech->js_alerts();
+
+An interface to the Javascript Alerts
+
+Returns the list of alerts
+
+## `$mech->clear_js_alerts()`
+
+    $mech->clear_js_alerts();
+
+Clears all saved alerts
+
+## `$mech->js_errors()`
+
+    print $_->{message}
+        for $mech->js_errors();
+
+An interface to the Javascript Error Console
+
+Returns the list of errors in the JEC
+
+Maybe this should be called `js_messages` or
+`js_console_messages` instead.
+
+## `$mech->clear_js_errors()`
+
+    $mech->clear_js_errors();
+
+Clears all Javascript messages from the console
+
+## `$mech->confirm( 'Really do this?' [ => 1 ])`
+
+Records a confirmation (which is "1" or "ok" by default), to be used
+whenever javascript fires a confirm dialog. If the message is not found,
+the answer is "cancel".
+
+## `$mech->eval_in_page( $str, @args )`
+
+## `$mech->eval( $str, @args )`
+
+    my ($value, $type) = $mech->eval( '2+2' );
+
+Evaluates the given Javascript fragment in the
+context of the web page.
+Returns a pair of value and Javascript type.
+
+This allows access to variables and functions declared
+"globally" on the web page.
+
+This method is special to WWW::Mechanize::Chrome.
+
+## `$mech->eval_in_Chrome $code, @args`
+
+    $mech->eval_in_Chrome(<<'JS', "Foobar/1.0");
+        this.settings.userAgent= arguments[0]
+    JS
+
+Evaluates Javascript code in the context of Chrome.
+
+This allows you to modify properties of Chrome.
+
+## `$mech->highlight_node( @nodes )`
+
+    my @links = $mech->selector('a');
+    $mech->highlight_node(@links);
+    print $mech->content_as_png();
+
+Convenience method that marks all nodes in the arguments
+with
+
+    background: red;
+    border: solid black 1px;
+    display: block; /* if the element was display: none before */
+
+This is convenient if you need visual verification that you've
+got the right nodes.
+
+There currently is no way to restore the nodes to their original
+visual state except reloading the page.
+
+# NAVIGATION METHODS
+
+## `$mech->get( $url, %options )`
+
+    $mech->get( $url  );
+
+Retrieves the URL `URL`.
+
+It returns a faked [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object for interface compatibility
+with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize). It seems that Selenium and thus [Selenium::Remote::Driver](https://metacpan.org/pod/Selenium::Remote::Driver)
+have no concept of HTTP status code and thus no way of returning the
+HTTP status code.
+
+Note that Chrome does not support download of files.
+
+## `$mech->get_local( $filename , %options )`
+
+    $mech->get_local('test.html');
+
+Shorthand method to construct the appropriate
+`file://` URI and load it into Chrome. Relative
+paths will be interpreted as relative to `$0`.
+
+This method accepts the same options as `->get()`.
+
+This method is special to WWW::Mechanize::Chrome but could
+also exist in WWW::Mechanize through a plugin.
+
+**Warning**: Chrome does not handle local files well. Especially
+subframes do not get loaded properly.
+
+## `$mech->post( $url, %options )`
+
+**not implemented**
+
+Selenium currently does not allow a raw POST message
+and the code for constructing a form on the fly is not working
+so this method is not implemented.
+
+    $mech->post( 'http://example.com',
+        params => { param => "Hello World" },
+        headers => {
+          "Content-Type" => 'application/x-www-form-urlencoded',
+        },
+        charset => 'utf-8',
+    );
+
+Sends a POST request to `$url`.
+
+A `Content-Length` header will be automatically calculated if
+it is not given.
+
+The following options are recognized:
+
+- `headers` - a hash of HTTP headers to send. If not given,
+the content type will be generated automatically.
+- `data` - the raw data to send, if you've encoded it already.
+
+## `$mech->add_header( $name => $value, ... )`
+
+    $mech->add_header(
+        'X-WWW-Mechanize-Chrome' => "I'm using it",
+        Encoding => 'text/klingon',
+    );
+
+This method sets up custom headers that will be sent with **every** HTTP(S)
+request that Chrome makes.
+
+Note that currently, we only support one value per header.
+
+## `$mech->delete_header( $name , $name2... )`
+
+    $mech->delete_header( 'User-Agent' );
+
+Removes HTTP headers from the agent's list of special headers. Note
+that Chrome may still send a header with its default value.
+
+## `$mech->reset_headers`
+
+    $mech->reset_headers();
+
+Removes all custom headers and makes Chrome send its defaults again.
+
+## `$mech->res()` / `$mech->response(%options)`
+
+    my $response = $mech->response(headers => 0);
+
+Returns the current response as a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
+
+## `$mech->success()`
+
+    $mech->get('http://google.com');
+    print "Yay"
+        if $mech->success();
+
+Returns a boolean telling whether the last request was successful.
+If there hasn't been an operation yet, returns false.
+
+This is a convenience function that wraps `$mech->res->is_success`.
+
+## `$mech->status()`
+
+    $mech->get('http://google.com');
+    print $mech->status();
+    # 200
+
+Returns the HTTP status code of the response.
+This is a 3-digit number like 200 for OK, 404 for not found, and so on.
+
+## `$mech->back()`
+
+    $mech->back();
+
+Goes one page back in the page history.
+
+Returns the (new) response.
+
+## `$mech->forward()`
+
+    $mech->forward();
+
+Goes one page forward in the page history.
+
+Returns the (new) response.
+
+## `$mech->uri()`
+
+    print "We are at " . $mech->uri;
+
+Returns the current document URI.
+
+# CONTENT METHODS
+
+## `$mech->document()`
+
+Returns the document object as a WebElement.
+
+This is WWW::Mechanize::Chrome specific.
+
+## `$mech->content( %options )`
+
+    print $mech->content;
+    print $mech->content( format => 'html' ); # default
+    print $mech->content( format => 'text' ); # identical to ->text
+
+This always returns the content as a Unicode string. It tries
+to decode the raw content according to its input encoding.
+This currently only works for HTML pages, not for images etc.
+
+Recognized options:
+
+- `format` - the stuff to return
+
+    The allowed values are `html` and `text`. The default is `html`.
+
+## `$mech->text()`
+
+    print $mech->text();
+
+Returns the text of the current HTML content.  If the content isn't
+HTML, $mech will die.
+
+## `$mech->content_encoding()`
+
+    print "The content is encoded as ", $mech->content_encoding;
+
+Returns the encoding that the content is in. This can be used
+to convert the content from UTF-8 back to its native encoding.
+
+## `$mech->update_html( $html )`
+
+    $mech->update_html($html);
+
+Writes `$html` into the current document. This is mostly
+implemented as a convenience method for [HTML::Display::MozRepl](https://metacpan.org/pod/HTML::Display::MozRepl).
+
+## `$mech->base()`
+
+    print $mech->base;
+
+Returns the URL base for the current page.
+
+The base is either specified through a `base`
+tag or is the current URL.
+
+This method is specific to WWW::Mechanize::Chrome.
+
+## `$mech->content_type()`
+
+## `$mech->ct()`
+
+    print $mech->content_type;
+
+Returns the content type of the currently loaded document
+
+## `$mech->is_html()`
+
+    print $mech->is_html();
+
+Returns true/false on whether our content is HTML, according to the
+HTTP headers.
+
+## `$mech->title()`
+
+    print "We are on page " . $mech->title;
+
+Returns the current document title.
+
+# EXTRACTION METHODS
+
+## `$mech->links()`
+
+    print $_->text . " -> " . $_->url . "\n"
+        for $mech->links;
+
+Returns all links in the document as [WWW::Mechanize::Link](https://metacpan.org/pod/WWW::Mechanize::Link) objects.
+
+Currently accepts no parameters. See `->xpath`
+or `->selector` when you want more control.
+
+## `$mech->selector( $css_selector, %options )`
+
+    my @text = $mech->selector('p.content');
+
+Returns all nodes matching the given CSS selector. If
+`$css_selector` is an array reference, it returns
+all nodes matched by any of the CSS selectors in the array.
+
+This takes the same options that `->xpath` does.
+
+This method is implemented via [WWW::Mechanize::Plugin::Selector](https://metacpan.org/pod/WWW::Mechanize::Plugin::Selector).
+
+## `$mech->find_link_dom( %options )`
+
+    print $_->{innerHTML} . "\n"
+        for $mech->find_link_dom( text_contains => 'CPAN' );
+
+A method to find links, like [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)'s
+`->find_links` method. This method returns DOM objects from
+Chrome instead of WWW::Mechanize::Link objects.
+
+Note that Chrome
+might have reordered the links or frame links in the document
+so the absolute numbers passed via `n`
+might not be the same between
+[WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) and [WWW::Mechanize::Chrome](https://metacpan.org/pod/WWW::Mechanize::Chrome).
+
+The supported options are:
+
+- `text` and `text_contains` and `text_regex`
+
+    Match the text of the link as a complete string, substring or regular expression.
+
+    Matching as a complete string or substring is a bit faster, as it is
+    done in the XPath engine of Chrome.
+
+- `id` and `id_contains` and `id_regex`
+
+    Matches the `id` attribute of the link completely or as part
+
+- `name` and `name_contains` and `name_regex`
+
+    Matches the `name` attribute of the link
+
+- `url` and `url_regex`
+
+    Matches the URL attribute of the link (`href`, `src` or `content`).
+
+- `class` - the `class` attribute of the link
+- `n` - the (1-based) index. Defaults to returning the first link.
+- `single` - If true, ensure that only one element is found. Otherwise croak
+or carp, depending on the `autodie` parameter.
+- `one` - If true, ensure that at least one element is found. Otherwise croak
+or carp, depending on the `autodie` parameter.
+
+    The method `croak`s if no link is found. If the `single` option is true,
+    it also `croak`s when more than one link is found.
+
+## `$mech->find_link( %options )`
+
+    print $_->text . "\n"
+        for $mech->find_link( text_contains => 'CPAN' );
+
+A method quite similar to [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)'s method.
+The options are documented in `->find_link_dom`.
+
+Returns a [WWW::Mechanize::Link](https://metacpan.org/pod/WWW::Mechanize::Link) object.
+
+This defaults to not look through child frames.
+
+## `$mech->find_all_links( %options )`
+
+    print $_->text . "\n"
+        for $mech->find_all_links( text_regex => qr/google/i );
+
+Finds all links in the document.
+The options are documented in `->find_link_dom`.
+
+Returns them as list or an array reference, depending
+on context.
+
+This defaults to not look through child frames.
+
+## `$mech->find_all_links_dom %options`
+
+    print $_->{innerHTML} . "\n"
+        for $mech->find_all_links_dom( text_regex => qr/google/i );
+
+Finds all matching linky DOM nodes in the document.
+The options are documented in `->find_link_dom`.
+
+Returns them as list or an array reference, depending
+on context.
+
+This defaults to not look through child frames.
+
+## `$mech->follow_link( $link )`
+
+## `$mech->follow_link( %options )`
+
+    $mech->follow_link( xpath => '//a[text() = "Click here!"]' );
+
+Follows the given link. Takes the same parameters that `find_link_dom`
+uses.
+
+Note that `->follow_link` will only try to follow link-like
+things like `A` tags.
+
+## `$mech->xpath( $query, %options )`
+
+    my $link = $mech->xpath('//a[id="clickme"]', one => 1);
+    # croaks if there is no link or more than one link found
+
+    my @para = $mech->xpath('//p');
+    # Collects all paragraphs
+
+    my @para_text = $mech->xpath('//p/text()', type => $mech->xpathResult('STRING_TYPE'));
+    # Collects all paragraphs as text
+
+Runs an XPath query in Chrome against the current document.
+
+If you need more information about the returned results,
+use the `->xpathEx()` function.
+
+The options allow the following keys:
+
+- `document` - document in which the query is to be executed. Use this to
+search a node within a specific subframe of `$mech->document`.
+- `frames` - if true, search all documents in all frames and iframes.
+This may or may not conflict with `node`. This will default to the
+`frames` setting of the WWW::Mechanize::Chrome object.
+- `node` - node relative to which the query is to be executed. Note
+that you will have to use a relative XPath expression as well. Use
+
+        .//foo
+
+    instead of
+
+        //foo
+
+- `single` - If true, ensure that only one element is found. Otherwise croak
+or carp, depending on the `autodie` parameter.
+- `one` - If true, ensure that at least one element is found. Otherwise croak
+or carp, depending on the `autodie` parameter.
+- `maybe` - If true, ensure that at most one element is found. Otherwise
+croak or carp, depending on the `autodie` parameter.
+- `all` - If true, return all elements found. This is the default.
+You can use this option if you want to use `->xpath` in scalar context
+to count the number of matched elements, as it will otherwise emit a warning
+for each usage in scalar context without any of the above restricting options.
+- `any` - no error is raised, no matter if an item is found or not.
+- `type` - force the return type of the query.
+
+        type => $mech->xpathResult('ORDERED_NODE_SNAPSHOT_TYPE'),
+
+    WWW::Mechanize::Chrome tries a best effort in giving you the appropriate
+    result of your query, be it a DOM node or a string or a number. In the case
+    you need to restrict the return type, you can pass this in.
+
+    The allowed strings are documented in the MDN. Interesting types are
+
+        ANY_TYPE     (default, uses whatever things the query returns)
+        STRING_TYPE
+        NUMBER_TYPE
+        ORDERED_NODE_SNAPSHOT_TYPE
+
+Returns the matched results.
+
+You can pass in a list of queries as an array reference for the first parameter.
+The result will then be the list of all elements matching any of the queries.
+
+This is a method that is not implemented in WWW::Mechanize.
+
+In the long run, this should go into a general plugin for
+[WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
+
+## `$mech->by_id( $id, %options )`
+
+    my @text = $mech->by_id('_foo:bar');
+
+Returns all nodes matching the given ids. If
+`$id` is an array reference, it returns
+all nodes matched by any of the ids in the array.
+
+This method is equivalent to calling `->xpath` :
+
+    $self->xpath(qq{//*[\@id="$_"], %options)
+
+It is convenient when your element ids get mistaken for
+CSS selectors.
+
+## `$mech->click( $name [,$x ,$y] )`
+
+    $mech->click( 'go' );
+    $mech->click({ xpath => '//button[@name="go"]' });
+
+Has the effect of clicking a button (or other element) on the current form. The
+first argument is the `name` of the button to be clicked. The second and third
+arguments (optional) allow you to specify the (x,y) coordinates of the click.
+
+If there is only one button on the form, `$mech->click()` with
+no arguments simply clicks that one button.
+
+If you pass in a hash reference instead of a name,
+the following keys are recognized:
+
+- `selector` - Find the element to click by the CSS selector
+- `xpath` - Find the element to click by the XPath query
+- `dom` - Click on the passed DOM element
+
+    You can use this to click on arbitrary page elements. There is no convenient
+    way to pass x/y co-ordinates with this method.
+
+- `id` - Click on the element with the given id
+
+    This is useful if your document ids contain characters that
+    do look like CSS selectors. It is equivalent to
+
+        xpath => qq{//*[\@id="$id"]}
+
+Returns a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
+
+As a deviation from the WWW::Mechanize API, you can also pass a
+hash reference as the first parameter. In it, you can specify
+the parameters to search much like for the `find_link` calls.
+
+## `$mech->click_button( ... )`
+
+    $mech->click_button( name => 'go' );
+    $mech->click_button( input => $mybutton );
+
+Has the effect of clicking a button on the current form by specifying its
+name, value, or index. Its arguments are a list of key/value pairs. Only
+one of name, number, input or value must be specified in the keys.
+
+- `name` - name of the button
+- `value` - value of the button
+- `input` - DOM node
+- `id` - id of the button
+- `number` - number of the button
+
+If you find yourself wanting to specify a button through its
+`selector` or `xpath`, consider using `->click` instead.
+
+# FORM METHODS
+
+## `$mech->current_form()`
+
+    print $mech->current_form->{name};
+
+Returns the current form.
+
+This method is incompatible with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
+It returns the DOM `<form>` object and not
+a [HTML::Form](https://metacpan.org/pod/HTML::Form) instance.
+
+The current form will be reset by WWW::Mechanize::Chrome
+on calls to `->get()` and `->get_local()`,
+and on calls to `->submit()` and `->submit_with_fields`.
+
+## `$mech->dump_forms( [$fh] )`
+
+    open my $fh, '>', 'form-log.txt'
+        or die "Couldn't open logfile 'form-log.txt': $!";
+    $mech->dump_forms( $fh );
+
+Prints a dump of the forms on the current page to
+the filehandle `$fh`. If `$fh` is not specified or is undef, it dumps
+to `STDOUT`.
+
+## `$mech->form_name( $name [, %options] )`
+
+    $mech->form_name( 'search' );
+
+Selects the current form by its name. The options
+are identical to those accepted by the ["$mech->xpath"](#mech-xpath) method.
+
+## `$mech->form_id( $id [, %options] )`
+
+    $mech->form_id( 'login' );
+
+Selects the current form by its `id` attribute.
+The options
+are identical to those accepted by the ["$mech->xpath"](#mech-xpath) method.
+
+This is equivalent to calling
+
+    $mech->by_id($id,single => 1,%options)
+
+## `$mech->form_number( $number [, %options] )`
+
+    $mech->form_number( 2 );
+
+Selects the _number_th form.
+The options
+are identical to those accepted by the ["$mech->xpath"](#mech-xpath) method.
+
+## `$mech->form_with_fields( [$options], @fields )`
+
+    $mech->form_with_fields(
+        'user', 'password'
+    );
+
+Find the form which has the listed fields.
+
+If the first argument is a hash reference, it's taken
+as options to `->xpath`.
+
+See also ["$mech->submit\_form"](#mech-submit_form).
+
+## `$mech->forms( %options )`
+
+    my @forms = $mech->forms();
+
+When called in a list context, returns a list
+of the forms found in the last fetched page.
+In a scalar context, returns a reference to
+an array with those forms.
+
+The options
+are identical to those accepted by the ["$mech->selector"](#mech-selector) method.
+
+The returned elements are the DOM `<form>` elements.
+
+## `$mech->field( $selector, $value, [,\@pre_events [,\@post_events]] )`
+
+    $mech->field( user => 'joe' );
+    $mech->field( not_empty => '', [], [] ); # bypass JS validation
+
+Sets the field with the name given in `$selector` to the given value.
+Returns the value.
+
+The method understands very basic CSS selectors in the value for `$selector`,
+like the [HTML::Form](https://metacpan.org/pod/HTML::Form) find\_input() method.
+
+A selector prefixed with '#' must match the id attribute of the input.
+A selector prefixed with '.' matches the class attribute. A selector
+prefixed with '^' or with no prefix matches the name attribute.
+
+By passing the array reference `@pre_events`, you can indicate which
+Javascript events you want to be triggered before setting the value.
+`@post_events` contains the events you want to be triggered
+after setting the value.
+
+By default, the events set in the
+constructor for `pre_events` and `post_events`
+are triggered.
+
+## `$mech->value( $selector_or_element, [%options] )`
+
+    print $mech->value( 'user' );
+
+Returns the value of the field given by `$selector_or_name` or of the
+DOM element passed in.
+
+The legacy form of
+
+    $mech->value( name => value );
+
+is also still supported but will likely be deprecated
+in favour of the `->field` method.
+
+For fields that can have multiple values, like a `select` field,
+the method is context sensitive and returns the first selected
+value in scalar context and all values in list context.
+
+## `$mech->get_set_value( %options )`
+
+Allows fine-grained access to getting/setting a value
+with a different API. Supported keys are:
+
+    pre
+    post
+    name
+    value
+
+in addition to all keys that `$mech->xpath` supports.
+
+## `$mech->submit( $form )`
+
+    $mech->submit;
+
+Submits the form. Note that this does **not** fire the `onClick`
+event and thus also does not fire eventual Javascript handlers.
+Maybe you want to use `$mech->click` instead.
+
+The default is to submit the current form as returned
+by `$mech->current_form`.
+
+## `$mech->submit_form( %options )`
+
+    $mech->submit_form(
+        with_fields => {
+            user => 'me',
+            pass => 'secret',
+        }
+    );
+
+This method lets you select a form from the previously fetched page,
+fill in its fields, and submit it. It combines the form\_number/form\_name,
+set\_fields and click methods into one higher level call. Its arguments are
+a list of key/value pairs, all of which are optional.
+
+- `form => $mech->current_form()`
+
+    Specifies the form to be filled and submitted. Defaults to the current form.
+
+- `fields => \%fields`
+
+    Specifies the fields to be filled in the current form
+
+- `with_fields => \%fields`
+
+    Probably all you need for the common case. It combines a smart form selector
+    and data setting in one operation. It selects the first form that contains
+    all fields mentioned in \\%fields. This is nice because you don't need to
+    know the name or number of the form to do this.
+
+    (calls ["$mech->form\_with\_fields()"](#mech-form_with_fields) and ["$mech->set\_fields()"](#mech-set_fields)).
+
+    If you choose this, the form\_number, form\_name, form\_id and fields options
+    will be ignored.
+
+## `$mech->set_fields( $name => $value, ... )`
+
+    $mech->set_fields(
+        user => 'me',
+        pass => 'secret',
+    );
+
+This method sets multiple fields of the current form. It takes a list of
+field name and value pairs. If there is more than one field with the same
+name, the first one found is set. If you want to select which of the
+duplicate field to set, use a value which is an anonymous array which
+has the field value and its number as the 2 elements.
+
+## `$mech->expand_frames( $spec )`
+
+    my @frames = $mech->expand_frames();
+
+Expands the frame selectors (or `1` to match all frames)
+into their respective Chrome nodes according to the current
+document. All frames will be visited in breadth first order.
+
+This is mostly an internal method.
+
+## `$mech->current_frame`
+
+    my $last_frame= $mech->current_frame;
+    # Switch frame somewhere else
+
+    # Switch back
+    $mech->activate_container( $last_frame );
+
+Returns the currently active frame as a WebElement.
+
+This is mostly an internal method.
+
+See also
+
+[http://code.google.com/p/selenium/issues/detail?id=4305](http://code.google.com/p/selenium/issues/detail?id=4305)
+
+Frames are currently not really supported.
+
+# CONTENT RENDERING METHODS
+
+## `$mech->content_as_png( [\%coordinates ] )`
+
+    my $png_data = $mech->content_as_png();
+
+    # Create scaled-down 480px wide preview
+    my $png_data = $mech->content_as_png(undef, { width => 480 });
+
+Returns the given tab or the current page rendered as PNG image.
+
+All parameters are optional.
+
+- ` \%coordinates `
+
+    If the coordinates are given, that rectangle will be cut out.
+    The coordinates should be a hash with the four usual entries,
+    `left`,`top`,`width`,`height`.
+
+This method is specific to WWW::Mechanize::Chrome.
+
+Currently, the data transfer between Chrome and Perl
+is done Base64-encoded.
+
+## `$mech->viewport_size`
+
+    print Dumper $mech->viewport_size;
+    $mech->viewport_size({ width => 1388, height => 792 });
+
+Returns (or sets) the new size of the viewport (the "window").
+
+## `$mech->element_as_png( $element )`
+
+    my $shiny = $mech->selector('#shiny', single => 1);
+    my $i_want_this = $mech->element_as_png($shiny);
+
+Returns PNG image data for a single element
+
+## `$mech->render_element( %options )`
+
+    my $shiny = $mech->selector('#shiny', single => 1);
+    my $i_want_this= $mech->render_element(
+        element => $shiny,
+        format => 'pdf',
+    );
+
+Returns the data for a single element
+or writes it to a file. It accepts
+all options of `->render_content`.
+
+## `$mech->element_coordinates( $element )`
+
+    my $shiny = $mech->selector('#shiny', single => 1);
+    my ($pos) = $mech->element_coordinates($shiny);
+    print $pos->{left},',', $pos->{top};
+
+Returns the page-coordinates of the `$element`
+in pixels as a hash with four entries, `left`, `top`, `width` and `height`.
+
+This function might get moved into another module more geared
+towards rendering HTML.
+
+## `$mech->render_content(%options)`
+
+    my $pdf_data = $mech->render( format => 'pdf' );
+
+    $mech->render_content(
+        format => 'jpg',
+        filename => '/path/to/my.jpg',
+    );
+
+Returns the current page rendered in the specified format
+as a bytestring or stores the current page in the specified
+filename.
+
+The filename must be absolute. We are dealing with external processes here!
+
+This method is specific to WWW::Mechanize::Chrome.
+
+Currently, the data transfer between Chrome and Perl
+is done through a temporary file, so directly using
+the `filename` option may be faster.
+
+## `$mech->content_as_pdf(%options)`
+
+    my $pdf_data = $mech->content_as_pdf();
+
+    $mech->content_as_pdf(
+        filename => '/path/to/my.pdf',
+    );
+
+Returns the current page rendered in PDF format as a bytestring.
+
+This method is specific to WWW::Mechanize::Chrome.
+
+Currently, the data transfer between Chrome and Perl
+is done through a temporary file, so directly using
+the `filename` option may be faster.
+
+# INTERNAL METHODS
+
+These are methods that are available but exist mostly as internal
+helper methods. Use of these is discouraged.
+
+## `$mech->element_query( \@elements, \%attributes )`
+
+    my $query = $mech->element_query(['input', 'select', 'textarea'],
+                               { name => 'foo' });
+
+Returns the XPath query that searches for all elements with `tagName`s
+in `@elements` having the attributes `%attributes`. The `@elements`
+will form an `or` condition, while the attributes will form an `and`
+condition.
+
+## `$mech->Chrome_elementToJS`
+
+Returns the Javascript fragment to turn a Selenium::Remote::Chrome
+id back to a Javascript object.
+
+# INCOMPATIBILITIES WITH WWW::Mechanize
+
+As this module is in a very early stage of development,
+there are many incompatibilities. The main thing is
+that only the most needed WWW::Mechanize methods
+have been implemented by me so far.
+
+## Unsupported Methods
+
+At least the following methods are unsupported:
+
+- `->find_all_inputs`
+
+    This function is likely best implemented through `$mech->selector`.
+
+- `->find_all_submits`
+
+    This function is likely best implemented through `$mech->selector`.
+
+- `->images`
+
+    This function is likely best implemented through `$mech->selector`.
+
+- `->find_image`
+
+    This function is likely best implemented through `$mech->selector`.
+
+- `->find_all_images`
+
+    This function is likely best implemented through `$mech->selector`.
+
+## Functions that will likely never be implemented
+
+These functions are unlikely to be implemented because
+they make little sense in the context of Chrome.
+
+- `->clone`
+- `->credentials( $username, $password )`
+- `->get_basic_credentials( $realm, $uri, $isproxy )`
+- `->clear_credentials()`
+- `->put`
+
+    I have no use for it
+
+- `->post`
+
+    Selenium does not support POST requests
+
+# TODO
+
+- Add `limit` parameter to `->xpath()` to allow an early exit-case
+when searching through frames.
+- Implement downloads via
+
+    [https://perlmonks.org/?node\_id=1151151](https://perlmonks.org/?node_id=1151151)
+
+- Implement download progress
+
+# INSTALLING
+
+## Install the `Chrome` executable
+
+- Installing on Ubuntu
+
+    Version: 1.9.8
+    Platform: x86\_64
+
+    Install or update latest system software:
+
+    `sudo apt-get update`
+
+    `sudo apt-get install build-essential chrpath libssl-dev libxft-dev`
+
+    Install the following packages needed by Chrome:
+
+    `sudo apt-get install libfreetype6 libfreetype6-dev`
+
+    `sudo apt-get install libfontconfig1 libfontconfig1-dev`
+
+    Get Chrome from the [website](http://Chrome.org/)
+
+    `cd ~`
+
+    `export PHANTOM_JS="Chrome-1.9.8-linux-x86_64"`
+
+    `wget https://bitbucket.org/ariya/Chrome/downloads/$PHANTOM_JS.tar.bz2`
+
+    `sudo tar xvjf $PHANTOM_JS.tar.bz2`
+
+    Once downloaded move Chrome folder:
+
+    `sudo mv $PHANTOM_JS /usr/local/share`
+
+    `sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/Chrome /usr/local/bin`
+
+    `sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/Chrome /usr/bin/Chrome`
+
+    Test it has been installed on your system:
+
+    `Chrome --version`
+
+# SEE ALSO
+
+- [http://Chrome.org](http://Chrome.org) - the Chrome homepage
+- [https://github.com/detro/ghostdriver](https://github.com/detro/ghostdriver) - the ghostdriver homepage
+- [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
+- [WWW::Scripter](https://metacpan.org/pod/WWW::Scripter) - another WWW::Mechanize-workalike with Javascript support
+- [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
+
+# REPOSITORY
+
+The public repository of this module is
+[https://github.com/Corion/www-mechanize-Chrome](https://github.com/Corion/www-mechanize-Chrome).
+
+# SUPPORT
+
+The public support forum of this module is
+[https://perlmonks.org/](https://perlmonks.org/).
+
+# TALKS
+
+I've given a talk about this module at Perl conferences:
+
+[German Perl Workshop 2014, German](http://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-Chrome.de.html)
+
+[YAPC::Europe 2014, English](http://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-Chrome.en.html)
+
+[Talk on Youtube](https://www.youtube.com/watch?v=lH3Fhw6b5BI)
+
+<div>
+
+    <iframe id="ytplayer" type="text/html" width="640" height="390"
+      src="https://www.youtube.com/watch?v=lH3Fhw6b5BI"
+      frameborder="0"/>
+</div>
+
+# BUG TRACKER
+
+Please report bugs in this module via the RT CPAN bug queue at
+[https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome](https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome)
+or via mail to [www-mechanize-Chrome-Bugs@rt.cpan.org](https://metacpan.org/pod/www-mechanize-Chrome-Bugs@rt.cpan.org).
+
+# AUTHOR
+
+Max Maischein `corion@cpan.org`
+
+# COPYRIGHT (c)
+
+Copyright 2014-2016 by Max Maischein `corion@cpan.org`.
+
+# LICENSE
+
+This module is released under the same terms as Perl itself.
+
+This distribution includes a modified copy of the ghostdriver code,
+which is released under the same terms as the ghostdriver code itself.
+The terms of the ghostdriver code are the BSD license, as found at
+[https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD](https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD):
+
+    Copyright (c) 2014, Ivan De Marino <http://ivandemarino.me>
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The ghostdriver code includes the Selenium WebDriver fragments.

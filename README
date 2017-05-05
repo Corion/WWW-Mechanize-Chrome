@@ -1,0 +1,81 @@
+NAME
+
+WWW::Mechanize::Chrome - automate the Chrome browser
+
+
+
+INSTALLATION
+
+This is a Perl module distribution. It should be installed with whichever
+tool you use to manage your installation of Perl, e.g. any of
+
+  cpanm .
+  cpan  .
+  cpanp -i .
+
+Consult http://www.cpan.org/modules/INSTALL.html for further instruction.
+Should you wish to install this module manually, the procedure is
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+
+REPOSITORY
+
+The public repository of this module is
+L<https://github.com/Corion/www-mechanize-Chrome>.
+
+SUPPORT
+
+The public support forum of this module is
+L<https://perlmonks.org/>.
+
+BUG TRACKER
+
+Please report bugs in this module via the RT CPAN bug queue at
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome>
+or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org>.
+
+AUTHOR
+
+Max Maischein C<corion@cpan.org>
+
+LICENSE
+
+This module is released under the same terms as Perl itself.
+
+This distribution includes a modified copy of the ghostdriver code,
+which is released under the same terms as the ghostdriver code itself.
+The terms of the ghostdriver code are the BSD license, as found at
+L<https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD>:
+
+    Copyright (c) 2014, Ivan De Marino <http://ivandemarino.me>
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The ghostdriver code includes the Selenium WebDriver fragments.
+
+COPYRIGHT (c)
+
+Copyright 2014-2016 by Max Maischein C<corion@cpan.org>.

@@ -1,0 +1,26 @@
+.gitignore
+inc/IO/Catch.pm
+inc/Test/HTTP/cookie-server
+inc/Test/HTTP/LocalServer.pm
+inc/Test/HTTP/log-server
+lib/Chrome/DevToolsProtocol.pm
+lib/Chrome/DevToolsProtocol/Extension.pm
+lib/WWW/Mechanize/Chrome.pm
+Makefile.PL
+MANIFEST			This list of files
+MANIFEST.SKIP
+README
+README.mkdn
+t/00-load.t
+t/49-mech-get-file.html
+t/49-mech-get-file.t
+t/50-mech-new.t
+xt/99-changes.t
+xt/99-compile.t
+xt/99-manifest.t
+xt/99-pod.t
+xt/99-synopsis.t
+xt/99-todo.t
+xt/99-unix-text.t
+xt/99-versions.t
+xt/meta-lint.t
