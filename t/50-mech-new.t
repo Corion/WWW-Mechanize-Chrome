@@ -25,7 +25,12 @@ diag "Attaching to tab $target_tab->[1]";
 
 my $tab = $c->attach( $target_tab->[0] );
 my $res = $tab->eval('1+1');
-is $res, 2, "Simple expressions work in tab";
+is $res, 2, "Simple expressions work in tab"
+    or diag Dumper $res;
+
+my $res = $tab->eval('{"foo": "bar"}');
+is_deeply $res, {foo => 'bar'}, "Somewhat complex expressions work in tab"
+    or diag Dumper $res;
 
 isa_ok $tab, 'Chrome::DevToolsProtocol::Tab';
 
@@ -49,18 +54,31 @@ is $res, 2, "Simple expressions work";
 
 # XXX How can we return asynchronous results?
 # XXX We need to send an event through the repl extension
+# chrome.tabs.executeScript(tab.id, code)
+# chrome.tabs.onUpdated.addListener()
+# Also see http://github.com/AndersSahlin/MailCheckerPlus/blob/master/src/chrome-api-vsdoc.js
+# as a stub for the Chrome API
 $res = $eval->eval(<<JS);
     chrome.tabs.create({}, function(tab){
-        console.log("Created new tab "+tab.id);
+        // console.log("Created new tab "+tab.id);
+        // alert("Created new tab "+tab.id);
         var p=chrome.extension.connect("$ext_id",{});
         p.postMessage({'new_tab':tab.id});
         //chrome.extension.sendRequest("$ext_id",{'new_tab': tab.id}, function(any response) {});
-        console.log("Created new tab (2)");
+        console.log("Created new tab (2)"); // Sends a message to Perl
     })
 JS
+
+# console.log() sends a (text) message to Perl, as onMessage event
+# 'data' => {
+#     'log' => 'Created new tab (2)'
+# },
 
 is $res, 2, "Simple expressions work";
 
 
 # Read some more events
 AnyEvent->condvar->recv;
+
+# chrome.experimental.webNavigation.onDOMContentLoaded.addListener(function(object details) {...});
+# chrome.experimental.webNavigation.onErrorOccurred.addListener(function(object details) {...});

@@ -179,6 +179,9 @@ sub attach {
         # Check whether we get a "detach" reply?
         # Otherwise forward packet
         #warn "Forwarding " . Dumper \@_;
+        # Ideally, we would keep track of outstanding sequence numbers
+        # and dispatch the responses to them
+        # but the ExtensionPorts don't have the seq / request_seq field :(
         $tab->handle_packet( $_[0]->recv );
         
         # Reinstate the callback
@@ -255,6 +258,8 @@ sub request {
     my $reply = AnyEvent->condvar;
     push @{ $self->{outstanding} }, $reply;
     #warn "Sending debugger request " . Dumper $payload;
+    # This always has seq / request_seq, so we should do a proper wait here!
+    # See http://code.google.com/p/v8/wiki/DebuggerProtocol
     $self->{ connection }->request( $headers, $payload );
     $reply->recv;
 };
@@ -264,6 +269,7 @@ sub eval {
     my ($self,$expr) = @_;
     $self->request({
         command => 'evaluate_javascript',
+        #command => 'evaluate',
         data => {
             arguments => $expr,
             frame => 0, # always take the current stack frame
