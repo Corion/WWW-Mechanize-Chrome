@@ -28,6 +28,7 @@ sub new($class, %args) {
     $args{ host } ||= 'localhost';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
+    $args{ ua } ||= Future::HTTP->new;
     #$args{ sequence_number } ||= 1;
     # XXX Make receivers multi-level on Tool+Destination
     # XXX Make receivers store callbacks instead of one-shot condvars?
@@ -41,6 +42,7 @@ sub host( $self ) { $self->{host} }
 sub port( $self ) { $self->{port} }
 sub endpoint( $self ) { $self->{endpoint} }
 sub json( $self ) { $self->{json} }
+sub ua( $self ) { $self->{ua} }
 
 sub connect( $self, %args ) {
     # Kick off the connect
@@ -52,10 +54,8 @@ sub connect( $self, %args ) {
     
         # find the debugger endpoint:
         # These are the open tabs
-        my $f = Future::HTTP->new;
-        $got_endpoint = $f->http_get('http://localhost:9222/json')->then(sub($payload,$headers) {
-            my $res = $self->json->decode( $payload );
-            my $endpoint = $res->[0]->{webSocketDebuggerUrl};
+        $got_endpoint = $self->json_get('')->then(sub($tabs) {
+            my $endpoint = $tabs->[0]->{webSocketDebuggerUrl};
             Future->done( $endpoint );
         });
     } else {
@@ -180,12 +180,47 @@ sub command {
     $d->{data};
 };
 
-sub protocol_version {
-    $_[0]->command('version');
+sub build_url( $self, %options ) {
+    $options{ host } ||= $self->{host};
+    $options{ port } ||= $self->{port};
+    my $url = sprintf "http://%s:%s/json", $options{ host }, $options{ port };
+    $url .= '/' . $options{domain} if $options{ domain };
+    $url
 };
 
-sub list_tabs {
-    @{ $_[0]->command('list_tabs') || [] };
+=head2 C<< $chrome->json_get >>
+
+=cut
+
+sub json_get($self, $domain, %options) {
+    my $url = $self->build_url( domain => $domain, %options );
+    $self->ua->http_get( $url )->then( sub( $payload, $headers ) {
+        Future->done( $self->json->decode( $payload ))
+    });
+};
+
+
+=head2 C<< $chrome->protocol_version >>
+
+    print $chrome->protocol_version->get->{"Protocol-Version"};
+
+=cut
+
+sub protocol_version($self) {
+    $self->json_get( 'version' )->then( sub( $payload ) {
+        Future->done( $payload->{"Protocol-Version"});
+    });
+};
+
+=head2 C<< $chrome->list_tabs >>
+
+=cut
+
+sub list_tabs( $self, $url ) {
+    return $self->ua->http_get($url)->then(sub($payload,$headers) {
+        my $res = $self->json->decode( $payload );
+        Future->done($res)
+    });
 };
 
 sub attach {

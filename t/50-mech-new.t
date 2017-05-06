@@ -9,14 +9,12 @@ isa_ok $c, 'Chrome::DevToolsProtocol';
 
 $c->connect->get();
 
-cmp_ok $c->protocol_version, '>=', '0.1', "We have a protocol version";
+my $version = $c->protocol_version;
+cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
 
 diag "Open tabs";
 
-my ($h,$d) = $c->request(
-    {Tool => 'DevToolsService' }, { command => 'list_tabs' },
-);
-my @tabs = @{ $d->{data} };
+my @tabs = @{ $c->list_tabs()->get };
 
 my $target_tab = $tabs[ 0 ];
 diag "Attaching to tab $target_tab->[1]";
