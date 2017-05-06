@@ -46,26 +46,30 @@ sub connect( $self, %args ) {
     # Kick off the connect
     
     my $endpoint = $args{ endpoint } || $self->endpoint;
-    
+
+    my $got_endpoint;
     if( ! $endpoint ) {
     
         # find the debugger endpoint:
         # These are the open tabs
         my $f = Future::HTTP->new;
-        my $res = $f->http_get('http://localhost:9222/json')->then(sub($payload,$headers) {
-            Future->done( $self->json->decode( $payload ));
-        })->get;
-        $endpoint = $self->{endpoint} = $res->[0]->{webSocketDebuggerUrl};
+        $got_endpoint = $f->http_get('http://localhost:9222/json')->then(sub($payload,$headers) {
+            my $res = $self->json->decode( $payload );
+            my $endpoint = $res->[0]->{webSocketDebuggerUrl};
+            Future->done( $endpoint );
+        });
+    } else {
+        $got_endpoint = Future->done( $endpoint );
     };
     
     my $client;
-    my $on_connect = as_future_cb {
-        my( $done_cb ) = @_;
-        warn "Connecting to $endpoint";
-        $client = AnyEvent::WebSocket::Client->new;
-        $client->connect( $endpoint )->cb( $done_cb );
-
-    }->then( sub( $c ) {
+    $got_endpoint->then( sub( $endpoint ) {
+        as_future_cb( sub( $done_cb, $fail_cb ) {
+            warn "Connecting to $endpoint";
+            $client = AnyEvent::WebSocket::Client->new;
+            $client->connect( $endpoint )->cb( $done_cb );
+        });
+    })->then( sub( $c ) {
         warn sprintf "Connected to %s:%s", $self->host, $self->port;
         my $connection = $c->recv;
         
