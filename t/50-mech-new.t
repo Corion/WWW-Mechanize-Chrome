@@ -7,6 +7,8 @@ use Chrome::DevToolsProtocol;
 my $c = Chrome::DevToolsProtocol->new();
 isa_ok $c, 'Chrome::DevToolsProtocol';
 
+$c->connect->get();
+
 cmp_ok $c->protocol_version, '>=', '0.1', "We have a protocol version";
 
 diag "Open tabs";

@@ -8,6 +8,7 @@ use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
+use WebDriver::Tiny;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION= '0.01';
@@ -61,16 +62,9 @@ The default is C<chrome> as found via C<$ENV{PATH}>.
 You can also provide this information from the outside
 by setting C<$ENV{chrome_EXE}>.
 
-=item B<launch_ghostdriver>
-
-Filename of the C<ghostdriver> Javascript code
-to launch. The default is the file distributed with this module.
-
-  launch_ghostdriver => "devel/my/ghostdriver/main.js",
-
 =item B<launch_arg>
 
-Specify additional parameters to the Ghostdriver script.
+Specify additional parameters to the Chrome executable.
 
   launch_arg => [ "--some-new-parameter=foo" ],
 
@@ -81,7 +75,7 @@ that file will be used to store or retrieve cookies.
 
 =item B<driver>
 
-A premade L<Selenium::Remote::Driver> object.
+A premade L<WebDriver::Tiny> object.
 
 =item B<report_js_errors>
 
@@ -95,7 +89,7 @@ for testing with C<use warnings qw(fatal)>.
 sub build_command_line {
     my( $class, $options )= @_;
 
-    $options->{ "log" } ||= 'OFF';
+    #$options->{ "log" } ||= 'OFF';
 
     $options->{ launch_exe } ||= $ENV{chrome_EXE} || 'chrome';
     $options->{ launch_arg } ||= [];
@@ -103,7 +97,7 @@ sub build_command_line {
     $options->{port} ||= 9222;
 
     if ($options->{port}) {
-        push @{ $options->{ launch_arg }}, "--port=$options->{ port }";
+        push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
     };
 
     if ($options->{profile}) {
@@ -154,6 +148,7 @@ sub new {
 
     unless ($options{pid}) {
         my @cmd= $class->build_command_line( \%options );
+        
         $options{ kill_pid } = 1;
         if( @cmd > 1 ) {
             # We can do a proper pipe-open
@@ -188,9 +183,9 @@ sub new {
     # Connect to it
     eval {
         # XXX fixme - we need the Chrome driver here
-        $options{ driver } ||= Selenium::Remote::Driver->new(
+        $options{ driver } ||= Chrome::DevToolsProtocol->new(
             'port' => $options{ port },
-            remote_server_addr => $localhost,
+            host => $localhost,
             auto_close => 0,
             error_handler => sub {
                 #warn ref$_[0];
@@ -202,12 +197,12 @@ sub new {
                 croak $_[1]
             },
         );
-        # (Monkey)patch Selenium::Remote::Driver
-        $options{ driver }->commands->get_cmds->{get}->{no_content_success}= 0;
+        # Synchronously connect here, just for easy API compatibility
+        $options{ driver }->connect()->get;
     };
 
-    # if Chrome started, but so slow or unresponsive that SRD cannot connect to it,
-    # kill it manually to avoid waiting for it indefinitely
+    # if Chrome started, but so slow or unresponsive that we cannot connect
+    # to it, kill it manually to avoid waiting for it indefinitely
     if ( $@ ) {
         kill 9, delete $options{ pid } if $options{ kill_pid };
         die $@;
@@ -252,11 +247,11 @@ sub Chrome_version {
     };
 }
 
-=head2 C<< $mech->ghostdriver_version >>
+=head2 C<< $mech->chrome_version >>
 
-  print $mech->ghostdriver_version;
+  print $mech->chrome_version;
 
-Returns the version of the ghostdriver script that is used.
+Returns the version of the Chrome that is used.
 
 =cut
 

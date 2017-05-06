@@ -1,8 +1,13 @@
 package Chrome::DevToolsProtocol;
 use strict;
+use Filter::signatures;
+no warnings 'experimental::signatures';
+use feature 'signatures';
 use AnyEvent;
-use AnyEvent::Socket;
-use AnyEvent::Handle;
+use AnyEvent::WebSocket::Client;
+use Future;
+use AnyEvent::Future qw(as_future_cb);
+use Future::HTTP;
 use Carp qw(croak);
 use JSON;
 use Data::Dumper;
@@ -12,11 +17,14 @@ use vars qw<$VERSION $magic>;
 $VERSION = '0.01';
 $magic = "ChromeDevToolsHandshake";
 
-sub new {
-    my ($class, %args) = @_;
-    
+# DOM access
+# https://chromedevtools.github.io/devtools-protocol/tot/DOM/
+# http://localhost:9222/json
+
+sub new($class, %args) {
     my $self = bless \%args => $class;
     
+    # Set up defaults
     $args{ host } ||= 'localhost';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
@@ -26,45 +34,53 @@ sub new {
     
     $args{ receivers } ||= {};
     
-    # Kick off the connect
-    my $connected = AnyEvent->condvar;
-    $self->{chrome} = AnyEvent::Handle->new( connect => [ $args{ host }, $args{ port } ], on_connect => sub {
-        my ($fh) = @_;
-        $self->{chrome} ||= $fh;
-        
-        # Send the id
-        $self->{chrome}->push_write("$magic\r\n");
-        $self->{chrome}->push_read(line => "\r\n", sub {
-            my ($handle,$line) = @_;
-            
-            if ($line ne $magic) {
-                croak "Did not get magic response (got '$line')";
-            };
-            $connected->send;
-        }); # read the response
-    });
-    
-    # How can (should?) we do/pass this asynchronously?
-    $connected->recv;
-    
-    # Kick off the continous polling
-    $self->{chrome}->on_read( sub {
-        my $fh = $_[0];
-        $fh->push_read( line => "\r\n\r\n", sub {
-            #print "Headers consumed\n";
-            # Deparse headers
-            my $headers = +{ $_[1] =~ /^([^:]+):([^\r\n]*)[\r\n]*$/mg };
-            
-            $fh->unshift_read( json => sub {
-                #print "Payload consumed\n";
-                my $payload = $_[1];
-                $self->handle_packet($headers,$payload);
-                #$complete->send($headers, $payload);
-            });
-        });
-    });
-    
     $self
+};
+
+sub host( $self ) { $self->{host} }
+sub port( $self ) { $self->{port} }
+sub endpoint( $self ) { $self->{endpoint} }
+sub json( $self ) { $self->{json} }
+
+sub connect( $self, %args ) {
+    # Kick off the connect
+    
+    my $endpoint = $args{ endpoint } || $self->endpoint;
+    
+    if( ! $endpoint ) {
+    
+        # find the debugger endpoint:
+        # These are the open tabs
+        my $f = Future::HTTP->new;
+        my $res = $f->http_get('http://localhost:9222/json')->then(sub($payload,$headers) {
+            Future->done( $self->json->decode( $payload ));
+        })->get;
+        $endpoint = $self->{endpoint} = $res->[0]->{webSocketDebuggerUrl};
+    };
+    
+    my $client;
+    my $on_connect = as_future_cb {
+        my( $done_cb ) = @_;
+        warn "Connecting to $endpoint";
+        $client = AnyEvent::WebSocket::Client->new;
+        $client->connect( $endpoint )->cb( $done_cb );
+
+    }->then( sub( $c ) {
+        warn sprintf "Connected to %s:%s", $self->host, $self->port;
+        my $connection = $c->recv;
+        
+        # Well, it's a tab, not the whole Chrome process here...
+        $self->{chrome} ||= $connection;
+        
+        # Kick off the continous polling
+        $self->{chrome}->on( each_message => sub( $connection,$message) {
+            my $payload = $message;
+            die "Message: " . Dumper $payload;
+            #$self->handle_packet($headers,$payload);
+        });
+        
+        Future->done( $connection )
+    });
 };
 
 # Handles any response packet from Chrome and
