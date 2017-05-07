@@ -48,16 +48,9 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     You can also provide this information from the outside
     by setting `$ENV{chrome_EXE}`.
 
-- **launch\_ghostdriver**
-
-    Filename of the `ghostdriver` Javascript code
-    to launch. The default is the file distributed with this module.
-
-        launch_ghostdriver => "devel/my/ghostdriver/main.js",
-
 - **launch\_arg**
 
-    Specify additional parameters to the Ghostdriver script.
+    Specify additional parameters to the Chrome executable.
 
         launch_arg => [ "--some-new-parameter=foo" ],
 
@@ -68,24 +61,19 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 - **driver**
 
-    A premade [Selenium::Remote::Driver](https://metacpan.org/pod/Selenium::Remote::Driver) object.
+    A premade [WebDriver::Tiny](https://metacpan.org/pod/WebDriver::Tiny) object.
 
 - **report\_js\_errors**
 
     If set to 1, after each request tests for Javascript errors and warns. Useful
     for testing with `use warnings qw(fatal)`.
 
-## `$mech->Chrome_version`
+## `$mech->chrome_version`
 
-    print $mech->Chrome_version;
+    print $mech->chrome_version;
 
-Returns the version of the Chrome executable that is used.
-
-## `$mech->ghostdriver_version`
-
-    print $mech->ghostdriver_version;
-
-Returns the version of the ghostdriver script that is used.
+Returns the version of the Chrome executable that is used. This information
+needs launching the browser and asking for the version via the network.
 
 ## `$mech->driver`
 
@@ -146,9 +134,9 @@ This allows access to variables and functions declared
 
 This method is special to WWW::Mechanize::Chrome.
 
-## `$mech->eval_in_Chrome $code, @args`
+## `$mech->eval_in_chrome $code, @args`
 
-    $mech->eval_in_Chrome(<<'JS', "Foobar/1.0");
+    $mech->eval_in_chrome(<<'JS', "Foobar/1.0");
         this.settings.userAgent= arguments[0]
     JS
 
@@ -310,7 +298,9 @@ Returns the current document URI.
 
 ## `$mech->document()`
 
-Returns the document object as a WebElement.
+    print $self->driver->send_message( 'DOM.getDocument' )->get->{nodeId}
+
+Returns the document object as a Future.
 
 This is WWW::Mechanize::Chrome specific.
 
