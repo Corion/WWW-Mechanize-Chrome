@@ -124,68 +124,94 @@ sub build_command_line {
     @cmd
 };
 
+sub find_free_port( $self, $start ) {
+    my $port = $start;
+    while (1) {
+        $port++, next unless IO::Socket::INET->new(
+            Listen    => 5,
+            Proto     => 'tcp',
+            Reuse     => 1,
+            LocalPort => $port
+        );
+        last;
+    }
+    $port;
+}
+
+sub spawn_child( $self, $localhost, @cmd ) {
+    my ($pid, $fh);
+    if( @cmd > 1 ) {
+        # We can do a proper pipe-open
+        my $mode = shift @cmd;
+        $pid = open $fh, $mode, @cmd
+            or die "Couldn't launch [@cmd]: $! / $?";
+    } else {
+        # We can't do a proper pipe-open, so do the single-arg open
+        # in the hope that everything has been set up properly
+        $pid = open $fh, $cmd[0]
+            or die "Couldn't launch [$cmd[0]]: $! / $?";
+    };
+
+    # Just to give Chrome time to start up, make sure it accepts connections
+    my $wait = time + ($self->{ wait } || 20);
+    while ( time < $wait ) {
+        my $t = time;
+        my $socket = IO::Socket::INET->new(
+            PeerHost => $localhost,
+            PeerPort => $self->{ port },
+            Proto    => 'tcp',
+        );
+        if( $socket ) {
+            close $socket;
+            sleep 1;
+            last;
+        };
+        sleep 1 if time - $t < 1;
+    }
+    return ($pid,$fh)
+}
+
+sub log( $self, $level, $message, @args ) {
+    if( my $handler = $self->{log} ) {
+        shift;
+        goto &$handler;
+    } else {
+        if( !@args ) {
+            warn "$level: $message";
+        } else {
+            warn "$level: $message " . Dumper @args;
+        };
+    };
+}
+
 sub new {
     my ($class, %options) = @_;
 
-    my $localhost = '127.0.0.1';
-    unless ( defined $options{ port } ) {
-        # Find free port
-        my $port = 9222;
-        while (1) {
-            $port++, next unless IO::Socket::INET->new(
-                Listen    => 5,
-                Proto     => 'tcp',
-                Reuse     => 1,
-                LocalPort => $port
-            );
-            last;
-        }
-        $options{ port } = $port;
-    }
-
-    if (! exists $options{ autodie }) { $options{ autodie } = 1 };
+    if (! exists $options{ autodie }) {
+        $options{ autodie } = 1
+    };
 
     if( ! exists $options{ frames }) {
         $options{ frames }= 1;
     };
 
-    unless ($options{pid}) {
+    my $self= bless \%options => $class;
+    my $localhost = '127.0.0.1';
+
+    unless ( defined $options{ port } ) {
+        # Find free port
+        $options{ port } = $self->find_free_port( 9222 );
+    }
+
+    unless ($options{pid} or $options{reuse}) {
         my @cmd= $class->build_command_line( \%options );
-
-        $options{ kill_pid } = 1;
-        if( @cmd > 1 ) {
-            # We can do a proper pipe-open
-            my $mode = shift @cmd;
-            $options{ pid } = open $options{fh}, $mode, @cmd
-                or die "Couldn't launch [@cmd]: $! / $?";
-        } else {
-            # We can't do a proper pipe-open, so do the single-arg open
-            # in the hope that everything has been set up properly
-            $options{ pid } = open $options{fh}, $cmd[0]
-                or die "Couldn't launch [$cmd[0]]: $! / $?";
-        };
-
-        # Just to give Chrome time to start up, make sure it accepts connections
-        my $wait = time + ($options{ wait } || 20);
-        while ( time < $wait ) {
-            my $t = time;
-            my $socket = IO::Socket::INET->new(
-                PeerHost => $localhost,
-                PeerPort => $options{ port },
-                Proto    => 'tcp',
-            );
-            if( $socket ) {
-                close $socket;
-                sleep 1;
-                last;
-            };
-            sleep 1 if time - $t < 1;
-        }
+        $self->log('DEBUG', "Spawning", \@cmd);
+        ($self->{pid}, $self->{fh}) = $self->spawn_child( $localhost, @cmd );
+        $self->{ kill_pid } = 1;
     }
 
     # Connect to it
     eval {
-        # XXX fixme - we need the Chrome driver here
         $options{ driver } ||= Chrome::DevToolsProtocol->new(
             'port' => $options{ port },
             host => $localhost,
@@ -201,17 +227,18 @@ sub new {
             },
         );
         # Synchronously connect here, just for easy API compatibility
-        $options{ driver }->connect()->get;
+        $self->driver->connect(
+            new_tab => !$options{ reuse },
+        )->get;
     };
 
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $@ ) {
-        kill 9, delete $options{ pid } if $options{ kill_pid };
+        kill 9, delete $self->{ pid } if $self->{ kill_pid };
         die $@;
     }
 
-    my $self= bless \%options => $class;
     $self->get('about:blank'); # Reset to clean state
 
     if( 0 ) {
