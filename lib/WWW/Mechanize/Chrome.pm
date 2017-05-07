@@ -534,10 +534,11 @@ sub update_response {
 sub get {
     my ($self, $url, %options ) = @_;
     # We need to stringify $url so it can pass through JSON
-    my $phantom_res= $self->driver->get( "$url" );
-    $self->post_process;
+    my $phantom_res= $self->driver->send_message('Page.navigate',
+        url => $url )->get->{frameId};
+    #$self->post_process;
 
-    $self->update_response( $phantom_res );
+    #$self->update_response( $phantom_res );
 };
 
 =head2 C<< $mech->get_local( $filename , %options ) >>
