@@ -211,7 +211,8 @@ sub new {
         die $@;
     }
 
-     my $self= bless \%options => $class;
+    my $self= bless \%options => $class;
+    $self->get('about:blank'); # Reset to clean state
 
     if( 0 ) {
     $self->eval_in_chrome(<<'JS');
