@@ -210,7 +210,7 @@ sub new {
 
      my $self= bless \%options => $class;
 
-     $self->eval_in_Chrome(<<'JS');
+     $self->eval_in_chrome(<<'JS');
          var page= this;
          page.errors= [];
          page.alerts= [];
@@ -230,35 +230,21 @@ JS
      $self
 };
 
-=head2 C<< $mech->Chrome_version >>
+=head2 C<< $mech->chrome_version >>
 
-  print $mech->Chrome_version;
+  print $mech->chrome_version;
 
-Returns the version of the Chrome executable that is used.
+Returns the version of the Chrome executable that is used. This information
+needs launching the browser and asking for the version via the network.
 
 =cut
 
 sub chrome_version {
     my( $self )= @_;
-    $self->{Chrome_version} ||= do {
-        my $version= $self->chrome->protocol_version;
+    $self->{chrome_version} ||= do {
+        my $version= $self->chrome->protocol_version->get->{Browser};
         $version=~ s!\s+!!g;
         $version
-    };
-}
-
-=head2 C<< $mech->chrome_version >>
-
-  print $mech->chrome_version;
-
-Returns the version of the Chrome that is used.
-
-=cut
-
-sub ghostdriver_version {
-    my( $self )= @_;
-    $self->{ghostdriver_version} ||= do {
-        $self->eval_in_Chrome('return ghostdriver.version');
     };
 }
 
@@ -283,15 +269,6 @@ sub autodie {
 
 sub allow {
     my($self,%options)= @_;
-    for my $opt (keys %options) {
-        if( 'javascript' eq $opt ) {
-            $self->eval_in_Chrome(<<'JS', $options{ $opt });
-                this.settings.javascriptEnabled= arguments[0]
-JS
-        } else {
-            warn "->allow('$opt', ...) is currently a dummy.";
-        };
-    };
 }
 
 =head2 C<< $mech->js_alerts() >>
@@ -304,7 +281,7 @@ Returns the list of alerts
 
 =cut
 
-sub js_alerts { @{ shift->eval_in_Chrome('return this.alerts') } }
+sub js_alerts { @{ shift->eval_in_chrome('return this.alerts') } }
 
 =head2 C<< $mech->clear_js_alerts() >>
 
@@ -314,7 +291,7 @@ Clears all saved alerts
 
 =cut
 
-sub clear_js_alerts { shift->eval_in_Chrome('this.alerts = [];') }
+sub clear_js_alerts { shift->eval_in_chrome('this.alerts = [];') }
 
 =head2 C<< $mech->js_errors() >>
 
@@ -332,7 +309,7 @@ C<js_console_messages> instead.
 
 sub js_errors {
     my ($self) = @_;
-    my $errors= $self->eval_in_Chrome(<<'JS');
+    my $errors= $self->eval_in_chrome(<<'JS');
         return this.errors
 JS
     @$errors
@@ -348,7 +325,7 @@ Clears all Javascript messages from the console
 
 sub clear_js_errors {
     my ($self) = @_;
-    my $errors= $self->eval_in_Chrome(<<'JS');
+    my $errors= $self->eval_in_chrome(<<'JS');
         this.errors= [];
 JS
 
@@ -367,7 +344,7 @@ sub confirm
     my ( $self, $msg, $affirmative ) = @_;
     $affirmative = 1 unless defined $affirmative;
     $affirmative = $affirmative ? 'true' : 'false';
-    $self->eval_in_Chrome("this.confirms['$msg']=$affirmative;");
+    $self->eval_in_chrome("this.confirms['$msg']=$affirmative;");
 }
 
 =head2 C<< $mech->eval_in_page( $str, @args ) >>
@@ -406,9 +383,9 @@ sub eval_in_page {
     *eval = \&eval_in_page;
 }
 
-=head2 C<< $mech->eval_in_Chrome $code, @args >>
+=head2 C<< $mech->eval_in_chrome $code, @args >>
 
-  $mech->eval_in_Chrome(<<'JS', "Foobar/1.0");
+  $mech->eval_in_chrome(<<'JS', "Foobar/1.0");
       this.settings.userAgent= arguments[0]
   JS
 
@@ -418,7 +395,7 @@ This allows you to modify properties of Chrome.
 
 =cut
 
-sub eval_in_Chrome {
+sub eval_in_chrome {
     my ($self, $code, @args) = @_;
     #my $tab = $self->tab;
 
@@ -438,7 +415,7 @@ sub eval_in_Chrome {
 sub agent {
     my($self, $ua) = @_;
     # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
-    $self->eval_in_Chrome(<<'JS', $ua);
+    $self->eval_in_chrome(<<'JS', $ua);
        this.settings.userAgent= arguments[0]
 JS
 }
@@ -715,7 +692,7 @@ sub add_header {
     #warn Dumper $headers;
 
     while( my ($k,$v) = splice @headers, 0, 2 ) {
-        $self->eval_in_Chrome(<<'JS', , $k, $v);
+        $self->eval_in_chrome(<<'JS', , $k, $v);
             var h= this.customHeaders;
             h[arguments[0]]= arguments[1];
             this.customHeaders= h;
@@ -735,7 +712,7 @@ that Chrome may still send a header with its default value.
 sub delete_header {
     my ($self, @headers) = @_;
 
-    $self->eval_in_Chrome(<<'JS', @headers);
+    $self->eval_in_chrome(<<'JS', @headers);
         var headers= this.customHeaders;
         for( var i = 0; i < arguments.length; i++ ) {
             delete headers[arguments[i]];
@@ -754,7 +731,7 @@ Removes all custom headers and makes Chrome send its defaults again.
 
 sub reset_headers {
     my ($self) = @_;
-    $self->eval_in_Chrome('this.customHeaders= {}');
+    $self->eval_in_chrome('this.customHeaders= {}');
 };
 
 =head2 C<< $mech->res() >> / C<< $mech->response(%options) >>
@@ -982,7 +959,7 @@ implemented as a convenience method for L<HTML::Display::MozRepl>.
 
 sub update_html {
     my ($self,$content) = @_;
-    $self->eval_in_Chrome('this.setContent(arguments[0], arguments[1])', $content);
+    $self->eval_in_chrome('this.setContent(arguments[0], arguments[1])', $content);
 };
 
 =head2 C<< $mech->base() >>
@@ -2648,7 +2625,7 @@ sub content_as_png {
 
     if( scalar keys %$rect ) {
 
-        $self->eval_in_Chrome( 'this.clipRect= arguments[0]', $rect );
+        $self->eval_in_chrome( 'this.clipRect= arguments[0]', $rect );
     };
 
     return $self->render_content( format => 'png' );
@@ -2666,7 +2643,7 @@ Returns (or sets) the new size of the viewport (the "window").
 sub viewport_size {
     my( $self, $new )= @_;
 
-    $self->eval_in_Chrome( <<'JS', $new );
+    $self->eval_in_chrome( <<'JS', $new );
         if( arguments[0]) {
             this.viewportSize= arguments[0];
         };
@@ -2693,10 +2670,10 @@ sub element_as_png {
        this.clipRect= arguments[0];
 JS
 
-    my $old= $self->eval_in_Chrome( $code, $cliprect );
+    my $old= $self->eval_in_chrome( $code, $cliprect );
     my $png= $self->content_as_png();
     #warn Dumper $old;
-    $self->eval_in_Chrome( $code, $old );
+    $self->eval_in_chrome( $code, $old );
     $png
 };
 
@@ -2726,12 +2703,12 @@ sub render_element {
        this.clipRect= arguments[0];
 JS
 
-    my $old= $self->eval_in_Chrome( $code, $cliprect );
+    my $old= $self->eval_in_chrome( $code, $cliprect );
     my $res= $self->render_content(
         %options
     );
     #warn Dumper $old;
-    $self->eval_in_Chrome( $code, $old );
+    $self->eval_in_chrome( $code, $old );
     $res
 };
 
@@ -2796,7 +2773,7 @@ sub render_content {
     require File::Spec;
     $outname= File::Spec->rel2abs($outname, '.');
 
-    $self->eval_in_Chrome(<<'JS', $outname, $format);
+    $self->eval_in_chrome(<<'JS', $outname, $format);
         var outname= arguments[0];
         var format= arguments[1];
         this.render( outname, { "format": format });
