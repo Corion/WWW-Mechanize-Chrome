@@ -49,10 +49,10 @@ sub log( $self, $level, $message, @args ) {
         shift;
         goto &$handler;
     } else {
-        if( @args ) {
+        if( !@args ) {
             warn "$level: $message";
         } else {
-            warn "$level: $message " . Dumper \@args;
+            warn "$level: $message " . Dumper @args;
         };
     };
 }
@@ -162,6 +162,15 @@ sub send_message( $self, $method, %params ) {
     $self->ws->send( $payload );
     $response
 }
+
+=head2 C<< $chrome->eval >>
+
+=cut
+
+sub eval( $self, $string ) {
+    $self->send_message('Runtime.eval', expression => $string, returnByValue => 1 )
+};
+
 
 =head2 C<< $chrome->protocol_version >>
 
