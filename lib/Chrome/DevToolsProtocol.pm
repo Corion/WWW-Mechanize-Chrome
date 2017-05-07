@@ -60,27 +60,43 @@ sub connect( $self, %args ) {
     # Kick off the connect
 
     my $endpoint;
-    if( $args{ tab }) {
+    if( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         $endpoint = $args{ tab }->{webSocketDebuggerUrl};
+
+    } elsif( exists $args{ new_tab } ) {
+        $endpoint = undef;
+        $args{ tab } ||= 0;
+
+    } elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
+        $endpoint = undef;
+
     } else {
         $endpoint = $args{ endpoint } || $self->endpoint;
     };
 
     my $got_endpoint;
     if( ! $endpoint ) {
+        if( $args{ new_tab }) {
+            $got_endpoint = $self->new_tab()->then(sub( $info ) {
+                $self->log('DEBUG', "Created new tab", $info );
+                return Future->done( $info->{webSocketDebuggerUrl} );
+            });
+        } elsif( $args{ tab } =~ /^\d+$/ ) {
+            $got_endpoint = $self->list_tabs()->then(sub( $info ) {
+                $self->log('DEBUG', "Attached to tab $args{tab}", $info );
+                return Future->done( $info->[ $args{ tab }]->{webSocketDebuggerUrl} );
+            });
 
-        # find the debugger endpoint:
-        # These are the open tabs
-        $got_endpoint = $self->list_tabs()->then(sub($tabs) {
-            my $endpoint = $tabs->[0]->{webSocketDebuggerUrl};
-            Future->done( $endpoint );
-        });
+        };
+
     } else {
         $got_endpoint = Future->done( $endpoint );
     };
 
     my $client;
     $got_endpoint->then( sub( $endpoint ) {
+        $self->{ endpoint } = $endpoint;
+
         as_future_cb( sub( $done_cb, $fail_cb ) {
             $self->log('DEBUG',"Connecting to $endpoint");
             $client = AnyEvent::WebSocket::Client->new;
