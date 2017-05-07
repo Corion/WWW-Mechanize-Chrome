@@ -45,6 +45,19 @@ sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
 sub ws( $self ) { $self->{ws} }
 
+sub log( $self, $level, $message, @args ) {
+    if( my $handler = $self->{log} ) {
+        shift;
+        goto &$handler;
+    } else {
+        if( @args ) {
+            warn "$level: $message";
+        } else {
+            warn "$level: $message " . Dumper \@args;
+        };
+    };
+}
+
 sub connect( $self, %args ) {
     # Kick off the connect
     
@@ -66,12 +79,12 @@ sub connect( $self, %args ) {
     my $client;
     $got_endpoint->then( sub( $endpoint ) {
         as_future_cb( sub( $done_cb, $fail_cb ) {
-            warn "Connecting to $endpoint";
+            $self->log('DEBUG',"Connecting to $endpoint");
             $client = AnyEvent::WebSocket::Client->new;
             $client->connect( $endpoint )->cb( $done_cb );
         });
     })->then( sub( $c ) {
-        warn sprintf "Connected to %s:%s", $self->host, $self->port;
+        $self->log( 'DEBUG', sprintf "Connected to %s:%s", $self->host, $self->port );
         my $connection = $c->recv;
         
         # Well, it's a tab, not the whole Chrome process here...
