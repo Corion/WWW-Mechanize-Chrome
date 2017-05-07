@@ -107,12 +107,13 @@ sub connect( $self, %args ) {
 
 sub on_response( $self, $connection, $message ) {
     my $response = $self->json->decode( $message->{body});
-    $self->log( 'DEBUG', "Replying to $response->{id}", $response );
 
     if( $response->{error} ) {
+        $self->log( 'DEBUG', "Replying to error $response->{id}", $response );
         $self->{receivers}->{$response->{id}}->die(  $response->{error}->{message},$response->{error}->{code} );
     } else {
-        $self->{receivers}->{$response->{id}}->done( $response->{body} );
+        $self->log( 'DEBUG', "Replying to $response->{id}", $response );
+        $self->{receivers}->{$response->{id}}->done( $response->{result} );
     };
 }
 
