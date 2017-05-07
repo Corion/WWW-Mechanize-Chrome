@@ -184,6 +184,14 @@ sub protocol_version($self) {
     });
 };
 
+=head2 C<< $chrome->get_domains >>
+
+=cut
+
+sub get_domains( $self ) {
+    $self->send_message('Schema.getDomains');
+}
+
 =head2 C<< $chrome->list_tabs >>
 
 =cut
@@ -193,6 +201,27 @@ sub list_tabs( $self ) {
 };
 
 =head2 C<< $chrome->new_tab >>
+
+=cut
+
+sub activate_tab( $self, $tab ) {
+    return $self->json_get('new/'+ $tab->{id})
+};
+
+=head2 C<< $chrome->activate_tab >>
+
+=cut
+
+sub activate_tab( $self, $tab ) {
+    return $self->json_get('activate/'+ $tab->{id})
+};
+
+=head2 C<< $chrome->close_tab >>
+
+=cut
+
+sub activate_tab( $self, $tab ) {
+    return $self->json_get('close/'+ $tab->{id})
 };
 
 
