@@ -182,14 +182,26 @@ sub eval( $self, $string ) {
     });
 };
 
+=head2 C<< $chrome->version_info >>
+
+    print $chrome->version_info->get->{"Protocol-Version"};
+
+=cut
+
+sub version_info($self) {
+    $self->json_get( 'version' )->then( sub( $payload ) {
+        Future->done( $payload );
+    });
+};
+
 =head2 C<< $chrome->protocol_version >>
 
-    print $chrome->protocol_version->get->{"Protocol-Version"};
+    print $chrome->protocol_version->get;
 
 =cut
 
 sub protocol_version($self) {
-    $self->json_get( 'version' )->then( sub( $payload ) {
+    $self->version_info->then( sub( $payload ) {
         Future->done( $payload->{"Protocol-Version"});
     });
 };

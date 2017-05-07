@@ -9,8 +9,14 @@ my $chrome = Chrome::DevToolsProtocol->new(
 );
 isa_ok $chrome, 'Chrome::DevToolsProtocol';
 
-my $version = $chrome->protocol_version;
+my $version = $chrome->version_info->get;
+diag $version->{Browser};
+
+   $version = $chrome->protocol_version->get;
 cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
+
+cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
+
 
 diag "Open tabs";
 

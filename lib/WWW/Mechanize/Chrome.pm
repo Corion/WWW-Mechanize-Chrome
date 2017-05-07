@@ -238,10 +238,10 @@ Returns the version of the Chrome executable that is used.
 
 =cut
 
-sub Chrome_version {
+sub chrome_version {
     my( $self )= @_;
     $self->{Chrome_version} ||= do {
-        my $version= `$self->{ launch_exe } --version`;
+        my $version= $self->chrome->protocol_version;
         $version=~ s!\s+!!g;
         $version
     };
