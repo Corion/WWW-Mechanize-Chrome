@@ -68,7 +68,7 @@ sub connect( $self, %args ) {
     
         # find the debugger endpoint:
         # These are the open tabs
-        $got_endpoint = $self->json_get('')->then(sub($tabs) {
+        $got_endpoint = $self->list_tabs()->then(sub($tabs) {
             my $endpoint = $tabs->[0]->{webSocketDebuggerUrl};
             Future->done( $endpoint );
         });
@@ -231,11 +231,8 @@ sub protocol_version($self) {
 
 =cut
 
-sub list_tabs( $self, $url ) {
-    return $self->ua->http_get($url)->then(sub($payload,$headers) {
-        my $res = $self->json->decode( $payload );
-        Future->done($res)
-    });
+sub list_tabs( $self ) {
+    return $self->json_get('list')
 };
 
 sub attach {
