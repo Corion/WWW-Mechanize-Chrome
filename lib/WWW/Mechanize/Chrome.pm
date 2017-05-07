@@ -369,13 +369,13 @@ sub eval_in_page {
 
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
-    local @Selenium::Remote::Driver::CARP_NOT
-        = (@Selenium::Remote::Driver::CARP_NOT, (ref $self)); # we trust this
+    local @Chrome::DevToolsProtocol::CARP_NOT
+        = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
-        = (@CARP_NOT, 'Selenium::Remote::Driver', (ref $self)); # we trust this
-    my $eval_in_sandbox = $self->driver->execute_script("return $str", @args);
+        = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
+    my $result = $self->driver->evaluate("return $str", @args);
     $self->post_process;
-    return $eval_in_sandbox;
+    return $result->{value}, $result->{type};
 };
 
 {
