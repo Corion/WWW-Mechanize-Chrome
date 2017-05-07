@@ -878,8 +878,15 @@ sub document( $self ) {
 # var page = require('webpage').create();
 # page.open('http://somejsonpage.com', function () {
 #     var jsonSource = page.plainText;
-sub decoded_content {
-    $_[0]->driver->get_page_source
+sub decoded_content($self) {
+    $self->document->then(sub( $root ) {
+        # Find "HTML" child node:
+        my $nodeId = $root->{root}->{children}->[0]->{nodeId};
+        $self->driver->log('DEBUG', "Fetching HTML for node " . $nodeId );
+        $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+    })->then( sub( $outerHTML ) {
+        Future->done( $outerHTML->{outerHTML} )
+    })->get;
 };
 
 =head2 C<< $mech->content( %options ) >>
@@ -906,14 +913,13 @@ The allowed values are C<html> and C<text>. The default is C<html>.
 
 =cut
 
-sub content {
-    my ($self, %options) = @_;
+sub content( $self, %options ) {
     $options{ format } ||= 'html';
     my $format = delete $options{ format } || 'html';
 
     my $content;
     if( 'html' eq $format ) {
-        $content= $self->driver->get_page_source
+        $content= $self->decoded_content()
     } elsif ( $format eq 'text' ) {
         $content= $self->text;
     } else {
