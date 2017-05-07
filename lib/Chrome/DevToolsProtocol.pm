@@ -11,7 +11,6 @@ use Future::HTTP;
 use Carp qw(croak);
 use JSON;
 use Data::Dumper;
-use Chrome::DevToolsProtocol::Extension;
 
 use vars qw<$VERSION $magic>;
 $VERSION = '0.01';
@@ -236,10 +235,13 @@ sub list_tabs( $self ) {
 
 =head2 C<< $chrome->new_tab >>
 
+    my $new_tab = $chrome->new_tab('https://www.google.com')->get;
+
 =cut
 
-sub new_tab( $self, $tab ) {
-    return $self->json_get('new/'+ $tab->{id})
+sub new_tab( $self, $url=undef ) {
+    my $u = $url ? '?' . $url : '';
+    $self->json_get('new' . $u)
 };
 
 =head2 C<< $chrome->activate_tab >>
@@ -247,7 +249,7 @@ sub new_tab( $self, $tab ) {
 =cut
 
 sub activate_tab( $self, $tab ) {
-    return $self->json_get('activate/'+ $tab->{id})
+    return $self->json_get('activate/' . $tab->{id})
 };
 
 =head2 C<< $chrome->close_tab >>
@@ -255,7 +257,7 @@ sub activate_tab( $self, $tab ) {
 =cut
 
 sub close_tab( $self, $tab ) {
-    return $self->json_get('close/'+ $tab->{id})
+    return $self->json_get('close/' . $tab->{id})
 };
 
 1;
