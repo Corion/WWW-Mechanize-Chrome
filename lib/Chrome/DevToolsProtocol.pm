@@ -163,14 +163,23 @@ sub send_message( $self, $method, %params ) {
     $response
 }
 
+=head2 C<< $chrome->evaluate >>
+
+=cut
+
+sub evaluate( $self, $string ) {
+    $self->send_message('Runtime.evaluate', expression => $string, returnByValue => JSON::true )
+};
+
 =head2 C<< $chrome->eval >>
 
 =cut
 
 sub eval( $self, $string ) {
-    $self->send_message('Runtime.eval', expression => $string, returnByValue => 1 )
+    $self->evaluate( $string )->then(sub( $result ) {
+        Future->done( $result->{result}->{value} )
+    });
 };
-
 
 =head2 C<< $chrome->protocol_version >>
 
