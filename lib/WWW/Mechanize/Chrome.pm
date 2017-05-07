@@ -93,7 +93,7 @@ sub build_command_line {
 
     $options->{ launch_exe } ||= $ENV{chrome_EXE} || 'chrome';
     $options->{ launch_arg } ||= [];
-    
+
     $options->{port} ||= 9222;
 
     if ($options->{port}) {
@@ -103,7 +103,7 @@ sub build_command_line {
     if ($options->{profile}) {
         push @{ $options->{ launch_arg }}, "--user-data-dir=$options->{ profile }";
     };
-    
+
     push @{ $options->{ launch_arg }}, "--headless";
     push @{ $options->{ launch_arg }}, "--disable-gpu"; # temporarily needed for now
 
@@ -148,7 +148,7 @@ sub new {
 
     unless ($options{pid}) {
         my @cmd= $class->build_command_line( \%options );
-        
+
         $options{ kill_pid } = 1;
         if( @cmd > 1 ) {
             # We can do a proper pipe-open
@@ -414,10 +414,13 @@ sub eval_in_chrome {
 
 sub agent {
     my($self, $ua) = @_;
-    # page.settings.userAgent = 'Mozilla/5.0 (Windows NT 5.1; rv:8.0) Gecko/20100101 Firefox/7.0';
-    $self->eval_in_chrome(<<'JS', $ua);
-       this.settings.userAgent= arguments[0]
-JS
+
+    if( $ua ) {
+        die "Setting the User-Agent is not yet implemented";
+        # Call Network.setUserAgentOverride { userAgent => $ua }
+    };
+
+    $self->chrome_version->{"User-Agent"}
 }
 
 sub DESTROY {
