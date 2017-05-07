@@ -854,22 +854,24 @@ Returns the current document URI.
 
 =cut
 
-sub uri {
-    URI->new( $_[0]->driver->get_current_url )
+sub uri( $self ) {
+    URI->new( $self->document->get->{documentURL} )
 }
 
 =head1 CONTENT METHODS
 
 =head2 C<< $mech->document() >>
 
-Returns the document object as a WebElement.
+    print $self->driver->send_message( 'DOM.getDocument' )->get->{nodeId}
+
+Returns the document object as a Future.
 
 This is WWW::Mechanize::Chrome specific.
 
 =cut
 
-sub document {
-    $_[0]->driver->find_element('html','tag_name');
+sub document( $self ) {
+    $self->driver->send_message( 'DOM.getDocument' )
 }
 
 # If things get nasty, we could fall back to Chrome.webpage.plainText
