@@ -43,6 +43,7 @@ sub port( $self ) { $self->{port} }
 sub endpoint( $self ) { $self->{endpoint} }
 sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
+sub ws( $self ) { $self->{ws} }
 
 sub connect( $self, %args ) {
     # Kick off the connect
@@ -83,6 +84,7 @@ sub connect( $self, %args ) {
             #$self->handle_packet($headers,$payload);
         });
         
+        $self->{ws} = $connection;
         Future->done( $connection )
     });
 };
