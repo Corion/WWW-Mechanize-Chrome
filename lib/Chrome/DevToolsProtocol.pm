@@ -23,18 +23,17 @@ $magic = "ChromeDevToolsHandshake";
 
 sub new($class, %args) {
     my $self = bless \%args => $class;
-    
+
     # Set up defaults
     $args{ host } ||= 'localhost';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
     $args{ ua } ||= Future::HTTP->new;
-    #$args{ sequence_number } ||= 1;
+    $args{ sequence_number } ||= 0;
+
     # XXX Make receivers multi-level on Tool+Destination
-    # XXX Make receivers store callbacks instead of one-shot condvars?
-    
     $args{ receivers } ||= {};
-    
+
     $self
 };
 
@@ -60,12 +59,17 @@ sub log( $self, $level, $message, @args ) {
 
 sub connect( $self, %args ) {
     # Kick off the connect
-    
-    my $endpoint = $args{ endpoint } || $self->endpoint;
+
+    my $endpoint;
+    if( $args{ tab }) {
+        $endpoint = $args{ tab }->{webSocketDebuggerUrl};
+    } else {
+        $endpoint = $args{ endpoint } || $self->endpoint;
+    };
 
     my $got_endpoint;
     if( ! $endpoint ) {
-    
+
         # find the debugger endpoint:
         # These are the open tabs
         $got_endpoint = $self->list_tabs()->then(sub($tabs) {
@@ -75,7 +79,7 @@ sub connect( $self, %args ) {
     } else {
         $got_endpoint = Future->done( $endpoint );
     };
-    
+
     my $client;
     $got_endpoint->then( sub( $endpoint ) {
         as_future_cb( sub( $done_cb, $fail_cb ) {
@@ -86,26 +90,33 @@ sub connect( $self, %args ) {
     })->then( sub( $c ) {
         $self->log( 'DEBUG', sprintf "Connected to %s:%s", $self->host, $self->port );
         my $connection = $c->recv;
-        
+
         # Well, it's a tab, not the whole Chrome process here...
         $self->{chrome} ||= $connection;
-        
+
         # Kick off the continous polling
         $self->{chrome}->on( each_message => sub( $connection,$message) {
-            my $payload = $message;
-            die "Message: " . Dumper $payload;
-            #$self->handle_packet($headers,$payload);
+            $self->on_response( $connection, $message )
         });
-        
+
         $self->{ws} = $connection;
+
         Future->done( $connection )
     });
 };
 
+sub on_response( $self, $connection, $message ) {
+    my $response = $self->json->decode( $message->{body});
+    $self->log( 'DEBUG', "Replying to $response->{id}", $response->{result} );
+    $self->{receivers}->{$response->{id}}->done( $response->{result} );
+}
 
-
+sub next_sequence( $self ) {
+    $self->{sequence_number}++
 };
 
+sub current_sequence( $self ) {
+    $self->{sequence_number}
 };
 
 sub build_url( $self, %options ) {
@@ -127,6 +138,25 @@ sub json_get($self, $domain, %options) {
     });
 };
 
+=head2 C<< $chrome->send_message >>
+
+Expects a response!
+
+=cut
+
+sub send_message( $self, $method, %params ) {
+    my $id = $self->next_sequence;
+    my $payload = $self->json->encode({
+        id => $id,
+        method => $method,
+        params => \%params
+    });
+
+    my $response = AnyEvent::Future->new();
+    $self->{receivers}->{ $id } = $response;
+    $self->ws->send( $payload );
+    $response
+}
 
 =head2 C<< $chrome->protocol_version >>
 
