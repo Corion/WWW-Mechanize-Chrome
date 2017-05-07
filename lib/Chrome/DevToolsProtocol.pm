@@ -259,3 +259,9 @@ sub close_tab( $self, $tab ) {
 };
 
 1;
+
+=head1 SEE ALSO
+
+Chrome DevTools at L<https://chromedevtools.github.io/devtools-protocol/1-2>
+
+=cut
