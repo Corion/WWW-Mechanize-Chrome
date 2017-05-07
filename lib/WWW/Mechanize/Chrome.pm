@@ -974,9 +974,13 @@ implemented as a convenience method for L<HTML::Display::MozRepl>.
 
 =cut
 
-sub update_html {
-    my ($self,$content) = @_;
-    $self->eval_in_chrome('this.setContent(arguments[0], arguments[1])', $content);
+sub update_html( $self, $content ) {
+    $self->document->then(sub( $root ) {
+        # Find "HTML" child node:
+        my $nodeId = $root->{root}->{children}->[0]->{nodeId};
+        $self->driver->log('DEBUG', "Setting HTML for node " . $nodeId );
+        $self->driver->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => $content )
+     })->get;
 };
 
 =head2 C<< $mech->base() >>
