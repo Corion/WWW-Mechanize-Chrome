@@ -102,97 +102,10 @@ sub connect( $self, %args ) {
     });
 };
 
-# Handles any response packet from Chrome and
-# decides whether it's an event or a response
-sub handle_packet {
-    my ($self,$headers,$payload) = @_;
-    warn "Received packet: " . Dumper [$headers,$payload];
-    # Now dispatch to the proper Destination
-    # Empty destination means "connection"
-    my $dest = defined $headers->{ Destination } 
-               ? $headers->{ Destination } 
-               : '';
-    my $tool = $headers->{ Tool } || '';
-    
-    # Dispatch simply based on all headers
-    # Also, discriminate between coderef and condvar
-    # Only delete condvars, keep coderefs
-    my $handler = $self->{receivers}->{$tool}->{$dest};
-    if ($handler) {
-        if ('CODE' eq (ref $handler)) {
-            $handler->( $headers, $payload );
-        } else {
-            # If it's a CondVar, remove it from the list
-            delete $self->{receivers}->{$tool}->{$dest};
-            $handler->send( $headers, $payload );
-        };
-    } else {
-        warn "Unknown response destination '$tool/$dest', ignored";
-        warn Dumper [$headers,$payload];
-    };
+
+
 };
 
-sub write_request {
-    my ($self, $headers, $body) = @_;
-    # XXX What about UTF8 ? The protocol seems to count CHARACTERS,
-    # not bytes. We-ird.
-    my $json = $self->{json}->encode($body);
-    $headers->{'Content-Length'} = length $json;
-    my $fh = $self->{chrome};
-    while (my ($k,$v) = each %$headers) {
-        $fh->push_write("$k:$v\r\n");
-    };
-    $fh->push_write("\r\n");
-    $fh->push_write($json);
-    #warn "Wrote " . Dumper $headers;
-    #warn "Wrote $json";
-};
-
-sub next_sequence {
-    $_[0]->{sequence_number}++
-};
-
-sub current_sequence {
-    $_[0]->{sequence_number}
-};
-
-sub request {
-    my ($self, $headers, $body) = @_;
-    #$headers->{Destination} ||= '';
-    my $repl_sender = $headers->{Destination} || '';
-    my $tool = $headers->{Tool} || '';
-    my $got = $self->queue_response($headers->{Destination}, $headers->{Tool});
-    $self->write_request( $headers, $body );
-    #print "Waiting for reply from '$tool/$repl_sender'\n";
-    my @data = $got->recv;
-    #print "Got reply from '$tool/$repl_sender'\n";
-    @data
-};
-
-sub queue_response {
-    my ($self, $destination, $tool) = @_;
-    my $got = AnyEvent->condvar;
-    $destination //= ''; # //
-    #warn "Listening on $tool/$destination";
-    $self->{receivers}->{$tool} ||= {};
-    $self->{receivers}->{$tool}->{$destination} ||= AnyEvent->condvar;
-};
-
-sub extension {
-    my ($self,$id) = @_;
-    Chrome::DevToolsProtocol::Extension->new(
-        id => $id,
-        client => $self,
-    );
-};
-
-# Only good for naked commands, no payload
-sub command {
-    my ($self,$command, $data) = @_;
-    my ($h,$d) = $self->request(
-        { Tool => 'DevToolsService' }, { command => $command },
-    );
-    $d->{data};
 };
 
 sub build_url( $self, %options ) {
@@ -235,51 +148,9 @@ sub list_tabs( $self ) {
     return $self->json_get('list')
 };
 
-sub attach {
-    my ($self, $tab_id) = @_;
-    my $tab = Chrome::DevToolsProtocol::Tab->new(
-        connection => $self, # should be weakened
-        id => $tab_id,
-    );
-    my $cv;
-    my $forward; $forward = sub {
-        # Check whether we get a "detach" reply?
-        # Otherwise forward packet
-        #warn "Forwarding " . Dumper \@_;
-        # Ideally, we would keep track of outstanding sequence numbers
-        # and dispatch the responses to them
-        # but the ExtensionPorts don't have the seq / request_seq field :(
-        $tab->handle_packet( $_[0]->recv );
-        
-        # Reinstate the callback
-        $cv = AnyEvent->condvar;
-        $cv->cb( $forward );
-        $self->{receivers}->{V8Debugger}->{$tab_id} = $cv;
-    };
-    $cv = AnyEvent->condvar;
-    $cv->cb( $forward );
-    $self->{receivers}->{V8Debugger}->{$tab_id} = $cv;
-
-    #warn "Requesting attach to $tab_id";
-    my ($d,$h) = $self->request(
-        { Tool => 'V8Debugger', Destination => $tab_id, },
-        { command => 'attach' },
-    );
-    # We should return a ::Tab object or something?
-    # Do we really want to?    
-    $tab
+=head2 C<< $chrome->new_tab >>
 };
 
-#sub extension {
-#    my ($self,$name) = @_;
-#    my $ext = Chrome::DevToolsProtocol::Extension->new(
-#        id => $name,
-#        client => $self, # weaken this ...
-#        port => 9,
-#    );
-#    $ext->connect($name);
-#    $ext
-#};
 
 package Chrome::DevToolsProtocol::Tab;
 use strict;
@@ -321,7 +192,7 @@ sub request {
     $payload->{ command } ||= 'debugger_command';
     $payload->{ data }->{ seq } = $self->{ seq }++;
     $payload->{ data }->{ type } = 'request';
-    
+
     my $reply = AnyEvent->condvar;
     push @{ $self->{outstanding} }, $reply;
     #warn "Sending debugger request " . Dumper $payload;
