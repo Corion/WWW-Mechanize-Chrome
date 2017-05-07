@@ -48,7 +48,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-
     load_file_ok($mech, '49-mech-get-file.html', javascript => 0);
     $mech->get('about:blank');
     load_file_ok($mech, '49-mech-get-file.html', javascript => 1);
