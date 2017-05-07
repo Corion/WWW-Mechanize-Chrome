@@ -12,6 +12,7 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
+use Data::Dumper;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION= '0.01';
