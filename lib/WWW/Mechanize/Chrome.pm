@@ -243,7 +243,7 @@ needs launching the browser and asking for the version via the network.
 sub chrome_version {
     my( $self )= @_;
     $self->{chrome_version} ||= do {
-        my $version= $self->chrome->protocol_version->get->{Browser};
+        my $version= $self->driver->version_info->get->{Browser};
         $version=~ s!\s+!!g;
         $version
     };
