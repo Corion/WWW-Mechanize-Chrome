@@ -209,24 +209,26 @@ sub new {
 
      my $self= bless \%options => $class;
 
-     $self->eval_in_chrome(<<'JS');
-         var page= this;
-         page.errors= [];
-         page.alerts= [];
-         page.confirms= {};
-         page.onError= function(msg, trace) {
-             //_log.warn("Caught JS error", msg);
-             page.errors.push({ "message": msg, "trace": trace });
-         };
-         page.onAlert = function(msg) {
-             page.alerts.push(msg);
-         };
-         page.onConfirm= function(msg) {
-             return page.confirms[msg];
-         };
+    if( 0 ) {
+    $self->eval_in_chrome(<<'JS');
+        var page= this;
+        page.errors= [];
+        page.alerts= [];
+        page.confirms= {};
+        page.onError= function(msg, trace) {
+            //_log.warn("Caught JS error", msg);
+            page.errors.push({ "message": msg, "trace": trace });
+        };
+        page.onAlert = function(msg) {
+            page.alerts.push(msg);
+        };
+        page.onConfirm= function(msg) {
+            return page.confirms[msg];
+        };
 JS
+    };
 
-     $self
+    $self
 };
 
 =head2 C<< $mech->chrome_version >>
