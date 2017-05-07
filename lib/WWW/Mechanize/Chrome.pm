@@ -1,5 +1,8 @@
 package WWW::Mechanize::Chrome;
 use strict;
+use Filter::signatures;
+no warnings 'experimental::signatures';
+use feature 'signatures';
 use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
@@ -8,6 +11,7 @@ use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
+use Chrome::DevToolsProtocol;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION= '0.01';
