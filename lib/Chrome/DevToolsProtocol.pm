@@ -214,7 +214,7 @@ sub list_tabs( $self ) {
 
 =cut
 
-sub activate_tab( $self, $tab ) {
+sub new_tab( $self, $tab ) {
     return $self->json_get('new/'+ $tab->{id})
 };
 
@@ -230,7 +230,7 @@ sub activate_tab( $self, $tab ) {
 
 =cut
 
-sub activate_tab( $self, $tab ) {
+sub close_tab( $self, $tab ) {
     return $self->json_get('close/'+ $tab->{id})
 };
 
