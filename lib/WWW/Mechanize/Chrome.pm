@@ -294,6 +294,19 @@ sub driver {
     $_[0]->{driver}
 };
 
+=head2 C<< $mech->tab >>
+
+    my $tab = $mech->tab
+
+Access the tab hash of the L<Chrome::DevToolsProtocol> instance connecting
+to Chrome. This represents the tab we control.
+
+=cut
+
+sub tab( $self ) {
+    $self->driver->tab
+}
+
 sub autodie {
     my( $self, $val )= @_;
     $self->{autodie} = $val
