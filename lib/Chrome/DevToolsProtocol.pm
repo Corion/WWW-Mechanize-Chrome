@@ -9,9 +9,8 @@ use Carp qw(croak);
 use JSON;
 use Data::Dumper;
 
-use vars qw<$VERSION $magic>;
+use vars qw<$VERSION>;
 $VERSION = '0.01';
-$magic = "ChromeDevToolsHandshake";
 
 # DOM access
 # https://chromedevtools.github.io/devtools-protocol/tot/DOM/
