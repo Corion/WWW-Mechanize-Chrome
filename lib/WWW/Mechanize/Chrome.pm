@@ -473,6 +473,13 @@ sub agent {
 sub DESTROY {
     my $pid= delete $_[0]->{pid};
 
+    if( $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
+        if( $_[0]->{autoclose} ) {
+            $_[0]->driver->close_tab($_[0]->tab)->get();
+        };
+
+    };
+
     # Purge the filehandle - we should've opened that to /dev/null anyway:
     if( my $child_out = $_[0]->{ fh }) {
         local $/;
@@ -480,9 +487,9 @@ sub DESTROY {
     };
 
     eval {
+        # Shut down our websocket connection
         my $dr= delete $_[0]->{ driver };
-        $dr->quit;
-        undef $dr;
+        $dr->ws->close;
     };
     if( $pid ) {
         kill 'SIGKILL' => $pid;
