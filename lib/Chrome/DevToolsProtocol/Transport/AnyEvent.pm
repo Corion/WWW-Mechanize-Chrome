@@ -40,12 +40,9 @@ sub connect( $class, $handler, $got_endpoint, $logger ) {
 
         # Kick off the continous polling
         $connection->on( each_message => sub( $connection,$message) {
-            warn $connection;
-            warn $message;
             $handler->on_response( $connection, $message )
         });
 
-        warn "Returning future";
         return Future->done( $connection )
     });
 }

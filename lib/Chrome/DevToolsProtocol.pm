@@ -112,7 +112,6 @@ sub connect( $self, %args ) {
         };
     };
     $got_endpoint = $got_endpoint->then(sub($endpoint) {
-        warn "Stored endpoint $endpoint";
         $self->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
     });
