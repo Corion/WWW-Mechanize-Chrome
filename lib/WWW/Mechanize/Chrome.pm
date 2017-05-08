@@ -95,7 +95,7 @@ sub build_command_line {
 
     #$options->{ "log" } ||= 'OFF';
 
-    $options->{ launch_exe } ||= $ENV{chrome_EXE} || 'chrome';
+    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || 'chrome';
     $options->{ launch_arg } ||= [];
 
     $options->{port} ||= 9222;
