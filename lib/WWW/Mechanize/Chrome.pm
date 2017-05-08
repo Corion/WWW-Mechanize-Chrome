@@ -209,6 +209,23 @@ sub new {
         $self->log('DEBUG', "Spawning", \@cmd);
         ($self->{pid}, $self->{fh}) = $self->spawn_child( $localhost, @cmd );
         $self->{ kill_pid } = 1;
+
+        # Just to give Chrome time to start up, make sure it accepts connections
+        my $wait = time + ($options{ wait } || 20);
+        while ( time < $wait ) {
+            my $t = time;
+            my $socket = IO::Socket::INET->new(
+                PeerHost => $localhost,
+                PeerPort => $options{ port },
+                Proto    => 'tcp',
+            );
+            if( $socket ) {
+                close $socket;
+                sleep 1;
+                last;
+            };
+            sleep 1 if time - $t < 1;
+        }
     }
 
     # Connect to it
