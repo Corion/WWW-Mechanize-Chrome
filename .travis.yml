@@ -1,0 +1,77 @@
+language: perl
+perl:
+  # Selenium::Remote::Driver needs Perl 5.10
+  #- "5.6.2"       # ancient
+  #- "5.8"
+  #- "5.8.4"
+  #- "5.8.4-thr"
+  #- "5.8.8"       # common, prebuilt version
+  - "5.10"
+  - "5.12"
+  - "5.14"
+  - "5.16"
+  - "5.18"
+  - "5.18.1-thr"
+  - "5.20"
+  - "5.22"
+  - "5.24"
+  - "dev"
+  - "blead"
+
+matrix:
+  allow_failures:
+    - perl: blead
+    - perl: 5.6.2
+
+sudo: required
+
+dist: trusty
+addons:
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-stable
+
+before_install:
+  - sudo apt-get -qq update
+  #- sudo apt-get -y install chromium
+  #- export CHROME_BIN=chromium-browser
+  #- export DISPLAY=:99.0
+  #- sh -e /etc/init.d/xvfb start
+  #- sudo apt-get install -y libappindicator1 fonts-liberation
+  #- wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  #- sudo dpkg -i google-chrome*.deb
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - export SPLIT_BUILD=0
+  - source ~/travis-perl-helpers/init
+  - build-perl
+  - perl -V
+  - build-dist
+  - cd $BUILD_DIR
+
+install:
+  - cpan-install ExtUtils::MakeMaker~6.68
+  - cpan-install --deps
+  # For author testing/compile testing
+  - cpan-install HTML::Display
+
+script:
+  - cd $BUILD_DIR
+  - perl Makefile.PL && make
+  - prove -blv $(test-dirs)
+
+branches:
+  except:
+    - /^wip\//
+    - /^blocked/
+#notifications:
+#  email: false
+#  irc:
+#    channels:
+#      - "irc.perl.org#moo-smoke"
+#    template:
+#      - "%{repository}#%{build_number} %{branch} by %{author}: %{message} (%{build_url})"
+#    on_success: change
+#    on_failure: always
+#    skip_join: true
