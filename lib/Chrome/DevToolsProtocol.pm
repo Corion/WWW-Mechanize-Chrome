@@ -254,10 +254,14 @@ sub get_domains( $self ) {
 
 =head2 C<< $chrome->list_tabs >>
 
+  my @tabs = $chrome->list_tabs->get();
+
 =cut
 
 sub list_tabs( $self ) {
-    return $self->json_get('list')
+    return $self->json_get('list')->then(sub( $info ) {
+        return Future->done( @$info );
+    });
 };
 
 =head2 C<< $chrome->new_tab >>
@@ -276,7 +280,8 @@ sub new_tab( $self, $url=undef ) {
 =cut
 
 sub activate_tab( $self, $tab ) {
-    return $self->json_get('activate/' . $tab->{id})
+    my $url = $self->build_url( domain => 'activate/' . $tab->{id} );
+    $self->ua->http_get( $url );
 };
 
 =head2 C<< $chrome->close_tab >>
@@ -284,7 +289,8 @@ sub activate_tab( $self, $tab ) {
 =cut
 
 sub close_tab( $self, $tab ) {
-    return $self->json_get('close/' . $tab->{id})
+    my $url = $self->build_url( domain => 'close/' . $tab->{id} );
+    $self->ua->http_get( $url )->catch(sub{ use Data::Dumper; warn Dumper \@_; Future->done });
 };
 
 1;
