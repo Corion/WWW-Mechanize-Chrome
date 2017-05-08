@@ -79,7 +79,7 @@ that file will be used to store or retrieve cookies.
 
 =item B<driver>
 
-A premade L<WebDriver::Tiny> object.
+A premade L<Chrome::DevToolsProtocol> object.
 
 =item B<report_js_errors>
 
