@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
 
 sub new_mech {
     my $chrome = WWW::Mechanize::Chrome->new(
-        #log => sub {},
+        log => sub {},
         transport => 'Chrome::DevToolsProtocol::Transport::Mojo',
         @_
     );
