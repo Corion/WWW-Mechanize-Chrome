@@ -65,6 +65,7 @@ my %module = (
     TEST_REQUIRES => { # all core anyway...
         'Test::More'   => 0,
         'Data::Dumper' => 0,
+        'Mojolicious'  => 0,
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

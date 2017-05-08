@@ -18,3 +18,4 @@ Makefile$
 ^.releaserc
 ^.*.cmd
 ^chrome-versions
+^WWW-Mechanize-Chrome

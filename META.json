@@ -1,0 +1,72 @@
+{
+   "abstract" : "automate the Chrome browser",
+   "author" : [
+      "Max Maischein <corion@cpan.org>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "ExtUtils::MakeMaker version 7.24, CPAN::Meta::Converter version 2.143240",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "WWW-Mechanize-Chrome",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "inc"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "AnyEvent" : "0",
+            "AnyEvent::Future" : "0",
+            "AnyEvent::WebSocket::Client" : "0",
+            "Carp" : "0",
+            "Exporter" : "5",
+            "File::Basename" : "0",
+            "Filter::signatures" : "0.09",
+            "Future" : "0",
+            "Future::HTTP" : "0",
+            "HTML::Selector::XPath" : "0",
+            "HTTP::Headers" : "0",
+            "HTTP::Response" : "0",
+            "IO::Socket::INET" : "0",
+            "JSON" : "0",
+            "Scalar::Util" : "0",
+            "WWW::Mechanize::Link" : "0",
+            "perl" : "5.006"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Data::Dumper" : "0",
+            "Mojolicious" : "0",
+            "Test::More" : "0"
+         }
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/Corion/WWW-Mechanize-Chrome.git",
+         "web" : "https://github.com/Corion/WWW::Mechanize::Chrome"
+      }
+   },
+   "version" : "0.01",
+   "x_static_install" : 1
+}
