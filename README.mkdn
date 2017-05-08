@@ -61,7 +61,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 - **driver**
 
-    A premade [WebDriver::Tiny](https://metacpan.org/pod/WebDriver::Tiny) object.
+    A premade [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) object.
 
 - **report\_js\_errors**
 
@@ -80,6 +80,13 @@ needs launching the browser and asking for the version via the network.
     my $selenium= $mech->driver
 
 Access the [Selenium::Driver::Remote](https://metacpan.org/pod/Selenium::Driver::Remote) instance connecting to Chrome.
+
+## `$mech->tab`
+
+    my $tab = $mech->tab
+
+Access the tab hash of the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting
+to Chrome. This represents the tab we control.
 
 ## `$mech->js_alerts()`
 
