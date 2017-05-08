@@ -32,6 +32,7 @@ addons:
       - google-chrome
     packages:
       - google-chrome-stable
+      - chromium-browser
 
 before_install:
   - sudo apt-get -qq update
@@ -44,6 +45,8 @@ before_install:
   #- sudo dpkg -i google-chrome*.deb
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   - export SPLIT_BUILD=0
+  - export CHROME_BIN=/usr/bin/chrome-browser
+  - find /usr | grep -i chrom
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V
