@@ -936,7 +936,7 @@ sub decoded_content($self) {
     $self->document->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        $self->driver->log('DEBUG', "Fetching HTML for node " . $nodeId );
+        $self->log('DEBUG', "Fetching HTML for node " . $nodeId );
         $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
     })->then( sub( $outerHTML ) {
         Future->done( $outerHTML->{outerHTML} )
@@ -1032,7 +1032,7 @@ sub update_html( $self, $content ) {
     $self->document->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        $self->driver->log('DEBUG', "Setting HTML for node " . $nodeId );
+        $self->log('DEBUG', "Setting HTML for node " . $nodeId );
         $self->driver->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => $content )
      })->get;
 };
