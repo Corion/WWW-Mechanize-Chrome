@@ -6,6 +6,7 @@ build_requires:
   Data::Dumper: '0'
   ExtUtils::MakeMaker: '0'
   Mojolicious: '0'
+  Test::HTTP::LocalServer: '0'
   Test::More: '0'
 configure_requires:
   ExtUtils::MakeMaker: '0'
@@ -35,6 +36,7 @@ requires:
   HTTP::Response: '0'
   IO::Socket::INET: '0'
   JSON: '0'
+  Object::Import: '0'
   Scalar::Util: '0'
   WWW::Mechanize::Link: '0'
   perl: '5.006'

@@ -7,7 +7,7 @@ use File::Basename;
 use File::Spec;
 
 use WWW::Mechanize::Chrome;
-use lib 'inc', '../inc', '.';
+use lib '.';
 use t::helper;
 use Test::HTTP::LocalServer;
 
