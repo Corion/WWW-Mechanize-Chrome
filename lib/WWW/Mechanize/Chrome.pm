@@ -554,7 +554,7 @@ sub update_response {
         status     => 200,
         statusText => 'OK',
         headers    => [{
-            name  => 'x-www-mechanize-Chrome-fake-success',
+            name  => 'x-www-mechanize-chrome-fake-success',
             value => 1,
         }],
     } if ref($phantom_res) eq '' and $phantom_res eq '1';
