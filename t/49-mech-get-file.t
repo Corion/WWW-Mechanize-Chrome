@@ -22,9 +22,12 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => 12*@instances;
 };
 
+use Data::Dumper;
+
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
+        log => sub { my ($message, @info ) = @_; diag $message, Dumper \@info },
         @_,
     );
 };
