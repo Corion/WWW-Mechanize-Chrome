@@ -8,6 +8,7 @@ lib/Chrome/DevToolsProtocol/Extension.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/WWW/Mechanize/Chrome.pm
+lib/WWW/Mechanize/Chrome/DSL.pm
 lib/WWW/Mechanize/Plugin/Selector.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -20,6 +21,7 @@ t/02-chrome-devtools-tab-mojo.t
 t/02-chrome-devtools-tab.t
 t/49-mech-get-file.html
 t/49-mech-get-file.t
+t/50-mech-new-dsl.t
 t/50-mech-new.t
 t/helper.pm
 xt/99-changes.t
