@@ -22,6 +22,9 @@ sub browser_instances {
     push @instances, $default
         if $default;
 
+    push @instances, $ENV{ CHROME_BIN }
+        if -x $ENV{ CHROME_BIN };
+
     # add author tests with local versions
     my $spec = $ENV{TEST_WWW_MECHANIZE_CHROMES_VERSIONS}
              || 'chrome-versions/*/{*/,}chrome*'; # sorry, likely a bad default
