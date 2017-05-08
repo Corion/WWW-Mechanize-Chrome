@@ -61,6 +61,7 @@ my %module = (
         'File::Basename'                   => 0,
         'WWW::Mechanize::Link'             => 0,
         'IO::Socket::INET'                 => 0,
+        'Object::Import'                   => 0,
     },
     TEST_REQUIRES => { # all core anyway...
         'Test::More'   => 0,
