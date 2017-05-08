@@ -16,6 +16,8 @@ README
 README.mkdn
 t/00-load.t
 t/01-chrome-devtools-protocol.t
+t/02-chrome-devtools-tab-mojo.t
+t/02-chrome-devtools-tab.t
 t/49-mech-get-file.html
 t/49-mech-get-file.t
 t/50-mech-new.t
