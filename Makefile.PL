@@ -45,21 +45,22 @@ my %module = (
 
     PREREQ_PM => {
         'Exporter'         => 5, # for 'import'
-        'Carp'             => 0,
-        'Future'           => 0,
-        'AnyEvent'         => 0,
-        'AnyEvent::Future' => 0,
+        'Filter::signatures' => '0.09',
+        'Carp'               => 0,
+        'Future'             => 0,
+        'AnyEvent'           => 0,
+        'AnyEvent::Future'   => 0,
         'AnyEvent::WebSocket::Client' => 0,
         'Future::HTTP'     => 0,
         'JSON'             => 0,
         # 'WWW::Mechanize::Plugin::Selector' => 0, # included
+        'HTML::Selector::XPath'            => 0,
         'HTTP::Response'   => 0,
         'HTTP::Headers'                    => 0,
         'Scalar::Util'                     => 0,
         'File::Basename'                   => 0,
         'WWW::Mechanize::Link'             => 0,
         'IO::Socket::INET'                 => 0,
-        'HTML::Selector::XPath'            => 0,
     },
     TEST_REQUIRES => { # all core anyway...
         'Test::More'   => 0,
