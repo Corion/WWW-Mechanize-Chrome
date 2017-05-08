@@ -22,7 +22,6 @@ t/02-chrome-devtools-tab.t
 t/49-mech-get-file.html
 t/49-mech-get-file.t
 t/50-mech-new-dsl.t
-t/50-mech-new-with-tab.t
 t/50-mech-new.t
 t/51-mech-set-content.t
 t/helper.pm
