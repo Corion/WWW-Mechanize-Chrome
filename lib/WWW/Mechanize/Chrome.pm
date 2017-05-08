@@ -587,6 +587,9 @@ sub get {
     # We need to stringify $url so it can pass through JSON
     my $phantom_res= $self->driver->send_message('Page.navigate',
         url => $url )->get->{frameId};
+
+    # XXX We should wait for the pageLoad event...
+
     #$self->post_process;
 
     #$self->update_response( $phantom_res );
