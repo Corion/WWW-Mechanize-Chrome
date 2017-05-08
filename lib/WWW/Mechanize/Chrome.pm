@@ -446,13 +446,7 @@ This allows you to modify properties of Chrome.
 
 sub eval_in_chrome {
     my ($self, $code, @args) = @_;
-    #my $tab = $self->tab;
-
-    my $cmds= $self->driver->commands->get_cmds; # Initialize
-    $cmds->{'phantomExecute'}||= {
-        'method' => 'POST',
-        'url' => "session/:sessionId/phantom/execute"
-    };
+    croak "Can't call eval_in_chrome";
 
     my $params= {
         args => \@args,
