@@ -25,8 +25,8 @@ sub new($class, %args) {
     $args{ json } ||= JSON->new;
     $args{ ua } ||= Future::HTTP->new;
     $args{ sequence_number } ||= 0;
+    $args{ tab } ||= undef;
 
-    # XXX Make receivers multi-level on Tool+Destination
     $args{ receivers } ||= {};
 
     $self
@@ -34,10 +34,14 @@ sub new($class, %args) {
 
 sub host( $self ) { $self->{host} }
 sub port( $self ) { $self->{port} }
-sub endpoint( $self ) { $self->{endpoint} }
+sub endpoint( $self ) {
+    $self->tab
+        and $self->tab->{webSocketDebuggerUrl}
+}
 sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
 sub ws( $self ) { $self->{ws} }
+sub tab( $self ) { $self->{tab} }
 
 sub log( $self, $level, $message, @args ) {
     if( my $handler = $self->{log} ) {
