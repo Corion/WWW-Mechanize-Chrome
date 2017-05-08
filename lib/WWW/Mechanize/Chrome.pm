@@ -226,6 +226,8 @@ sub new {
                 # Reraise the error
                 croak $_[1]
             },
+            transport => $options{ transport },
+            log => sub {},
         );
         # Synchronously connect here, just for easy API compatibility
         $self->driver->connect(
