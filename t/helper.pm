@@ -70,12 +70,14 @@ sub run_across_instances {
         diag sprintf "Chrome version '%s'",
             $mech->chrome_version;
 
-        # Run the user-supplied tests
-        $code->($browser_instance, $mech);
-
-        # Quit in 500ms, so we have time to shut our socket down
+        # Run the user-supplied tests, making sure we don't keep a
+        # reference to $mech around
+        @_ = ($browser_instance, $mech);
         undef $mech;
-        sleep 2; # So the browser can shut down before we try to connect
+
+        goto &$code;
+
+        #sleep 2; # So the browser can shut down before we try to connect
         # to the new instance
     };
 };
