@@ -1111,8 +1111,10 @@ Returns the current document title.
 
 =cut
 
-sub title {
-    $_[0]->driver->get_title;
+sub title( $self ) {
+    my $id = $self->tab->{id};
+    (my $tab_now) = grep { $_->{id} eq $id } $self->driver->list_tabs->get;
+    $tab_now->{title};
 };
 
 =head1 EXTRACTION METHODS
