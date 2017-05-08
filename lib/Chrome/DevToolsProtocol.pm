@@ -3,10 +3,7 @@ use strict;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
-use AnyEvent;
-use AnyEvent::WebSocket::Client;
 use Future;
-use AnyEvent::Future qw(as_future_cb);
 use Future::HTTP;
 use Carp qw(croak);
 use JSON;
@@ -57,10 +54,19 @@ sub log( $self, $level, $message, @args ) {
 }
 
 sub connect( $self, %args ) {
+    # If we are still connected to a different tab, disconnect from it
+    if( $self->ws ) {
+        $self->ws->close;
+        delete $self->{ws};
+    };
+
     # Kick off the connect
 
     my $endpoint;
-    if( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
+    if( $args{ endpoint }) {
+        $endpoint = $args{ endpoint };
+    
+    } elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         $endpoint = $args{ tab }->{webSocketDebuggerUrl};
 
     } elsif( exists $args{ new_tab } ) {
@@ -71,7 +77,7 @@ sub connect( $self, %args ) {
         $endpoint = undef;
 
     } else {
-        $endpoint = $args{ endpoint } || $self->endpoint;
+        $endpoint ||= $self->endpoint;
     };
 
     my $got_endpoint;
@@ -79,46 +85,51 @@ sub connect( $self, %args ) {
         if( $args{ new_tab }) {
             $got_endpoint = $self->new_tab()->then(sub( $info ) {
                 $self->log('DEBUG', "Created new tab", $info );
+                $self->{tab} = $info;
                 return Future->done( $info->{webSocketDebuggerUrl} );
             });
+
         } elsif( $args{ tab } =~ /^\d+$/ ) {
-            $got_endpoint = $self->list_tabs()->then(sub( $info ) {
-                $self->log('DEBUG', "Attached to tab $args{tab}", $info );
-                return Future->done( $info->[ $args{ tab }]->{webSocketDebuggerUrl} );
+            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
+                $self->log('DEBUG', "Attached to tab $args{tab}", @tabs );
+                $self->{tab} = $tabs[ $args{ tab }];
+                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
+        } else {
         };
 
     } else {
         $got_endpoint = Future->done( $endpoint );
+        # We need to somehow find the tab id for our tab, so let's fake it:
+        $endpoint =~ m!/([^/]+)$!
+            or die "Couldn't find tab id in '$endpoint'";
+        $self->{tab} = {
+            id => $1,
+        };
     };
-
-    my $client;
-    $got_endpoint->then( sub( $endpoint ) {
+    $got_endpoint = $got_endpoint->then(sub($endpoint) {
+        warn "Stored endpoint $endpoint";
         $self->{ endpoint } = $endpoint;
+        return Future->done( $endpoint );
+    });
+    
+    my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport::AnyEvent';
+    (my $transport_module = $transport) =~ s!::!/!g;
+    $transport_module .= '.pm';
+    require $transport_module;
 
-        as_future_cb( sub( $done_cb, $fail_cb ) {
-            $self->log('DEBUG',"Connecting to $endpoint");
-            $client = AnyEvent::WebSocket::Client->new;
-            $client->connect( $endpoint )->cb( $done_cb );
-        });
-    })->then( sub( $c ) {
-        $self->log( 'DEBUG', sprintf "Connected to %s:%s", $self->host, $self->port );
-        my $connection = $c->recv;
-
-        # Well, it's a tab, not the whole Chrome process here...
-        $self->{chrome} ||= $connection;
-
-        # Kick off the continous polling
-        $self->{chrome}->on( each_message => sub( $connection,$message) {
-            $self->on_response( $connection, $message )
-        });
-
-        $self->{ws} = $connection;
-
-        Future->done( $connection )
+    $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } )->then(sub( $ws ) {
+        $self->{ws} = $ws;
+        return Future->done( $ws )
     });
 };
+
+sub DESTROY( $self ) {
+    if( $self->ws ) {
+        $self->ws->close
+    };
+}
 
 sub on_response( $self, $connection, $message ) {
     my $response = $self->json->decode( $message->body );

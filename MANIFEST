@@ -5,6 +5,8 @@ inc/Test/HTTP/LocalServer.pm
 inc/Test/HTTP/log-server
 lib/Chrome/DevToolsProtocol.pm
 lib/Chrome/DevToolsProtocol/Extension.pm
+lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
+lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Plugin/Selector.pm
 Makefile.PL
