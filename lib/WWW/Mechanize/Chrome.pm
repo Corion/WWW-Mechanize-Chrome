@@ -15,7 +15,7 @@ use Chrome::DevToolsProtocol;
 use Data::Dumper;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION= '0.01';
+$VERSION = '0.01';
 
 =head1 NAME
 
