@@ -32,9 +32,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
 
     isa_ok $chrome, 'Chrome::DevToolsProtocol';
 
-    my $version = $chrome->version_info->get;
-    diag $version->{Browser};
-
        $version = $chrome->protocol_version->get;
     cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
 
