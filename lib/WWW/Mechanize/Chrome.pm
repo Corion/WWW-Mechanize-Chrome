@@ -293,8 +293,23 @@ needs launching the browser and asking for the version via the network.
 
 =cut
 
+sub chrome_version_from_stdout {
+    # We can try to get at the version through the --version command line:
+    my @cmd = $self->build_command_line( launch_args => '--version', headless => 1, );
+    open my $fh, @cmd
+        or return;
+    return join "", <$fh>
+}
+
 sub chrome_version {
     my( $self )= @_;
+
+    if( $^O !~ /mswin/i ) {
+        my $version = $self->chrome_version_from_stdout();
+        # XXX needs cleanup
+        return $version if $version;
+    };
+
     $self->{chrome_version} ||= do {
         my $version= $self->driver->version_info->get->{Browser};
         $version=~ s!\s+!!g;
