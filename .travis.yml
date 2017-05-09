@@ -41,6 +41,7 @@ before_install:
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   - export SPLIT_BUILD=0
   - export CHROME_BIN=/usr/bin/chromium-browser
+  - $CHROME_BIN --version
   #- find /usr | grep -i chrom
   - source ~/travis-perl-helpers/init
   - build-perl
