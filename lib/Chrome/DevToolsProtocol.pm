@@ -99,7 +99,30 @@ sub connect( $self, %args ) {
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
+        } elsif( ref $args{ tab } eq 'Regexp') {
+            # Let's assume that the tab is a regex:
+            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
+                (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
+                $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
+                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
+            });
+
+        } elsif( $args{ tab } ) {
+            # Let's assume that the tab is the tab id:
+            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
+                (my $tab) = grep { $_->{id} eq $args{ tab }} @tabs;
+                $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
+                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
+            });
+
         } else {
+            # Attach to the first available tab we find
+            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
+                (my $tab) = grep { $_->{webSocketDebuggerUrl} } @tabs;
+                $self->log('DEBUG', "Attached to some tab", $tab );
+                $self->{tab} = $tab;
+                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
+            });
         };
 
     } else {
