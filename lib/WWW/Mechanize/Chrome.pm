@@ -295,7 +295,7 @@ needs launching the browser and asking for the version via the network.
 
 sub chrome_version_from_stdout( $self ) {
     # We can try to get at the version through the --version command line:
-    my @cmd = $self->build_command_line( launch_args => '--version', headless => 1, );
+    my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, });
     open my $fh, @cmd
         or return;
     my $v = join '', <$fh>;
