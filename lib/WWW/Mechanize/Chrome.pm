@@ -300,7 +300,7 @@ sub chrome_version_from_stdout( $self ) {
     open my $fh, @cmd
         or return;
     my $v = join '', <$fh>;
-    
+
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     $v =~ /^(\S+)\s+([\d\.]+)\s/
         or return; # we didn't find anything
@@ -615,16 +615,40 @@ sub update_response {
 
 sub wait_for_event( $self, $event ) {
     # Read the stuff that the driver sends to us:
+    #Mojo::IOLoop->one_tick;
+    my @events = ();
+
+    while( !@events or $events[-1]->{method} ne $event ) {
+        AnyEvent->_poll();
+    };
+    $self->driver->on_message( undef );
+
+    @events
 }
 
 sub get {
     my ($self, $url, %options ) = @_;
+
+    my @events = ();
+    # This one is transport/event-loop specific:
+    my $done = AnyEvent::Future->new();
+    $self->driver->on_message( sub( $message ) {
+        push @events, $message;
+        if( $events[-1]->{method} eq 'Page.loadEventFired' ) {
+            $self->log( 'DEBUG', "Received final message, unwinding", $events[-1] );
+            $self->driver->on_message( undef );
+            $done->done( @events );
+        };
+    });
+
     # We need to stringify $url so it can pass through JSON
     my $res= $self->driver->send_message(
         'Page.navigate',
-        url => $url
+        url => "$url"
     )->get->{frameId};
-    
+
+    my @events = $done->get;
+    warn "Looping done";
     # I guess for the error code etc. we'll have to listen for
     # the network messages...
    #  {
@@ -639,8 +663,7 @@ sub get {
    #            },
    # 'method' => 'Page.frameNavigated'
    # }
-    $self->wait_for_event('Page.domContentEventFired');
-    
+
     #$self->post_process;
 
     #$self->update_response( $phantom_res );
