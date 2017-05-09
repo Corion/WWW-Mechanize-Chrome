@@ -108,7 +108,8 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--user-data-dir=$options->{ profile }";
     };
 
-    push @{ $options->{ launch_arg }}, "--headless";
+    push @{ $options->{ launch_arg }}, "--headless"
+        if $options->{ headless };
     push @{ $options->{ launch_arg }}, "--disable-gpu"; # temporarily needed for now
 
     my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /\s/)
