@@ -613,42 +613,42 @@ sub update_response {
     return $res
 };
 
-sub wait_for_event( $self, $event ) {
+sub wait_for_event( $self, $event_cond, $cb ) {
     # Read the stuff that the driver sends to us:
     #Mojo::IOLoop->one_tick;
     my @events = ();
-
-    while( !@events or $events[-1]->{method} ne $event ) {
-        AnyEvent->_poll();
-    };
-    $self->driver->on_message( undef );
-
-    @events
-}
-
-sub get {
-    my ($self, $url, %options ) = @_;
 
     my @events = ();
     # This one is transport/event-loop specific:
     my $done = AnyEvent::Future->new();
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
-        if( $events[-1]->{method} eq 'Page.loadEventFired' ) {
+        if( $event_cond->( $events[-1] )) {
             $self->log( 'DEBUG', "Received final message, unwinding", $events[-1] );
             $self->driver->on_message( undef );
             $done->done( @events );
         };
     });
 
-    # We need to stringify $url so it can pass through JSON
-    my $res= $self->driver->send_message(
-        'Page.navigate',
-        url => "$url"
-    )->get->{frameId};
+    Future->wait_all( $cb->(), $done );
+    # $cb->();
 
-    my @events = $done->get;
-    warn "Looping done";
+    # $done
+}
+
+sub get {
+    my ($self, $url, %options ) = @_;
+
+    my( $res, $events)
+      =  $self->wait_for_event( sub { $_[0]->{method} eq 'Page.loadEventFired' }, sub {
+        $self->driver->send_message(
+            'Page.navigate',
+            url => "$url"
+        )
+    })->get;
+
+    my @events = $events->get;
+    $res = $res->get->{frameId};
     # I guess for the error code etc. we'll have to listen for
     # the network messages...
    #  {
