@@ -613,59 +613,92 @@ sub update_response {
     return $res
 };
 
-sub wait_for_event( $self, $event_cond, $cb ) {
+=head2 $mech->_collectEvents
+
+  my $events = $mech->_collectEvents(
+      sub { $_[0]->{method} eq 'Page.loadEventFired' }
+  );
+  my( $e,$r) = Future->wait_all( $events, $self->driver->send_message(...));
+
+Internal method to create a Future that waits for an event that is sent by Chrome.
+
+The subroutine is the predicate to check to see if the current event
+is the event we have been waiting for.
+
+The result is a Future that will return all captured events.
+
+=cut
+
+sub _collectEvents( $self, @info ) {
     # Read the stuff that the driver sends to us:
-    #Mojo::IOLoop->one_tick;
-    my @events = ();
+    my $predicate = pop @info;
+    ref $predicate eq 'CODE'
+        or die "Need a predicate as the last parameter, not '$predicate'!";
 
     my @events = ();
     # This one is transport/event-loop specific:
     my $done = AnyEvent::Future->new();
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
-        if( $event_cond->( $events[-1] )) {
+        if( $predicate->( $events[-1] )) {
             $self->log( 'DEBUG', "Received final message, unwinding", $events[-1] );
             $self->driver->on_message( undef );
-            $done->done( @events );
+            $done->done( @info, @events );
         };
     });
-
-    Future->wait_all( $cb->(), $done );
-    # $cb->();
-
-    # $done
+    $done
 }
 
 sub get {
     my ($self, $url, %options ) = @_;
 
-    my( $res, $events)
-      =  $self->wait_for_event( sub { $_[0]->{method} eq 'Page.loadEventFired' }, sub {
-        $self->driver->send_message(
-            'Page.navigate',
-            url => "$url"
-        )
-    })->get;
+    # $frameInfo might come _after_ we have already seen messages for it?!
+    # So we need to capture all events even before we send our command to the
+    # browser, as we might receive messages before we receive the answer to
+    # our command:
+    my $frameId; # XXX $frameId = $self->frameId;
+    my $events_f = $self->_collectEvents( $frameId, sub( $ev ) {
+        # Let's assume that the first frame id we see is "our" frame
+        if( $ev->{method} eq 'Page.frameStartedLoading' ) {
+            $frameId ||= $ev->{params}->{frameId};
+        };
+            $ev->{method} eq 'Page.frameStoppedLoading'
+        and $ev->{params}->{frameId} eq $frameId
+    });
 
+        # Page.frameStartedLoading
+        # Page.frameNavigated
+        # Page.frameStoppedLoading
+    my $nav_f = $self->driver->send_message(
+        'Page.navigate',
+        url => "$url"
+    );
+    # Wait for things to settle down
+    my( $nav, $events )= Future->wait_all( $nav_f, $events_f )->get;
+    
     my @events = $events->get;
-    $res = $res->get->{frameId};
+    my $res = $nav->get->{frameId};
+    
+    # Store our frame id so we know what events to listen for!
+    
+    # Now, look at the loaderId and store that if we need to fabricate a
+    # proper HTTP::Response from it
+    # Network.responseReceived
+    
     # I guess for the error code etc. we'll have to listen for
     # the network messages...
-   #  {
-   #'params' => {
-   #              'frame' => {
-   #                           'url' => 'about:blank',
-   #                           'securityOrigin' => '://',
-   #                           'mimeType' => 'text/html',
-   #                           'loaderId' => '5648.5',
-   #                           'id' => '5648.1'
-   #                         }
-   #            },
-   # 'method' => 'Page.frameNavigated'
-   # }
-
-    #$self->post_process;
-
+    #  {
+    #'params' => {
+    #              'frame' => {
+    #                           'url' => 'about:blank',
+    #                           'securityOrigin' => '://',
+    #                           'mimeType' => 'text/html',
+    #                           'loaderId' => '5648.5',
+    #                           'id' => '5648.1'
+    #                         }
+    #            },
+    # 'method' => 'Page.frameNavigated'
+    # }
     #$self->update_response( $phantom_res );
 };
 
