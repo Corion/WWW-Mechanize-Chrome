@@ -301,9 +301,9 @@ sub chrome_version_from_stdout( $self ) {
     my $v = join '', <$fh>;
     
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
-    $v =~ /\s([\d\.]+)\s/
+    $v =~ /^(\S+)\s+([\d\.]+)\s/
         or return; # we didn't find anything
-    return "$1"
+    return "$1/$2"
 }
 
 sub chrome_version( $self ) {
