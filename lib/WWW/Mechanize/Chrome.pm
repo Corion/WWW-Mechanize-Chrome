@@ -245,7 +245,7 @@ sub new {
                 croak $_[1]
             },
             transport => $options{ transport },
-            log => sub {},
+            log => $options{ log },
         );
         # Synchronously connect here, just for easy API compatibility
         $self->driver->connect(
@@ -260,6 +260,7 @@ sub new {
         die $@;
     }
 
+    $self->driver->send_message('Page.enable')->get; # we need to get DOMLoaded events
     $self->get('about:blank'); # Reset to clean state
 
     if( 0 ) {
@@ -612,14 +613,34 @@ sub update_response {
     return $res
 };
 
+sub wait_for_event( $self, $event ) {
+    # Read the stuff that the driver sends to us:
+}
+
 sub get {
     my ($self, $url, %options ) = @_;
     # We need to stringify $url so it can pass through JSON
-    my $phantom_res= $self->driver->send_message('Page.navigate',
-        url => $url )->get->{frameId};
-
-    # XXX We should wait for the pageLoad event...
-
+    my $res= $self->driver->send_message(
+        'Page.navigate',
+        url => $url
+    )->get->{frameId};
+    
+    # I guess for the error code etc. we'll have to listen for
+    # the network messages...
+   #  {
+   #'params' => {
+   #              'frame' => {
+   #                           'url' => 'about:blank',
+   #                           'securityOrigin' => '://',
+   #                           'mimeType' => 'text/html',
+   #                           'loaderId' => '5648.5',
+   #                           'id' => '5648.1'
+   #                         }
+   #            },
+   # 'method' => 'Page.frameNavigated'
+   # }
+    $self->wait_for_event('Page.domContentEventFired');
+    
     #$self->post_process;
 
     #$self->update_response( $phantom_res );

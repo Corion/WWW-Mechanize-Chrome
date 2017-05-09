@@ -27,7 +27,7 @@ use Data::Dumper;
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        log => sub { my ($message, @info ) = @_; diag $message, Dumper \@info },
+        log => sub { my ($level, $message, @info ) = @_; diag $message, Dumper \@info },
         @_,
     );
 };
@@ -41,7 +41,7 @@ sub load_file_ok {
     #$mech->allow(@options);
     diag "Loading $fn";
     $mech->get_local($fn);
-    ok $mech->success, $htmlfile;
+    ok $mech->success, "Loading $htmlfile is considered a success";
     is $mech->title, $htmlfile, "We loaded the right file (@options)"
         or diag $mech->content;
 };
