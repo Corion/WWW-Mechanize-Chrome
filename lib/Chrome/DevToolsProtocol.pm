@@ -46,7 +46,9 @@ sub tab( $self ) { $self->{tab} }
 sub on_message( $self, $new_message=0 ) {
     if( $new_message ) {
         $self->{on_message} = $new_message
-    }
+    } elsif( ! defined $new_message ) {
+        $self->{on_message} = undef
+    };
     $self->{on_message}
 }
 
