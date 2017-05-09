@@ -260,8 +260,11 @@ sub new {
         die $@;
     }
 
-    $self->driver->send_message('Page.enable')->get; # we need to get DOMLoaded events
-    $self->get('about:blank'); # Reset to clean state
+    Future->wait_all(
+        $self->driver->send_message('Page.enable'),
+        $self->driver->send_message('Network.enable'),
+    )->get; # we need to get DOMLoaded events and Network events
+    $self->get('about:blank'); # Reset to clean state, also initialize our frame id
 
     if( 0 ) {
     $self->eval_in_chrome(<<'JS');
