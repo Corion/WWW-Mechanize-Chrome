@@ -64,7 +64,7 @@ Specify the path to the Chrome executable.
 
 The default is C<chrome> as found via C<$ENV{PATH}>.
 You can also provide this information from the outside
-by setting C<$ENV{chrome_EXE}>.
+by setting C<$ENV{CHROME_BIN}>.
 
 =item B<launch_arg>
 
