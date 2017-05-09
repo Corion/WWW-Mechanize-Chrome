@@ -28,6 +28,7 @@ sub new($class, %args) {
     $args{ tab } ||= undef;
 
     $args{ receivers } ||= {};
+    $args{ on_message } ||= undef;
 
     $self
 };
@@ -42,6 +43,12 @@ sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
 sub ws( $self ) { $self->{ws} }
 sub tab( $self ) { $self->{tab} }
+sub on_message( $self, $new_message=0 ) {
+    if( $new_message ) {
+        $self->{on_message} = $new_message
+    }
+    $self->{on_message}
+}
 
 sub log( $self, $level, $message, @args ) {
     if( my $handler = $self->{log} ) {
@@ -161,7 +168,13 @@ sub on_response( $self, $connection, $message ) {
 
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
-        $self->log( 'DEBUG', "Received message", $response )
+        if( $self->on_message ) {
+            $self->log( 'DEBUG', "Dispatching message", $response );
+            $self->on_message->( $response );
+
+        } else {
+            $self->log( 'DEBUG', "Ignored message", $response )
+        };
     } else {
 
         my $id = $response->{id};
