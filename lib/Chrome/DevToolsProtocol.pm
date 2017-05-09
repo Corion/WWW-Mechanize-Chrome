@@ -77,7 +77,7 @@ sub connect( $self, %args ) {
     my $endpoint;
     if( $args{ endpoint }) {
         $endpoint = $args{ endpoint };
-    
+
     } elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         $endpoint = $args{ tab }->{webSocketDebuggerUrl};
 
@@ -147,7 +147,7 @@ sub connect( $self, %args ) {
         $self->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
     });
-    
+
     my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport::AnyEvent';
     (my $transport_module = $transport) =~ s!::!/!g;
     $transport_module .= '.pm';
