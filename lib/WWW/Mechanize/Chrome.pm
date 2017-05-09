@@ -293,17 +293,20 @@ needs launching the browser and asking for the version via the network.
 
 =cut
 
-sub chrome_version_from_stdout {
+sub chrome_version_from_stdout( $self ) {
     # We can try to get at the version through the --version command line:
     my @cmd = $self->build_command_line( launch_args => '--version', headless => 1, );
     open my $fh, @cmd
         or return;
-    return join "", <$fh>
+    my $v = join '', <$fh>;
+    
+    # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
+    $v =~ /\s([\d\.]+)\s/
+        or return; # we didn't find anything
+    return "$1"
 }
 
-sub chrome_version {
-    my( $self )= @_;
-
+sub chrome_version( $self ) {
     if( $^O !~ /mswin/i ) {
         my $version = $self->chrome_version_from_stdout();
         # XXX needs cleanup
