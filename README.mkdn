@@ -46,7 +46,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     The default is `chrome` as found via `$ENV{PATH}`.
     You can also provide this information from the outside
-    by setting `$ENV{chrome_EXE}`.
+    by setting `$ENV{CHROME_BIN}`.
 
 - **launch\_arg**
 
