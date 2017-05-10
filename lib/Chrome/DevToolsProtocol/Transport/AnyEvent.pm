@@ -47,4 +47,8 @@ sub connect( $class, $handler, $got_endpoint, $logger ) {
     });
 }
 
+sub future {
+    AnyEvent::Future->new
+}
+
 1;

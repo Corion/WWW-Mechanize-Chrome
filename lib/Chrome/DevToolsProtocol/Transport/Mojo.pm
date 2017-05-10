@@ -47,4 +47,8 @@ sub connect( $class, $handler, $got_endpoint, $logger ) {
     });
 }
 
+sub future {
+    Future::Mojo->new
+}
+
 1;

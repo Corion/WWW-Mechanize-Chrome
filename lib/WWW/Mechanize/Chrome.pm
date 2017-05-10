@@ -640,7 +640,7 @@ sub _collectEvents( $self, @info ) {
 
     my @events = ();
     # This one is transport/event-loop specific:
-    my $done = AnyEvent::Future->new();
+    my $done = $self->driver->future;
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {

@@ -43,6 +43,8 @@ sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
 sub ws( $self ) { $self->{ws} }
 sub tab( $self ) { $self->{tab} }
+sub transport( $self ) { $self->{transport} }
+sub future( $self ) { $self->transport->future }
 sub on_message( $self, $new_message=0 ) {
     if( $new_message ) {
         $self->{on_message} = $new_message
@@ -152,6 +154,7 @@ sub connect( $self, %args ) {
     (my $transport_module = $transport) =~ s!::!/!g;
     $transport_module .= '.pm';
     require $transport_module;
+    $self->{transport} = $transport;
 
     $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } )->then(sub( $ws ) {
         $self->{ws} = $ws;
