@@ -23,7 +23,7 @@ sub browser_instances {
         if $default;
 
     push @instances, $ENV{ CHROME_BIN }
-        if -x $ENV{ CHROME_BIN };
+        if $ENV{ CHROME_BIN } and -x $ENV{ CHROME_BIN };
 
     # add author tests with local versions
     my $spec = $ENV{TEST_WWW_MECHANIZE_CHROMES_VERSIONS}

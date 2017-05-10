@@ -27,7 +27,7 @@ use Data::Dumper;
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        log => sub { my ($level, $message, @info ) = @_; diag $message, Dumper \@info },
+        #log => sub { my ($level, $message, @info ) = @_; diag $message, Dumper \@info },
         @_,
     );
 };
