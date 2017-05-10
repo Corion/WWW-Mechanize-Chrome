@@ -499,9 +499,7 @@ sub eval_in_chrome {
     $self->driver->_execute_command({ command => 'phantomExecute' }, $params);
 };
 
-sub agent {
-    my($self, $ua) = @_;
-
+sub agent( $self, $ua ) {
     if( $ua ) {
         die "Setting the User-Agent is not yet implemented";
         # Call Network.setUserAgentOverride { userAgent => $ua }
