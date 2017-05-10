@@ -656,6 +656,10 @@ sub _collectEvents( $self, @info ) {
     $done
 }
 
+sub updateResponse($self, $response) {
+    $self->{response} = $response
+}
+
 sub get {
     my ($self, $url, %options ) = @_;
 
