@@ -517,12 +517,17 @@ sub autoclose_tab( $self, $autoclose ) {
 sub DESTROY {
     my $pid= delete $_[0]->{pid};
 
+    eval {
+        # Shut down our websocket connection
+        $_[0]->{ driver }->ws->close;
+    };
+
     if( $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
         if( $_[0]->{autoclose} ) {
-            $_[0]->driver->close_tab($_[0]->tab)->get();
+            $_[0]->driver->close_tab({ id => $tab_id })->get();
         };
-
     };
+    delete $_[0]->{ driver };
 
     # Purge the filehandle - we should've opened that to /dev/null anyway:
     if( my $child_out = $_[0]->{ fh }) {
@@ -530,11 +535,6 @@ sub DESTROY {
         1 while <$child_out>;
     };
 
-    eval {
-        # Shut down our websocket connection
-        my $dr= delete $_[0]->{ driver };
-        $dr->ws->close;
-    };
     if( $pid ) {
         kill 'SIGKILL' => $pid;
     };
