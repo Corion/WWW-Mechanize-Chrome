@@ -686,31 +686,23 @@ sub get {
     );
     # Wait for things to settle down
     my( $nav, $events )= Future->wait_all( $nav_f, $events_f )->get;
-    
+
     my @events = $events->get;
-    my $res = $nav->get->{frameId};
-    
-    # Store our frame id so we know what events to listen for!
-    
+
+    # Store our frame id so we know what events to listen for in the future!
+    $self->{frameId} = $nav->get->{frameId};
+
     # Now, look at the loaderId and store that if we need to fabricate a
     # proper HTTP::Response from it
     # Network.responseReceived
-    
-    # I guess for the error code etc. we'll have to listen for
-    # the network messages...
-    #  {
-    #'params' => {
-    #              'frame' => {
-    #                           'url' => 'about:blank',
-    #                           'securityOrigin' => '://',
-    #                           'mimeType' => 'text/html',
-    #                           'loaderId' => '5648.5',
-    #                           'id' => '5648.1'
-    #                         }
-    #            },
-    # 'method' => 'Page.frameNavigated'
-    # }
-    #$self->update_response( $phantom_res );
+    if( $url ne 'about:blank' ) {
+        my $response = $self->httpMessageFromEvents( $self->{frameId}, \@events );
+        $self->updateResponse( $response );
+        $response
+    } else {
+        # We should return a really fake HTTP::Response here
+        return 1
+    };
 };
 
 =head2 C<< $mech->get_local( $filename , %options ) >>
@@ -758,6 +750,49 @@ sub get_local {
     #    $res->code( 400 ); # Must have been "not found"
     #};
     $res
+}
+
+sub httpRequestFromChromeRequest( $self, $event ) {
+    my $req = HTTP::Request->new(
+        $event->{params}->{request}->{method},
+        $event->{params}->{request}->{url},
+        HTTP::Headers->new( $event->{params}->{request}->{headers} ),
+    );
+};
+
+sub httpResponseFromChromeResponse( $self, $res ) {
+    my $response = HTTP::Response->new(
+        $res->{params}->{response}->{status} || 200, # is 0 for files?!
+        $res->{params}->{response}->{statusText},
+        HTTP::Headers->new( $res->{params}->{response}->{headers}),
+    );
+};
+
+sub httpMessageFromEvents( $self, $frameId, $events ) {
+    my @events = grep {    exists $_->{params}->{frameId} && $_->{params}->{frameId} eq $frameId
+                        or exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id} eq $frameId
+                      } @$events;
+    my %events;
+    for (@events) {
+        $events{ $_->{method} } = $_;
+    };
+
+    # Create HTTP::Request object from 'Network.requestWillBeSent'
+    my $request;
+    if( ! $events{ 'Network.requestWillBeSent' }) {
+        warn "Didn't see a 'Network.requestWillBeSent' event, cannot synthesize response well";
+    } else {
+        # $request = $self->httpRequestFromChromeRequest( $events{ 'Network.requestWillBeSent' });
+    };
+
+    # Create HTTP::Response object from 'Network.responseReceived'
+    if( ! $events{ 'Network.responseReceived' }) {
+        die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
+    };
+    my $res = $events{ 'Network.responseReceived' };
+    my $response = $self->httpResponseFromChromeResponse( $res );
+    $response->request( $request );
+    $response
 }
 
 =head2 C<< $mech->post( $url, %options ) >>
