@@ -531,7 +531,7 @@ sub DESTROY {
 
     # Purge the filehandle - we should've opened that to /dev/null anyway:
     if( my $child_out = $_[0]->{ fh }) {
-        local $/;
+        local $/; # / for Filter::Simple
         1 while <$child_out>;
     };
 
