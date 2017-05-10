@@ -594,37 +594,11 @@ Note that Chrome does not support download of files.
 
 =cut
 
-sub update_response {
-    my( $self, $phantom_res ) = @_;
+sub update_response($self, $response) {
+    $self->{response} = $response
+}
 
-    # just 1 means success
-    $phantom_res = {
-        status     => 200,
-        statusText => 'OK',
-        headers    => [{
-            name  => 'x-www-mechanize-chrome-fake-success',
-            value => 1,
-        }],
-    } if ref($phantom_res) eq '' and $phantom_res eq '1';
-
-    # Now add a status code of 4xx if we don't have one.
-    if( ! $phantom_res->{status}) {
-        $phantom_res->{status}= 400;
-        $phantom_res->{statusText}= "Unknown error (added by " . __PACKAGE__ . ")";
-    };
-
-    my @headers= map {;@{$_}{qw(name value)}} @{ $phantom_res->{headers} };
-    my $res= HTTP::Response->new( $phantom_res->{status}, $phantom_res->{statusText}, \@headers );
-
-    # Should we fetch the response body?!
-
-    delete $self->{ current_form };
-
-    $self->{response} = $res;
-    return $res
-};
-
-=head2 $mech->_collectEvents
+=head2 C<< $mech->_collectEvents >>
 
   my $events = $mech->_collectEvents(
       sub { $_[0]->{method} eq 'Page.loadEventFired' }
@@ -658,10 +632,6 @@ sub _collectEvents( $self, @info ) {
         };
     });
     $done
-}
-
-sub updateResponse($self, $response) {
-    $self->{response} = $response
 }
 
 sub get {
@@ -701,7 +671,7 @@ sub get {
     # Network.responseReceived
     if( $url ne 'about:blank' ) {
         my $response = $self->httpMessageFromEvents( $self->{frameId}, \@events );
-        $self->updateResponse( $response );
+        $self->update_response( $response );
         $response
     } else {
         # We should return a really fake HTTP::Response here
