@@ -245,7 +245,7 @@ sub new {
                 croak $_[1]
             },
             transport => $options{ transport },
-            log => $options{ log },
+            #log => $options{ log },
         );
         # Synchronously connect here, just for easy API compatibility
         $self->driver->connect(
