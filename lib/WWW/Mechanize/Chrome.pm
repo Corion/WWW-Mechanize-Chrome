@@ -288,6 +288,10 @@ JS
     $self
 };
 
+sub frameId( $self ) {
+    $self->{frameId}
+}
+
 =head2 C<< $mech->chrome_version >>
 
   print $mech->chrome_version;
@@ -659,8 +663,8 @@ sub get {
     # So we need to capture all events even before we send our command to the
     # browser, as we might receive messages before we receive the answer to
     # our command:
-    my $frameId; # XXX $frameId = $self->frameId;
-    my $events_f = $self->_collectEvents( $frameId, sub( $ev ) {
+    my $frameId = $options{ frameId } || $self->frameId;
+    my $events_f = $self->_collectEvents( sub( $ev ) {
         # Let's assume that the first frame id we see is "our" frame
         if( $ev->{method} eq 'Page.frameStartedLoading' ) {
             $frameId ||= $ev->{params}->{frameId};
