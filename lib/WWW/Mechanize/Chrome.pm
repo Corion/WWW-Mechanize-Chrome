@@ -510,6 +510,10 @@ sub agent {
     $self->chrome_version->{"User-Agent"}
 }
 
+sub autoclose_tab( $self, $autoclose ) {
+    $self->{autoclose} = $autoclose
+}
+
 sub DESTROY {
     my $pid= delete $_[0]->{pid};
 
