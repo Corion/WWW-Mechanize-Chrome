@@ -21,11 +21,16 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => 5*@instances;
 };
 
+my %args;
 sub new_mech {
+    # Just keep these to pass the parameters to new instances
+    if( ! keys %args ) {
+        %args = @_;
+    };
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         log => sub {},
-        @_,
+        %args,
     );
 };
 
@@ -66,6 +71,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub
         autoclose => 0,
         reuse => 1,
         log => sub {},
+        %args,
     );
     $mech->update_html(<<HTML);
     <html><head><title>$magic</title></head><body>Test</body></html>
@@ -80,6 +86,7 @@ HTML
         tab => qr/^\Q$magic/,
         reuse => 1,
         log => sub {},
+        %args,
     );
     my $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We selected the existing tab"
@@ -94,6 +101,7 @@ HTML
         autoclose => 0,
         tab => 'current',
         log => sub {},
+        %args,
     );
     $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We connected to the current tab"
@@ -109,6 +117,7 @@ HTML
             tab => qr/\Q$magic/,
             log => sub {},
             reuse => 1,
+        %args,
         );
         1;
     };
@@ -117,4 +126,5 @@ HTML
     like $err, q{/Couldn't find a tab matching/}, 'We got the correct error message';
 
     kill 'SIGKILL', $pid; # clean up, the hard way
+    %args = ();
 });
