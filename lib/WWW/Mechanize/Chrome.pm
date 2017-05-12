@@ -3179,77 +3179,13 @@ Selenium does not support POST requests
 
 =back
 
-=head1 TODO
-
-=over 4
-
-=item *
-
-Add C<< limit >> parameter to C<< ->xpath() >> to allow an early exit-case
-when searching through frames.
-
-=item *
-
-Implement downloads via
-
-L<https://perlmonks.org/?node_id=1151151>
-
-=item *
-
-Implement download progress
-
-=back
-
 =head1 INSTALLING
-
-=over 4
-
-=back
 
 =head2 Install the C<Chrome> executable
 
-=over
-
-=item *
-
-Installing on Ubuntu
-
-Version: 1.9.8
-Platform: x86_64
-
-Install or update latest system software:
-
-C<< sudo apt-get update >>
-
-C<< sudo apt-get install build-essential chrpath libssl-dev libxft-dev >>
-
-Install the following packages needed by Chrome:
-
-C<< sudo apt-get install libfreetype6 libfreetype6-dev >>
-
-C<< sudo apt-get install libfontconfig1 libfontconfig1-dev >>
-
-Get Chrome from the L<website|http://Chrome.org/>
-
-C<< cd ~ >>
-
-C<< export PHANTOM_JS="Chrome-1.9.8-linux-x86_64" >>
-
-C<< wget https://bitbucket.org/ariya/Chrome/downloads/$PHANTOM_JS.tar.bz2 >>
-
-C<< sudo tar xvjf $PHANTOM_JS.tar.bz2 >>
-
-Once downloaded move Chrome folder:
-
-C<< sudo mv $PHANTOM_JS /usr/local/share >>
-
-C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/Chrome /usr/local/bin >>
-
-C<< sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/Chrome /usr/bin/Chrome >>
-
 Test it has been installed on your system:
 
-C<< Chrome --version >>
+C<< chrome-browser --version >>
 
 =back
 
@@ -3259,11 +3195,7 @@ C<< Chrome --version >>
 
 =item *
 
-L<http://Chrome.org> - the Chrome homepage
-
-=item *
-
-L<https://github.com/detro/ghostdriver> - the ghostdriver homepage
+L<https://developer.chrome.com/devtools/docs/debugging-clients> - the Chrome DevTools homepage
 
 =item *
 
@@ -3271,18 +3203,18 @@ L<WWW::Mechanize> - the module whose API grandfathered this module
 
 =item *
 
-L<WWW::Scripter> - another WWW::Mechanize-workalike with Javascript support
+L<WWW::Mechanize::Firefox> - a similar module with a visible application
 
 =item *
 
-L<WWW::Mechanize::Firefox> - a similar module with a visible application
+L<WWW::Mechanize::PhantomJS> - a similar module without a visible application
 
 =back
 
 =head1 REPOSITORY
 
 The public repository of this module is
-L<https://github.com/Corion/www-mechanize-Chrome>.
+L<https://github.com/Corion/www-mechanize-chrome>.
 
 =head1 SUPPORT
 
@@ -3291,18 +3223,7 @@ L<https://perlmonks.org/>.
 
 =head1 TALKS
 
-I've given a talk about this module at Perl conferences:
-
-L<German Perl Workshop 2014, German|http://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-Chrome.de.html>
-
-L<YAPC::Europe 2014, English|http://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-Chrome.en.html>
-
-L<Talk on Youtube|https://www.youtube.com/watch?v=lH3Fhw6b5BI>
-
-=for html
-<iframe id="ytplayer" type="text/html" width="640" height="390"
-  src="https://www.youtube.com/watch?v=lH3Fhw6b5BI"
-  frameborder="0"/>
+I've given no talks about this module yet at Perl conferences.
 
 =head1 BUG TRACKER
 
@@ -3316,40 +3237,10 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2014-2016 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2017 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
 This module is released under the same terms as Perl itself.
-
-This distribution includes a modified copy of the ghostdriver code,
-which is released under the same terms as the ghostdriver code itself.
-The terms of the ghostdriver code are the BSD license, as found at
-L<https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD>:
-
-    Copyright (c) 2014, Ivan De Marino <http://ivandemarino.me>
-    All rights reserved.
-
-    Redistribution and use in source and binary forms, with or without modification,
-    are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The ghostdriver code includes the Selenium WebDriver fragments.
 
 =cut
