@@ -1189,7 +1189,8 @@ sub content_type {
     # Let's trust the <meta http-equiv first, and the header second:
     # Also, a pox on Chrome for not having lower-case or upper-case
     my $ct;
-    if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
+    # if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
+    if(my( $meta )= $self->xpath( q{//meta[lower-case(@http-equiv)="content-type"]}, first => 1 )) {
         $ct= $meta->get_attribute('content');
     };
     if(!$ct and my $r= $self->response ) {
@@ -1804,7 +1805,7 @@ sub xpath {
         my $doc= $options{ document } || $self->document;
 
         # This stores the path to this document
-        $doc->{__path}||= [];
+        # $doc->{__path}||= [];
 
         # @documents stores pairs of (containing document element, child element)
         my @documents= ($doc);
@@ -1822,19 +1823,18 @@ sub xpath {
             my @found;
             # Now find the elements
             if ($options{ node }) {
-                #$doc ||= $options{ node }->get_attribute( 'documentElement' );
-                #if( $options{ document } and $options{ document }->get_tag_name =~ /^i?frame$/i) {
-                #    $self->driver->switch_to_frame( $options{ document });
-                #} elsif( $options{ document } and $options{ document }->get_tag_name =~ /^html$/i) {
-                #    $self->driver->switch_to_frame();
-                #} elsif( $options{ document }) {
-                #    die sprintf "Don't know how to switch to a '%s'", $options{ document }->get_tag_name;
-                #};
-                @found= map { $self->driver->find_child_elements( $options{ node }, $_ => 'xpath' ) } @$query;
+            # querySelectorAll 
+                @found = map { @{ $_->get } } 
+                         Future->wait_all(
+                             map { $self->driver->send_message( 'DOM.querySelectorAll', nodeId => $options{ node }, selector => $_ ) } @$query
+                         )->get;
             } else {
                 #warn "Collecting frames";
                 #my $tag= $doc->get_tag_name;
                 #warn "Searching $doc->{id} for @$query";
+                 Future->wait_all(
+                     map { $self->driver->send_message( 'DOM.querySelectorAll', nodeId => $doc, selector => $_ ) } @$query
+                 )->get;
                 @found= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
                 if( ! @found ) {
                     #warn "Nothing found matching @$query in frame";
@@ -1862,7 +1862,7 @@ sub xpath {
             use Data::Dumper;
             #warn Dumper \@documents;
             if ($options{ frames } and not $options{ node }) {
-                #warn "Expanding subframes";
+                warn "Expanding subframes";
                 #warn ">Expanding below " . $doc->get_tag_name() . ' - ' . $doc->get_attribute('title');
                 #local $nesting .= "--";
                 my @d; # = $self->expand_frames( $options{ frames }, $doc );
