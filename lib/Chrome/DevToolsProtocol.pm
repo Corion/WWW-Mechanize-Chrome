@@ -229,7 +229,14 @@ sub json_get($self, $domain, %options) {
 
 =head2 C<< $chrome->send_message >>
 
-Expects a response!
+  my $future = $chrome->send_message('DOM.querySelectorAll',
+      selector => 'p',
+      nodeId => $node,
+  );
+  my $nodes = $future->get;
+
+This function expects a response. The future will not be resolved until Chrome
+has sent a response to this query.
 
 =cut
 
