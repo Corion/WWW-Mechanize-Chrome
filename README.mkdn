@@ -185,6 +185,20 @@ HTTP status code.
 
 Note that Chrome does not support download of files.
 
+## `$mech->_collectEvents`
+
+    my $events = $mech->_collectEvents(
+        sub { $_[0]->{method} eq 'Page.loadEventFired' }
+    );
+    my( $e,$r) = Future->wait_all( $events, $self->driver->send_message(...));
+
+Internal method to create a Future that waits for an event that is sent by Chrome.
+
+The subroutine is the predicate to check to see if the current event
+is the event we have been waiting for.
+
+The result is a Future that will return all captured events.
+
 ## `$mech->get_local( $filename , %options )`
 
     $mech->get_local('test.html');
@@ -1023,71 +1037,25 @@ they make little sense in the context of Chrome.
 
     Selenium does not support POST requests
 
-# TODO
-
-- Add `limit` parameter to `->xpath()` to allow an early exit-case
-when searching through frames.
-- Implement downloads via
-
-    [https://perlmonks.org/?node\_id=1151151](https://perlmonks.org/?node_id=1151151)
-
-- Implement download progress
-
 # INSTALLING
 
 ## Install the `Chrome` executable
 
-- Installing on Ubuntu
+Test it has been installed on your system:
 
-    Version: 1.9.8
-    Platform: x86\_64
-
-    Install or update latest system software:
-
-    `sudo apt-get update`
-
-    `sudo apt-get install build-essential chrpath libssl-dev libxft-dev`
-
-    Install the following packages needed by Chrome:
-
-    `sudo apt-get install libfreetype6 libfreetype6-dev`
-
-    `sudo apt-get install libfontconfig1 libfontconfig1-dev`
-
-    Get Chrome from the [website](http://Chrome.org/)
-
-    `cd ~`
-
-    `export PHANTOM_JS="Chrome-1.9.8-linux-x86_64"`
-
-    `wget https://bitbucket.org/ariya/Chrome/downloads/$PHANTOM_JS.tar.bz2`
-
-    `sudo tar xvjf $PHANTOM_JS.tar.bz2`
-
-    Once downloaded move Chrome folder:
-
-    `sudo mv $PHANTOM_JS /usr/local/share`
-
-    `sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/Chrome /usr/local/bin`
-
-    `sudo ln -sf /usr/local/share/$PHANTOM_JS/bin/Chrome /usr/bin/Chrome`
-
-    Test it has been installed on your system:
-
-    `Chrome --version`
+`chrome-browser --version`
 
 # SEE ALSO
 
-- [http://Chrome.org](http://Chrome.org) - the Chrome homepage
-- [https://github.com/detro/ghostdriver](https://github.com/detro/ghostdriver) - the ghostdriver homepage
+- [https://developer.chrome.com/devtools/docs/debugging-clients](https://developer.chrome.com/devtools/docs/debugging-clients) - the Chrome DevTools homepage
 - [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
-- [WWW::Scripter](https://metacpan.org/pod/WWW::Scripter) - another WWW::Mechanize-workalike with Javascript support
 - [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
+- [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS) - a similar module without a visible application
 
 # REPOSITORY
 
 The public repository of this module is
-[https://github.com/Corion/www-mechanize-Chrome](https://github.com/Corion/www-mechanize-Chrome).
+[https://github.com/Corion/www-mechanize-chrome](https://github.com/Corion/www-mechanize-chrome).
 
 # SUPPORT
 
@@ -1096,20 +1064,7 @@ The public support forum of this module is
 
 # TALKS
 
-I've given a talk about this module at Perl conferences:
-
-[German Perl Workshop 2014, German](http://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-Chrome.de.html)
-
-[YAPC::Europe 2014, English](http://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-Chrome.en.html)
-
-[Talk on Youtube](https://www.youtube.com/watch?v=lH3Fhw6b5BI)
-
-<div>
-
-    <iframe id="ytplayer" type="text/html" width="640" height="390"
-      src="https://www.youtube.com/watch?v=lH3Fhw6b5BI"
-      frameborder="0"/>
-</div>
+I've given no talks about this module yet at Perl conferences.
 
 # BUG TRACKER
 
@@ -1123,38 +1078,16 @@ Max Maischein `corion@cpan.org`
 
 # COPYRIGHT (c)
 
-Copyright 2014-2016 by Max Maischein `corion@cpan.org`.
+Copyright 2010-2017 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 
 This module is released under the same terms as Perl itself.
 
-This distribution includes a modified copy of the ghostdriver code,
-which is released under the same terms as the ghostdriver code itself.
-The terms of the ghostdriver code are the BSD license, as found at
-[https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD](https://github.com/detro/ghostdriver/blob/master/LICENSE.BSD):
+# POD ERRORS
 
-    Copyright (c) 2014, Ivan De Marino <http://ivandemarino.me>
-    All rights reserved.
+Hey! **The above document had some coding errors, which are explained below:**
 
-    Redistribution and use in source and binary forms, with or without modification,
-    are permitted provided that the following conditions are met:
+- Around line 3190:
 
-    * Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-    ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The ghostdriver code includes the Selenium WebDriver fragments.
+    &#x3d;back without =over
