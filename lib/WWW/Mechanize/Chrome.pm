@@ -1882,12 +1882,12 @@ sub xpath {
     #     or a list, like WWW::Mechanize::Chrome
 
     if (! $zero_allowed and @res == 0) {
-        $self->signal_condition( "No elements found for $options{ user_info }" );
+        $self->signal_condition( sprintf "No elements found for %s", $options{ user_info } );
     };
     if (! $two_allowed and @res > 1) {
         #$self->highlight_node(@res);
         warn $_->get_text() || '<no text>' for @res;
-        $self->signal_condition( (scalar @res) . " elements found for $options{ user_info }" );
+        $self->signal_condition( sprintf "%d elements found for %s", (scalar @res), $options{ user_info } );
     };
 
     $return_first_element ? $res[0] : @res
