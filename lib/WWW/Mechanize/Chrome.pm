@@ -140,6 +140,24 @@ sub _find_free_port( $self, $start ) {
     $port;
 }
 
+sub _wait_for_socket_connection( $self, $host, $port, $timeout ) {
+    my $wait = time + ($timeout || 20);
+    while ( time < $wait ) {
+        my $t = time;
+        my $socket = IO::Socket::INET->new(
+            PeerHost => $host,
+            PeerPort => $port,
+            Proto    => 'tcp',
+        );
+        if( $socket ) {
+            close $socket;
+            sleep 1;
+            last;
+        };
+        sleep 1 if time - $t < 1;
+    }
+};
+
 sub spawn_child( $self, $localhost, @cmd ) {
     my ($pid, $fh);
     if( @cmd > 1 ) {
@@ -155,21 +173,7 @@ sub spawn_child( $self, $localhost, @cmd ) {
     };
 
     # Just to give Chrome time to start up, make sure it accepts connections
-    my $wait = time + ($self->{ wait } || 20);
-    while ( time < $wait ) {
-        my $t = time;
-        my $socket = IO::Socket::INET->new(
-            PeerHost => $localhost,
-            PeerPort => $self->{ port },
-            Proto    => 'tcp',
-        );
-        if( $socket ) {
-            close $socket;
-            sleep 1;
-            last;
-        };
-        sleep 1 if time - $t < 1;
-    }
+    $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{wait} || 20);
     return ($pid,$fh)
 }
 
@@ -212,21 +216,7 @@ sub new {
         $self->{ kill_pid } = 1;
 
         # Just to give Chrome time to start up, make sure it accepts connections
-        my $wait = time + ($options{ wait } || 20);
-        while ( time < $wait ) {
-            my $t = time;
-            my $socket = IO::Socket::INET->new(
-                PeerHost => $localhost,
-                PeerPort => $options{ port },
-                Proto    => 'tcp',
-            );
-            if( $socket ) {
-                close $socket;
-                sleep 1;
-                last;
-            };
-            sleep 1 if time - $t < 1;
-        }
+        $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{wait} || 20);
     }
 
     # Connect to it
