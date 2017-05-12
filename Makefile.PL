@@ -25,7 +25,7 @@ my %module = (
         "meta-spec" => { version => 2 },
         resources => {
             repository => {
-                web => 'https://github.com/Corion/WWW::Mechanize::Chrome',
+                web => 'https://github.com/Corion/WWW-Mechanize-Chrome',
                 url => 'git://github.com/Corion/WWW-Mechanize-Chrome.git',
                 type => 'git',
             }
@@ -53,8 +53,7 @@ my %module = (
         'AnyEvent::WebSocket::Client' => 0,
         'Future::HTTP'     => 0,
         'JSON'             => 0,
-        # 'WWW::Mechanize::Plugin::Selector' => 0, # included
-        'HTML::Selector::XPath'            => 0,
+        'WWW::Mechanize::Plugin::Selector' => 0,
         'HTTP::Response'   => 0,
         'HTTP::Headers'                    => 0,
         'Scalar::Util'                     => 0,
