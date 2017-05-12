@@ -3177,8 +3177,6 @@ Test it has been installed on your system:
 
 C<< chrome-browser --version >>
 
-=back
-
 =head1 SEE ALSO
 
 =over 4

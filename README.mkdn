@@ -1083,11 +1083,3 @@ Copyright 2010-2017 by Max Maischein `corion@cpan.org`.
 # LICENSE
 
 This module is released under the same terms as Perl itself.
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 3190:
-
-    &#x3d;back without =over
