@@ -126,7 +126,7 @@ sub build_command_line {
     @cmd
 };
 
-sub find_free_port( $self, $start ) {
+sub _find_free_port( $self, $start ) {
     my $port = $start;
     while (1) {
         $port++, next unless IO::Socket::INET->new(
@@ -202,7 +202,7 @@ sub new {
 
     unless ( defined $options{ port } ) {
         # Find free port
-        $options{ port } = $self->find_free_port( 9222 );
+        $options{ port } = $self->_find_free_port( 9222 );
     }
 
     unless ($options{pid} or $options{reuse}) {
