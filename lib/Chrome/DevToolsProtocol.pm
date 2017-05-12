@@ -8,6 +8,7 @@ use Future::HTTP;
 use Carp qw(croak);
 use JSON;
 use Data::Dumper;
+use Chrome::DevToolsProtocol::Transport;
 
 use vars qw<$VERSION>;
 $VERSION = '0.01';
@@ -150,7 +151,7 @@ sub connect( $self, %args ) {
         return Future->done( $endpoint );
     });
 
-    my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport::AnyEvent';
+    my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport';
     (my $transport_module = $transport) =~ s!::!/!g;
     $transport_module .= '.pm';
     require $transport_module;
@@ -163,7 +164,8 @@ sub connect( $self, %args ) {
 };
 
 sub DESTROY( $self ) {
-    if( $self->ws ) {
+    if( $self->ws) {
+        warn "Closing websocket";
         $self->ws->close
     };
 }

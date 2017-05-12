@@ -4,6 +4,7 @@ inc/Test/HTTP/cookie-server
 inc/Test/HTTP/LocalServer.pm
 inc/Test/HTTP/log-server
 lib/Chrome/DevToolsProtocol.pm
+lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/WWW/Mechanize/Chrome.pm
