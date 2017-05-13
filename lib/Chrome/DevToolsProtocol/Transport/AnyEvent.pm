@@ -4,11 +4,13 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
+use Carp qw(croak);
+
 use AnyEvent;
 use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
-use vars qw<$VERSION $magic>;
+use vars qw<$VERSION $magic @CARP_NOT>;
 $VERSION = '0.01';
 
 =head1 SYNOPSIS
@@ -25,16 +27,22 @@ $VERSION = '0.01';
 sub connect( $class, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
 
-    my $client;
-    $got_endpoint->then( sub( $endpoint ) {
+    local @CARP_NOT = (@CARP_NOT, 'Chrome::DevToolsProtocol::Transport');
 
-        as_future_cb( sub( $done_cb, $fail_cb ) {
+    croak "Need an endpoint to connect to" unless $got_endpoint;
+
+    my $client;
+    my $r = $got_endpoint->then( sub( $endpoint ) {
+
+        my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
             $logger->('DEBUG',"Connecting to $endpoint");
             $client = AnyEvent::WebSocket::Client->new;
             $client->connect( $endpoint )->cb( $done_cb );
         });
+        $res
 
-    })->then( sub( $c ) {
+    });
+    $r->then( sub( $c ) {
         $logger->( 'DEBUG', sprintf "Connected" );
         my $connection = $c->recv;
 
