@@ -1783,7 +1783,7 @@ sub xpath {
     #my $original_frame= $self->current_frame;
 
     DOCUMENTS: {
-        my $doc= $options{ document } || $self->document;
+        my $doc= $options{ document } || $self->document->get;
 
         # This stores the path to this document
         # $doc->{__path}||= [];
