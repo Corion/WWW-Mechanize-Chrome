@@ -76,7 +76,6 @@ sub connect( $self, %args ) {
     };
 
     # Kick off the connect
-
     my $endpoint;
     if( $args{ endpoint }) {
         $endpoint = $args{ endpoint };
