@@ -256,25 +256,6 @@ sub new {
     )->get; # we need to get DOMLoaded events and Network events
     $self->get('about:blank'); # Reset to clean state, also initialize our frame id
 
-    if( 0 ) {
-    $self->eval_in_chrome(<<'JS');
-        var page= this;
-        page.errors= [];
-        page.alerts= [];
-        page.confirms= {};
-        page.onError= function(msg, trace) {
-            //_log.warn("Caught JS error", msg);
-            page.errors.push({ "message": msg, "trace": trace });
-        };
-        page.onAlert = function(msg) {
-            page.alerts.push(msg);
-        };
-        page.onConfirm= function(msg) {
-            return page.confirms[msg];
-        };
-JS
-    };
-
     $self
 };
 
