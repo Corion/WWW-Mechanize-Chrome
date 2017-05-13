@@ -1170,7 +1170,7 @@ sub content_type {
     # Let's trust the <meta http-equiv first, and the header second:
     # Also, a pox on Chrome for not having lower-case or upper-case
     my $ct;
-    # if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
+    #if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
     if(my( $meta )= $self->xpath( q{//meta[lower-case(@http-equiv)="content-type"]}, first => 1 )) {
         $ct= $meta->get_attribute('content');
     };
@@ -1741,6 +1741,30 @@ L<WWW::Mechanize>.
 
 =cut
 
+sub _performSearch( $self, %args ) {
+    my $nodeId = $args{ nodeId };
+    my $query = $args{ query };
+    $self->driver->send_message( 'DOM.performSearch', nodeId => $nodeId, query => $query )->then(sub($results) {
+        if( $results->{resultCount} ) {
+            my $searchResults;
+            $self->driver->send_message( 'DOM.getSearchResults',
+                searchId => $results->{searchId},
+                fromIndex => 0,
+                toIndex => $results->{resultCount} -1
+            )->then( sub( $results ) {
+                $searchResults = $results;
+                $self->driver->send_message( 'DOM.discardSearchResults',
+                    searchId => $results->{searchId},
+                );
+            })->then( sub( $response ) {
+                Future->done( $searchResults );
+            });
+        } else {
+            return Future->done()
+        };
+    })
+}
+
 sub xpath {
     my( $self, $query, %options) = @_;
 
@@ -1803,20 +1827,24 @@ sub xpath {
 
             my @found;
             # Now find the elements
+            warn Dumper \%options;
             if ($options{ node }) {
-            # querySelectorAll 
-                @found = map { @{ $_->get } } 
+                @found = map { @{ $_->get } }
                          Future->wait_all(
-                             map { $self->driver->send_message( 'DOM.querySelectorAll', nodeId => $options{ node }, selector => $_ ) } @$query
+                             map { $self->driver->send_message( 'DOM.performSearch', nodeId => $options{ node }->{nodeId}, query => $_ ) } @$query
                          )->get;
+                @found = map { $self->eval("\$x('%s')") }  @$query
             } else {
                 #warn "Collecting frames";
                 #my $tag= $doc->get_tag_name;
                 #warn "Searching $doc->{id} for @$query";
-                 Future->wait_all(
-                     map { $self->driver->send_message( 'DOM.querySelectorAll', nodeId => $doc, selector => $_ ) } @$query
-                 )->get;
-                @found= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
+                warn Dumper $doc;
+                my $id = $doc->{root}->{nodeId};
+                warn Dumper \@found;
+                Future->wait_all(
+                     map { $self->_performSearch( nodeId => $id, query => $_ ) } @$query
+                )->get;
+                #@found= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
                 if( ! @found ) {
                     #warn "Nothing found matching @$query in frame";
                     #warn $self->content;

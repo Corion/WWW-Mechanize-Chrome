@@ -19,7 +19,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 12*@instances;
+    plan tests => 14*@instances;
 };
 
 use Data::Dumper;
@@ -46,12 +46,15 @@ sub load_file_ok {
         or diag $mech->content;
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 14, sub {
     my ($firefox_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     load_file_ok($mech, '49-mech-get-file.html', javascript => 0);
+
+    is $mech->content_type, 'text/html', "HTML content type";
+
     $mech->get('about:blank');
     load_file_ok($mech, '49-mech-get-file.html', javascript => 1);
     $mech->get('about:blank');
@@ -66,9 +69,9 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub
     $mech->get_local('49-mech-get-file-lc-ct.html');
     ok $mech->success, '49-mech-get-file-lc-ct.html';
     is $mech->title, '49-mech-get-file-lc-ct.html', "We loaded the right file";
-
     ok $mech->is_html, "The local file gets identified as HTML even with a weird-cased http-equiv attribute"
         or diag $mech->content;
+    is $mech->content_type, 'text/html; charset=iso-8859-1', "HTML content type is read from http-equiv meta tag";
 
     $mech->get_local('file-does-not-exist.html');
     ok !$mech->success, 'We fail on non-existing file'
