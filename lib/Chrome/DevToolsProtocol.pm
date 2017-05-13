@@ -5,7 +5,7 @@ no warnings 'experimental::signatures';
 use feature 'signatures';
 use Future;
 use Future::HTTP;
-use Carp qw(croak);
+use Carp qw(croak carp);
 use JSON;
 use Data::Dumper;
 use Chrome::DevToolsProtocol::Transport;
@@ -61,9 +61,9 @@ sub log( $self, $level, $message, @args ) {
         goto &$handler;
     } else {
         if( !@args ) {
-            warn "$level: $message";
+            carp "$level: $message";
         } else {
-            warn "$level: $message " . Dumper @args;
+            carp "$level: $message " . Dumper @args;
         };
     };
 }
