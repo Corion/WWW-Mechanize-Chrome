@@ -46,7 +46,7 @@ sub future($factoryclass, @args) {
     $implementation ||= $factoryclass->best_implementation();
     
     # return a new instance
-    $implementation->connect(@args);
+    $implementation->future(@args);
 }
 
 sub best_implementation( $class, @candidates ) {
