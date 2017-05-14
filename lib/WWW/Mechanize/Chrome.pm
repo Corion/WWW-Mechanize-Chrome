@@ -1115,7 +1115,7 @@ sub content_encoding {
     # Let's trust the <meta http-equiv first, and the header second:
     # Also, a pox on Chrome for not having lower-case or upper-case
     if(( my $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
-        (my $ct= $meta->get_attribute('content')) =~ s/^.*;\s*charset=\s*//i;
+        (my $ct= $meta->{attributes}->{'content'}) =~ s/^.*;\s*charset=\s*//i;
         return $ct
             if( $ct );
     };
@@ -1177,7 +1177,7 @@ sub content_type {
     # Also, a pox on Chrome for not having lower-case or upper-case
     my $ct;
     if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
-        $ct= $meta->get_attribute('content');
+        $ct= $meta->{attributes}->{'content'};
     };
     if(!$ct and my $r= $self->response ) {
         my $h= $r->headers;
@@ -1845,24 +1845,26 @@ sub xpath {
 
             my @found;
             # Now find the elements
-            warn Dumper \%options;
             if ($options{ node }) {
                 @found = map { @{ $_->get } }
                          Future->wait_all(
-                             map { $self->driver->send_message( 'DOM.performSearch', nodeId => $options{ node }->{nodeId}, query => $_ ) } @$query
+                             #map { $self->_performSearch( nodeId => $id, query => $_ ) } @$query
                          )->get;
-                @found = map { $self->eval("\$x('%s')") }  @$query
             } else {
-                #warn "Collecting frames";
-                #my $tag= $doc->get_tag_name;
-                #warn "Searching $doc->{id} for @$query";
-                warn Dumper $doc;
                 my $id = $doc->{root}->{nodeId};
-                warn Dumper \@found;
-                Future->wait_all(
-                     map { $self->_performSearch( nodeId => $id, query => $_ ) } @$query
+                @found = Future->wait_all(
+                    map { $self->_performSearch( nodeId => $id, query => $_ )->then( sub( @ids ) {
+                         Future->wait_all(
+                         map {
+                             $self->_fetchNode( $_ )
+                         } @ids
+                         )
+                    })
+                    } @$query
                 )->get;
-                #@found= map { $self->driver->find_elements( $_ => 'xpath' ) } @$query;
+                #warn Dumper \@found;
+                @found = map { $_->get->get } @found;
+                warn Dumper \@found;
                 if( ! @found ) {
                     #warn "Nothing found matching @$query in frame";
                     #warn $self->content;
@@ -1875,7 +1877,7 @@ sub xpath {
             # Remember the path to each found element
             for( @found ) {
                 # We reuse the reference here instead of copying the list. So don't modify the list.
-                $_->{__path}= $doc->{__path};
+                #$_->{__path}= $doc->{__path};
             };
 
             push @res, @found;
@@ -1886,10 +1888,9 @@ sub xpath {
             #    @res= grep { $_->{resultSize} } @res;
             #    last DOCUMENTS;
             #};
-            use Data::Dumper;
+            #use Data::Dumper;
             #warn Dumper \@documents;
             if ($options{ frames } and not $options{ node }) {
-                warn "Expanding subframes";
                 #warn ">Expanding below " . $doc->get_tag_name() . ' - ' . $doc->get_attribute('title');
                 #local $nesting .= "--";
                 my @d; # = $self->expand_frames( $options{ frames }, $doc );
@@ -2755,7 +2756,6 @@ sub current_frame {
     # Now climb up until the root window
     my $f= $current;
     my @chain;
-    warn "Walking up to root document";
     while( $f= $self->driver->execute_script('return arguments[0].frameElement', $f )) {
         $f= $self->make_WebElement( $f );
         unshift @res, $f;

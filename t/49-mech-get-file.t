@@ -71,7 +71,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 14, sub
     is $mech->title, '49-mech-get-file-lc-ct.html', "We loaded the right file";
     ok $mech->is_html, "The local file gets identified as HTML even with a weird-cased http-equiv attribute"
         or diag $mech->content;
-    is $mech->content_type, 'text/html; charset=iso-8859-1', "HTML content type is read from http-equiv meta tag";
+    is $mech->content_type, 'text/html', "HTML content type is read from http-equiv meta tag";
 
     $mech->get_local('file-does-not-exist.html');
     ok !$mech->success, 'We fail on non-existing file'
