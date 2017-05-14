@@ -235,6 +235,7 @@ sub new {
                 croak $_[1]
             },
             transport => $options{ transport },
+            log => sub {},
             #log => $options{ log },
         );
         # Synchronously connect here, just for easy API compatibility
