@@ -1176,8 +1176,7 @@ sub content_type {
     # Let's trust the <meta http-equiv first, and the header second:
     # Also, a pox on Chrome for not having lower-case or upper-case
     my $ct;
-    #if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
-    if(my( $meta )= $self->xpath( q{//meta[lower-case(@http-equiv)="content-type"]}, first => 1 )) {
+    if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
         $ct= $meta->get_attribute('content');
     };
     if(!$ct and my $r= $self->response ) {
