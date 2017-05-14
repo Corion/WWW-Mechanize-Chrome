@@ -597,7 +597,7 @@ sub _collectEvents( $self, @info ) {
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
-            $self->log( 'DEBUG', "Received final message, unwinding", $events[-1] );
+            #$self->log( 'DEBUG', "Received final message, unwinding", $events[-1] );
             $self->driver->on_message( undef );
             $done->done( @info, @events );
         };
@@ -713,10 +713,29 @@ sub httpResponseFromChromeResponse( $self, $res ) {
     );
 };
 
+sub httpResponseFromChromeNetworkFail( $self, $res ) {
+    my $response = HTTP::Response->new(
+        $res->{params}->{response}->{status} || 599, # No error code exists for files
+        $res->{params}->{response}->{errorText},
+        HTTP::Headers->new( {}),
+    );
+};
+
 sub httpMessageFromEvents( $self, $frameId, $events ) {
+    my ($requestId,$loaderId);
     my @events = grep {    exists $_->{params}->{frameId} && $_->{params}->{frameId} eq $frameId
                         or exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id} eq $frameId
-                      } @$events;
+                        or exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id} eq $frameId
+                        or $requestId && exists $_->{params}->{requestId} && $_->{params}->{requestId} eq $requestId
+                 }
+                 map {
+                     # Extract the loaderId and requestId
+                     if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
+                         $requestId ||= $_->{params}->{requestId};
+                         $loaderId ||= $_->{params}->{loaderId};
+                     };
+                     $_
+                 } @$events;
     my %events;
     for (@events) {
         $events{ $_->{method} } = $_;
@@ -733,7 +752,7 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
     # Create HTTP::Response object from 'Network.responseReceived'
     my $response;
     if( my $res = $events{ 'Network.loadingFailed' }) {
-        $response = $self->httpResponseFromChromeResponse( $res );
+        $response = $self->httpResponseFromChromeNetworkFail( $res );
         $response->request( $request );
 
     } elsif ( $res = $events{ 'Network.responseReceived' }) {
