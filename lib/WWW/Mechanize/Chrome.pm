@@ -1752,21 +1752,34 @@ sub _performSearch( $self, %args ) {
     $self->driver->send_message( 'DOM.performSearch', nodeId => $nodeId, query => $query )->then(sub($results) {
         if( $results->{resultCount} ) {
             my $searchResults;
+            my $searchId = $results->{searchId};
             $self->driver->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
                 fromIndex => 0,
-                toIndex => $results->{resultCount} -1
-            )->then( sub( $results ) {
-                $searchResults = $results;
+                toIndex => $results->{resultCount}
+            )->followed_by( sub( $results ) {
+                $searchResults = $results->get;
                 $self->driver->send_message( 'DOM.discardSearchResults',
-                    searchId => $results->{searchId},
+                    searchId => $searchId,
                 );
-            })->then( sub( $response ) {
-                Future->done( $searchResults );
+            })->followed_by( sub( $response ) {
+                Future->done( @{ $searchResults->{nodeIds} } );
             });
         } else {
             return Future->done()
         };
+    })
+}
+
+sub _fetchNode( $self, $nodeId ) {
+    $self->driver->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId )->then( sub( $r ) {
+        my $node = {
+            nodeId => $nodeId,
+            attributes => {
+                @{ $r->{attributes}},
+            },
+        };
+        Future->done( $node );
     })
 }
 
