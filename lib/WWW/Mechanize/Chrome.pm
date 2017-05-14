@@ -730,12 +730,18 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
     };
 
     # Create HTTP::Response object from 'Network.responseReceived'
-    if( ! $events{ 'Network.responseReceived' }) {
+    my $response;
+    if( my $res = $events{ 'Network.loadingFailed' }) {
+        $response = $self->httpResponseFromChromeResponse( $res );
+        $response->request( $request );
+
+    } elsif ( $res = $events{ 'Network.responseReceived' }) {
+        $response = $self->httpResponseFromChromeResponse( $res );
+        $response->request( $request );
+
+    } else {
         die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
     };
-    my $res = $events{ 'Network.responseReceived' };
-    my $response = $self->httpResponseFromChromeResponse( $res );
-    $response->request( $request );
     $response
 }
 
