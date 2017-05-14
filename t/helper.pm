@@ -28,11 +28,20 @@ sub browser_instances {
     # add author tests with local versions
     my $spec = $ENV{TEST_WWW_MECHANIZE_CHROMES_VERSIONS}
              || 'chrome-versions/*/{*/,}chrome*'; # sorry, likely a bad default
-    push @instances, sort {$a cmp $b} grep { -x } bsd_glob $spec;
+    push @instances, grep { -x } bsd_glob $spec;
 
     # Consider filtering for unsupported Chrome versions here
+    @instances = map { s!\\!/!g; $_ } # for Windows
+                 grep { ($_ ||'') =~ /$filter/ } @instances;
 
-    grep { ($_ ||'') =~ /$filter/ } @instances;
+    # Only use unique Chrome executables
+    my %seen;
+    undef @seen{ @instances };
+    use Data::Dumper;
+
+    # Well, we should do a nicer natural sort here
+    @instances = sort {$a cmp $b} keys %seen;
+
 };
 
 sub default_unavailable {
