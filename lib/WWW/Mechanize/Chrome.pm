@@ -769,10 +769,6 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
 
 B<not implemented>
 
-Selenium currently does not allow a raw POST message
-and the code for constructing a form on the fly is not working
-so this method is not implemented.
-
   $mech->post( 'http://example.com',
       params => { param => "Hello World" },
       headers => {
@@ -856,6 +852,22 @@ sub post {
         }
 JS
     # Now, how to trick Selenium into fetching the response?
+}
+
+=head2 C<< $mech->reload( %options ) >>
+
+  $mech->reload( ignoreCache => 1 )
+
+Acts like the reload button in a browser: repeats the current request.
+The history (as per the "back" method) is not altered.
+
+Returns the HTTP::Response object from the reload, or undef if there's no
+current request.
+
+=cut
+
+sub reload( $self, %options ) {
+    $self->driver->send_message('Page.reload', %options )->get
 }
 
 =head2 C<< $mech->add_header( $name => $value, ... ) >>
