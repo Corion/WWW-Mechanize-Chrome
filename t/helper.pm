@@ -71,7 +71,7 @@ sub runtests {
             });
         };
         diag sprintf "Chrome version '%s'", $version;
-        next
+        return
     };
 
     diag sprintf "Chrome version '%s'",
