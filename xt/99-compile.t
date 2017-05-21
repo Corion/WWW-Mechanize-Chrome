@@ -27,7 +27,8 @@ sub check {
         for ($stdout, $stderr);
 
     if( $exit ) {
-        diag $exit;
+        diag $stderr;
+        diag "Exit code: ", $exit;
         fail($_);
     } elsif( $stderr ne "$_ syntax OK") {
         diag $stderr;
