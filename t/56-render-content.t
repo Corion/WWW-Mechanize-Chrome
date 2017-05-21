@@ -9,7 +9,7 @@ use Test::HTTP::LocalServer;
 use t::helper;
 
 # What instances of Chrome will we try?
-my $instance_port = 8910;
+my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 my @tests= (
     { format => 'pdf', like => qr/^%PDF-/ },
@@ -51,12 +51,11 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
     for my $test ( @tests ) {
         my $format= $test->{format};
         my $content= eval { $mech->render_content( format => $format ); };
-        if( $@ ) {
-            SKIP: {
+        SKIP: {
+            if( $@ ) {
                 skip "$@", 2;
-                # Chrome/60.0.3086.0
             };
-        } else {
+
             like $content, $test->{like}, "->render_content( format => '$format' )"
                 or diag substr( $content, 0, 10 );
             my @delete;
