@@ -1,9 +1,6 @@
 .gitignore
 Changes
 inc/IO/Catch.pm
-inc/Test/HTTP/cookie-server
-inc/Test/HTTP/LocalServer.pm
-inc/Test/HTTP/log-server
 lib/Chrome/DevToolsProtocol.pm
 lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
