@@ -42,7 +42,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     croak "Need an endpoint to connect to" unless $got_endpoint;
 
     my $client;
-    my $r = $got_endpoint->then( sub( $endpoint ) {
+    $got_endpoint->then( sub( $endpoint ) {
+        die "Got an undefined endpoint" unless defined $endpoint;
 
         my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
             $logger->('DEBUG',"Connecting to $endpoint");
@@ -51,8 +52,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         });
         $res
 
-    });
-    $r->then( sub( $c ) {
+    })->then( sub( $c ) {
         $logger->( 'DEBUG', sprintf "Connected" );
         my $connection = $c->recv;
         $self->{connection} = $connection;
@@ -63,7 +63,9 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             $handler->on_response( $connection, $message->body )
         });
 
-        return Future->done( $connection )
+        my $res = Future->done( $self );
+        undef $self;
+        $res
     });
 }
 
@@ -72,9 +74,9 @@ sub send( $self, $message ) {
 }
 
 sub close( $self ) {
-    $self->connection->close
-        if $self->connection;
-    delete $self->{connection}
+    my $c = delete $self->{connection};
+    $c->close
+        if $c;
 }
 
 sub future {

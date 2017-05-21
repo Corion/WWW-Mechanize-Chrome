@@ -55,11 +55,12 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {
-        warn "Message: $message";
             $handler->on_response( $connection, $message )
         });
 
-        Future->done( $connection )
+        my $res = Future->done( $self );
+        undef $self;
+        $res
     });
 }
 
@@ -68,9 +69,9 @@ sub send( $self, $message ) {
 }
 
 sub close( $self ) {
-    $self->connection->finish
-        if $self->connection;
-    delete $self->{connection};
+    my $c = delete $self->{connection};
+    $c->finish
+        if $c;
     delete $self->{ua};
 }
 
