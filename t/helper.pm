@@ -48,6 +48,43 @@ sub default_unavailable {
     !scalar browser_instances
 };
 
+sub runtests {
+    my ($browser_instance,$port, $new_mech, $code, $test_count) = @_;
+    if ($browser_instance) {
+        diag sprintf "Testing with %s",
+            $browser_instance;
+    };
+    my @launch = $browser_instance
+               ? ( launch_exe => $browser_instance,
+                   port => $port )
+               : ();
+
+    my $mech = eval { $new_mech->(@launch) };
+
+    if( ! $mech ) {
+        SKIP: {
+            skip "Couldn't create new object: $@", $test_count;
+        };
+        my $version = eval {
+            WWW::Mechanize::Chrome::chrome_version({
+                launch_exe => $browser_instance
+            });
+        };
+        diag sprintf "Chrome version '%s'", $version;
+        next
+    };
+
+    diag sprintf "Chrome version '%s'",
+        $mech->chrome_version;
+
+    # Run the user-supplied tests, making sure we don't keep a
+    # reference to $mech around
+    @_ = ($browser_instance, $mech);
+    undef $mech;
+
+    goto &$code;
+}
+
 sub run_across_instances {
     my ($instances, $port, $new_mech, $test_count, $code) = @_;
 
@@ -55,41 +92,8 @@ sub run_across_instances {
         unless $test_count;
 
     for my $browser_instance (@$instances) {
-        if ($browser_instance) {
-            diag sprintf "Testing with %s",
-                $browser_instance;
-        };
-        my @launch = $browser_instance
-                   ? ( launch_exe => $browser_instance,
-                       port => $port )
-                   : ();
-
-        my $mech = eval { $new_mech->(@launch) };
-
-        if( ! $mech ) {
-            SKIP: {
-                skip "Couldn't create new object: $@", $test_count;
-            };
-            my $version = eval {
-                WWW::Mechanize::Chrome::chrome_version({
-                    launch_exe => $browser_instance
-                });
-            };
-            diag sprintf "Chrome version '%s'", $version;
-            next
-        };
-
-        diag sprintf "Chrome version '%s'",
-            $mech->chrome_version;
-
-        # Run the user-supplied tests, making sure we don't keep a
-        # reference to $mech around
-        @_ = ($browser_instance, $mech);
-        undef $mech;
-
-        goto &$code;
-
-        #sleep 2; # So the browser can shut down before we try to connect
+        runtests( $browser_instance,$port, $new_mech, $code, $test_count );
+        sleep 1; # So the browser can shut down before we try to connect
         # to the new instance
     };
 };
