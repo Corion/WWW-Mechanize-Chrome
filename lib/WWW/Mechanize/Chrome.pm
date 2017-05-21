@@ -12,6 +12,7 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
+use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
@@ -2843,7 +2844,7 @@ sub make_WebElement {
 
 =head1 CONTENT RENDERING METHODS
 
-=head2 C<< $mech->content_as_png( [\%coordinates ] ) >>
+=head2 C<< $mech->content_as_png() >>
 
     my $png_data = $mech->content_as_png();
 
@@ -2855,12 +2856,6 @@ Returns the given tab or the current page rendered as PNG image.
 All parameters are optional.
 
 =over 4
-
-=item C< \%coordinates >
-
-If the coordinates are given, that rectangle will be cut out.
-The coordinates should be a hash with the four usual entries,
-C<left>,C<top>,C<width>,C<height>.
 
 =back
 
@@ -2875,12 +2870,8 @@ sub content_as_png {
     my ($self, $rect) = @_;
     $rect ||= {};
 
-    if( scalar keys %$rect ) {
-
-        $self->eval_in_chrome( 'this.clipRect= arguments[0]', $rect );
-    };
-
-    return $self->render_content( format => 'png' );
+    my $base64 = $self->driver->send_message('Page.captureScreenshot', format => 'png' )->get;
+    return decode_base64( $base64 )
 };
 
 =head2 C<< $mech->viewport_size >>
@@ -2889,6 +2880,8 @@ sub content_as_png {
   $mech->viewport_size({ width => 1388, height => 792 });
 
 Returns (or sets) the new size of the viewport (the "window").
+
+   Emulation.setDeviceMetricsOverride
 
 =cut
 
@@ -2987,64 +2980,20 @@ sub element_coordinates {
 
     my $pdf_data = $mech->render( format => 'pdf' );
 
-    $mech->render_content(
-        format => 'jpg',
-        filename => '/path/to/my.jpg',
-    );
-
 Returns the current page rendered in the specified format
 as a bytestring or stores the current page in the specified
 filename.
 
-The filename must be absolute. We are dealing with external processes here!
-
 This method is specific to WWW::Mechanize::Chrome.
-
-Currently, the data transfer between Chrome and Perl
-is done through a temporary file, so directly using
-the C<filename> option may be faster.
 
 =cut
 
-sub render_content {
-    my ($self, %options) = @_;
-    #$rect ||= {};
-    #$target_rect ||= {};
-    my $outname= $options{ filename };
-    my $format= $options{ format };
-    my $wantresult;
-
-    my @delete;
-    if( ! $outname) {
-        require File::Temp;
-        (my $fh, $outname)= File::Temp::tempfile();
-        close $fh;
-        push @delete, $outname;
-        $wantresult= 1;
-    };
-    require File::Spec;
-    $outname= File::Spec->rel2abs($outname, '.');
-
-    $self->eval_in_chrome(<<'JS', $outname, $format);
-        var outname= arguments[0];
-        var format= arguments[1];
-        this.render( outname, { "format": format });
-JS
-
-    my $result;
-    if( $wantresult ) {
-        open my $fh, '<', $outname
-            or die "Couldn't read tempfile '$outname': $!";
-        binmode $fh, ':raw';
-        local $/;
-        $result= <$fh>;
-    };
-
-    for( @delete ) {
-        unlink $_
-            or warn "Couldn't clean up tempfile: $_': $!";
-    };
-    $result
+sub render_content( $self, %options ) {
+    $options{ format } ||= 'pdf';
+    delete $options{ format };
+    
+    my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get;
+    return decode_base64( $base64 );
 }
 
 =head2 C<< $mech->content_as_pdf(%options) >>

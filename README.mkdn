@@ -219,10 +219,6 @@ subframes do not get loaded properly.
 
 **not implemented**
 
-Selenium currently does not allow a raw POST message
-and the code for constructing a form on the fly is not working
-so this method is not implemented.
-
     $mech->post( 'http://example.com',
         params => { param => "Hello World" },
         headers => {
@@ -241,6 +237,16 @@ The following options are recognized:
 - `headers` - a hash of HTTP headers to send. If not given,
 the content type will be generated automatically.
 - `data` - the raw data to send, if you've encoded it already.
+
+## `$mech->reload( %options )`
+
+    $mech->reload( ignoreCache => 1 )
+
+Acts like the reload button in a browser: repeats the current request.
+The history (as per the "back" method) is not altered.
+
+Returns the HTTP::Response object from the reload, or undef if there's no
+current request.
 
 ## `$mech->add_header( $name => $value, ... )`
 
@@ -872,7 +878,7 @@ Frames are currently not really supported.
 
 # CONTENT RENDERING METHODS
 
-## `$mech->content_as_png( [\%coordinates ] )`
+## `$mech->content_as_png()`
 
     my $png_data = $mech->content_as_png();
 
@@ -882,12 +888,6 @@ Frames are currently not really supported.
 Returns the given tab or the current page rendered as PNG image.
 
 All parameters are optional.
-
-- ` \%coordinates `
-
-    If the coordinates are given, that rectangle will be cut out.
-    The coordinates should be a hash with the four usual entries,
-    `left`,`top`,`width`,`height`.
 
 This method is specific to WWW::Mechanize::Chrome.
 
@@ -900,6 +900,8 @@ is done Base64-encoded.
     $mech->viewport_size({ width => 1388, height => 792 });
 
 Returns (or sets) the new size of the viewport (the "window").
+
+    Emulation.setDeviceMetricsOverride
 
 ## `$mech->element_as_png( $element )`
 
@@ -936,22 +938,11 @@ towards rendering HTML.
 
     my $pdf_data = $mech->render( format => 'pdf' );
 
-    $mech->render_content(
-        format => 'jpg',
-        filename => '/path/to/my.jpg',
-    );
-
 Returns the current page rendered in the specified format
 as a bytestring or stores the current page in the specified
 filename.
 
-The filename must be absolute. We are dealing with external processes here!
-
 This method is specific to WWW::Mechanize::Chrome.
-
-Currently, the data transfer between Chrome and Perl
-is done through a temporary file, so directly using
-the `filename` option may be faster.
 
 ## `$mech->content_as_pdf(%options)`
 
