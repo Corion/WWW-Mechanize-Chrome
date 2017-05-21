@@ -164,14 +164,15 @@ sub spawn_child_posix( $self, @cmd ) {
 
     # daemonize
     defined(my $pid = fork())   || die "can't fork: $!";
+    warn "Spawned child as $pid";
+    return $pid if $pid;   # non-zero now means I am the parent
     chdir("/")                  || die "can't chdir to /: $!";
-    return $pid exit if $pid;   # non-zero now means I am the parent
 
     # We are the child, close about everything, then exec
     (setsid() != -1)            || die "Can't start a new session: $!";
-    open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
-    open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
-    open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
+    #open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
+    #open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
+    #open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
     exec @cmd;
 }
 
