@@ -69,7 +69,7 @@ sub log( $self, $level, $message, @args ) {
 
 sub connect( $self, %args ) {
     # If we are still connected to a different tab, disconnect from it
-    if( $self->transport ) {
+    if( $self->transport and ref $self->transport ) {
         warn "Reusing self, closing websocket";
         $self->transport->close();
     };
