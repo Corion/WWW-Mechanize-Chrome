@@ -82,6 +82,7 @@ HTML
     like $c, qr/\Q$magic/, "We can read our content back immediately";
 
     undef $mech;
+    sleep 1; # to give chrome time to reopen its socket for our tab
 
     # Now check that we don't open a new tab if we try to find an existing tab:
     $mech = WWW::Mechanize::Chrome->new(
