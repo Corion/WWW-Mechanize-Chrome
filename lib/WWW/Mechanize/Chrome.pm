@@ -299,6 +299,7 @@ sub chrome_version_from_stdout( $self ) {
     # We can try to get at the version through the --version command line:
     my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, });
 
+    warn "Retrieving version via [@cmd]";
     my $v = join '', readpipe(@cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
