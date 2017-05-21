@@ -3,6 +3,7 @@ use strict;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
+use Scalar::Util 'weaken';
 
 use Carp qw(croak);
 
@@ -34,6 +35,7 @@ sub connection( $self ) {
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
+    weaken $handler;
 
     local @CARP_NOT = (@CARP_NOT, 'Chrome::DevToolsProtocol::Transport');
 
@@ -54,6 +56,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $logger->( 'DEBUG', sprintf "Connected" );
         my $connection = $c->recv;
         $self->{connection} = $connection;
+        undef $self;
 
         # Kick off the continous polling
         $connection->on( each_message => sub( $connection,$message) {
@@ -70,6 +73,8 @@ sub send( $self, $message ) {
 
 sub close( $self ) {
     $self->connection->close
+        if $self->connection;
+    delete $self->{connection}
 }
 
 sub future {

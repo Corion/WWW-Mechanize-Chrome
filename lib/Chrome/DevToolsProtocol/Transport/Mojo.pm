@@ -3,6 +3,7 @@ use strict;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
+use Scalar::Util 'weaken';
 
 use Mojo::UserAgent;
 use Future::Mojo;
@@ -32,6 +33,7 @@ sub connection( $self ) {
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
+    weaken $handler;
 
     my $client;
     $got_endpoint->then( sub( $endpoint ) {
@@ -49,6 +51,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $logger->( 'DEBUG', sprintf "Connected" );
         my $connection = $c;
         $self->{connection} = $connection;
+        undef $self;
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {
@@ -66,6 +69,9 @@ sub send( $self, $message ) {
 
 sub close( $self ) {
     $self->connection->finish
+        if $self->connection;
+    delete $self->{connection};
+    delete $self->{ua};
 }
 
 sub future {
