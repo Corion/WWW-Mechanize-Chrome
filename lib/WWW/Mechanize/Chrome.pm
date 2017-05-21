@@ -2870,7 +2870,7 @@ sub content_as_png {
     my ($self, $rect) = @_;
     $rect ||= {};
 
-    my $base64 = $self->driver->send_message('Page.captureScreenshot', format => 'png' )->get;
+    my $base64 = $self->driver->send_message('Page.captureScreenshot', format => 'png' )->get->{data};
     return decode_base64( $base64 )
 };
 
