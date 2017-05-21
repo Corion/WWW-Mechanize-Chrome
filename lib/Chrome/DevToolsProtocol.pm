@@ -42,7 +42,6 @@ sub endpoint( $self ) {
 }
 sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
-sub ws( $self ) { $self->{ws} }
 sub tab( $self ) { $self->{tab} }
 sub transport( $self ) { $self->{transport} }
 sub future( $self ) { $self->transport->future }
@@ -70,9 +69,9 @@ sub log( $self, $level, $message, @args ) {
 
 sub connect( $self, %args ) {
     # If we are still connected to a different tab, disconnect from it
-    if( $self->ws ) {
-        $self->ws->close;
-        delete $self->{ws};
+    if( $self->transport ) {
+        warn "Reusing self, closing websocket";
+        $self->transport->close();
     };
 
     # Kick off the connect
@@ -85,7 +84,7 @@ sub connect( $self, %args ) {
 
     } elsif( exists $args{ new_tab } ) {
         $endpoint = undef;
-        $args{ tab } ||= 0;
+        #$args{ tab } ||= 0;
 
     } elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
         $endpoint = undef;
@@ -158,17 +157,15 @@ sub connect( $self, %args ) {
         $transport = $self->{transport} = $transport->new;
     };
 
-    warn $transport;
     $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } )->then(sub( $ws ) {
-        $self->{ws} = $ws;
-        return Future->done( $ws )
+        return Future->done( $transport )
     });
 };
 
 sub DESTROY( $self ) {
-    if( $self->ws) {
+    if( $self->transport) {
         warn "Closing websocket";
-        $self->transport->close( $self->ws )
+        $self->transport->close()
     };
         warn "Driver done";
 }
@@ -251,9 +248,9 @@ sub send_message( $self, $method, %params ) {
         params => \%params
     });
 
-    my $response = AnyEvent::Future->new();
+    my $response = $self->future;
+    $self->transport->send( $payload );
     $self->{receivers}->{ $id } = $response;
-    $self->ws->send( $payload );
     $response
 }
 

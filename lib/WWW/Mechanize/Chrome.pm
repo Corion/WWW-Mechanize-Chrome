@@ -490,8 +490,8 @@ sub DESTROY {
 
     eval {
         # Shut down our websocket connection
-        $_[0]->{ driver }->ws->close;
-        delete $_[0]->{ driver }->{ws}; # this should be a function in the driver
+        $_[0]->{ driver }->close;
+        delete $_[0]->{ driver }->{ws};
     };
 
     if( $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
