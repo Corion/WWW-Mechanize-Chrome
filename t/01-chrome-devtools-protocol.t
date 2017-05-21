@@ -15,7 +15,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 7*@instances;
+    plan tests => 6*@instances;
 };
 
 sub new_mech {
@@ -26,7 +26,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 7, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
     my( $file, $mech ) = splice @_;
     my $chrome = $mech->driver;
 
@@ -34,9 +34,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 7, sub 
 
     my $version = $chrome->protocol_version->get;
     cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
-
-    cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
-
 
     diag "Open tabs";
 
@@ -46,7 +43,8 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 7, sub 
 
     my $target_tab = $tabs[ 0 ];
 
-    my $tab = $chrome->connect(tab => $target_tab)->get();
+    $chrome->connect(tab => $target_tab)->get();
+    my $tab = $chrome->tab;
     isn::t $tab, undef, "Attached to tab '$target_tab->{title}'";
 
     #warn Dumper $c->request(

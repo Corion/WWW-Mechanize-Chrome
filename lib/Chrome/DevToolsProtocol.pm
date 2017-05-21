@@ -124,10 +124,20 @@ sub connect( $self, %args ) {
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
+        } elsif( ref $args{ tab } ) {
+            # Let's assume that the tab is a tab object:
+            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
+                (my $tab) = grep { $_->{id} eq $args{ tab }->{id}} @tabs;
+                $self->{tab} = $tab;
+                $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
+                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
+            });
+
         } elsif( $args{ tab } ) {
             # Let's assume that the tab is the tab id:
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 (my $tab) = grep { $_->{id} eq $args{ tab }} @tabs;
+                $self->{tab} = $tab;
                 $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
