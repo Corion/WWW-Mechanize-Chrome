@@ -67,6 +67,7 @@ my %module = (
         'Data::Dumper' => 0,
         'Mojolicious'  => 0,
         'Future::Mojo' => 0,
+        'Image::Info'  => 0,
         'Test::HTTP::LocalServer' => 0,
     },
 
