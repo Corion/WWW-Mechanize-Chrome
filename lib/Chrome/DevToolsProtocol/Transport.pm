@@ -65,3 +65,5 @@ sub best_implementation( $class, @candidates ) {
         };
     };
 };
+
+1;
