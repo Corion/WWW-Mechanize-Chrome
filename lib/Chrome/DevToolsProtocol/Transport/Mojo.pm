@@ -5,7 +5,7 @@ no warnings 'experimental::signatures';
 use feature 'signatures';
 
 use Mojo::UserAgent;
-use Future::Mojo qw(as_future_cb);
+use Future::Mojo;
 
 use vars qw<$VERSION $magic>;
 $VERSION = '0.01';
@@ -13,7 +13,8 @@ $VERSION = '0.01';
 =head1 SYNOPSIS
 
     my $got_endpoint = Future->done( "ws://..." );
-    Chrome::DevToolsProtocol::Transport::AnyEvent->connect( $handler, $got_endpoint, $logger)
+    my $t = Chrome::DevToolsProtocol::Transport::Mojo->new;
+    $t->connect( $handler, $got_endpoint, $logger)
     ->then(sub {
         my( $connection ) = @_;
         print "We are connected\n";
@@ -21,7 +22,15 @@ $VERSION = '0.01';
 
 =cut
 
-sub connect( $class, $handler, $got_endpoint, $logger ) {
+sub new( $class, %options ) {
+    bless \%options => $class
+}
+
+sub connection( $self ) {
+    $self->{connection}
+}
+
+sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
 
     my $client;
@@ -29,22 +38,34 @@ sub connect( $class, $handler, $got_endpoint, $logger ) {
         $client = Mojo::UserAgent->new;
 
         $logger->('DEBUG',"Connecting to $endpoint");
-        my $res = Future::Mojo->new();
+        my $res = $self->future;
         $client->websocket( $endpoint, sub( $ua, $tx ) {
+            $self->{ua} = $ua;
             $res->done( $tx );
         });
+        $res
 
     })->then( sub( $c ) {
         $logger->( 'DEBUG', sprintf "Connected" );
         my $connection = $c;
+        $self->{connection} = $connection;
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {
+        warn "Message: $message";
             $handler->on_response( $connection, $message )
         });
 
         Future->done( $connection )
     });
+}
+
+sub send( $self, $message ) {
+    $self->connection->send( $message )
+}
+
+sub close( $self ) {
+    $self->connection->finish
 }
 
 sub future {

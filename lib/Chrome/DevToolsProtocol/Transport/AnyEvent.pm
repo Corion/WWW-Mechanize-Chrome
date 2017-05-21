@@ -24,7 +24,15 @@ $VERSION = '0.01';
 
 =cut
 
-sub connect( $class, $handler, $got_endpoint, $logger ) {
+sub new( $class, %options ) {
+    bless \%options => $class
+}
+
+sub connection( $self ) {
+    $self->{connection}
+}
+
+sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
 
     local @CARP_NOT = (@CARP_NOT, 'Chrome::DevToolsProtocol::Transport');
@@ -45,14 +53,23 @@ sub connect( $class, $handler, $got_endpoint, $logger ) {
     $r->then( sub( $c ) {
         $logger->( 'DEBUG', sprintf "Connected" );
         my $connection = $c->recv;
+        $self->{connection} = $connection;
 
         # Kick off the continous polling
         $connection->on( each_message => sub( $connection,$message) {
-            $handler->on_response( $connection, $message )
+            $handler->on_response( $connection, $message->body )
         });
 
         return Future->done( $connection )
     });
+}
+
+sub send( $self, $message ) {
+    $self->connection->send( $message )
+}
+
+sub close( $self ) {
+    $self->connection->close
 }
 
 sub future {

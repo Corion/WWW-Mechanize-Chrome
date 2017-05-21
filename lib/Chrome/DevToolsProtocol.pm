@@ -151,11 +151,14 @@ sub connect( $self, %args ) {
     });
 
     my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport';
-    (my $transport_module = $transport) =~ s!::!/!g;
-    $transport_module .= '.pm';
-    require $transport_module;
-    $self->{transport} = $transport;
+    if( ! ref $transport ) { # it's a classname
+        (my $transport_module = $transport) =~ s!::!/!g;
+        $transport_module .= '.pm';
+        require $transport_module;
+        $transport = $self->{transport} = $transport->new;
+    };
 
+    warn $transport;
     $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } )->then(sub( $ws ) {
         $self->{ws} = $ws;
         return Future->done( $ws )
@@ -165,12 +168,13 @@ sub connect( $self, %args ) {
 sub DESTROY( $self ) {
     if( $self->ws) {
         warn "Closing websocket";
-        $self->ws->close
+        $self->transport->close( $self->ws )
     };
+        warn "Driver done";
 }
 
 sub on_response( $self, $connection, $message ) {
-    my $response = $self->json->decode( $message->body );
+    my $response = $self->json->decode( $message );
 
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:

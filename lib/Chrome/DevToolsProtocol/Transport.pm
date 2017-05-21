@@ -26,27 +26,20 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
 
 =head1 METHODS
 
-=head2 C<< Chrome::DevToolsProtocol::Transport->connect() >>
+=head2 C<< Chrome::DevToolsProtocol::Transport->new() >>
 
-    my $ua = Chrome::DevToolsProtocol::Transport->connect();
+    my $ua = Chrome::DevToolsProtocol::Transport->new();
 
 Creates a new instance of the transport using the "best" event loop
 for implementation. The default event loop is currently L<AnyEvent>.
 
 =cut
 
-sub connect($factoryclass, @args) {
+sub new($factoryclass, @args) {
     $implementation ||= $factoryclass->best_implementation();
     
     # return a new instance
-    $implementation->connect(@args);
-}
-
-sub future($factoryclass, @args) {
-    $implementation ||= $factoryclass->best_implementation();
-    
-    # return a new instance
-    $implementation->future(@args);
+    $implementation->new(@args);
 }
 
 sub best_implementation( $class, @candidates ) {
