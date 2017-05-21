@@ -117,12 +117,7 @@ sub build_command_line {
                   ? qq("$options->{ launch_exe }")
                   : $options->{ launch_exe };
 
-    my @cmd=( "|-", $program, @{ $options->{launch_arg}} );
-    if( $^O =~ /mswin/i ) {
-        # Windows Perl doesn't support pipe-open with list
-        shift @cmd; # remove pipe-open
-        @cmd= "| " . join " ", @cmd;
-    };
+    my @cmd=( $program, @{ $options->{launch_arg}} );
 
     @cmd
 };
@@ -159,23 +154,38 @@ sub _wait_for_socket_connection( $self, $host, $port, $timeout ) {
     }
 };
 
+sub spawn_child_win32( $self, @cmd ) {
+    system(1, @cmd)
+}
+
+sub spawn_child_posix( $self, @cmd ) {
+    require POSIX;
+    POSIX->import("setsid");
+
+    # daemonize
+    defined(my $pid = fork())   || die "can't fork: $!";
+    chdir("/")                  || die "can't chdir to /: $!";
+    return $pid exit if $pid;   # non-zero now means I am the parent
+
+    # We are the child, close about everything, then exec
+    (setsid() != -1)            || die "Can't start a new session: $!";
+    open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
+    open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
+    open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
+    exec @cmd;
+}
+
 sub spawn_child( $self, $localhost, @cmd ) {
-    my ($pid, $fh);
-    if( @cmd > 1 ) {
-        # We can do a proper pipe-open
-        my $mode = shift @cmd;
-        $pid = open $fh, $mode, @cmd
-            or die "Couldn't launch [@cmd]: $! / $?";
+    my ($pid);
+    if( $^O =~ /mswin/i ) {
+        $pid = $self->spawn_child_win32(@cmd)
     } else {
-        # We can't do a proper pipe-open, so do the single-arg open
-        # in the hope that everything has been set up properly
-        $pid = open $fh, $cmd[0]
-            or die "Couldn't launch [$cmd[0]]: $! / $?";
+        $pid = $self->spawn_child_posix(@cmd)
     };
 
     # Just to give Chrome time to start up, make sure it accepts connections
     $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{wait} || 20);
-    return ($pid,$fh)
+    return $pid
 }
 
 sub log( $self, $level, $message, @args ) {
@@ -213,12 +223,16 @@ sub new {
     unless ($options{pid} or $options{reuse}) {
         my @cmd= $class->build_command_line( \%options );
         $self->log('DEBUG', "Spawning", \@cmd);
-        ($self->{pid}, $self->{fh}) = $self->spawn_child( $localhost, @cmd );
+        $self->{pid} = $self->spawn_child( $localhost, @cmd );
         $self->{ kill_pid } = 1;
 
         # Just to give Chrome time to start up, make sure it accepts connections
         $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{wait} || 20);
     }
+
+    if( $options{ tab } and $options{ tab } eq 'current' ) {
+        $options{ tab } = 0; # use tab at index 0
+    };
 
     # Connect to it
     eval {
@@ -277,9 +291,8 @@ needs launching the browser and asking for the version via the network.
 sub chrome_version_from_stdout( $self ) {
     # We can try to get at the version through the --version command line:
     my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, });
-    open my $fh, @cmd
-        or return;
-    my $v = join '', <$fh>;
+
+    my $v = join '', readpipe(@cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     $v =~ /^(\S+)\s+([\d\.]+)\s/
