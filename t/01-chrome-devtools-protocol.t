@@ -26,7 +26,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 7, sub {
     my( $file, $mech ) = splice @_;
     my $chrome = $mech->driver;
 
