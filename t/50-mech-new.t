@@ -94,7 +94,7 @@ HTML
         %args,
     );
     $c = $mech->content;
-    like $mech->content, qr/\Q$magic/, "We selected the existing tab"
+    like $c, qr/\Q$magic/, "We selected the existing tab"
         or do { diag $_->{title} for $mech->driver->list_tabs() };
 
     # Now activate the tab and connect to the "current" tab

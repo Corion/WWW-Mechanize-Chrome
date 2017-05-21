@@ -22,6 +22,7 @@ t/47-mech-simplest.t
 t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
 t/49-mech-get-file.t
+t/49-mech-nav.t
 t/50-mech-new-dsl.t
 t/50-mech-new.t
 t/51-mech-set-content.t

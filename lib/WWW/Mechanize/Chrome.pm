@@ -253,8 +253,8 @@ sub new {
                 croak $_[1]
             },
             transport => $options{ transport },
-            log => sub {},
-            #log => $options{ log },
+            #log => sub {},
+            log => $options{ log },
         );
         # Synchronously connect here, just for easy API compatibility
         $self->driver->connect(
@@ -1026,6 +1026,28 @@ sub status {
     return $self->response( headers => 0 )->code
 };
 
+sub _navigate( $self, $get_navigation_future, %options ) {
+    my $frameId = $options{ frameId } || $self->frameId;
+    my $events_f = $self->_collectEvents( sub( $ev ) {
+        # Let's assume that the first frame id we see is "our" frame
+        if( $ev->{method} eq 'Page.frameStartedLoading' ) {
+            $frameId ||= $ev->{params}->{frameId};
+        };
+            $ev->{method} eq 'Page.frameStoppedLoading'
+        and $ev->{params}->{frameId} eq $frameId
+    });
+
+    my $nav_f = $get_navigation_future->();
+
+    # Wait for things to settle down
+    my( $nav, $events ) = Future->wait_all( $nav_f, $events_f )->get;
+
+    # Store our frame id so we know what events to listen for in the future!
+    $self->{frameId} = $nav->get->{frameId};
+
+    my @events = $events->get;
+}
+
 =head2 C<< $mech->back() >>
 
     $mech->back();
@@ -1036,11 +1058,14 @@ Returns the (new) response.
 
 =cut
 
-sub back {
-    my ($self) = @_;
-
-    $self->driver->go_back;
-}
+sub back( $self, %options ) {
+    $self->_navigate( sub {
+        $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
+            my $entry = $history->{entries}->[ $history->{currentIndex}-1 ];
+            $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
+        });
+    }, %options);
+};
 
 =head2 C<< $mech->forward() >>
 
@@ -1052,9 +1077,15 @@ Returns the (new) response.
 
 =cut
 
-sub forward {
+sub forward( $self, %options ) {
     my ($self) = @_;
-    $self->driver->go_forward;
+
+    $self->_navigate( sub {
+        $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
+            my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
+            $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
+        });
+    }, %options);
 }
 
 =head2 C<< $mech->uri() >>
@@ -1066,7 +1097,7 @@ Returns the current document URI.
 =cut
 
 sub uri( $self ) {
-    URI->new( $self->document->get->{documentURL} )
+    URI->new( $self->document->get->{root}->{documentURL} )
 }
 
 =head1 CONTENT METHODS
@@ -1899,34 +1930,33 @@ sub xpath {
 
             my @found;
             # Now find the elements
+            warn Dumper \%options;
+            my $id;
             if ($options{ node }) {
-                @found = map { @{ $_->get } }
-                         Future->wait_all(
-                             #map { $self->_performSearch( nodeId => $id, query => $_ ) } @$query
-                         )->get;
+                $id = $options{ node }->{nodeId};
             } else {
-                my $id = $doc->{root}->{nodeId};
-                @found = Future->wait_all(
-                    map { $self->_performSearch( nodeId => $id, query => $_ )->then( sub( @ids ) {
-                         Future->wait_all(
-                         map {
-                             $self->_fetchNode( $_ )
-                         } @ids
-                         )
-                    })
-                    } @$query
-                )->get;
-                #warn Dumper \@found;
-                @found = map { $_->get->get } @found;
-                #warn Dumper \@found;
-                if( ! @found ) {
-                    #warn "Nothing found matching @$query in frame";
-                    #warn $self->content;
-                    #$self->driver->switch_to_frame();
-                };
-                #$self->driver->switch_to_frame();
-                #warn $doc->get_text;
+                $id = $doc->{root}->{nodeId};
             };
+            @found = Future->wait_all(
+                map { $self->_performSearch( nodeId => $id, query => $_ )->then( sub( @ids ) {
+                     Future->wait_all(
+                     map {
+                         $self->_fetchNode( $_ )
+                     } @ids
+                     )
+                })
+                } @$query
+            )->get;
+            #warn Dumper \@found;
+            @found = map { $_->get->get } @found;
+            #warn Dumper \@found;
+            if( ! @found ) {
+                #warn "Nothing found matching @$query in frame";
+                #warn $self->content;
+                #$self->driver->switch_to_frame();
+            };
+            #$self->driver->switch_to_frame();
+            #warn $doc->get_text;
 
             # Remember the path to each found element
             for( @found ) {
@@ -2090,7 +2120,29 @@ sub click {
         @buttons = $self->_option_query(%options);
     };
 
-    $buttons[0]->click();
+    # Get the node as an object so we can find its position and send the clicks:
+    use Data::Dumper;
+    warn Dumper $buttons[0];
+    my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => $buttons[0]->{nodeId})->get;
+    warn Dumper $obj;
+    my $id = $obj->{object}->{objectId};
+    #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
+    #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
+    warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])->get;
+    sleep 5;
+    # , userGesture => $JSON::true
+
+    #my $pos = $self->driver->send_message('DOM.getBoxModel', nodeId => $buttons[0]->{nodeId})->get;
+    #warn Dumper $pos;
+    #my ($x, $y) = ($pos->{model}->{content}->[0], $pos->{model}->{content}->[1]);
+    #warn Dumper $self->driver->send_message('DOM.focus', nodeId => $buttons[0]->{nodeId})->get;
+    #sleep 3;
+    #warn Dumper $self->driver->send_message('Input.dispatchKeyEvent',type => 'char', text => "\x13", keyIdentifier => "U+000D")->get;
+    #sleep 5;
+    #warn Dumper $self->driver->send_message('Input.dispatchMouseEvent',type => 'mousePressed', x => 0+$x, y => 0+$y)->get;
+    #warn Dumper $self->driver->send_message('Input.dispatchMouseEvent',type => 'mouseReleased', x => 0+$x, y => 0+$y)->get;
+    #$self->eval();
+    #$buttons[0]->click();
     $self->post_process;
 
     if (defined wantarray) {
@@ -2344,6 +2396,8 @@ sub form_number {
         user_info => "form number $number",
         %options
     );
+
+    $self->{current_form};
 };
 
 =head2 C<< $mech->form_with_fields( [$options], @fields ) >>
