@@ -18,7 +18,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 5*@instances;
+    plan tests => 6*@instances;
 };
 
 my %args;
@@ -27,6 +27,7 @@ sub new_mech {
     if( ! keys %args ) {
         %args = @_;
     };
+    #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         log => sub {},
@@ -34,7 +35,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
     my $app = $mech->driver;
@@ -43,15 +44,15 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub
 
     # Add one more, just to be on the safe side, so that Chrome doesn't close
     # immediately again:
-    $app->new_tab()->get;
+    $mech->driver->new_tab()->get;
 
     my @tabs = $app->list_tabs()->get;
     diag "Tabs open: ", 0+@tabs;
 
-    sleep 1;
-
+    diag "Releasing mechanize";
     undef $mech; # our own tab should now close automatically
-    
+    diag "Released mechanize";
+
     sleep 1;
 
     diag "Listing tabs";
@@ -67,40 +68,48 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub
     #diag "Tab title is $magic";
     # Now check that we don't open a new tab if we try to find an existing tab:
     $mech = WWW::Mechanize::Chrome->new(
-        autodie => 0,
+        autodie   => 0,
         autoclose => 0,
-        reuse => 1,
-        log => sub {},
+        reuse     => 1,
+        log       => sub {},
+        new_tab   => 1,
         %args,
     );
     $mech->update_html(<<HTML);
     <html><head><title>$magic</title></head><body>Test</body></html>
 HTML
+    my $c = $mech->content;
+    like $c, qr/\Q$magic/, "We can read our content back immediately";
 
     undef $mech;
 
     # Now check that we don't open a new tab if we try to find an existing tab:
     $mech = WWW::Mechanize::Chrome->new(
-        autodie => 0,
+        autodie   => 0,
         autoclose => 0,
-        tab => qr/^\Q$magic/,
-        reuse => 1,
-        log => sub {},
+        tab       => qr/^\Q$magic/,
+        reuse     => 1,
+        log       => sub {},
         %args,
     );
-    my $c = $mech->content;
+    $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We selected the existing tab"
         or do { diag $_->{title} for $mech->driver->list_tabs() };
 
     # Now activate the tab and connect to the "current" tab
-    # This is ugly for a user currently using Firefox, but hey, they
-    # should be watching in amazement instead of surfing while we test
-    $app->activate_tab($mech->tab)->get;
+    # This is ugly for a user currently using that Chrome instance,
+    # but hey, they should be watching in amazement instead of surfing
+    # while we test
+    #$app->activate_tab($mech->tab)->get;
+    undef $mech,
+    sleep 2; # to make the socket available again
+
     $mech = WWW::Mechanize::Chrome->new(
-        autodie => 0,
+        autodie   => 0,
         autoclose => 0,
-        tab => 'current',
-        log => sub {},
+        tab       => 'current',
+        reuse     => 1,
+        log       => sub {},
         %args,
     );
     $c = $mech->content;

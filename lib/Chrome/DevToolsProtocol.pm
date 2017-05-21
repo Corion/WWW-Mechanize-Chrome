@@ -102,7 +102,7 @@ sub connect( $self, %args ) {
                 return Future->done( $info->{webSocketDebuggerUrl} );
             });
 
-        } elsif( $args{ tab } =~ /^\d+$/ ) {
+        } elsif( defined $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 $self->log('DEBUG', "Attached to tab $args{tab}", @tabs );
                 $self->{tab} = $tabs[ $args{ tab }];
@@ -111,8 +111,15 @@ sub connect( $self, %args ) {
 
         } elsif( ref $args{ tab } eq 'Regexp') {
             # Let's assume that the tab is a regex:
+
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
+
+                if( ! $tab ) {
+                    croak "Couldn't find a tab matching /$args{ tab }/";
+                };
+
+                $self->{tab} = $tab;
                 $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
@@ -147,6 +154,8 @@ sub connect( $self, %args ) {
     $got_endpoint = $got_endpoint->then(sub($endpoint) {
         $self->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
+    })->catch(sub(@args) {
+        croak @args;
     });
 
     my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport';
@@ -154,20 +163,21 @@ sub connect( $self, %args ) {
         (my $transport_module = $transport) =~ s!::!/!g;
         $transport_module .= '.pm';
         require $transport_module;
-        $transport = $self->{transport} = $transport->new;
+        $self->{transport} = $transport->new;
+        $transport = $self->{transport};
     };
 
-    $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } )->then(sub( $ws ) {
-        return Future->done( $transport )
+    $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } )
+    ->then(sub( $tr ) {
+        return Future->done( $tr )
     });
 };
 
 sub DESTROY( $self ) {
-    if( $self->transport) {
-        warn "Closing websocket";
-        $self->transport->close()
+    delete $self->{ua};
+    if( my $t = $self->transport) {
+        $t->close();
     };
-        warn "Driver done";
 }
 
 sub on_response( $self, $connection, $message ) {
@@ -310,8 +320,9 @@ sub get_domains( $self ) {
 
 =cut
 
-sub list_tabs( $self ) {
+sub list_tabs( $self, $type = 'page' ) {
     return $self->json_get('list')->then(sub( $info ) {
+        @$info = grep { defined $type ? $_->{type} eq $type : 1 } @$info;
         return Future->done( @$info );
     });
 };
@@ -342,7 +353,10 @@ sub activate_tab( $self, $tab ) {
 
 sub close_tab( $self, $tab ) {
     my $url = $self->build_url( domain => 'close/' . $tab->{id} );
-    $self->ua->http_get( $url )->catch(sub{ use Data::Dumper; warn Dumper \@_; Future->done });
+    $self->ua->http_get( $url, headers => { 'Connection' => 'close' } )
+    ->catch(
+        sub{ use Data::Dumper; warn Dumper \@_; Future->done }
+    );
 };
 
 1;

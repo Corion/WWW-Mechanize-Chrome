@@ -256,6 +256,7 @@ sub new {
         # Synchronously connect here, just for easy API compatibility
         $self->driver->connect(
             new_tab => !$options{ reuse },
+            tab     => $options{ tab },
         )->get;
     };
 
@@ -270,7 +271,10 @@ sub new {
         $self->driver->send_message('Page.enable'),
         $self->driver->send_message('Network.enable'),
     )->get; # we need to get DOMLoaded events and Network events
-    $self->get('about:blank'); # Reset to clean state, also initialize our frame id
+
+    if( ! exists $options{ tab }) {
+        $self->get('about:blank'); # Reset to clean state, also initialize our frame id
+    };
 
     $self
 };
@@ -3004,7 +3008,7 @@ This method is specific to WWW::Mechanize::Chrome.
 sub render_content( $self, %options ) {
     $options{ format } ||= 'pdf';
     delete $options{ format };
-    
+
     my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get;
     return decode_base64( $base64 );
 }

@@ -26,7 +26,9 @@ $VERSION = '0.01';
 =cut
 
 sub new( $class, %options ) {
-    bless \%options => $class
+    my $self = \%options;
+    bless $self => $class;
+    $self
 }
 
 sub connection( $self ) {
