@@ -29,6 +29,7 @@ t/50-mech-new-dsl.t
 t/50-mech-new.t
 t/51-mech-set-content.t
 t/56-render-content.t
+t/70-mech-png.t
 t/helper.pm
 xt/99-changes.t
 xt/99-compile.t
