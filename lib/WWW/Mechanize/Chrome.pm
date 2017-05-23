@@ -627,13 +627,7 @@ sub _collectEvents( $self, @info ) {
     $done
 }
 
-sub get {
-    my ($self, $url, %options ) = @_;
-
-    # $frameInfo might come _after_ we have already seen messages for it?!
-    # So we need to capture all events even before we send our command to the
-    # browser, as we might receive messages before we receive the answer to
-    # our command:
+sub _navigate( $self, $get_navigation_future, %options ) {
     my $frameId = $options{ frameId } || $self->frameId;
     my $events_f = $self->_collectEvents( sub( $ev ) {
         # Let's assume that the first frame id we see is "our" frame
@@ -644,20 +638,30 @@ sub get {
         and $ev->{params}->{frameId} eq $frameId
     });
 
-        # Page.frameStartedLoading
-        # Page.frameNavigated
-        # Page.frameStoppedLoading
-    my $nav_f = $self->driver->send_message(
-        'Page.navigate',
-        url => "$url"
-    );
-    # Wait for things to settle down
-    my( $nav, $events )= Future->wait_all( $nav_f, $events_f )->get;
+    my $nav_f = $get_navigation_future->();
 
-    my @events = $events->get;
+    # Wait for things to settle down
+    my( $nav, $events ) = Future->wait_all( $nav_f, $events_f )->get;
 
     # Store our frame id so we know what events to listen for in the future!
     $self->{frameId} = $nav->get->{frameId};
+
+    my @events = $events->get;
+}
+
+
+sub get {
+    my ($self, $url, %options ) = @_;
+
+    # $frameInfo might come _after_ we have already seen messages for it?!
+    # So we need to capture all events even before we send our command to the
+    # browser, as we might receive messages before we receive the answer to
+    # our command:
+    my @events = $self->_navigate( sub {
+        $self->driver->send_message(
+            'Page.navigate',
+            url => "$url"
+    )}, %options );
 
     # Now, look at the loaderId and store that if we need to fabricate a
     # proper HTTP::Response from it
@@ -670,6 +674,7 @@ sub get {
         # We should return a really fake HTTP::Response here
         return 1
     };
+
 };
 
 =head2 C<< $mech->get_local( $filename , %options ) >>
@@ -1025,28 +1030,6 @@ sub status {
     my ($self) = @_;
     return $self->response( headers => 0 )->code
 };
-
-sub _navigate( $self, $get_navigation_future, %options ) {
-    my $frameId = $options{ frameId } || $self->frameId;
-    my $events_f = $self->_collectEvents( sub( $ev ) {
-        # Let's assume that the first frame id we see is "our" frame
-        if( $ev->{method} eq 'Page.frameStartedLoading' ) {
-            $frameId ||= $ev->{params}->{frameId};
-        };
-            $ev->{method} eq 'Page.frameStoppedLoading'
-        and $ev->{params}->{frameId} eq $frameId
-    });
-
-    my $nav_f = $get_navigation_future->();
-
-    # Wait for things to settle down
-    my( $nav, $events ) = Future->wait_all( $nav_f, $events_f )->get;
-
-    # Store our frame id so we know what events to listen for in the future!
-    $self->{frameId} = $nav->get->{frameId};
-
-    my @events = $events->get;
-}
 
 =head2 C<< $mech->back() >>
 
