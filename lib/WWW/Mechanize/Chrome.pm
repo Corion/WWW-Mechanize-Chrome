@@ -1061,8 +1061,6 @@ Returns the (new) response.
 =cut
 
 sub forward( $self, %options ) {
-    my ($self) = @_;
-
     $self->_navigate( sub {
         $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
