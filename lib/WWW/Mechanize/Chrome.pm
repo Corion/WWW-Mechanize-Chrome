@@ -238,6 +238,8 @@ sub new($class, %options) {
         $options{ tab } = 0; # use tab at index 0
     };
 
+    $options{ extra_headers } ||= {};
+
     # Connect to it
     eval {
         $options{ driver } ||= Chrome::DevToolsProtocol->new(
@@ -316,10 +318,21 @@ sub chrome_version( $self ) {
         return $version if $version;
     };
 
+    $self->chrome_version_info()->{Browser}
+}
+
+=head2 C<< $mech->chrome_version_info >>
+
+  print $mech->chrome_version_info->{Browser};
+
+Returns the version information of the Chrome executable and various other
+APIs of Chrome that the object is connected to.
+
+=cut
+
+sub chrome_version_info( $self ) {
     $self->{chrome_version} ||= do {
-        my $version= $self->driver->version_info->get->{Browser};
-        $version=~ s!\s+!!g;
-        $version
+        $self->driver->version_info->get;
     };
 }
 
@@ -461,7 +474,7 @@ sub eval_in_page {
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->driver->evaluate("return $str", @args);
+    my $result = $self->driver->evaluate("return $str");
     $self->post_process;
     return $result->{value}, $result->{type};
 };
@@ -481,26 +494,21 @@ Evaluates Javascript code in the context of Chrome.
 
 This allows you to modify properties of Chrome.
 
+This is currently not implemented.
+
 =cut
 
 sub eval_in_chrome {
     my ($self, $code, @args) = @_;
     croak "Can't call eval_in_chrome";
-
-    my $params= {
-        args => \@args,
-        script => $code,
-    };
-    $self->driver->_execute_command({ command => 'phantomExecute' }, $params);
 };
 
 sub agent( $self, $ua ) {
     if( $ua ) {
-        die "Setting the User-Agent is not yet implemented";
-        # Call Network.setUserAgentOverride { userAgent => $ua }
+        $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )->get
     };
 
-    $self->chrome_version->{"User-Agent"}
+    $self->chrome_version_info->{"User-Agent"}
 }
 
 sub autoclose_tab( $self, $autoclose ) {
@@ -542,23 +550,17 @@ sub DESTROY {
     print $mech->content_as_png();
 
 Convenience method that marks all nodes in the arguments
-with
-
-  background: red;
-  border: solid black 1px;
-  display: block; /* if the element was display: none before */
+with a red frame.
 
 This is convenient if you need visual verification that you've
 got the right nodes.
-
-There currently is no way to restore the nodes to their original
-visual state except reloading the page.
 
 =cut
 
 sub highlight_node {
     my ($self,@nodes) = @_;
     for (@nodes) {
+        #  Overlay.highlightNode
         my $style= $self->eval_in_page(<<JS, $_);
         (function(el) {
             if( 'none' == el.style.display ) {
@@ -912,18 +914,18 @@ Note that currently, we only support one value per header.
 
 =cut
 
-sub add_header {
-    my ($self, @headers) = @_;
-    use Data::Dumper;
-    #warn Dumper $headers;
+sub _set_extra_headers( $self, %headers ) {
+    $self->driver->send_message('Network.setExtraHTTPHeaders',
+        headers => \%headers
+    )->get
+};
 
-    while( my ($k,$v) = splice @headers, 0, 2 ) {
-        $self->eval_in_chrome(<<'JS', , $k, $v);
-            var h= this.customHeaders;
-            h[arguments[0]]= arguments[1];
-            this.customHeaders= h;
-JS
+sub add_header( $self, %headers ) {
+    $self->{ extra_headers } = {
+        %{ $self->{ extra_headers } },
+        %headers,
     };
+    $self->_set_extra_headers( %{ $self->{ extra_headers } } );
 };
 
 =head2 C<< $mech->delete_header( $name , $name2... ) >>
@@ -935,16 +937,9 @@ that Chrome may still send a header with its default value.
 
 =cut
 
-sub delete_header {
-    my ($self, @headers) = @_;
-
-    $self->eval_in_chrome(<<'JS', @headers);
-        var headers= this.customHeaders;
-        for( var i = 0; i < arguments.length; i++ ) {
-            delete headers[arguments[i]];
-        };
-        this.customHeaders= headers;
-JS
+sub delete_header( $self, @headers ) {
+    delete @{ $self->{ extra_headers } }{ @headers };
+    $self->_set_extra_headers( %{ $self->{ extra_headers } } );
 };
 
 =head2 C<< $mech->reset_headers >>
@@ -955,9 +950,9 @@ Removes all custom headers and makes Chrome send its defaults again.
 
 =cut
 
-sub reset_headers {
-    my ($self) = @_;
-    $self->eval_in_chrome('this.customHeaders= {}');
+sub reset_headers( $self ) {
+    $self->{ extra_headers } = {};
+    $self->_set_extra_headers();
 };
 
 =head2 C<< $mech->res() >> / C<< $mech->response(%options) >>
@@ -1086,7 +1081,7 @@ sub uri( $self ) {
 
 =head2 C<< $mech->document() >>
 
-    print $self->driver->send_message( 'DOM.getDocument' )->get->{nodeId}
+    print $self->document->get->{nodeId}
 
 Returns the document object as a Future.
 
@@ -1845,8 +1840,9 @@ sub _fetchNode( $self, $nodeId ) {
             attributes => {
                 @{ $r->{attributes}},
             },
+            driver => $self->driver,
         };
-        Future->done( $node );
+        Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
     })
 }
 
@@ -3111,23 +3107,6 @@ sub element_query {
             . ']';
 };
 
-=head2 C<< $mech->Chrome_elementToJS >>
-
-Returns the Javascript fragment to turn a Selenium::Remote::Chrome
-id back to a Javascript object.
-
-=cut
-
-sub Chrome_elementToJS {
-    <<'JS'
-    function(id,doc_opt){
-        var d = doc_opt || document;
-        var c= d['$wdc_'];
-        return c[id]
-    };
-JS
-}
-
 sub post_process
 {
     my $self = shift;
@@ -3148,6 +3127,40 @@ sub report_js_errors
     ( @{$_->{trace}} && $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
     } @errors;
     Carp::carp("javascript error: @errors") ;
+}
+
+package WWW::Mechanize::Chrome::Node;
+use strict;
+use Filter::signatures;
+no warnings 'experimental::signatures';
+use feature 'signatures';
+use Moo 2;
+
+has 'attributes' => (
+    is => 'lazy',
+    default => sub { {} },
+);
+
+has 'nodeId' => (
+    is => 'ro',
+);
+
+has 'driver' => (
+    is => 'ro',
+);
+
+sub get_attribute( $self, $attribute ) {
+    if( $attribute eq 'innerText' ) {
+        my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId )->get->{outerHTML};
+
+        # Strip first and last tag in a not so elegant way
+        $html =~ s!\A<[^>]+>!!;
+        $html =~ s!<[^>]+>\z!!;
+        return $html
+    } else {
+
+        return $self->attributes->{ $attribute }
+    }
 }
 
 1;
