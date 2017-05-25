@@ -36,7 +36,6 @@ sub connection( $self ) {
 }
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
-    $logger ||= sub{};
     weaken $handler;
 
     local @CARP_NOT = (@CARP_NOT, 'Chrome::DevToolsProtocol::Transport');
@@ -48,14 +47,14 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         die "Got an undefined endpoint" unless defined $endpoint;
 
         my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
-            $logger->('DEBUG',"Connecting to $endpoint");
+            $logger->('debug',"Connecting to $endpoint");
             $client = AnyEvent::WebSocket::Client->new;
             $client->connect( $endpoint )->cb( $done_cb );
         });
         $res
 
     })->then( sub( $c ) {
-        $logger->( 'DEBUG', sprintf "Connected" );
+        $logger->( 'trace', sprintf "Connected" );
         my $connection = $c->recv;
         $self->{connection} = $connection;
         undef $self;

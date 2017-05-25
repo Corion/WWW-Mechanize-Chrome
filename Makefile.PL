@@ -51,6 +51,7 @@ my %module = (
         'AnyEvent'           => 0,
         'AnyEvent::Future'   => 0,
         'AnyEvent::WebSocket::Client' => 0,
+        'Log::Log4perl'      => 0, # configurable logging
         'Future::HTTP'     => 0,
         'JSON'             => 0,
         'WWW::Mechanize::Plugin::Selector' => 0,

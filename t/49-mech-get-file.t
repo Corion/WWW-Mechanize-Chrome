@@ -5,11 +5,14 @@ use Cwd;
 use URI::file;
 use File::Basename;
 use File::Spec;
+use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
 use lib '.';
 use t::helper;
 use Test::HTTP::LocalServer;
+
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -27,7 +30,6 @@ use Data::Dumper;
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        #log => sub { my ($level, $message, @info ) = @_; diag $message, Dumper \@info },
         @_,
     );
 };

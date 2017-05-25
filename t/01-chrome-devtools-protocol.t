@@ -4,6 +4,7 @@ use Test::More;
 use Data::Dumper;
 use Chrome::DevToolsProtocol;
 use WWW::Mechanize::Chrome; # for launching Chrome
+use Log::Log4perl qw(:easy);
 
 use lib 'inc', '../inc', '.';
 use t::helper;
@@ -20,7 +21,6 @@ if (my $err = t::helper::default_unavailable) {
 
 sub new_mech {
     my $chrome = WWW::Mechanize::Chrome->new(
-        log => sub {},
         transport => 'Chrome::DevToolsProtocol::Transport::AnyEvent',
         @_
     );

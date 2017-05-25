@@ -55,9 +55,7 @@ Specify the port where Chrome should listen
 
 =item B<log>
 
-Specify the log level of Chrome
-
-  log => 'OFF'   # Also INFO, WARN, DEBUG
+A premade L<Log::Log4perl> object
 
 =item B<launch_exe>
 
@@ -165,7 +163,7 @@ sub spawn_child_posix( $self, @cmd ) {
     # daemonize
     defined(my $pid = fork())   || die "can't fork: $!";
     if( $pid ) {    # non-zero now means I am the parent
-        $self->log('DEBUG', "Spawned child as $pid");
+        $self->log('debug', "Spawned child as $pid");
         return $pid;
     };
     chdir("/")                  || die "can't chdir to /: $!";
@@ -191,21 +189,23 @@ sub spawn_child( $self, $localhost, @cmd ) {
     return $pid
 }
 
+sub _build_log( $self ) {
+    require Log::Log4perl;
+    Log::Log4perl->get_logger(__PACKAGE__);
+}
+
 sub log( $self, $level, $message, @args ) {
-    if( my $handler = $self->{log} ) {
-        shift;
-        goto &$handler;
+    my $logger = $self->{log};
+    if( !@args ) {
+        $logger->$level( $message )
     } else {
-        if( !@args ) {
-            warn "$level: $message";
-        } else {
-            warn "$level: $message " . Dumper @args;
-        };
+        my $enabled = "is_$level";
+        $logger->$level( join " ", $message, Dumper @args )
+            if( $logger->$enabled );
     };
 }
 
-sub new {
-    my ($class, %options) = @_;
+sub new($class, %options) {
 
     if (! exists $options{ autodie }) {
         $options{ autodie } = 1
@@ -217,6 +217,7 @@ sub new {
 
     my $self= bless \%options => $class;
     my $localhost = '127.0.0.1';
+    $self->{log} ||= $self->_build_log;
 
     unless ( defined $options{ port } ) {
         # Find free port
@@ -225,7 +226,7 @@ sub new {
 
     unless ($options{pid} or $options{reuse}) {
         my @cmd= $class->build_command_line( \%options );
-        $self->log('DEBUG', "Spawning", \@cmd);
+        $self->log('debug', "Spawning", \@cmd);
         $self->{pid} = $self->spawn_child( $localhost, @cmd );
         $self->{ kill_pid } = 1;
 
@@ -619,7 +620,7 @@ sub _collectEvents( $self, @info ) {
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
-            #$self->log( 'DEBUG', "Received final message, unwinding", $events[-1] );
+            $self->log( 'trace', "Received final message, unwinding", $events[-1] );
             $self->driver->on_message( undef );
             $done->done( @info, @events );
         };
@@ -1105,7 +1106,7 @@ sub decoded_content($self) {
     $self->document->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        $self->log('DEBUG', "Fetching HTML for node " . $nodeId );
+        $self->log('trace', "Fetching HTML for node " . $nodeId );
         $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
     })->then( sub( $outerHTML ) {
         Future->done( $outerHTML->{outerHTML} )
@@ -1201,7 +1202,7 @@ sub update_html( $self, $content ) {
     $self->document->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        $self->log('DEBUG', "Setting HTML for node " . $nodeId );
+        $self->log('trace', "Setting HTML for node " . $nodeId );
         $self->driver->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => $content )
      })->get;
 };

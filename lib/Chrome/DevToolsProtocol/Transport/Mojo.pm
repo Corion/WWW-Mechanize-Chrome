@@ -39,7 +39,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     $got_endpoint->then( sub( $endpoint ) {
         $client = Mojo::UserAgent->new;
 
-        $logger->('DEBUG',"Connecting to $endpoint");
+        $logger->('debug',"Connecting to $endpoint");
         die "Got an undefined endpoint" unless defined $endpoint;
         my $res = $self->future;
         $client->websocket( $endpoint, sub( $ua, $tx ) {
@@ -49,7 +49,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $res
 
     })->then( sub( $c ) {
-        $logger->( 'DEBUG', sprintf "Connected" );
+        $logger->( 'trace', sprintf "Connected" );
         my $connection = $c;
         $self->{connection} = $connection;
         undef $self;

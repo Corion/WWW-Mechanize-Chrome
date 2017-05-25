@@ -2,6 +2,7 @@
 use strict;
 use Test::More;
 use File::Basename;
+use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
 
@@ -9,6 +10,8 @@ use lib 'inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 
 use t::helper;
+
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -30,7 +33,6 @@ sub new_mech {
     #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        log => sub {},
         %args,
     );
 };
@@ -71,7 +73,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
         autodie   => 0,
         autoclose => 0,
         reuse     => 1,
-        log       => sub {},
         new_tab   => 1,
         %args,
     );
@@ -90,7 +91,6 @@ HTML
         autoclose => 0,
         tab       => qr/^\Q$magic/,
         reuse     => 1,
-        log       => sub {},
         %args,
     );
     $c = $mech->content;
@@ -110,7 +110,6 @@ HTML
         autoclose => 0,
         tab       => 'current',
         reuse     => 1,
-        log       => sub {},
         %args,
     );
     $c = $mech->content;
@@ -125,7 +124,6 @@ HTML
         $mech = WWW::Mechanize::Chrome->new(
             autodie => 1,
             tab => qr/\Q$magic/,
-            log => sub {},
             reuse => 1,
         %args,
         );

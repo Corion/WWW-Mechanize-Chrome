@@ -29,7 +29,6 @@ if (my $err = t::helper::default_unavailable) {
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        log => sub {},
         @_,
     );
 };

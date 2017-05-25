@@ -17,6 +17,11 @@ $VERSION = '0.01';
 # https://chromedevtools.github.io/devtools-protocol/tot/DOM/
 # http://localhost:9222/json
 
+sub _build_log( $self ) {
+    require Log::Log4perl;
+    Log::Log4perl->get_logger(__PACKAGE__);
+}
+
 sub new($class, %args) {
     my $self = bless \%args => $class;
 
@@ -27,6 +32,7 @@ sub new($class, %args) {
     $args{ ua } ||= Future::HTTP->new;
     $args{ sequence_number } ||= 0;
     $args{ tab } ||= undef;
+    $args{ log } ||= $self->_build_log;
 
     $args{ receivers } ||= {};
     $args{ on_message } ||= undef;
@@ -55,15 +61,13 @@ sub on_message( $self, $new_message=0 ) {
 }
 
 sub log( $self, $level, $message, @args ) {
-    if( my $handler = $self->{log} ) {
-        shift;
-        goto &$handler;
+    my $logger = $self->{log};
+    if( !@args ) {
+        $logger->$level( $message )
     } else {
-        if( !@args ) {
-            carp "$level: $message";
-        } else {
-            carp "$level: $message " . Dumper @args;
-        };
+        my $enabled = "is_$level";
+        $logger->$level( join " ", $message, Dumper @args )
+            if( $logger->$enabled );
     };
 }
 
@@ -96,14 +100,14 @@ sub connect( $self, %args ) {
     if( ! $endpoint ) {
         if( $args{ new_tab }) {
             $got_endpoint = $self->new_tab()->then(sub( $info ) {
-                $self->log('DEBUG', "Created new tab", $info );
+                $self->log('debug', "Created new tab", $info );
                 $self->{tab} = $info;
                 return Future->done( $info->{webSocketDebuggerUrl} );
             });
 
         } elsif( defined $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
-                $self->log('DEBUG', "Attached to tab $args{tab}", @tabs );
+                $self->log('debug', "Attached to tab $args{tab}", @tabs );
                 $self->{tab} = $tabs[ $args{ tab }];
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
@@ -119,7 +123,7 @@ sub connect( $self, %args ) {
                 };
 
                 $self->{tab} = $tab;
-                $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
+                $self->log('debug', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
@@ -128,7 +132,7 @@ sub connect( $self, %args ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 (my $tab) = grep { $_->{id} eq $args{ tab }->{id}} @tabs;
                 $self->{tab} = $tab;
-                $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
+                $self->log('debug', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
@@ -137,7 +141,7 @@ sub connect( $self, %args ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 (my $tab) = grep { $_->{id} eq $args{ tab }} @tabs;
                 $self->{tab} = $tab;
-                $self->log('DEBUG', "Attached to tab $args{tab}", $tab );
+                $self->log('debug', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
@@ -145,7 +149,7 @@ sub connect( $self, %args ) {
             # Attach to the first available tab we find
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 (my $tab) = grep { $_->{webSocketDebuggerUrl} } @tabs;
-                $self->log('DEBUG', "Attached to some tab", $tab );
+                $self->log('debug', "Attached to some tab", $tab );
                 $self->{tab} = $tab;
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
@@ -195,11 +199,11 @@ sub on_response( $self, $connection, $message ) {
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
         if( $self->on_message ) {
-            $self->log( 'DEBUG', "Dispatching message", $response );
+            $self->log( 'trace', "Dispatching message", $response );
             $self->on_message->( $response );
 
         } else {
-            $self->log( 'DEBUG', "Ignored message", $response )
+            $self->log( 'trace', "Ignored message", $response )
         };
     } else {
 
@@ -207,13 +211,13 @@ sub on_response( $self, $connection, $message ) {
         my $receiver = delete $self->{receivers}->{ $id };
 
         if( ! $receiver) {
-            $self->log( 'DEBUG', "Ignored response to unknown receiver", $response )
+            $self->log( 'debug', "Ignored response to unknown receiver", $response )
 
         } elsif( $response->{error} ) {
-            $self->log( 'DEBUG', "Replying to error $response->{id}", $response );
+            $self->log( 'debug', "Replying to error $response->{id}", $response );
             $receiver->die(  $response->{error}->{message},$response->{error}->{code} );
         } else {
-            $self->log( 'DEBUG', "Replying to $response->{id}", $response );
+            $self->log( 'debug', "Replying to $response->{id}", $response );
             $receiver->done( $response->{result} );
         };
     };

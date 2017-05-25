@@ -5,6 +5,8 @@ author:
 build_requires:
   Data::Dumper: '0'
   ExtUtils::MakeMaker: '0'
+  Future::Mojo: '0'
+  Image::Info: '0'
   Mojolicious: '0'
   Test::HTTP::LocalServer: '0'
   Test::More: '0'
@@ -31,7 +33,6 @@ requires:
   Filter::signatures: '0.09'
   Future: '0'
   Future::HTTP: '0'
-  HTML::Selector::XPath: '0'
   HTTP::Headers: '0'
   HTTP::Response: '0'
   IO::Socket::INET: '0'
@@ -39,6 +40,7 @@ requires:
   Object::Import: '0'
   Scalar::Util: '0'
   WWW::Mechanize::Link: '0'
+  WWW::Mechanize::Plugin::Selector: '0'
   perl: '5.006'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git

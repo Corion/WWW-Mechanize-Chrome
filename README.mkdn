@@ -36,9 +36,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 - **log**
 
-    Specify the log level of Chrome
-
-        log => 'OFF'   # Also INFO, WARN, DEBUG
+    A premade [Log::Log4perl](https://metacpan.org/pod/Log::Log4perl) object
 
 - **launch\_exe**
 
@@ -158,17 +156,10 @@ This allows you to modify properties of Chrome.
     print $mech->content_as_png();
 
 Convenience method that marks all nodes in the arguments
-with
-
-    background: red;
-    border: solid black 1px;
-    display: block; /* if the element was display: none before */
+with a red frame.
 
 This is convenient if you need visual verification that you've
 got the right nodes.
-
-There currently is no way to restore the nodes to their original
-visual state except reloading the page.
 
 # NAVIGATION METHODS
 
@@ -783,8 +774,6 @@ value in scalar context and all values in list context.
 Allows fine-grained access to getting/setting a value
 with a different API. Supported keys are:
 
-    pre
-    post
     name
     value
 
@@ -974,11 +963,6 @@ Returns the XPath query that searches for all elements with `tagName`s
 in `@elements` having the attributes `%attributes`. The `@elements`
 will form an `or` condition, while the attributes will form an `and`
 condition.
-
-## `$mech->Chrome_elementToJS`
-
-Returns the Javascript fragment to turn a Selenium::Remote::Chrome
-id back to a Javascript object.
 
 # INCOMPATIBILITIES WITH WWW::Mechanize
 
