@@ -34,25 +34,20 @@ sub new_mech {
 };
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub {
-    my($browser_instance, $mech)= @_;
+    my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    my ($site,$estatus) = ('http://'.rand(1000).'.www.doesnotexist.example/',500);
-    my $res = $mech->get($site);
+    my $html = $mech->content;
+    like $html, qr!<html><head></head><body></body></html>!, "We can get the plain HTML";
 
-    #is $mech->uri, $site, "Navigating to (nonexisting) $site";
+    my $html2 = $mech->content( format => 'html' );
+    is $html2, $html, "When asking for HTML explicitly, we get the same text";
 
-    if( ! isa_ok $res, 'HTTP::Response', 'The response') {
-        SKIP: { skip "No response returned", 1 };
-    } else {
-        my $c = $res->code;
-        like $res->code, qr/^(404|5\d\d)$/, "GETting $site gives a 5xx (no proxy) or 404 (proxy)"
-            or diag $mech->content;
+    my $text = $mech->content( format => 'text' );
+    is $text, '', "We can get the plain text";
 
-        like $mech->status, qr/^(404|5\d\d)$/, "GETting $site returns a 5xx (no proxy) or 404 (proxy) HTTP status"
-            or diag $mech->content;
-    };
-
-    ok !$mech->success, 'We consider this response not successful';
+    my $text2;
+    my $lives = eval { $mech->content( format => 'bogus' ); 1 };
+    ok !$lives, "A bogus content format raises an error";
 });
