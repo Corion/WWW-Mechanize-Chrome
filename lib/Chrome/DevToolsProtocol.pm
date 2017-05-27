@@ -36,6 +36,7 @@ sub new($class, %args) {
 
     $args{ receivers } ||= {};
     $args{ on_message } ||= undef;
+    $args{ one_shot } ||= {};
 
     $self
 };
@@ -193,12 +194,24 @@ sub DESTROY( $self ) {
     };
 }
 
+sub one_shot( $self, $event ) {
+    my $result = $self->transport->future;
+    push @{ $self->{one_shot}->{ $event } }, $result;
+    $result
+};
+
 sub on_response( $self, $connection, $message ) {
     my $response = $self->json->decode( $message );
 
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
-        if( $self->on_message ) {
+
+        my $slot = $self->{one_shot}->{ $response->{method}};
+        if( $slot and my $recipient = shift @$slot ) {
+            $self->log( 'trace', "Dispatching one-shot event", $response );
+            $recipient->done( $response )
+
+        } elsif( $self->on_message ) {
             $self->log( 'trace', "Dispatching message", $response );
             $self->on_message->( $response );
 
@@ -215,7 +228,7 @@ sub on_response( $self, $connection, $message ) {
 
         } elsif( $response->{error} ) {
             $self->log( 'debug', "Replying to error $response->{id}", $response );
-            $receiver->die(  $response->{error}->{message},$response->{error}->{code} );
+            $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data},$response->{error}->{code} );
         } else {
             $self->log( 'debug', "Replying to $response->{id}", $response );
             $receiver->done( $response->{result} );
@@ -272,6 +285,7 @@ sub send_message( $self, $method, %params ) {
     });
 
     my $response = $self->future;
+    $self->log( 'trace', "Sent message", $payload );
     $self->transport->send( $payload );
     $self->{receivers}->{ $id } = $response;
     $response
@@ -282,7 +296,10 @@ sub send_message( $self, $method, %params ) {
 =cut
 
 sub evaluate( $self, $string ) {
-    $self->send_message('Runtime.evaluate', expression => $string, returnByValue => JSON::true )
+    $self->send_message('Runtime.evaluate',
+        expression => $string,
+        returnByValue => JSON::true
+    )
 };
 
 =head2 C<< $chrome->eval >>
