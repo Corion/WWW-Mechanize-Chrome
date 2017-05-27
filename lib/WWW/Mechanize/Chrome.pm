@@ -734,7 +734,7 @@ sub httpResponseFromChromeResponse( $self, $res ) {
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
-        HTTP::Headers->new( $res->{params}->{response}->{headers}),
+        HTTP::Headers->new( %{ $res->{params}->{response}->{headers} }),
     );
 };
 
@@ -763,7 +763,7 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
                  } @$events;
     my %events;
     for (@events) {
-        $events{ $_->{method} } = $_;
+        $events{ $_->{method} } ||= $_;
     };
 
     # Create HTTP::Request object from 'Network.requestWillBeSent'
@@ -1237,6 +1237,7 @@ sub content_type {
         $ct= $meta->{attributes}->{'content'};
     };
     if(!$ct and my $r= $self->response ) {
+
         my $h= $r->headers;
         $ct= $h->header('Content-Type');
     };
