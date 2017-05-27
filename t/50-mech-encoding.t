@@ -11,7 +11,7 @@ my @tests = (
     [ 'mixi_jp_index.html', 'EUC-JP', qr/\x{30DF}\x{30AF}\x{30B7}\x{30A3}/ ],
     [ 'sophos_co_jp_index.html', 'SHIFT_JIS', qr/\x{30B0}\x{30ED}\x{30FC}\x{30D0}\x{30EB}/ ],
 );
-my $testcount = @tests;
+my $testcount = 2*@tests;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
@@ -46,7 +46,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
             my ($file,$encoding,$content_re) = @$_;
             $mech->get_local($file);
             is uc $mech->content_encoding, $encoding, "$file has encoding $encoding";
-            diag length $mech->content;
+            diag "Length of content", length $mech->content;
             like $mech->content, $content_re, "Partial expression gets found in UTF-8 content";
     };
 });

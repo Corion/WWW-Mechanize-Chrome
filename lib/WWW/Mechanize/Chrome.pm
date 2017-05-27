@@ -1088,18 +1088,19 @@ sub document( $self ) {
     $self->driver->send_message( 'DOM.getDocument' )
 }
 
-# If things get nasty, we could fall back to Chrome.webpage.plainText
-# var page = require('webpage').create();
-# page.open('http://somejsonpage.com', function () {
-#     var jsonSource = page.plainText;
 sub decoded_content($self) {
     $self->document->then(sub( $root ) {
-        # Find "HTML" child node:
-        my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        $self->log('trace', "Fetching HTML for node " . $nodeId );
-        $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-    })->then( sub( $outerHTML ) {
-        Future->done( $outerHTML->{outerHTML} )
+        # Join _all_ child nodes together to also fetch DOCTYPE nodes
+        # and the stuff that comes after them
+        my @content = map {
+            my $nodeId = $_->{nodeId};
+            $self->log('trace', "Fetching HTML for node " . $nodeId );
+            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+        } @{ $root->{root}->{children} };
+        
+        Future->wait_all( @content )
+    })->then( sub( @outerHTML_f ) {
+        Future->done( join "", map { $_->get->{outerHTML} } @outerHTML_f )
     })->get;
 };
 
@@ -1129,7 +1130,7 @@ The allowed values are C<html> and C<text>. The default is C<html>.
 
 sub content( $self, %options ) {
     $options{ format } ||= 'html';
-    my $format = delete $options{ format } || 'html';
+    my $format = delete $options{ format };
 
     my $content;
     if( 'html' eq $format ) {
@@ -1921,8 +1922,7 @@ sub xpath {
                 })
                 } @$query
             )->get;
-            #warn Dumper \@found;
-            @found = map { $_->get->get } @found;
+            @found = map { my $r = $_->get; $r ? $r->get : () } @found;
             #warn Dumper \@found;
             if( ! @found ) {
                 #warn "Nothing found matching @$query in frame";
