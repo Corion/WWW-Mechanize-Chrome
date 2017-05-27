@@ -14,6 +14,7 @@ use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
+use Scalar::Util 'weaken';
 
 use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION = '0.01';
@@ -24,7 +25,10 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 =head1 SYNOPSIS
 
+  use Log::Log4perl qw(:easy);
   use WWW::Mechanize::Chrome;
+
+  Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
   my $mech = WWW::Mechanize::Chrome->new();
   $mech->get('http://google.com');
 
