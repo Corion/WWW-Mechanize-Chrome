@@ -1,0 +1,27 @@
+<html>
+<head>
+<title>50-click.html</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<script>
+var clicked="<nothing>";
+var w;
+var counter=0;
+
+window.setTimeout(function(){counter++},1000);
+</script>
+</head>
+<body bgcolor="white">
+<form name="foo" id="foo" action="51-mech-submit.html">
+<!-- If the form action points to the same page, clicking the unnamed button
+     raises no events in FF? -->
+<input type="submit" id="unnamed">
+<input type="submit" name="Go" id="Go">
+<input type="image" src="nowhere.png" name="imageGo" id="imageGo" alt="imageGo"/>
+</form>
+<a href="#" id="a_link" onclick="javascript:clicked='a_link';return false">A link</a>
+<div id="a_div" onclick="javascript:clicked='a_div';return false">Some div</div>
+<a href="#" id="open_window" onclick="javascript:w=window.open('50-form2.html');return false">Open a window (or tab)</a>
+<a href="#" id="foo:fancy" onclick="javascript:clicked='foo:fancy';return false">
+<a href="#" id="foo:array[1]" onclick="javascript:clicked='foo:array[1]';return false">
+</body>
+</html>

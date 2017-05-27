@@ -471,16 +471,15 @@ This method is special to WWW::Mechanize::Chrome.
 
 sub eval_in_page {
     my ($self,$str,@args) = @_;
-
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
     local @Chrome::DevToolsProtocol::CARP_NOT
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->driver->evaluate("return $str");
-    $self->post_process;
-    return $result->{value}, $result->{type};
+    my $result = $self->driver->evaluate("$str")->get;
+#    $self->post_process;
+    return $result->{result}->{value}, $result->{result}->{type};
 };
 
 {
@@ -1809,20 +1808,41 @@ sub _performSearch( $self, %args ) {
     my $nodeId = $args{ nodeId };
     my $query = $args{ query };
     $self->driver->send_message( 'DOM.performSearch', nodeId => $nodeId, query => $query )->then(sub($results) {
+    
         if( $results->{resultCount} ) {
             my $searchResults;
             my $searchId = $results->{searchId};
+            my $childNodes = $self->driver->one_shot('DOM.setChildNodes');
             $self->driver->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
                 fromIndex => 0,
                 toIndex => $results->{resultCount}
-            )->followed_by( sub( $results ) {
-                $searchResults = $results->get;
-                $self->driver->send_message( 'DOM.discardSearchResults',
-                    searchId => $searchId,
-                );
-            })->followed_by( sub( $response ) {
-                Future->done( @{ $searchResults->{nodeIds} } );
+            # We can't immediately discard our search results until we find out
+            # what invalidates node ids.
+            # So we currently accumulate memory until we disconnect. Oh well.
+            # And node ids still get invalidated
+            #)->followed_by( sub( $results ) {
+            #    $searchResults = $results->get;
+            #    $self->driver->send_message( 'DOM.discardSearchResults',
+            #        searchId => $searchId,
+            #    );
+            #}
+            )->then( sub( $response ) {
+                my %nodes = map {
+                    $_->{nodeId} => $_
+                } @{ $childNodes->get->{params}->{nodes} };
+                
+                # Now, resolve the found nodes directly with the
+                # found node ids instead of returning the numbers and fetching
+                # them later
+                my @nodes = map {
+                    # Upgrade the attributes to a hash, ruining their order:
+                    my $n = $nodes{ $_ };
+                    $self->_fetchNode( 0+$_, $n );
+                    #WWW::Mechanize::Chrome::Node->new( $n )
+                } @{ $response->{nodeIds} };
+                
+                Future->wait_all( @nodes );
             });
         } else {
             return Future->done()
@@ -1830,17 +1850,31 @@ sub _performSearch( $self, %args ) {
     })
 }
 
-sub _fetchNode( $self, $nodeId ) {
-    $self->driver->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId )->then( sub( $r ) {
+# If we have the attributes, don't fetch them separately
+sub _fetchNode( $self, $nodeId, $attributes = undef ) {
+    $self->log('trace', sprintf "Resolving nodeId %s", $nodeId );
+    my $body = $self->driver->send_message( 'DOM.resolveNode', nodeId => 0+$nodeId );
+    if( $attributes ) {
+        $attributes = Future->done( $attributes )
+    } else {
+        $attributes = $self->driver->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId );
+    };
+    Future->wait_all( $body, $attributes )->then( sub( $body, $attributes ) {
+        $body = $body->get->{object};
+        $attributes = $attributes->get->{attributes};
+        my $nodeName = $body->{description};
+        $nodeName =~ s!#.*!!;
         my $node = {
             nodeId => $nodeId,
+            objectId => $body->{ objectId },
             attributes => {
-                @{ $r->{attributes}},
+                @{ $attributes },
             },
+            nodeName => $nodeName,
             driver => $self->driver,
         };
         Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
-    })
+    });
 }
 
 sub xpath {
@@ -1913,16 +1947,12 @@ sub xpath {
                 $id = $doc->{root}->{nodeId};
             };
             @found = Future->wait_all(
-                map { $self->_performSearch( nodeId => $id, query => $_ )->then( sub( @ids ) {
-                     Future->wait_all(
-                     map {
-                         $self->_fetchNode( $_ )
-                     } @ids
-                     )
-                })
+                map {
+                    $self->_performSearch( nodeId => $id, query => $_ )
                 } @$query
             )->get;
             @found = map { my $r = $_->get; $r ? $r->get : () } @found;
+            #warn "****** Have nodes";
             #warn Dumper \@found;
             if( ! @found ) {
                 #warn "Nothing found matching @$query in frame";
@@ -1932,12 +1962,6 @@ sub xpath {
             #$self->driver->switch_to_frame();
             #warn $doc->get_text;
 
-            # Remember the path to each found element
-            for( @found ) {
-                # We reuse the reference here instead of copying the list. So don't modify the list.
-                #$_->{__path}= $doc->{__path};
-            };
-
             push @res, @found;
 
             # A small optimization to return if we already have enough elements
@@ -1946,7 +1970,6 @@ sub xpath {
             #    @res= grep { $_->{resultSize} } @res;
             #    last DOCUMENTS;
             #};
-            #use Data::Dumper;
             #warn Dumper \@documents;
             if ($options{ frames } and not $options{ node }) {
                 #warn ">Expanding below " . $doc->get_tag_name() . ' - ' . $doc->get_attribute('title');
@@ -2095,14 +2118,13 @@ sub click {
     };
 
     # Get the node as an object so we can find its position and send the clicks:
-    #use Data::Dumper;
     #warn Dumper $buttons[0];
-    my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => $buttons[0]->{nodeId})->get;
-    #warn Dumper $obj;
-    my $id = $obj->{object}->{objectId};
+    $self->log('trace', sprintf "Resolving nodeId %d to object for clicking", $buttons[0]->nodeId );
+    my $id = $buttons[0]->objectId;
+    #$buttons[0]->{objectId} = $id;
     #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
     #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
-    warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])->get;
+    $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])->get;
     #sleep 5;
     # , userGesture => $JSON::true
 
@@ -2880,17 +2902,6 @@ sub switch_to_parent_frame {
     return $self->driver->_execute_command( $res, $params );
 }
 
-sub make_WebElement {
-    my( $self, $e )= @_;
-    return $e
-        if( blessed $e and $e->isa('Selenium::Remote::WebElement'));
-    my $res= Selenium::Remote::WebElement->new( $e->{WINDOW} || $e->{ELEMENT}, $self->driver );
-    croak "No id in " . Dumper $res
-        unless $res->{id};
-
-    $res
-}
-
 =head1 CONTENT RENDERING METHODS
 
 =head2 C<< $mech->content_as_png() >>
@@ -3137,8 +3148,24 @@ has 'attributes' => (
     default => sub { {} },
 );
 
+has 'nodeName' => (
+    is => 'ro',
+);
+
+has 'localName' => (
+    is => 'ro',
+);
+
 has 'nodeId' => (
     is => 'ro',
+);
+
+has 'objectId' => (
+    is => 'lazy',
+    default => sub( $self ) {
+        my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => $self->nodeId)->get;
+        $obj->{object}->{objectId}
+    },
 );
 
 has 'driver' => (
@@ -3158,6 +3185,11 @@ sub get_attribute( $self, $attribute ) {
         return $self->attributes->{ $attribute }
     }
 }
+
+sub get_tag_name( $self ) {
+    $self->nodeName
+}
+
 
 1;
 
