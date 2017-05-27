@@ -2094,15 +2094,15 @@ sub click {
     };
 
     # Get the node as an object so we can find its position and send the clicks:
-    use Data::Dumper;
-    warn Dumper $buttons[0];
+    #use Data::Dumper;
+    #warn Dumper $buttons[0];
     my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => $buttons[0]->{nodeId})->get;
-    warn Dumper $obj;
+    #warn Dumper $obj;
     my $id = $obj->{object}->{objectId};
     #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
     #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
     warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])->get;
-    sleep 5;
+    #sleep 5;
     # , userGesture => $JSON::true
 
     #my $pos = $self->driver->send_message('DOM.getBoxModel', nodeId => $buttons[0]->{nodeId})->get;
