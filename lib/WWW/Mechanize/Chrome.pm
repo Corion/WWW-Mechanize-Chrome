@@ -3137,10 +3137,10 @@ sub report_js_errors
 
 package WWW::Mechanize::Chrome::Node;
 use strict;
+use Moo 2;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
-use Moo 2;
 
 has 'attributes' => (
     is => 'lazy',
