@@ -2577,49 +2577,51 @@ sub _field_by_name {
     @fields
 }
 
-
 sub get_set_value {
     my ($self,%options) = @_;
     my $set_value = exists $options{ value };
     my $value = delete $options{ value };
     my $pre   = delete $options{pre}  || $self->{pre_value};
+    $pre = [$pre]
+        if (! ref $pre);
     my $post  = delete $options{post} || $self->{post_value};
+    $post = [$post]
+        if (! ref $post);
     my $name  = delete $options{ name };
+
     my @fields = $self->_field_by_name(
                      name => $name,
                      user_info => "input with name '$name'",
                      %options );
-    $pre = [$pre]
-        if (! ref $pre);
-    $post = [$post]
-        if (! ref $post);
 
-    if ($fields[0]) {
-        my $tag = $fields[0]->get_tag_name();
+    if (my $obj = $fields[0]) {
+
+        my $tag = $obj->get_tag_name();
         if ($set_value) {
-            #for my $ev (@$pre) {
-            #    $fields[0]->__event($ev);
-            #};
+            my %method = (
+                input    => 'value',
+                textarea => 'content',
+                select   => 'selected',
+            );
+            my $method = $method{ lc $tag };
 
-            my $get= $self->Chrome_elementToJS();
-            my $val= escape($value);
-            my $bool = $value ? 'true' : 'false';
-            my $js= <<JS;
-                var g=$get;
-                var el=g("$fields[0]->{id}");
-                if (el.type=='checkbox')
-                   el.checked=$bool;
-                else
-                   el.value="$val";
-JS
-            $js= quotemeta($js);
-            $self->eval("eval('$js')"); # for some reason, Selenium/Ghostdriver don't like the JS as plain JS
+            # Send pre-change events:
 
-            #for my $ev (@$post) {
-            #    $fields[0]->__event($ev);
-            #};
+            my $id = $obj->{objectId};
+            if( 'value' eq $method ) {
+                $self->driver->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => $value )->get;
+
+            } elsif( 'selected' eq $method ) {
+                # XXX needs more logic to find the correct child
+                $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { if( newValue ) { this.selected = newValue } else { delete this.selected } }', arguments => [ $value ])->get;
+            } elsif( 'content' eq $method ) {
+                $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { this.innerHTML = newValue }', arguments => [ $value ])->get;
+            } else {
+                die "Don't know how to set the value for node '$tag', sorry";
+            };
+
+            # Send post-change events
         };
-        # What about 'checkbox'es/radioboxes?
 
         # Don't bother to fetch the field's value if it's not wanted
         return unless defined wantarray;
@@ -2635,7 +2637,8 @@ JS
                 return $values[0];
             }
         } else {
-            return $fields[0]->{value}
+            # Need to handle SELECT fields here
+            return $obj->get_attribute('value');
         };
     } else {
         return
@@ -2659,8 +2662,9 @@ sub submit {
     my ($self,$dom_form) = @_;
     $dom_form ||= $self->current_form;
     if ($dom_form) {
-        $dom_form->submit();
-        $self->signal_http_status;
+        # We should prepare for navigation here as well
+        $self->driver->send_message('Runtime.callFunctionOn', objectId => $dom_form->objectId, functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}', )->get;
+        #$self->signal_http_status;
 
         $self->clear_current_form;
         1;
