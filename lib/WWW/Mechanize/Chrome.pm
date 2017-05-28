@@ -2014,7 +2014,6 @@ sub xpath {
     };
 
     $return_first_element ? $res[0] : @res
-
 }
 
 =head2 C<< $mech->by_id( $id, %options ) >>
@@ -2547,10 +2546,10 @@ sub value {
 Allows fine-grained access to getting/setting a value
 with a different API. Supported keys are:
 
-  pre
-  post
   name
   value
+  pre
+  post
 
 in addition to all keys that C<< $mech->xpath >> supports.
 
@@ -2573,20 +2572,11 @@ sub _field_by_name {
     } else {
         _default_limiter( single => \%options );
         my $query = $self->element_query([qw[input select textarea]], { $attr => $name });
-        #warn $query;
         @fields = $self->xpath($query,%options);
     };
     @fields
 }
 
-sub escape
-{
-    my $s = shift;
-    $s =~ s/(["\\])/\\$1/g;
-    $s =~ s/\n/\\n/g;
-    $s =~ s/\r/\\r/g;
-    return $s;
-}
 
 sub get_set_value {
     my ($self,%options) = @_;
