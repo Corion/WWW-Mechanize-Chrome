@@ -624,7 +624,13 @@ sub _collectEvents( $self, @info ) {
     $done
 }
 
-sub _navigate( $self, $get_navigation_future, %options ) {
+sub _waitForNavigation( $self, %options ) {
+    # Capture all events as we seem to have initiated some network transfers
+    # If we see a Page.frameScheduledNavigation then Chrome started navigating
+    # to a new page in response to our click and we should wait until we
+    # received all the navigation events.
+
+    $self->log('trace', "Capturing events until 'Page.frameStoppedLoading'");
     my $frameId = $options{ frameId } || $self->frameId;
     my $events_f = $self->_collectEvents( sub( $ev ) {
         # Let's assume that the first frame id we see is "our" frame
@@ -635,6 +641,14 @@ sub _navigate( $self, $get_navigation_future, %options ) {
         and $ev->{params}->{frameId} eq $frameId
     });
 
+    $events_f;
+}
+
+sub _navigate( $self, $get_navigation_future, %options ) {
+    my $frameId = $options{ frameId } || $self->frameId;
+    my $events_f = $self->_waitForNavigation( %options );
+
+    # Kick off the navigation ourselves
     my $nav_f = $get_navigation_future->();
 
     # Wait for things to settle down
@@ -956,7 +970,9 @@ Returns the current response as a L<HTTP::Response> object.
 
 =cut
 
-sub response { $_[0]->{response} };
+sub response( $self ) {
+    $self->{response}
+};
 
 {
     no warnings 'once';
@@ -1095,7 +1111,7 @@ sub decoded_content($self) {
             $self->log('trace', "Fetching HTML for node " . $nodeId );
             $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         } @{ $root->{root}->{children} };
-        
+
         Future->wait_all( @content )
     })->then( sub( @outerHTML_f ) {
         Future->done( join "", map { $_->get->{outerHTML} } @outerHTML_f )
@@ -1674,7 +1690,6 @@ sub activate_container {
     for my $el ( @{ $doc->{__path} }) {
         #warn "Switching frames downwards ($el)";
         #warn "Tag: " . $el->get_tag_name;
-        #use Data::Dumper;
         #warn Dumper $el;
         warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src');
         $driver->switch_to_frame( $el );
@@ -1807,7 +1822,7 @@ sub _performSearch( $self, %args ) {
     my $nodeId = $args{ nodeId };
     my $query = $args{ query };
     $self->driver->send_message( 'DOM.performSearch', nodeId => $nodeId, query => $query )->then(sub($results) {
-    
+
         if( $results->{resultCount} ) {
             my $searchResults;
             my $searchId = $results->{searchId};
@@ -1830,7 +1845,7 @@ sub _performSearch( $self, %args ) {
                 my %nodes = map {
                     $_->{nodeId} => $_
                 } @{ $childNodes->get->{params}->{nodes} };
-                
+
                 # Now, resolve the found nodes directly with the
                 # found node ids instead of returning the numbers and fetching
                 # them later
@@ -1840,7 +1855,7 @@ sub _performSearch( $self, %args ) {
                     $self->_fetchNode( 0+$_, $n );
                     #WWW::Mechanize::Chrome::Node->new( $n )
                 } @{ $response->{nodeIds} };
-                
+
                 Future->wait_all( @nodes );
             });
         } else {
@@ -1938,7 +1953,7 @@ sub xpath {
 
             my @found;
             # Now find the elements
-            warn Dumper \%options;
+            #warn Dumper \%options;
             my $id;
             if ($options{ node }) {
                 $id = $options{ node }->{nodeId};
@@ -2123,22 +2138,25 @@ sub click {
     #$buttons[0]->{objectId} = $id;
     #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
     #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
+    my $navigated;
+    my $does_navigation
+        = $self->driver->one_shot('Page.frameScheduledNavigation')
+          ->then(sub {
+              $self->log('trace', "Navigation started, logging");
+              $navigated++;
+              $self->_waitForNavigation( %options )
+          });
     $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])->get;
-    #sleep 5;
-    # , userGesture => $JSON::true
-
-    #my $pos = $self->driver->send_message('DOM.getBoxModel', nodeId => $buttons[0]->{nodeId})->get;
-    #warn Dumper $pos;
-    #my ($x, $y) = ($pos->{model}->{content}->[0], $pos->{model}->{content}->[1]);
-    #warn Dumper $self->driver->send_message('DOM.focus', nodeId => $buttons[0]->{nodeId})->get;
-    #sleep 3;
-    #warn Dumper $self->driver->send_message('Input.dispatchKeyEvent',type => 'char', text => "\x13", keyIdentifier => "U+000D")->get;
-    #sleep 5;
-    #warn Dumper $self->driver->send_message('Input.dispatchMouseEvent',type => 'mousePressed', x => 0+$x, y => 0+$y)->get;
-    #warn Dumper $self->driver->send_message('Input.dispatchMouseEvent',type => 'mouseReleased', x => 0+$x, y => 0+$y)->get;
-    #$self->eval();
-    #$buttons[0]->click();
-    $self->post_process;
+    if( $navigated ) {
+        my @events = $does_navigation->get;
+        # Handle all the events, by turning them into a ->response again
+        my $res = $self->httpMessageFromEvents( $self->frameId, \@events );
+        $self->{response} = $res;
+        # $self->post_process; # this should be done in ->_navigate
+    } else {
+        $self->log('trace', "No navigation occurred, not collecting events");
+        $does_navigation->cancel;
+    };
 
     if (defined wantarray) {
         return $self->response
