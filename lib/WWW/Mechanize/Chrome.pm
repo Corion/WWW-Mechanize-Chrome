@@ -647,8 +647,7 @@ sub _navigate( $self, $get_navigation_future, %options ) {
 }
 
 
-sub get {
-    my ($self, $url, %options ) = @_;
+sub get($self, $url, %options ) {
 
     # $frameInfo might come _after_ we have already seen messages for it?!
     # So we need to capture all events even before we send our command to the
