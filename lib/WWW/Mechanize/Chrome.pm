@@ -624,7 +624,14 @@ sub _collectEvents( $self, @info ) {
     $done
 }
 
-sub _waitForNavigation( $self, %options ) {
+sub _fetchFrameId( $self, $ev ) {
+    if( $ev->{method} eq 'Page.frameStartedLoading' ) {
+        $self->log('debug', sprintf "Found frame id as %s", $ev->{params}->{frameId});
+        return $ev->{params}->{frameId};
+    };
+};
+
+sub _waitForNavigationEnd( $self, %options ) {
     # Capture all events as we seem to have initiated some network transfers
     # If we see a Page.frameScheduledNavigation then Chrome started navigating
     # to a new page in response to our click and we should wait until we
@@ -634,17 +641,16 @@ sub _waitForNavigation( $self, %options ) {
     my $frameId = $options{ frameId } || $self->frameId;
     my $events_f = $self->_collectEvents( sub( $ev ) {
         # Let's assume that the first frame id we see is "our" frame
-        if( $ev->{method} eq 'Page.frameStartedLoading' ) {
-            $frameId ||= $ev->{params}->{frameId};
-        };
+        $frameId ||= $self->_fetchFrameId($ev);
             $ev->{method} eq 'Page.frameStoppedLoading'
         and $ev->{params}->{frameId} eq $frameId
     });
 
+    # We should wait for Page.domContentEventFired here, somehow, before continuing
+
     $events_f;
 }
 
-sub _navigate( $self, $get_navigation_future, %options ) {
     my $frameId = $options{ frameId } || $self->frameId;
     my $events_f = $self->_waitForNavigation( %options );
 
