@@ -39,6 +39,7 @@ t/50-mech-new-dsl.t
 t/50-mech-new.t
 t/50-mech-status.t
 t/50-popup.t
+t/51-mech-form-with-fields.t
 t/51-mech-set-content.t
 t/51-mech-submit.html
 t/51-mech-submit.t
