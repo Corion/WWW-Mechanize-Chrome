@@ -9,6 +9,7 @@ use Carp qw(croak carp);
 use JSON;
 use Data::Dumper;
 use Chrome::DevToolsProtocol::Transport;
+use Scalar::Util 'weaken', 'isweak';
 
 use vars qw<$VERSION>;
 $VERSION = '0.01';
@@ -36,7 +37,7 @@ sub new($class, %args) {
 
     $args{ receivers } ||= {};
     $args{ on_message } ||= undef;
-    $args{ one_shot } ||= {};
+    $args{ one_shot } ||= [];
 
     $self
 };
@@ -194,9 +195,13 @@ sub DESTROY( $self ) {
     };
 }
 
-sub one_shot( $self, $event ) {
+sub one_shot( $self, @events ) {
     my $result = $self->transport->future;
-    push @{ $self->{one_shot}->{ $event } }, $result;
+    my $ref = $result;
+    weaken $ref;
+    my %events;
+    undef @events{ @events };
+    push @{ $self->{one_shot} }, { events => \%events, future => \$ref };
     $result
 };
 
@@ -206,10 +211,13 @@ sub on_response( $self, $connection, $message ) {
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
 
-        my $slot = $self->{one_shot}->{ $response->{method}};
-        if( $slot and my $recipient = shift @$slot ) {
+        (my $handler) = grep { exists $_->{events}->{ $response->{method} } and ${$_->{future}} } @{ $self->{one_shot}};
+        if( $handler ) {
             $self->log( 'trace', "Dispatching one-shot event", $response );
-            $recipient->done( $response )
+            ${ $handler->{future} }->done( $response );
+            
+            # Remove the handler we just invoked
+            @{ $self->{one_shot}} = grep { $_ and ${$_->{future}} and $_ != $handler } @{ $self->{one_shot}};
 
         } elsif( $self->on_message ) {
             $self->log( 'trace', "Dispatching message", $response );
