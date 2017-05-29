@@ -1026,7 +1026,7 @@ sub signal_http_status {
     if ($self->{autodie}) {
         if ($self->status and $self->status !~ /^2/ and $self->status != 0) {
             # there was an error
-            croak ($self->response(headers => 0)->message || sprintf "Got status code %d", $self->status );
+            croak ($self->response()->message || sprintf "Got status code %d", $self->status );
         };
     } else {
         # silent
@@ -1047,7 +1047,7 @@ This is a convenience function that wraps C<< $mech->res->is_success >>.
 =cut
 
 sub success {
-    my $res = $_[0]->response( headers => 0 );
+    my $res = $_[0]->response();
     $res and $res->is_success
 }
 
@@ -1064,7 +1064,7 @@ This is a 3-digit number like 200 for OK, 404 for not found, and so on.
 
 sub status {
     my ($self) = @_;
-    return $self->response( headers => 0 )->code
+    return $self->response()->code
 };
 
 =head2 C<< $mech->back() >>
