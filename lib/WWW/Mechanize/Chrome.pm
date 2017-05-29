@@ -651,19 +651,40 @@ sub _waitForNavigationEnd( $self, %options ) {
     $events_f;
 }
 
+sub _mightNavigate( $self, $get_navigation_future, %options ) {
     my $frameId = $options{ frameId } || $self->frameId;
-    my $events_f = $self->_waitForNavigation( %options );
+
+    my $scheduled = $self->driver->one_shot('Page.frameScheduledNavigation', 'Page.frameStartedLoading');
+    my $navigated;
+    my $does_navigation = $scheduled
+          ->then(sub( $ev ) {
+              $self->log('trace', "Navigation started, logging");
+              $navigated++;
+
+              $frameId ||= $self->_fetchFrameId( $ev );
+              $self->{ frameId } ||= $frameId;
+              $self->_waitForNavigationEnd( %options )
+          });
 
     # Kick off the navigation ourselves
-    my $nav_f = $get_navigation_future->();
+    my $nav = $get_navigation_future->()->get;
 
-    # Wait for things to settle down
-    my( $nav, $events ) = Future->wait_all( $nav_f, $events_f )->get;
+    my @events;
+    if( $navigated ) {
+        @events = $does_navigation->get;
+        # Handle all the events, by turning them into a ->response again
+        my $res = $self->httpMessageFromEvents( $self->frameId, \@events );
+        $self->update_response( $res );
+        undef $scheduled;
+    } else {
+        $self->log('trace', "No navigation occurred, not collecting events");
+        undef $scheduled;
+    };
 
     # Store our frame id so we know what events to listen for in the future!
-    $self->{frameId} = $nav->get->{frameId};
+    $self->{frameId} ||= $nav->{frameId};
 
-    my @events = $events->get;
+    @events
 }
 
 
@@ -673,7 +694,8 @@ sub get($self, $url, %options ) {
     # So we need to capture all events even before we send our command to the
     # browser, as we might receive messages before we receive the answer to
     # our command:
-    my @events = $self->_navigate( sub {
+    my @events = $self->_mightNavigate( sub {
+        $self->log('trace', "Navigating to [$url]");
         $self->driver->send_message(
             'Page.navigate',
             url => "$url"
@@ -786,24 +808,27 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
 
     # Create HTTP::Request object from 'Network.requestWillBeSent'
     my $request;
+    my $response;
     if( ! $events{ 'Network.requestWillBeSent' }) {
-        warn "Didn't see a 'Network.requestWillBeSent' event, cannot synthesize response well";
+        #warn "Didn't see a 'Network.requestWillBeSent' event, cannot synthesize response well";
     } else {
         # $request = $self->httpRequestFromChromeRequest( $events{ 'Network.requestWillBeSent' });
     };
 
-    # Create HTTP::Response object from 'Network.responseReceived'
-    my $response;
-    if( my $res = $events{ 'Network.loadingFailed' }) {
-        $response = $self->httpResponseFromChromeNetworkFail( $res );
-        $response->request( $request );
+    if(     $events{ "Page.frameNavigated" }
+        and $events{ "Page.frameNavigated" }->{params}->{frame}->{url} ne 'about:blank' ) {
+        # Create HTTP::Response object from 'Network.responseReceived'
+        if( my $res = $events{ 'Network.loadingFailed' }) {
+            $response = $self->httpResponseFromChromeNetworkFail( $res );
+            $response->request( $request );
 
-    } elsif ( $res = $events{ 'Network.responseReceived' }) {
-        $response = $self->httpResponseFromChromeResponse( $res );
-        $response->request( $request );
+        } elsif ( $res = $events{ 'Network.responseReceived' }) {
+            $response = $self->httpResponseFromChromeResponse( $res );
+            $response->request( $request );
 
-    } else {
-        die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
+        } else {
+            die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
+        };
     };
     $response
 }
@@ -1053,7 +1078,7 @@ Returns the (new) response.
 =cut
 
 sub back( $self, %options ) {
-    $self->_navigate( sub {
+    $self->_mightNavigate( sub {
         $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}-1 ];
             $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
@@ -1072,7 +1097,7 @@ Returns the (new) response.
 =cut
 
 sub forward( $self, %options ) {
-    $self->_navigate( sub {
+    $self->_mightNavigate( sub {
         $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
             $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
@@ -2143,29 +2168,11 @@ sub click {
     #$buttons[0]->{objectId} = $id;
     #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
     #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
-    my $navigated;
-    my $does_navigation
-        = $self->driver->one_shot('Page.frameScheduledNavigation')
-          ->then(sub {
-              $self->log('trace', "Navigation started, logging");
-              $navigated++;
-              $self->_waitForNavigation( %options )
-          });
-    $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])->get;
-    if( $navigated ) {
-        my @events = $does_navigation->get;
-        # Handle all the events, by turning them into a ->response again
-        my $res = $self->httpMessageFromEvents( $self->frameId, \@events );
-        $self->{response} = $res;
-        # $self->post_process; # this should be done in ->_navigate
-    } else {
-        $self->log('trace', "No navigation occurred, not collecting events");
-        $does_navigation->cancel;
-    };
 
-    if (defined wantarray) {
-        return $self->response
-    };
+    my $response =
+    $self->_mightNavigate( sub {
+        $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
+    }, %options);
 }
 
 # Internal method to run either an XPath, CSS or id query against the DOM
@@ -2669,15 +2676,15 @@ sub submit {
     $dom_form ||= $self->current_form;
     if ($dom_form) {
         # We should prepare for navigation here as well
-        $self->driver->send_message('Runtime.callFunctionOn', objectId => $dom_form->objectId, functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}', )->get;
-        #$self->signal_http_status;
+        $self->_mightNavigate( sub {
+            $self->driver->send_message('Runtime.callFunctionOn', objectId => $dom_form->objectId, functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}' );
+        });
 
         $self->clear_current_form;
         1;
     } else {
         croak "I don't know which form to submit, sorry.";
     }
-    $self->post_process;
     return $self->response;
 };
 
