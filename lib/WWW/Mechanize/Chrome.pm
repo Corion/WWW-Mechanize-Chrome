@@ -670,7 +670,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     my $nav = $get_navigation_future->()->get;
 
     my @events;
-    if( $navigated ) {
+    if( $navigated or $options{ navigates }) {
         @events = $does_navigation->get;
         # Handle all the events, by turning them into a ->response again
         my $res = $self->httpMessageFromEvents( $self->frameId, \@events );
@@ -935,7 +935,9 @@ current request.
 =cut
 
 sub reload( $self, %options ) {
-    $self->driver->send_message('Page.reload', %options )->get
+    $self->_mightNavigate( sub {
+        $self->driver->send_message('Page.reload', %options )->get
+    }, navigates => 1, %options);
 }
 
 =head2 C<< $mech->add_header( $name => $value, ... ) >>
@@ -1083,7 +1085,7 @@ sub back( $self, %options ) {
             my $entry = $history->{entries}->[ $history->{currentIndex}-1 ];
             $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
-    }, %options);
+    }, navigates => 1, %options);
 };
 
 =head2 C<< $mech->forward() >>
@@ -1102,7 +1104,7 @@ sub forward( $self, %options ) {
             my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
             $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
-    }, %options);
+    }, navigates => 1, %options);
 }
 
 =head2 C<< $mech->uri() >>
