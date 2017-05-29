@@ -646,8 +646,6 @@ sub _waitForNavigationEnd( $self, %options ) {
         and $ev->{params}->{frameId} eq $frameId
     });
 
-    # We should wait for Page.domContentEventFired here, somehow, before continuing
-
     $events_f;
 }
 
@@ -2137,7 +2135,7 @@ sub click {
 
     if (! defined $name) {
         croak("->click called with undef link");
-    } elsif (ref $name and blessed($name) and $name->can('click')) {
+    } elsif (ref $name and $name->isa('WWW::Mechanize::Chrome::Node') ) {
         $options{ dom } = $name;
     } elsif (ref $name eq 'HASH') { # options
         %options = %$name;
