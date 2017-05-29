@@ -1998,16 +1998,7 @@ sub xpath {
                     $self->_performSearch( nodeId => $id, query => $_ )
                 } @$query
             )->get;
-            @found = map { my $r = $_->get; $r ? $r->get : () } @found;
-            #warn "****** Have nodes";
-            #warn Dumper \@found;
-            if( ! @found ) {
-                #warn "Nothing found matching @$query in frame";
-                #warn $self->content;
-                #$self->driver->switch_to_frame();
-            };
-            #$self->driver->switch_to_frame();
-            #warn $doc->get_text;
+            @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @found;
 
             push @res, @found;
 
