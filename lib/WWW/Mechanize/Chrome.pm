@@ -1888,8 +1888,8 @@ sub _performSearch( $self, %args ) {
                 # ancestor because we can't restrict the search in Chrome
                 # directly...
                 my @foundNodes = @{ $response->{nodeIds} };
-                if( $nodeId ) {
-                    $self->log('trace', "Filtering query results for ancestor backendNodeId $nodeId");
+                if( $backendNodeId ) {
+                    $self->log('trace', "Filtering query results for ancestor backendNodeId $backendNodeId");
                     @foundNodes = grep {
                         my $p = $nodes{ $_ };
                         while( $p and $p->{backendNodeId} != $backendNodeId ) {
