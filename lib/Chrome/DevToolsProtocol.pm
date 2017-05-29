@@ -188,11 +188,15 @@ sub connect( $self, %args ) {
     });
 };
 
-sub DESTROY( $self ) {
-    delete $self->{ua};
+sub close( $self ) {
     if( my $t = $self->transport) {
         $t->close();
     };
+};
+
+sub DESTROY( $self ) {
+    delete $self->{ua};
+    $self->close;
 }
 
 sub one_shot( $self, @events ) {
@@ -215,7 +219,7 @@ sub on_response( $self, $connection, $message ) {
         if( $handler ) {
             $self->log( 'trace', "Dispatching one-shot event", $response );
             ${ $handler->{future} }->done( $response );
-            
+
             # Remove the handler we just invoked
             @{ $self->{one_shot}} = grep { $_ and ${$_->{future}} and $_ != $handler } @{ $self->{one_shot}};
 
