@@ -25,6 +25,8 @@ t/49-mech-get-file.t
 t/49-mech-nav.t
 t/50-click.html
 t/50-follow-link.t
+t/50-form2.html
+t/50-form2.t
 t/50-mech-content.t
 t/50-mech-ct.t
 t/50-mech-encoding.t

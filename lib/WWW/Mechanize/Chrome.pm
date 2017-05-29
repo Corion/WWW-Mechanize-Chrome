@@ -2624,7 +2624,7 @@ sub get_set_value {
 
             my $id = $obj->{objectId};
             if( 'value' eq $method ) {
-                $self->driver->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => $value )->get;
+                $self->driver->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
 
             } elsif( 'selected' eq $method ) {
                 # XXX needs more logic to find the correct child
