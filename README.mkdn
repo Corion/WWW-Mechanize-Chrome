@@ -7,7 +7,10 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 # SYNOPSIS
 
+    use Log::Log4perl qw(:easy);
     use WWW::Mechanize::Chrome;
+
+    Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
     my $mech = WWW::Mechanize::Chrome->new();
     $mech->get('http://google.com');
 
@@ -72,6 +75,13 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 Returns the version of the Chrome executable that is used. This information
 needs launching the browser and asking for the version via the network.
+
+## `$mech->chrome_version_info`
+
+    print $mech->chrome_version_info->{Browser};
+
+Returns the version information of the Chrome executable and various other
+APIs of Chrome that the object is connected to.
 
 ## `$mech->driver`
 
@@ -148,6 +158,8 @@ This method is special to WWW::Mechanize::Chrome.
 Evaluates Javascript code in the context of Chrome.
 
 This allows you to modify properties of Chrome.
+
+This is currently not implemented.
 
 ## `$mech->highlight_node( @nodes )`
 
@@ -316,7 +328,7 @@ Returns the current document URI.
 
 ## `$mech->document()`
 
-    print $self->driver->send_message( 'DOM.getDocument' )->get->{nodeId}
+    print $self->document->get->{nodeId}
 
 Returns the document object as a Future.
 
@@ -776,6 +788,8 @@ with a different API. Supported keys are:
 
     name
     value
+    pre
+    post
 
 in addition to all keys that `$mech->xpath` supports.
 
