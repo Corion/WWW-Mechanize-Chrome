@@ -34,6 +34,7 @@ t/50-mech-content.t
 t/50-mech-ct.t
 t/50-mech-encoding.t
 t/50-mech-forms.t
+t/50-mech-get.t
 t/50-mech-new-dsl.t
 t/50-mech-new.t
 t/50-mech-status.t
