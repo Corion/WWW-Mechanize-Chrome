@@ -19,7 +19,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 15*@instances;
+    plan tests => 17*@instances;
 };
 
 my %args;
@@ -39,7 +39,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 15, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 17, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
@@ -100,6 +100,14 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 15, sub
     $mech->submit_form();
     ($triggered) = $mech->eval_in_page('myevents');
     ok $triggered, "We can submit an empty form";
+
+    $mech->get_local('51-mech-submit.html');
+    $mech->allow('javascript' => 1);
+    $mech->form_number(3);
+    $mech->submit_form();
+    like $mech->uri, qr/q=Hello(%20|\+)World(%20|\+)C/, "We submit the proper GET request";
+    ($triggered) = $mech->eval_in_page('myevents');
+    ok $triggered, "We can submit a form without an onsubmit handler";
 });
 
 undef $server;
