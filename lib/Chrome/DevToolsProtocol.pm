@@ -38,6 +38,7 @@ sub new($class, %args) {
     $args{ receivers } ||= {};
     $args{ on_message } ||= undef;
     $args{ one_shot } ||= [];
+    $args{ collector } ||= {};
 
     $self
 };
@@ -50,9 +51,11 @@ sub endpoint( $self ) {
 }
 sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
+sub collector( $self ) { $self->{collector} }
 sub tab( $self ) { $self->{tab} }
 sub transport( $self ) { $self->{transport} }
 sub future( $self ) { $self->transport->future }
+
 sub on_message( $self, $new_message=0 ) {
     if( $new_message ) {
         $self->{on_message} = $new_message
@@ -60,6 +63,10 @@ sub on_message( $self, $new_message=0 ) {
         $self->{on_message} = undef
     };
     $self->{on_message}
+}
+
+sub set_collector( $self, $event, $callback ) {
+    $self->collector->{ $event } = $callback;
 }
 
 sub log( $self, $level, $message, @args ) {
@@ -222,6 +229,10 @@ sub on_response( $self, $connection, $message ) {
 
             # Remove the handler we just invoked
             @{ $self->{one_shot}} = grep { $_ and ${$_->{future}} and $_ != $handler } @{ $self->{one_shot}};
+
+        } elsif( my $collector = $self->collector->{ $response->{method} } ) {
+            $self->log( 'trace', "Collecting event", $response );
+            $collector->( $response );
 
         } elsif( $self->on_message ) {
             $self->log( 'trace', "Dispatching message", $response );

@@ -1852,13 +1852,17 @@ L<WWW::Mechanize>.
 =cut
 
 sub _performSearch( $self, %args ) {
-    my $nodeId = $args{ nodeId };
+    my $backendNodeId = $args{ backendNodeId };
     my $query = $args{ query };
-    $self->driver->send_message( 'DOM.performSearch', nodeId => $nodeId, query => $query )->then(sub($results) {
+    $self->driver->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
 
         if( $results->{resultCount} ) {
             my $searchResults;
             my $searchId = $results->{searchId};
+            my @childNodes;
+            $self->driver->set_collector('DOM.setChildNodes', sub( $ev ) {
+                push @childNodes, @{ $ev->{params}->{nodes} };
+            });
             my $childNodes = $self->driver->one_shot('DOM.setChildNodes');
             $self->driver->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
@@ -1875,11 +1879,27 @@ sub _performSearch( $self, %args ) {
             #    );
             #}
             )->then( sub( $response ) {
+                $self->driver->set_collector('DOM.setChildNodes', undef );
                 my %nodes = map {
                     $_->{nodeId} => $_
-                } @{ $childNodes->get->{params}->{nodes} };
+                } @childNodes;
 
-                # Now, resolve the found nodes directly with the
+                # Filter @found for those nodes that have $nodeId as
+                # ancestor because we can't restrict the search in Chrome
+                # directly...
+                my @foundNodes = @{ $response->{nodeIds} };
+                if( $nodeId ) {
+                    $self->log('trace', "Filtering query results for ancestor backendNodeId $nodeId");
+                    @foundNodes = grep {
+                        my $p = $nodes{ $_ };
+                        while( $p and $p->{backendNodeId} != $backendNodeId ) {
+                            $p = $nodes{ $p->{parentId} };
+                        };
+                        $p and $p->{backendNodeId} == $backendNodeId
+                    } @foundNodes;
+                };
+
+                # Resolve the found nodes directly with the
                 # found node ids instead of returning the numbers and fetching
                 # them later
                 my @nodes = map {
@@ -1887,7 +1907,7 @@ sub _performSearch( $self, %args ) {
                     my $n = $nodes{ $_ };
                     $self->_fetchNode( 0+$_, $n );
                     #WWW::Mechanize::Chrome::Node->new( $n )
-                } @{ $response->{nodeIds} };
+                } @foundNodes;
 
                 Future->wait_all( @nodes );
             });
@@ -1908,12 +1928,14 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
     };
     Future->wait_all( $body, $attributes )->then( sub( $body, $attributes ) {
         $body = $body->get->{object};
-        $attributes = $attributes->get->{attributes};
+        my $attr = $attributes->get;
+        $attributes = $attr->{attributes};
         my $nodeName = $body->{description};
         $nodeName =~ s!#.*!!;
         my $node = {
             nodeId => $nodeId,
             objectId => $body->{ objectId },
+            backendNodeId => $attr->{ backendNodeId },
             attributes => {
                 @{ $attributes },
             },
@@ -1924,9 +1946,7 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
     });
 }
 
-sub xpath {
-    my( $self, $query, %options) = @_;
-
+sub xpath( $self, $query, %options) {
     if ('ARRAY' ne (ref $query||'')) {
         $query = [$query];
     };
@@ -1985,21 +2005,17 @@ sub xpath {
             #warn $q;
 
             my @found;
-            # Now find the elements
-            #warn Dumper \%options;
             my $id;
             if ($options{ node }) {
-                $id = $options{ node }->{nodeId};
-            } else {
-                $id = $doc->{root}->{nodeId};
+                $id = $options{ node }->backendNodeId;
             };
             @found = Future->wait_all(
                 map {
-                    $self->_performSearch( nodeId => $id, query => $_ )
+                    $self->_performSearch( query => $_, backendNodeId => $id )
                 } @$query
             )->get;
+            
             @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @found;
-
             push @res, @found;
 
             # A small optimization to return if we already have enough elements
@@ -2018,12 +2034,6 @@ sub xpath {
             };
         };
     };
-
-    # Restore frame context
-    #warn "Switching back";
-    #$self->activate_container( $original_frame );
-
-    #@res
 
     # Determine if we want only one element
     #     or a list, like WWW::Mechanize::Chrome
@@ -3177,6 +3187,10 @@ has 'nodeId' => (
     is => 'ro',
 );
 
+has 'backendNodeId' => (
+    is => 'ro',
+);
+
 has 'objectId' => (
     is => 'lazy',
     default => sub( $self ) {
@@ -3205,6 +3219,10 @@ sub get_attribute( $self, $attribute ) {
 
 sub get_tag_name( $self ) {
     $self->nodeName
+}
+
+sub get_text( $self ) {
+    $self->get_attribute('innerText')
 }
 
 

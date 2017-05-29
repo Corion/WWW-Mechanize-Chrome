@@ -82,7 +82,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 17, sub
     is $triggered->{submit}, 0, 'OnSubmit was triggered (no user interaction)';
     is $triggered->{click},  0, 'Click    was not triggered';
     my $r = $mech->xpath('//input[@name="r"]', single => 1 );
-    is $mech->value('r'), 'Hello Chrome', "We set the new value";
+    is $r->get_attribute('value'), 'Hello Chrome', "We set the new value";
     
     $mech->get_local('51-mech-submit.html');
     $mech->allow('javascript' => 1);
@@ -105,7 +105,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 17, sub
     $mech->allow('javascript' => 1);
     $mech->form_number(3);
     $mech->submit_form();
-    like $mech->uri, qr/q=Hello(%20|\+)World(%20|\+)C/, "We submit the proper GET request";
+    like $mech->uri, qr/q2=Hello(%20|\+)World(%20|\+)C/, "We submit the proper GET request";
     ($triggered) = $mech->eval_in_page('myevents');
     ok $triggered, "We can submit a form without an onsubmit handler";
 });
