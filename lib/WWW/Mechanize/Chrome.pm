@@ -1818,23 +1818,6 @@ for each usage in scalar context without any of the above restricting options.
 
 C<< any >> - no error is raised, no matter if an item is found or not.
 
-=item *
-
-C<< type >> - force the return type of the query.
-
-  type => $mech->xpathResult('ORDERED_NODE_SNAPSHOT_TYPE'),
-
-WWW::Mechanize::Chrome tries a best effort in giving you the appropriate
-result of your query, be it a DOM node or a string or a number. In the case
-you need to restrict the return type, you can pass this in.
-
-The allowed strings are documented in the MDN. Interesting types are
-
-  ANY_TYPE     (default, uses whatever things the query returns)
-  STRING_TYPE
-  NUMBER_TYPE
-  ORDERED_NODE_SNAPSHOT_TYPE
-
 =back
 
 Returns the matched results.
