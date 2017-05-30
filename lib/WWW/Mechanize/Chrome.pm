@@ -816,6 +816,11 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
         } else {
             die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
         };
+    } else {
+        $response = HTTP::Response->new(
+            200,
+            'OK',
+        );
     };
     $response
 }
