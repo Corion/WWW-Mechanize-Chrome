@@ -585,6 +585,7 @@ Note that Chrome does not support download of files.
 =cut
 
 sub update_response($self, $response) {
+    $self->log('trace', 'Updated response object');
     $self->{response} = $response
 }
 
