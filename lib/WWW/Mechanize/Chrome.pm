@@ -2649,9 +2649,7 @@ by C<< $mech->current_form >>.
 
 =cut
 
-sub submit {
-    my ($self,$dom_form) = @_;
-    $dom_form ||= $self->current_form;
+sub submit($self,$dom_form = $self->current_form) {
     if ($dom_form) {
         # We should prepare for navigation here as well
         $self->_mightNavigate( sub {
@@ -2659,7 +2657,6 @@ sub submit {
         });
 
         $self->clear_current_form;
-        1;
     } else {
         croak "I don't know which form to submit, sorry.";
     }
