@@ -2058,7 +2058,7 @@ all nodes matched by any of the ids in the array.
 
 This method is equivalent to calling C<< ->xpath >> :
 
-    $self->xpath(qq{//*[\@id="$_"], %options)
+    $self->xpath(qq{//*[\@id="$_"]}, %options)
 
 It is convenient when your element ids get mistaken for
 CSS selectors.
