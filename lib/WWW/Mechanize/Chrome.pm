@@ -700,19 +700,6 @@ sub get($self, $url, %options ) {
             'Page.navigate',
             url => "$url"
     )}, %options );
-
-    # Now, look at the loaderId and store that if we need to fabricate a
-    # proper HTTP::Response from it
-    # Network.responseReceived
-    if( $url ne 'about:blank' ) {
-        my $response = $self->httpMessageFromEvents( $self->{frameId}, \@events );
-        $self->update_response( $response );
-        $response
-    } else {
-        # We should return a really fake HTTP::Response here
-        return 1
-    };
-
 };
 
 =head2 C<< $mech->get_local( $filename , %options ) >>
