@@ -56,7 +56,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
    ok $f, "We found the form";
 
    SKIP: {
-       skip "Chrome frame support is wonky.", 2;
+       #skip "Chrome frame support is wonky.", 2;
        
        $mech->get_local('52-frameset.html');
        $f = $mech->form_with_fields(

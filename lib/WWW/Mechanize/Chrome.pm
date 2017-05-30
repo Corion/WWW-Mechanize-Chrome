@@ -637,8 +637,8 @@ sub _waitForNavigationEnd( $self, %options ) {
     # to a new page in response to our click and we should wait until we
     # received all the navigation events.
 
-    $self->log('trace', "Capturing events until 'Page.frameStoppedLoading'");
     my $frameId = $options{ frameId } || $self->frameId;
+    $self->log('trace', "Capturing events until 'Page.frameStoppedLoading' for frame $frameId");
     my $events_f = $self->_collectEvents( sub( $ev ) {
         # Let's assume that the first frame id we see is "our" frame
         $frameId ||= $self->_fetchFrameId($ev);
@@ -650,7 +650,8 @@ sub _waitForNavigationEnd( $self, %options ) {
 }
 
 sub _mightNavigate( $self, $get_navigation_future, %options ) {
-    my $frameId = $options{ frameId } || $self->frameId;
+    undef $self->{frameId};
+    my $frameId = $options{ frameId };
 
     my $scheduled = $self->driver->one_shot('Page.frameScheduledNavigation', 'Page.frameStartedLoading');
     my $navigated;
@@ -660,7 +661,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
               $navigated++;
 
               $frameId ||= $self->_fetchFrameId( $ev );
-              $self->{ frameId } ||= $frameId;
+              $self->{ frameId } = $frameId;
               $self->_waitForNavigationEnd( %options )
           });
 
