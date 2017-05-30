@@ -3143,6 +3143,9 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
+use vars qw($VERSION);
+$VERSION = '0.01';
+
 has 'attributes' => (
     is => 'lazy',
     default => sub { {} },
