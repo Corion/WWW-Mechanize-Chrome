@@ -44,7 +44,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
     #is $mech->uri, $site, "Navigating to (nonexisting) $site";
 
     if( ! isa_ok $res, 'HTTP::Response', 'The response') {
-        SKIP: { skip "No response returned", 1 };
+        SKIP: { skip "No response returned", 2 };
     } else {
         my $c = $res->code;
         like $res->code, qr/^(404|5\d\d)$/, "GETting $site gives a 5xx (no proxy) or 404 (proxy)"

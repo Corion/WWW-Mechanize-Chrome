@@ -571,7 +571,7 @@ JS
 
 =head2 C<< $mech->get( $url, %options ) >>
 
-  $mech->get( $url  );
+  my $response = $mech->get( $url );
 
 Retrieves the URL C<URL>.
 
@@ -687,7 +687,6 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     @events
 }
 
-
 sub get($self, $url, %options ) {
 
     # $frameInfo might come _after_ we have already seen messages for it?!
@@ -700,6 +699,8 @@ sub get($self, $url, %options ) {
             'Page.navigate',
             url => "$url"
     )}, %options );
+
+    return $self->response;
 };
 
 =head2 C<< $mech->get_local( $filename , %options ) >>
