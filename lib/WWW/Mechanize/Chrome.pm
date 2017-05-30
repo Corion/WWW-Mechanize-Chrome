@@ -2118,7 +2118,7 @@ sub click {
 
     if (! defined $name) {
         croak("->click called with undef link");
-    } elsif (ref $name and $name->isa('WWW::Mechanize::Chrome::Node') ) {
+    } elsif (ref $name and blessed $name and $name->isa('WWW::Mechanize::Chrome::Node') ) {
         $options{ dom } = $name;
     } elsif (ref $name eq 'HASH') { # options
         %options = %$name;
