@@ -235,11 +235,19 @@ sub on_response( $self, $connection, $message ) {
             $collector->( $response );
 
         } elsif( $self->on_message ) {
-            $self->log( 'trace', "Dispatching message", $response );
+            if( $self->{log}->is_trace ) {
+                $self->log( 'trace', "Dispatching message", $response );
+            } else {
+                $self->log( 'debug', sprintf "Dispatching message '%s'", $response->{method} );
+            };
             $self->on_message->( $response );
 
         } else {
-            $self->log( 'trace', "Ignored message", $response )
+            if( $self->{log}->is_trace ) {
+                $self->log( 'trace', "Ignored message", $response );
+            } else {
+                $self->log( 'debug', sprintf "Ignored message '%s'", $response->{method} );
+            };
         };
     } else {
 
