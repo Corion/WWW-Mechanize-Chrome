@@ -342,9 +342,9 @@ sub chrome_version_info( $self ) {
 
 =head2 C<< $mech->driver >>
 
-    my $selenium= $mech->driver
+    my $driver = $mech->driver
 
-Access the L<Selenium::Driver::Remote> instance connecting to Chrome.
+Access the L<Chrome::DevToolsProtocol> instance connecting to Chrome.
 
 =cut
 
@@ -575,10 +575,8 @@ JS
 
 Retrieves the URL C<URL>.
 
-It returns a faked L<HTTP::Response> object for interface compatibility
-with L<WWW::Mechanize>. It seems that Selenium and thus L<Selenium::Remote::Driver>
-have no concept of HTTP status code and thus no way of returning the
-HTTP status code.
+It returns a <HTTP::Response> object for interface compatibility
+with L<WWW::Mechanize>.
 
 Note that Chrome does not support download of files.
 
