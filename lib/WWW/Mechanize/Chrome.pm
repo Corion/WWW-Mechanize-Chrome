@@ -1997,7 +1997,7 @@ sub xpath( $self, $query, %options) {
                     $self->_performSearch( query => $_, backendNodeId => $id )
                 } @$query
             )->get;
-            
+
             @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @found;
             push @res, @found;
 
@@ -2928,17 +2928,23 @@ All parameters are optional.
 
 This method is specific to WWW::Mechanize::Chrome.
 
-Currently, the data transfer between Chrome and Perl
-is done Base64-encoded.
-
 =cut
+
+sub _content_as_png {
+    my ($self, $rect) = @_;
+    $rect ||= {};
+
+    $self->driver->send_message('Page.captureScreenshot', format => 'png' )->then( sub( $res ) {
+        return Future->done( decode_base64( $res->{data} ))
+    });
+};
+
 
 sub content_as_png {
     my ($self, $rect) = @_;
     $rect ||= {};
 
-    my $base64 = $self->driver->send_message('Page.captureScreenshot', format => 'png' )->get->{data};
-    return decode_base64( $base64 )
+    return $self->_content_as_png( $self, $rect )->get;
 };
 
 =head2 C<< $mech->viewport_size >>
@@ -2948,19 +2954,25 @@ sub content_as_png {
 
 Returns (or sets) the new size of the viewport (the "window").
 
-   Emulation.setDeviceMetricsOverride
+The recognized keys are:
+
+  width
+  height
+  deviceScaleFactor
+  mobile
+  screenWidth
+  screenHeight
+  positionX
+  positionY
 
 =cut
 
-sub viewport_size {
-    my( $self, $new )= @_;
-
-    $self->eval_in_chrome( <<'JS', $new );
-        if( arguments[0]) {
-            this.viewportSize= arguments[0];
-        };
-        return this.viewportSize;
-JS
+sub viewport_size( $self, $new ) {
+    if( $new and keys %$new) {
+        $self->driver->send_message('Emulation.setDeviceMetricsOverride', %$new )->get();
+    } else {
+        $self->driver->send_message('Emulation.clearDeviceMetricsOverride' )->get();
+    };
 };
 
 =head2 C<< $mech->element_as_png( $element ) >>
@@ -2975,18 +2987,7 @@ Returns PNG image data for a single element
 sub element_as_png {
     my ($self, $element) = @_;
 
-    my $cliprect = $self->element_coordinates( $element );
-
-    my $code = <<'JS';
-       var old= this.clipRect;
-       this.clipRect= arguments[0];
-JS
-
-    my $old= $self->eval_in_chrome( $code, $cliprect );
-    my $png= $self->content_as_png();
-    #warn Dumper $old;
-    $self->eval_in_chrome( $code, $old );
-    $png
+    $self->render_element( element => $element, format => 'png' )
 };
 
 =head2 C<< $mech->render_element( %options ) >>
@@ -2994,12 +2995,17 @@ JS
     my $shiny = $mech->selector('#shiny', single => 1);
     my $i_want_this= $mech->render_element(
         element => $shiny,
-        format => 'pdf',
+        format => 'png',
     );
 
 Returns the data for a single element
 or writes it to a file. It accepts
 all options of C<< ->render_content >>.
+
+Note that while the image will have the node in the upper left
+corner, the width and height of the resulting image will still
+be the size of the browser window. Cut the image using
+C<< element_coordinates >> if you need exactly the element.
 
 =cut
 
@@ -3009,18 +3015,18 @@ sub render_element {
         or croak "No element given to render.";
 
     my $cliprect = $self->element_coordinates( $element );
+    my $res = Future->wait_all(
+        #$self->driver->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
+        $self->driver->send_message('Emulation.forceViewport', 'y' => int $cliprect->{top}, 'x' => int $cliprect->{left}, scale => 1.0 ),
+    )->then(sub {
+        $self->_content_as_png()
+    })->get;
 
-    my $code = <<'JS';
-       var old= this.clipRect;
-       this.clipRect= arguments[0];
-JS
+    Future->wait_all(
+        #$self->driver->send_message('Emulation.setVisibleSize', width => $cliprect->{width}, height => $cliprect->{height} ),
+        $self->driver->send_message('Emulation.resetViewport'),
+    )->get;
 
-    my $old= $self->eval_in_chrome( $code, $cliprect );
-    my $res= $self->render_content(
-        %options
-    );
-    #warn Dumper $old;
-    $self->eval_in_chrome( $code, $old );
     $res
 };
 
@@ -3040,7 +3046,17 @@ towards rendering HTML.
 
 sub element_coordinates {
     my ($self, $element) = @_;
-    my $cliprect = $self->eval('arguments[0].getBoundingClientRect()', $element );
+    my $cliprect = $self->driver->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true)->get->{result}->{value};
+    function() {
+        var r = this.getBoundingClientRect();
+        return {
+            top : r.top
+          , left: r.left
+          , width: r.width
+          , height: r.height
+        }
+    }
+JS
 };
 
 =head2 C<< $mech->render_content(%options) >>
@@ -3207,7 +3223,6 @@ sub get_tag_name( $self ) {
 sub get_text( $self ) {
     $self->get_attribute('innerText')
 }
-
 
 1;
 

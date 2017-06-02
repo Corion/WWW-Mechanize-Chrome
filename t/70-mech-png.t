@@ -13,7 +13,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
-my $testcount = (@instances*2);
+my $testcount = (@instances*3);
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -68,12 +68,11 @@ HTML
     like $pngData, '/^.PNG/', "The result looks like a PNG format file";
     #save $pngData, 'tmp.png';
 
-    if( 0 ) {
     my $pngName = $mech->selector("#my_name", single => 1);
     $pngData = $mech->element_as_png($pngName);
     like $pngData, '/^.PNG/', "The result looks like a PNG format file";
     #save $pngData, 'tmp.png';
-    
+    if( 0 ) {
     my $rect = { left  =>    0,
         top   =>    0,
         width  => 200,
@@ -119,5 +118,5 @@ HTML
     like $topleft, '/^.PNG/', "The result looks like a PNG format file";
     image_dimensions_are( $topleft, { width => 225, height => 150 }, "Scaled down via fixed height" );
     #save($pngData,"Topleft-".$i++.".png");
-    }
+    };
 })
