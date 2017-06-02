@@ -17,6 +17,8 @@ WWW::Mechanize::Chrome::DSL - Domain Specific Language for short scripts
 
 =head1 SYNOPSIS
 
+    use Log::Log4perl qw(:easy);
+    Log::Log4perl->easy_init($ERROR);
     use WWW::Mechanize::Chrome::DSL '$mech';
 
     get 'http://google.de';
