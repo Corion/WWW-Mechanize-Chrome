@@ -478,7 +478,16 @@ sub eval_in_page {
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
     my $result = $self->driver->evaluate("$str")->get;
-#    $self->post_process;
+
+    if( $result->{error} ) {
+        $self->signal_condition(
+            join "\n", grep { defined $_ }
+                           $result->{error}->{message},
+                           $result->{error}->{data},
+                           $result->{error}->{code}
+        );
+    };
+
     return $result->{result}->{value}, $result->{result}->{type};
 };
 
@@ -1003,13 +1012,13 @@ sub response( $self ) {
     *res = \&response;
 }
 
-# Call croak or carp, depending on the C< autodie > setting
+# Call croak or log it, depending on the C< autodie > setting
 sub signal_condition {
     my ($self,$msg) = @_;
     if ($self->{autodie}) {
         croak $msg
     } else {
-        carp $msg
+        $self->log( 'warn', $msg );
     }
 };
 
