@@ -36,8 +36,7 @@ sub browser_instances {
 
     # Only use unique Chrome executables
     my %seen;
-    undef @seen{ @instances };
-    use Data::Dumper;
+    @seen{ @instances } = 1 x @instances;
 
     # Well, we should do a nicer natural sort here
     @instances = sort {$a cmp $b} keys %seen;
