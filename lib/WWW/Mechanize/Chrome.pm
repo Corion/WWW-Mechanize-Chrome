@@ -318,8 +318,10 @@ sub chrome_version_from_stdout( $self ) {
 sub chrome_version( $self ) {
     if( $^O !~ /mswin/i ) {
         my $version = $self->chrome_version_from_stdout();
-        # XXX needs cleanup
-        return $version if $version;
+        if( $version ) {
+            $version =~ s/ Built on.*//;
+            return $version;
+        };
     };
 
     $self->chrome_version_info()->{Browser}
@@ -2611,7 +2613,7 @@ sub get_set_value {
                 $self->driver->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
 
             } elsif( 'selected' eq $method ) {
-                # XXX needs more logic to find the correct child
+                # needs more logic to find the correct child
                 $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { if( newValue ) { this.selected = newValue } else { delete this.selected } }', arguments => [ $value ])->get;
             } elsif( 'content' eq $method ) {
                 $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { this.innerHTML = newValue }', arguments => [ $value ])->get;
