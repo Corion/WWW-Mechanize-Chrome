@@ -85,9 +85,9 @@ APIs of Chrome that the object is connected to.
 
 ## `$mech->driver`
 
-    my $selenium= $mech->driver
+    my $driver = $mech->driver
 
-Access the [Selenium::Driver::Remote](https://metacpan.org/pod/Selenium::Driver::Remote) instance connecting to Chrome.
+Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting to Chrome.
 
 ## `$mech->tab`
 
@@ -177,14 +177,12 @@ got the right nodes.
 
 ## `$mech->get( $url, %options )`
 
-    $mech->get( $url  );
+    my $response = $mech->get( $url );
 
 Retrieves the URL `URL`.
 
-It returns a faked [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object for interface compatibility
-with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize). It seems that Selenium and thus [Selenium::Remote::Driver](https://metacpan.org/pod/Selenium::Remote::Driver)
-have no concept of HTTP status code and thus no way of returning the
-HTTP status code.
+It returns a <HTTP::Response> object for interface compatibility
+with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
 
 Note that Chrome does not support download of files.
 
@@ -566,20 +564,6 @@ You can use this option if you want to use `->xpath` in scalar context
 to count the number of matched elements, as it will otherwise emit a warning
 for each usage in scalar context without any of the above restricting options.
 - `any` - no error is raised, no matter if an item is found or not.
-- `type` - force the return type of the query.
-
-        type => $mech->xpathResult('ORDERED_NODE_SNAPSHOT_TYPE'),
-
-    WWW::Mechanize::Chrome tries a best effort in giving you the appropriate
-    result of your query, be it a DOM node or a string or a number. In the case
-    you need to restrict the return type, you can pass this in.
-
-    The allowed strings are documented in the MDN. Interesting types are
-
-        ANY_TYPE     (default, uses whatever things the query returns)
-        STRING_TYPE
-        NUMBER_TYPE
-        ORDERED_NODE_SNAPSHOT_TYPE
 
 Returns the matched results.
 
@@ -601,7 +585,7 @@ all nodes matched by any of the ids in the array.
 
 This method is equivalent to calling `->xpath` :
 
-    $self->xpath(qq{//*[\@id="$_"], %options)
+    $self->xpath(qq{//*[\@id="$_"]}, %options)
 
 It is convenient when your element ids get mistaken for
 CSS selectors.
@@ -894,9 +878,6 @@ All parameters are optional.
 
 This method is specific to WWW::Mechanize::Chrome.
 
-Currently, the data transfer between Chrome and Perl
-is done Base64-encoded.
-
 ## `$mech->viewport_size`
 
     print Dumper $mech->viewport_size;
@@ -904,7 +885,16 @@ is done Base64-encoded.
 
 Returns (or sets) the new size of the viewport (the "window").
 
-    Emulation.setDeviceMetricsOverride
+The recognized keys are:
+
+    width
+    height
+    deviceScaleFactor
+    mobile
+    screenWidth
+    screenHeight
+    positionX
+    positionY
 
 ## `$mech->element_as_png( $element )`
 
@@ -918,12 +908,17 @@ Returns PNG image data for a single element
     my $shiny = $mech->selector('#shiny', single => 1);
     my $i_want_this= $mech->render_element(
         element => $shiny,
-        format => 'pdf',
+        format => 'png',
     );
 
 Returns the data for a single element
 or writes it to a file. It accepts
 all options of `->render_content`.
+
+Note that while the image will have the node in the upper left
+corner, the width and height of the resulting image will still
+be the size of the browser window. Cut the image using
+`element_coordinates` if you need exactly the element.
 
 ## `$mech->element_coordinates( $element )`
 
