@@ -50,6 +50,8 @@ t/52-secondary-subframe.html
 t/52-subframe.html
 t/52-subframe2.html
 t/56-render-content.t
+t/58-alert.html
+t/58-alert.t
 t/60-mech-custom-headers.t
 t/70-mech-png.t
 t/helper.pm

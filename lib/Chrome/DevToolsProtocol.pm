@@ -294,6 +294,36 @@ sub json_get($self, $domain, %options) {
     });
 };
 
+sub _send_packet( $self, $response, $method, %params ) {
+    my $id = $self->next_sequence;
+    if( $response ) {
+        $self->{receivers}->{ $id } = $response;
+    };
+    
+    my $payload = $self->json->encode({
+        id     => 0+$id,
+        method => $method,
+        params => \%params
+    });
+
+    $self->log( 'trace', "Sent message", $payload );
+    $self->transport->send( $payload );
+}
+
+=head2 C<< $chrome->send_packet >>
+
+  $chrome->send_packet('Page.handleJavaScriptDialog',
+      accept => JSON::true,
+  );
+
+Sends a JSON packet to the remote end
+
+=cut
+
+sub send_packet( $self, $topic, %params ) {
+    $self->_send_packet( undef, $topic, %params )
+}
+
 =head2 C<< $chrome->send_message >>
 
   my $future = $chrome->send_message('DOM.querySelectorAll',
@@ -308,17 +338,8 @@ has sent a response to this query.
 =cut
 
 sub send_message( $self, $method, %params ) {
-    my $id = $self->next_sequence;
-    my $payload = $self->json->encode({
-        id => $id,
-        method => $method,
-        params => \%params
-    });
-
     my $response = $self->future;
-    $self->log( 'trace', "Sent message", $payload );
-    $self->transport->send( $payload );
-    $self->{receivers}->{ $id } = $response;
+    $self->_send_packet( $response, $method, %params );
     $response
 }
 

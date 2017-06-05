@@ -197,7 +197,7 @@ sub spawn_child( $self, $localhost, @cmd ) {
     };
 
     # Just to give Chrome time to start up, make sure it accepts connections
-    $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->startup_timeout} || 20);
+    $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{startup_timeout} || 20);
     return $pid
 }
 
@@ -268,7 +268,6 @@ sub new($class, %options) {
                 croak $_[1]
             },
             transport => $options{ transport },
-            #log => sub {},
             log => $options{ log },
         );
         # Synchronously connect here, just for easy API compatibility
@@ -383,29 +382,67 @@ sub autodie {
 
 sub allow {
     my($self,%options)= @_;
+    
+    my @await;
+    if( exists $options{ javascript } ) {
+        my $disabled = !$options{ javascript } ? JSON::true : JSON::false;
+        push @await,
+            $self->driver->send_message('Emulation.setScriptExecutionDisabled', $disabled );
+    };
+    
+    Future->wait_all( @await )->get;
 }
 
-=head2 C<< $mech->js_alerts() >>
+=head2 C<< $mech->on_dialog( $cb ) >>
 
-  print for $mech->js_alerts();
+  $mech->on_dialog( sub {
+      my( $mech, $dialog ) = @_;
+      warn $dialog->{message};
+      $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
+  });
 
-An interface to the Javascript Alerts
-
-Returns the list of alerts
-
-=cut
-
-sub js_alerts { @{ shift->eval_in_chrome('return this.alerts') } }
-
-=head2 C<< $mech->clear_js_alerts() >>
-
-    $mech->clear_js_alerts();
-
-Clears all saved alerts
+A callback for Javascript dialogs (C<< alert() >>, C<< prompt() >>, ... )
 
 =cut
 
-sub clear_js_alerts { shift->eval_in_chrome('this.alerts = [];') }
+sub on_dialog( $self, $cb ) {
+    my $s = $self;
+    weaken $s;
+    if( $cb ) {
+        $self->driver->set_collector('Page.javascriptDialogOpening', sub( $ev ) {
+            if( $s->{ on_dialog }) {
+                $s->{ on_dialog }->( $s, $ev->{params} );
+            };
+        });
+    } else {
+        $self->driver->set_collector('Page.javascriptDialogOpening', undef );
+    };
+    $self->{ on_dialog } = $cb;
+}
+
+=head2 C<< $mech->handle_dialog( $accept, $prompt = undef ) >>
+
+  $mech->on_dialog( sub {
+      my( $mech, $dialog ) = @_;
+      warn "[Javascript $dialog->{type}]: $dialog->{message}";
+      $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
+  });
+
+Closes the current Javascript dialog. Depending on
+
+=cut
+
+my $f_msg;
+sub handle_dialog( $self, $accept, $prompt = undef ) {
+    my $v = $accept ? JSON::true : JSON::false;
+    # We deliberately ignore the result here
+    # to avoid deadlock of Futures
+    $f_msg = $self->driver->send_message(
+        'Page.handleJavaScriptDialog',
+        accept => $v,
+        promptText => $prompt || 'generic message'
+    );
+};
 
 =head2 C<< $mech->js_errors() >>
 
