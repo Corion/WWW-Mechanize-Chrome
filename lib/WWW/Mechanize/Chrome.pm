@@ -75,6 +75,14 @@ Specify additional parameters to the Chrome executable.
 
   launch_arg => [ "--some-new-parameter=foo" ],
 
+=item B<startup_timeout>
+
+  startup_timeout => 20,
+
+The maximum number of seconds to wait until Chrome is ready. This helps on slow
+systems where Chrome takes some time starting up. The process will try every
+second to connect to Chrome.
+  
 =item B<cookie_file>
 
 Cookies are not directly persisted. If you pass in a path here,
@@ -189,7 +197,7 @@ sub spawn_child( $self, $localhost, @cmd ) {
     };
 
     # Just to give Chrome time to start up, make sure it accepts connections
-    $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{wait} || 20);
+    $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->startup_timeout} || 20);
     return $pid
 }
 
@@ -235,7 +243,7 @@ sub new($class, %options) {
         $self->{ kill_pid } = 1;
 
         # Just to give Chrome time to start up, make sure it accepts connections
-        $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{wait} || 20);
+        $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{startup_timeout} || 20);
     }
 
     if( $options{ tab } and $options{ tab } eq 'current' ) {
