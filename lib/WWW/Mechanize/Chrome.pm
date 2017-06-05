@@ -411,6 +411,7 @@ sub on_dialog( $self, $cb ) {
     if( $cb ) {
         $self->driver->set_collector('Page.javascriptDialogOpening', sub( $ev ) {
             if( $s->{ on_dialog }) {
+                $self->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
                 $s->{ on_dialog }->( $s, $ev->{params} );
             };
         });
@@ -437,10 +438,11 @@ sub handle_dialog( $self, $accept, $prompt = undef ) {
     my $v = $accept ? JSON::true : JSON::false;
     # We deliberately ignore the result here
     # to avoid deadlock of Futures
+    $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
     $f_msg = $self->driver->send_message(
         'Page.handleJavaScriptDialog',
         accept => $v,
-        promptText => $prompt || 'generic message'
+        promptText => (defined $prompt ? $prompt : 'generic message'),
     );
 };
 
@@ -481,22 +483,6 @@ sub clear_js_errors {
 JS
 
 };
-
-=head2 C<< $mech->confirm( 'Really do this?' [ => 1 ]) >>
-
-Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If the message is not found,
-the answer is "cancel".
-
-=cut
-
-sub confirm
-{
-    my ( $self, $msg, $affirmative ) = @_;
-    $affirmative = 1 unless defined $affirmative;
-    $affirmative = $affirmative ? 'true' : 'false';
-    $self->eval_in_chrome("this.confirms['$msg']=$affirmative;");
-}
 
 =head2 C<< $mech->eval_in_page( $str, @args ) >>
 
