@@ -3416,6 +3416,10 @@ L<https://developer.chrome.com/devtools/docs/debugging-clients> - the Chrome Dev
 
 =item *
 
+L<https://github.com/GoogleChrome/lighthouse> - Google Lighthouse, the main client
+
+=item *
+
 L<WWW::Mechanize> - the module whose API grandfathered this module
 
 =item *
