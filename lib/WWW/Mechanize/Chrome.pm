@@ -3160,6 +3160,50 @@ sub report_js_errors
     Carp::carp("javascript error: @errors") ;
 }
 
+=head1 DEBUGGING METHODS
+
+This module can collect the screencasts that Chrome can produce. The screencasts
+are sent to your callback which either feeds them to C<ffmpeg> to create a video
+out of them or dumps them to disk as sequential images.
+
+  sub saveFrame {
+      my( $mech, $framePNG ) = @_;
+      # just ignore this frame
+  }
+
+  $mech->setScreenFrameCallback( \&saveFrame );
+  ... do stuff ...
+  $mech->setScreenFrameCallback( undef ); # stop recording
+
+=cut
+
+sub _handleScreencastFrame( $self, $frame ) {
+    # Meh, this one doesn't get a response I guess. So, not ->send_message, just
+    # send a JSON packet to acknowledge the frame
+    $self->driver->send_message('Page.screenCastFrameAck',frameId => $frame->{params}.>{id} );
+    $self->{ screenFrameCallback }->( $self, $frame )->get;
+}
+
+sub setScreenFrameCallback( $self, $callback ) {
+    $self->{ screenFrameCallback } = $callback;
+    
+    my $action;
+    if( $callback ) {
+        $action = $mech->driver->send_message('Page.screencastFrame');
+        $self->{ screenFrameCallbackCollector } = sub( $frame ) {
+            $self->_handleScreencastFrame( $frame );
+        };
+        $self->driver->collector('Page.startScreenCast', $self->{ screenFrameCallbackCollector });
+    } else {
+        $action = $mech->driver->send_message('Page.stopScreenCast');
+        # well, actually, we should only reset this after we're sure that
+        # the last frame has been processed. Maybe we should send ourselves
+        # a fake event for that, or maybe Chrome tells us
+        $self->driver->collector('Page.screenCast', undef );
+    }
+    $action->get
+}
+
 package WWW::Mechanize::Chrome::Node;
 use strict;
 use Moo 2;
