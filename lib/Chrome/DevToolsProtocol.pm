@@ -437,8 +437,9 @@ sub close_tab( $self, $tab ) {
     my $url = $self->build_url( domain => 'close/' . $tab->{id} );
     $self->ua->http_get( $url, headers => { 'Connection' => 'close' } )
     ->catch(
-        sub{ use Data::Dumper; warn Dumper \@_; Future->done }
-    );
+        sub{ #use Data::Dumper; warn Dumper \@_; 
+             Future->done
+        });
 };
 
 1;
