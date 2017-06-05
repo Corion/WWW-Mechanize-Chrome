@@ -55,6 +55,14 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
         launch_arg => [ "--some-new-parameter=foo" ],
 
+- **startup\_timeout**
+
+        startup_timeout => 20,
+
+    The maximum number of seconds to wait until Chrome is ready. This helps on slow
+    systems where Chrome takes some time starting up. The process will try every
+    second to connect to Chrome.
+
 - **cookie\_file**
 
     Cookies are not directly persisted. If you pass in a path here,
@@ -96,19 +104,25 @@ Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsP
 Access the tab hash of the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting
 to Chrome. This represents the tab we control.
 
-## `$mech->js_alerts()`
+## `$mech->on_dialog( $cb )`
 
-    print for $mech->js_alerts();
+    $mech->on_dialog( sub {
+        my( $mech, $dialog ) = @_;
+        warn $dialog->{message};
+        $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
+    });
 
-An interface to the Javascript Alerts
+A callback for Javascript dialogs (`alert()`, `prompt()`, ... )
 
-Returns the list of alerts
+## `$mech->handle_dialog( $accept, $prompt = undef )`
 
-## `$mech->clear_js_alerts()`
+    $mech->on_dialog( sub {
+        my( $mech, $dialog ) = @_;
+        warn "[Javascript $dialog->{type}]: $dialog->{message}";
+        $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
+    });
 
-    $mech->clear_js_alerts();
-
-Clears all saved alerts
+Closes the current Javascript dialog. Depending on
 
 ## `$mech->js_errors()`
 
@@ -973,6 +987,21 @@ in `@elements` having the attributes `%attributes`. The `@elements`
 will form an `or` condition, while the attributes will form an `and`
 condition.
 
+# DEBUGGING METHODS
+
+This module can collect the screencasts that Chrome can produce. The screencasts
+are sent to your callback which either feeds them to `ffmpeg` to create a video
+out of them or dumps them to disk as sequential images.
+
+    sub saveFrame {
+        my( $mech, $framePNG ) = @_;
+        # just ignore this frame
+    }
+
+    $mech->setScreenFrameCallback( \&saveFrame );
+    ... do stuff ...
+    $mech->setScreenFrameCallback( undef ); # stop recording
+
 # INCOMPATIBILITIES WITH WWW::Mechanize
 
 As this module is in a very early stage of development,
@@ -1032,6 +1061,7 @@ Test it has been installed on your system:
 # SEE ALSO
 
 - [https://developer.chrome.com/devtools/docs/debugging-clients](https://developer.chrome.com/devtools/docs/debugging-clients) - the Chrome DevTools homepage
+- [https://github.com/GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) - Google Lighthouse, the main client
 - [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
 - [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
 - [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS) - a similar module without a visible application
