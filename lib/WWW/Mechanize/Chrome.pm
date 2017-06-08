@@ -3213,8 +3213,12 @@ out of them or dumps them to disk as sequential images.
 sub _handleScreencastFrame( $self, $frame ) {
     # Meh, this one doesn't get a response I guess. So, not ->send_message, just
     # send a JSON packet to acknowledge the frame
-    $self->driver->send_message('Page.screenCastFrameAck',frameId => $frame->{params}.>{id} );
-    $self->{ screenFrameCallback }->( $self, $frame )->get;
+    my $ack;
+    $ack = $self->driver->send_message('Page.screencastFrameAck',frameId => $frame->{params}->{id} )->then(sub {
+        # forget ourselves
+        undef $ack;
+    });
+    $self->{ screenFrameCallback }->( $self, $frame );
 }
 
 sub setScreenFrameCallback( $self, $callback ) {
@@ -3222,17 +3226,17 @@ sub setScreenFrameCallback( $self, $callback ) {
     
     my $action;
     if( $callback ) {
-        $action = $mech->driver->send_message('Page.screencastFrame');
         $self->{ screenFrameCallbackCollector } = sub( $frame ) {
             $self->_handleScreencastFrame( $frame );
         };
-        $self->driver->collector('Page.startScreenCast', $self->{ screenFrameCallbackCollector });
+        $self->driver->collector('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
+        $action = $self->driver->send_message('Page.startScreencast');
     } else {
-        $action = $mech->driver->send_message('Page.stopScreenCast');
+        $action = $self->driver->send_message('Page.stopScreencast');
         # well, actually, we should only reset this after we're sure that
         # the last frame has been processed. Maybe we should send ourselves
         # a fake event for that, or maybe Chrome tells us
-        $self->driver->collector('Page.screenCast', undef );
+        $self->driver->collector('Page.screencastFrame', undef );
     }
     $action->get
 }
