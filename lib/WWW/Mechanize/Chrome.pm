@@ -433,17 +433,19 @@ Closes the current Javascript dialog. Depending on
 
 =cut
 
-my $f_msg;
 sub handle_dialog( $self, $accept, $prompt = undef ) {
     my $v = $accept ? JSON::true : JSON::false;
-    # We deliberately ignore the result here
-    # to avoid deadlock of Futures
     $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
-    $f_msg = $self->driver->send_message(
+    my $f;
+    $f = $self->driver->send_message(
         'Page.handleJavaScriptDialog',
         accept => $v,
         promptText => (defined $prompt ? $prompt : 'generic message'),
-    );
+    )->then( sub {
+        # We deliberately ignore the result here
+        # to avoid deadlock of Futures
+        undef $f;
+    });
 };
 
 =head2 C<< $mech->js_errors() >>
