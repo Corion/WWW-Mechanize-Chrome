@@ -77,6 +77,8 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 19, sub
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
     like $headers, qr!^X-WWW-Mechanize-Chrome: \Q$WWW::Mechanize::Chrome::VERSION\E$!m, "We can add completely custom headers";
     like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
+    $mech->submit_form; # retrieve the JS window.navigator.userAgent value
+    is $mech->value('navigator'), $ua, "JS window.navigator.userAgent gets set as well";
     # diag $mech->content;
 
     $mech->delete_header(
