@@ -233,7 +233,7 @@ sub new($class, %options) {
     };
 
     my $self= bless \%options => $class;
-    my $localhost = '127.0.0.1';
+    my $host = $options{ host } || '127.0.0.1';
     $self->{log} ||= $self->_build_log;
 
     unless ( defined $options{ port } ) {
@@ -244,11 +244,11 @@ sub new($class, %options) {
     unless ($options{pid} or $options{reuse}) {
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
-        $self->{pid} = $self->spawn_child( $localhost, @cmd );
+        $self->{pid} = $self->spawn_child( $host, @cmd );
         $self->{ kill_pid } = 1;
 
         # Just to give Chrome time to start up, make sure it accepts connections
-        $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{startup_timeout} || 20);
+        $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
     }
 
     if( $options{ tab } and $options{ tab } eq 'current' ) {
@@ -261,7 +261,7 @@ sub new($class, %options) {
     eval {
         $options{ driver } ||= Chrome::DevToolsProtocol->new(
             'port' => $options{ port },
-            host => $localhost,
+            host => $host,
             auto_close => 0,
             error_handler => sub {
                 #warn ref$_[0];
@@ -387,14 +387,14 @@ sub autodie {
 
 sub allow {
     my($self,%options)= @_;
-    
+
     my @await;
     if( exists $options{ javascript } ) {
         my $disabled = !$options{ javascript } ? JSON::true : JSON::false;
         push @await,
             $self->driver->send_message('Emulation.setScriptExecutionDisabled', $disabled );
     };
-    
+
     Future->wait_all( @await )->get;
 }
 
