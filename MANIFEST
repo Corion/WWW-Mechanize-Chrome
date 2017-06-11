@@ -53,6 +53,7 @@ t/56-render-content.t
 t/58-alert.html
 t/58-alert.t
 t/60-mech-custom-headers.t
+t/61-screencast.t
 t/70-mech-png.t
 t/helper.pm
 t/mixi_jp_index.html

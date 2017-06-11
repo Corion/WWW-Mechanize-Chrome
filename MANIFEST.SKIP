@@ -19,3 +19,4 @@ Makefile$
 ^.*.cmd
 ^chrome-versions
 ^WWW-Mechanize-Chrome
+^frame-\d+.png

@@ -3219,29 +3219,38 @@ sub _handleScreencastFrame( $self, $frame ) {
     # Meh, this one doesn't get a response I guess. So, not ->send_message, just
     # send a JSON packet to acknowledge the frame
     my $ack;
-    $ack = $self->driver->send_message('Page.screencastFrameAck',frameId => $frame->{params}->{id} )->then(sub {
+    $ack = $self->driver->send_message('Page.screencastFrameAck',sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
+        $self->log('trace', 'Screencast frame acknowledged');
+        $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
+        $self->{ screenFrameCallback }->( $self, $frame->{params} );
         # forget ourselves
         undef $ack;
     });
-    $self->{ screenFrameCallback }->( $self, $frame );
 }
 
-sub setScreenFrameCallback( $self, $callback ) {
+sub setScreenFrameCallback( $self, $callback, %options ) {
     $self->{ screenFrameCallback } = $callback;
-    
+
+    $options{ format } ||= 'png';
+    $options{ everyNthFrame } ||= 1;
+
     my $action;
+    my $s = $self;
+    weaken $s;
     if( $callback ) {
         $self->{ screenFrameCallbackCollector } = sub( $frame ) {
-            $self->_handleScreencastFrame( $frame );
+            $s->_handleScreencastFrame( $frame );
         };
-        $self->driver->collector('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
-        $action = $self->driver->send_message('Page.startScreencast');
+        $self->driver->collector->{'Page.screencastFrame'} = $self->{ screenFrameCallbackCollector };
+        $action = $self->driver->send_message('Page.startScreencast');#, format => $options{ format }, everyNthFrame => 0+$options{ everyNthFrame });
     } else {
-        $action = $self->driver->send_message('Page.stopScreencast');
-        # well, actually, we should only reset this after we're sure that
-        # the last frame has been processed. Maybe we should send ourselves
-        # a fake event for that, or maybe Chrome tells us
-        $self->driver->collector('Page.screencastFrame', undef );
+        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {;
+            # well, actually, we should only reset this after we're sure that
+            # the last frame has been processed. Maybe we should send ourselves
+            # a fake event for that, or maybe Chrome tells us
+            delete $s->driver->collector->{'Page.screencastFrame'};
+            Future->done(1);
+        });
     }
     $action->get
 }
