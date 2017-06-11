@@ -55,6 +55,11 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
         launch_arg => [ "--some-new-parameter=foo" ],
 
+    Interesting parameters might be
+
+        '--window-size=1280x1696'
+        '--ignore-certificate-errors'
+
 - **startup\_timeout**
 
         startup_timeout => 20,
@@ -141,12 +146,6 @@ Maybe this should be called `js_messages` or
     $mech->clear_js_errors();
 
 Clears all Javascript messages from the console
-
-## `$mech->confirm( 'Really do this?' [ => 1 ])`
-
-Records a confirmation (which is "1" or "ok" by default), to be used
-whenever javascript fires a confirm dialog. If the message is not found,
-the answer is "cancel".
 
 ## `$mech->eval_in_page( $str, @args )`
 
@@ -1002,6 +1001,16 @@ out of them or dumps them to disk as sequential images.
     ... do stuff ...
     $mech->setScreenFrameCallback( undef ); # stop recording
 
+## `$mech->sleep`
+
+    $mech->sleep( 2 ); # wait for things to settle down
+
+Suspends the progress of the program while still handling messages from
+Chrome.
+
+The main use of this method is to give Chrome enough time to send all its
+screencast frames and to catch up before shutting down the connection.
+
 # INCOMPATIBILITIES WITH WWW::Mechanize
 
 As this module is in a very early stage of development,
@@ -1078,7 +1087,8 @@ The public support forum of this module is
 
 # TALKS
 
-I've given no talks about this module yet at Perl conferences.
+I've given a German talk at GPW 2017, see [http://act.yapc.eu/gpw2017/talk/7027](http://act.yapc.eu/gpw2017/talk/7027)
+and [https://corion.net/talks](https://corion.net/talks) for the slides.
 
 # BUG TRACKER
 
