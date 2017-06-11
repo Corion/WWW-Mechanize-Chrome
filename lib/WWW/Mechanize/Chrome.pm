@@ -3241,6 +3241,22 @@ sub setScreenFrameCallback( $self, $callback ) {
     $action->get
 }
 
+=head2 C<< $mech->sleep >>
+
+  $mech->sleep( 2 ); # wait for things to settle down
+
+Suspends the progress of the program while still handling messages from
+Chrome.
+
+The main use of this method is to give Chrome enough time to send all its
+screencast frames and to catch up before shutting down the connection.
+
+=cut
+
+sub sleep( $self, $seconds ) {
+    $self->driver->sleep( $seconds )->get;
+}
+
 package WWW::Mechanize::Chrome::Node;
 use strict;
 use Moo 2;

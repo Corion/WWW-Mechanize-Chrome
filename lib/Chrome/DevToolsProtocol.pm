@@ -201,6 +201,10 @@ sub close( $self ) {
     };
 };
 
+sub sleep( $self, $seconds ) {
+    $self->transport->sleep($seconds);
+};
+
 sub DESTROY( $self ) {
     delete $self->{ua};
     $self->close;

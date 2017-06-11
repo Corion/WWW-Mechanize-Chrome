@@ -80,4 +80,20 @@ sub future {
     Future::Mojo->new
 }
 
+=head2 C<< $transport->sleep( $seconds ) >>
+
+    $transport->sleep( 10 )->get; # wait for 10 seconds
+
+Returns a Future that will be resolved in the number of seconds given.
+
+=cut
+
+sub sleep( $self, $seconds ) {
+    my $done = $mech->driver->future;
+    Mojo::IOLoop->timer( $seconds => sub {
+        $done->done(1);
+    });
+    $done
+}
+
 1;

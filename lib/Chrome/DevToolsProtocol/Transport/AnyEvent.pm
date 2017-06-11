@@ -84,4 +84,19 @@ sub future {
     AnyEvent::Future->new
 }
 
+=head2 C<< $transport->sleep( $seconds ) >>
+
+    $transport->sleep( 10 )->get; # wait for 10 seconds
+
+Returns a Future that will be resolved in the number of seconds given.
+
+=cut
+
+sub sleep( $self, $seconds ) {
+
+    my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
+        AnyEvent->timer( after => $seconds, cb => $done_cb )
+    });
+}
+
 1;
