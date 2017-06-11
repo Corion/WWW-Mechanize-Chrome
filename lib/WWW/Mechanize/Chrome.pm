@@ -3466,7 +3466,8 @@ L<https://perlmonks.org/>.
 
 =head1 TALKS
 
-I've given no talks about this module yet at Perl conferences.
+I've given a German talk at GPW 2017, see L<http://act.yapc.eu/gpw2017/talk/7027>
+and L<https://corion.net/talks> for the slides.
 
 =head1 BUG TRACKER
 
