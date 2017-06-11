@@ -75,6 +75,11 @@ Specify additional parameters to the Chrome executable.
 
   launch_arg => [ "--some-new-parameter=foo" ],
 
+Interesting parameters might be
+
+    '--window-size=1280x1696'
+    '--ignore-certificate-errors'
+
 =item B<startup_timeout>
 
   startup_timeout => 20,
@@ -82,7 +87,7 @@ Specify additional parameters to the Chrome executable.
 The maximum number of seconds to wait until Chrome is ready. This helps on slow
 systems where Chrome takes some time starting up. The process will try every
 second to connect to Chrome.
-  
+
 =item B<cookie_file>
 
 Cookies are not directly persisted. If you pass in a path here,
