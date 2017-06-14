@@ -51,9 +51,18 @@ The default is to have HTTP errors fatal,
 as that makes debugging much easier than expecting
 you to actually check the results of every action.
 
+=item B<host>
+
+Specify the host where Chrome listens
+
+  host => 'localhost'
+
+Most likely you don't want to have Chrome listening on an outside port
+on a machine connected to the internet.
+
 =item B<port>
 
-Specify the port where Chrome should listen
+Specify the port of Chrome to connect to
 
   port => 9222
 
@@ -87,11 +96,6 @@ Interesting parameters might be
 The maximum number of seconds to wait until Chrome is ready. This helps on slow
 systems where Chrome takes some time starting up. The process will try every
 second to connect to Chrome.
-
-=item B<cookie_file>
-
-Cookies are not directly persisted. If you pass in a path here,
-that file will be used to store or retrieve cookies.
 
 =item B<driver>
 
@@ -2700,7 +2704,11 @@ sub submit($self,$dom_form = $self->current_form) {
     if ($dom_form) {
         # We should prepare for navigation here as well
         $self->_mightNavigate( sub {
-            $self->driver->send_message('Runtime.callFunctionOn', objectId => $dom_form->objectId, functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}' );
+            $self->driver->send_message(
+                'Runtime.callFunctionOn',
+                objectId => $dom_form->objectId,
+                functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}'
+            );
         });
 
         $self->clear_current_form;
@@ -2973,7 +2981,8 @@ sub _content_as_png {
     my ($self, $rect) = @_;
     $rect ||= {};
 
-    $self->driver->send_message('Page.captureScreenshot', format => 'png' )->then( sub( $res ) {
+    $self->driver->send_message('Page.captureScreenshot', format => 'png' )
+    ->then( sub( $res ) {
         return Future->done( decode_base64( $res->{data} ))
     });
 };
@@ -3056,7 +3065,12 @@ sub render_element {
     my $cliprect = $self->element_coordinates( $element );
     my $res = Future->wait_all(
         #$self->driver->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
-        $self->driver->send_message('Emulation.forceViewport', 'y' => int $cliprect->{top}, 'x' => int $cliprect->{left}, scale => 1.0 ),
+        $self->driver->send_message(
+            'Emulation.forceViewport',
+            'y' => int $cliprect->{top},
+            'x' => int $cliprect->{left},
+            scale => 1.0
+        ),
     )->then(sub {
         $self->_content_as_png()
     })->get;
@@ -3219,7 +3233,9 @@ sub _handleScreencastFrame( $self, $frame ) {
     # Meh, this one doesn't get a response I guess. So, not ->send_message, just
     # send a JSON packet to acknowledge the frame
     my $ack;
-    $ack = $self->driver->send_message('Page.screencastFrameAck',sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
+    $ack = $self->driver->send_message(
+        'Page.screencastFrameAck',
+        sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
         $self->log('trace', 'Screencast frame acknowledged');
         $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
         $self->{ screenFrameCallback }->( $self, $frame->{params} );
@@ -3242,7 +3258,11 @@ sub setScreenFrameCallback( $self, $callback, %options ) {
             $s->_handleScreencastFrame( $frame );
         };
         $self->driver->collector->{'Page.screencastFrame'} = $self->{ screenFrameCallbackCollector };
-        $action = $self->driver->send_message('Page.startScreencast');#, format => $options{ format }, everyNthFrame => 0+$options{ everyNthFrame });
+        $action = $self->driver->send_message(
+            'Page.startScreencast',
+            format => $options{ format },
+            everyNthFrame => 0+$options{ everyNthFrame }
+        );
     } else {
         $action = $self->driver->send_message('Page.stopScreencast')->then( sub {;
             # well, actually, we should only reset this after we're sure that
@@ -3422,11 +3442,19 @@ Selenium does not support POST requests
 
 =head1 INSTALLING
 
-=head2 Install the C<Chrome> executable
+=head2 Install the C<chrome> executable
 
 Test it has been installed on your system:
 
+On unixish systems, the executable is named C<chrome-browser>. Check
+that Chrome starts:
+
 C<< chrome-browser --version >>
+
+On Windows, the executable is named C<chrome.exe> and doesn't output
+information to the console. Check that Chrome starts:
+
+C<< chrome >>
 
 =head1 SEE ALSO
 

@@ -31,9 +31,18 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     as that makes debugging much easier than expecting
     you to actually check the results of every action.
 
+- **host**
+
+    Specify the host where Chrome listens
+
+        host => 'localhost'
+
+    Most likely you don't want to have Chrome listening on an outside port
+    on a machine connected to the internet.
+
 - **port**
 
-    Specify the port where Chrome should listen
+    Specify the port of Chrome to connect to
 
         port => 9222
 
@@ -67,11 +76,6 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     The maximum number of seconds to wait until Chrome is ready. This helps on slow
     systems where Chrome takes some time starting up. The process will try every
     second to connect to Chrome.
-
-- **cookie\_file**
-
-    Cookies are not directly persisted. If you pass in a path here,
-    that file will be used to store or retrieve cookies.
 
 - **driver**
 
@@ -1061,11 +1065,19 @@ they make little sense in the context of Chrome.
 
 # INSTALLING
 
-## Install the `Chrome` executable
+## Install the `chrome` executable
 
 Test it has been installed on your system:
 
+On unixish systems, the executable is named `chrome-browser`. Check
+that Chrome starts:
+
 `chrome-browser --version`
+
+On Windows, the executable is named `chrome.exe` and doesn't output
+information to the console. Check that Chrome starts:
+
+`chrome`
 
 # SEE ALSO
 
