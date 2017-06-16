@@ -396,7 +396,7 @@ sub allow {
     if( exists $options{ javascript } ) {
         my $disabled = !$options{ javascript } ? JSON::true : JSON::false;
         push @await,
-            $self->driver->send_message('Emulation.setScriptExecutionDisabled', $disabled );
+            $self->driver->send_message('Emulation.setScriptExecutionDisabled', value => $disabled );
     };
 
     Future->wait_all( @await )->get;
@@ -2054,19 +2054,6 @@ sub xpath( $self, $query, %options) {
 
             @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @found;
             push @res, @found;
-
-            # A small optimization to return if we already have enough elements
-            # We can't do this on $return_first as there might be more elements
-            #if( @res and $options{ return_first } and grep { $_->{resultSize} } @res ) {
-            #    @res= grep { $_->{resultSize} } @res;
-            #    last DOCUMENTS;
-            #};
-            #warn Dumper \@documents;
-            if ($options{ frames } and not $options{ node }) {
-                #warn ">Expanding below " . $doc->get_tag_name() . ' - ' . $doc->get_attribute('title');
-                #local $nesting .= "--";
-                push @documents, @d;
-            };
         };
     };
 
