@@ -62,6 +62,9 @@ my %module = (
         'WWW::Mechanize::Link'             => 0,
         'IO::Socket::INET'                 => 0,
         'Object::Import'                   => 0,
+        # for extracting element screenshots, loaded dynamically
+        'Imager'                           => 0,
+        'Imager::File::PNG'                => 0,
     },
     TEST_REQUIRES => { # all core anyway...
         'Test::More'   => 0,

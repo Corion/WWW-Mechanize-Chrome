@@ -2969,21 +2969,38 @@ This method is specific to WWW::Mechanize::Chrome.
 
 =cut
 
-sub _content_as_png {
-    my ($self, $rect) = @_;
-    $rect ||= {};
+sub _as_raw_png( $self, $image ) {
+    my $data;
+    $image->write( data => \$data, type => 'png' );
+    $data
+}
 
+sub _content_as_png($self, $rect={}, $target={} ) {
     $self->driver->send_message('Page.captureScreenshot', format => 'png' )->then( sub( $res ) {
-        return Future->done( decode_base64( $res->{data} ))
+        require Imager;
+        my $img = Imager->new ( data => decode_base64( $res->{data} ), format => 'png' );
+        # Cut out the wanted part
+        if( scalar keys %$rect) {
+            $img = $img->crop( %$rect );
+        };
+        # Resize image to width/height
+        if( scalar keys %$target) {
+            my %args;
+            $args{ ypixels } = $target->{ height }
+                if $target->{height};
+            $args{ xpixels } = $target->{ width }
+                if $target->{width};
+            $args{ scalefactor } = $target->{ scalex } || $target->{scaley};
+            $img = $img->scale( %args );
+        };
+        return Future->done( $img )
     });
 };
 
 
-sub content_as_png {
-    my ($self, $rect) = @_;
-    $rect ||= {};
-
-    return $self->_content_as_png( $self, $rect )->get;
+sub content_as_png($self, $rect={}, $target={}) {
+    my $img = $self->_content_as_png( $rect, $target )->get;
+    return $self->_as_raw_png( $img );
 };
 
 =head2 C<< $mech->viewport_size >>
@@ -3058,7 +3075,14 @@ sub render_element {
         #$self->driver->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
         $self->driver->send_message('Emulation.forceViewport', 'y' => int $cliprect->{top}, 'x' => int $cliprect->{left}, scale => 1.0 ),
     )->then(sub {
-        $self->_content_as_png()
+        $self->_content_as_png()->then( sub( $img ) {
+            my $element = $img->crop(
+                left => 0,
+                top => 0,
+                width => $cliprect->{width},
+                height => $cliprect->{height});
+            Future->done( $self->_as_raw_png( $element ));
+        })
     })->get;
 
     Future->wait_all(
