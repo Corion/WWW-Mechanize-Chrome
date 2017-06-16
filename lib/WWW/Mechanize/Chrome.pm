@@ -2021,7 +2021,6 @@ sub xpath( $self, $query, %options) {
     if( $options{ document }) {
         warn sprintf "Document %s", $options{ document }->{id};
     };
-    #my $original_frame= $self->current_frame;
 
     DOCUMENTS: {
         my $doc= $options{ document } || $self->document->get;
@@ -2066,8 +2065,6 @@ sub xpath( $self, $query, %options) {
             if ($options{ frames } and not $options{ node }) {
                 #warn ">Expanding below " . $doc->get_tag_name() . ' - ' . $doc->get_attribute('title');
                 #local $nesting .= "--";
-                my @d; # = $self->expand_frames( $options{ frames }, $doc );
-                #warn sprintf("Found %s %s pointing to %s", $_->get_tag_name, $_->{id}, $_->get_attribute('src')) for @d;
                 push @documents, @d;
             };
         };
@@ -2852,121 +2849,6 @@ sub do_set_fields {
     }
 };
 
-=head2 C<< $mech->expand_frames( $spec ) >>
-
-  my @frames = $mech->expand_frames();
-
-Expands the frame selectors (or C<1> to match all frames)
-into their respective Chrome nodes according to the current
-document. All frames will be visited in breadth first order.
-
-This is mostly an internal method.
-
-=cut
-
-sub expand_frames {
-    my ($self, $spec, $document) = @_;
-    $spec ||= $self->{frames};
-    my @spec = ref $spec ? @$spec : $spec;
-    $document ||= $self->document;
-
-    if (! ref $spec and $spec !~ /\D/ and $spec == 1) {
-        # All frames
-        @spec = qw( frame iframe );
-    };
-
-    # Optimize the default case of only names in @spec
-    my @res;
-    if (! grep {ref} @spec) {
-        @res = $self->selector(
-                        \@spec,
-                        document => $document,
-                        frames => 0, # otherwise we'll recurse :)
-                    );
-    } else {
-        @res =
-            map { #warn "Expanding $_";
-                    ref $_
-                  ? $_
-                  # Just recurse into the above code path
-                  : $self->expand_frames( $_, $document );
-            } @spec;
-    }
-
-    @res
-};
-
-
-=head2 C<< $mech->current_frame >>
-
-    my $last_frame= $mech->current_frame;
-    # Switch frame somewhere else
-
-    # Switch back
-    $mech->activate_container( $last_frame );
-
-Returns the currently active frame as a WebElement.
-
-This is mostly an internal method.
-
-See also
-
-L<http://code.google.com/p/selenium/issues/detail?id=4305>
-
-Frames are currently not really supported.
-
-=cut
-
-sub current_frame {
-    my( $self )= @_;
-    my @res;
-    my $current= $self->make_WebElement( $self->eval('window'));
-    warn sprintf "Current_frame: bottom: %s", $current->{id};
-
-    # Now climb up until the root window
-    my $f= $current;
-    my @chain;
-    while( $f= $self->driver->execute_script('return arguments[0].frameElement', $f )) {
-        $f= $self->make_WebElement( $f );
-        unshift @res, $f;
-        warn sprintf "One more level up, now in %s",
-            $f->{id};
-        warn $self->driver->execute_script('return arguments[0].title', $res[0]);
-        unshift @chain,
-            sprintf "Frame chain: %s %s", $res[0]->get_tag_name, $res[0]->{id};
-        # Activate that frame
-        $self->switch_to_parent_frame();
-        warn "Going up once more, maybe";
-    };
-    warn "Chain complete";
-    warn $_
-        for @chain;
-
-    # Now fake the element into
-    my $el= $self->make_WebElement( $current );
-    for( @res ) {
-        warn sprintf "Path has (web element) id %s", $_->{id};
-    };
-    $el->{__path}= \@res;
-    $el
-}
-
-sub switch_to_parent_frame {
-    #use JSON;
-    my ( $self ) = @_;
-
-    $self->{driver}->{commands}->{'switchToParentFrame'}||= {
-        'method' => 'POST',
-        'url' => "session/:sessionId/frame/parent"
-    };
-
-    #my $json_null = JSON::null;
-    my $params;
-    #$id = ( defined $id ) ? $id : $json_null;
-
-    my $res    = { 'command' => 'switchToParentFrame' };
-    return $self->driver->_execute_command( $res, $params );
-}
 
 =head1 CONTENT RENDERING METHODS
 

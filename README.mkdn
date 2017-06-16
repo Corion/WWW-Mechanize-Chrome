@@ -291,6 +291,14 @@ that Chrome may still send a header with its default value.
 
 Removes all custom headers and makes Chrome send its defaults again.
 
+## `$mech->block_urls()`
+
+    $mech->block_urls( '//facebook.com/js/conversions/tracking.js' );
+
+Sets the list of blocked URLs. These URLs will not be retrieved by Chrome
+when loading a page. This is useful to eliminate tracking images or to test
+resilience in face of bad network conditions.
+
 ## `$mech->res()` / `$mech->response(%options)`
 
     my $response = $mech->response(headers => 0);
@@ -851,34 +859,6 @@ field name and value pairs. If there is more than one field with the same
 name, the first one found is set. If you want to select which of the
 duplicate field to set, use a value which is an anonymous array which
 has the field value and its number as the 2 elements.
-
-## `$mech->expand_frames( $spec )`
-
-    my @frames = $mech->expand_frames();
-
-Expands the frame selectors (or `1` to match all frames)
-into their respective Chrome nodes according to the current
-document. All frames will be visited in breadth first order.
-
-This is mostly an internal method.
-
-## `$mech->current_frame`
-
-    my $last_frame= $mech->current_frame;
-    # Switch frame somewhere else
-
-    # Switch back
-    $mech->activate_container( $last_frame );
-
-Returns the currently active frame as a WebElement.
-
-This is mostly an internal method.
-
-See also
-
-[http://code.google.com/p/selenium/issues/detail?id=4305](http://code.google.com/p/selenium/issues/detail?id=4305)
-
-Frames are currently not really supported.
 
 # CONTENT RENDERING METHODS
 
