@@ -1038,6 +1038,22 @@ sub reset_headers( $self ) {
     $self->_set_extra_headers();
 };
 
+=head2 C<< $mech->block_urls() >>
+
+    $mech->block_urls( '//facebook.com/js/conversions/tracking.js' );
+
+Sets the list of blocked URLs. These URLs will not be retrieved by Chrome
+when loading a page. This is useful to eliminate tracking images or to test
+resilience in face of bad network conditions.
+
+=cut
+
+sub block_urls( $self, @urls ) {
+    $self->driver->send_message( 'Network.setBlockedUrls',
+        urls => \@urls
+    )->get;
+}
+
 =head2 C<< $mech->res() >> / C<< $mech->response(%options) >>
 
     my $response = $mech->response(headers => 0);
@@ -1742,10 +1758,6 @@ sub follow_link {
     }
 }
 
-# We need to trace the path from the root element to every webelement
-# because stupid GhostDriver/Selenium caches elements per document,
-# and not globally, keyed by document. Switching the implied reference
-# document makes lots of API calls fail :-(
 sub activate_parent_container {
     my( $self, $doc )= @_;
     $self->activate_container( $doc, 1 );
