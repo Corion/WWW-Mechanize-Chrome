@@ -236,6 +236,8 @@ sub new($class, %options) {
         $options{ frames }= 1;
     };
 
+    $options{ js_events } ||= [];
+
     my $self= bless \%options => $class;
     my $host = $options{ host } || '127.0.0.1';
     $self->{log} ||= $self->_build_log;
@@ -293,10 +295,19 @@ sub new($class, %options) {
         die $@;
     }
 
+    my $s = $self;
+    weaken $s;
+    my $collect_JS_problems = sub( $msg ) {
+        $s->_handleConsoleAPICall( $msg->{params} )
+    };
+    $self->driver->collector->{'Runtime.consoleAPICalled'} = $collect_JS_problems;
+    $self->driver->collector->{'Runtime.exceptionThrown'} = $collect_JS_problems;
+
     Future->wait_all(
-        $self->driver->send_message('Page.enable'),
-        $self->driver->send_message('Network.enable'),
-    )->get; # we need to get DOMLoaded events and Network events
+        $self->driver->send_message('Page.enable'),    # capture DOMLoaded
+        $self->driver->send_message('Network.enable'), # capture network
+        $self->driver->send_message('Runtime.enable'), # capture console messages
+    )->get;
 
     if( ! exists $options{ tab }) {
         $self->get('about:blank'); # Reset to clean state, also initialize our frame id
@@ -304,6 +315,17 @@ sub new($class, %options) {
 
     $self
 };
+
+sub _handleConsoleAPICall( $self, $msg ) {
+    if( $self->{report_js_errors}) {
+        my $desc = $msg->{exceptionDetails}->{exception}->{description};
+        my $loc  = $msg->{exceptionDetails}->{stackTrace}->{callFrames}->[0]->{url};
+        my $line = $msg->{exceptionDetails}->{stackTrace}->{callFrames}->[0]->{lineNumber};
+        my $err = "$desc at $loc line $line";
+        $self->log('error', $err);
+    };
+    push @{$self->{js_events}}, $msg;
+}
 
 sub frameId( $self ) {
     $self->{frameId}
@@ -473,10 +495,7 @@ C<js_console_messages> instead.
 
 sub js_errors {
     my ($self) = @_;
-    my $errors= $self->eval_in_chrome(<<'JS');
-        return this.errors
-JS
-    @$errors
+    @{$self->{js_events}}
 }
 
 =head2 C<< $mech->clear_js_errors() >>
@@ -489,10 +508,8 @@ Clears all Javascript messages from the console
 
 sub clear_js_errors {
     my ($self) = @_;
-    my $errors= $self->eval_in_chrome(<<'JS');
-        this.errors= [];
-JS
-
+    @{$self->{js_events}} = ();
+    $self->driver->send_message('Runtime.discardConsoleEntries')->get;
 };
 
 =head2 C<< $mech->eval_in_page( $str, @args ) >>
