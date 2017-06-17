@@ -24,7 +24,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 19*@instances;
+    plan tests => 20*@instances;
 };
 
 my %args;
@@ -44,7 +44,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 19, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub {
 
     my ($browser_instance, $mech) = @_;
 
