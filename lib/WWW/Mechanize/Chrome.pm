@@ -6,7 +6,7 @@ use feature 'signatures';
 use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
-use Scalar::Util qw( blessed );
+use Scalar::Util qw( blessed weaken);
 use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
@@ -14,7 +14,6 @@ use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
-use Scalar::Util 'weaken';
 
 use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION = '0.01';
@@ -300,8 +299,10 @@ sub new($class, %options) {
     my $collect_JS_problems = sub( $msg ) {
         $s->_handleConsoleAPICall( $msg->{params} )
     };
-    $self->driver->collector->{'Runtime.consoleAPICalled'} = $collect_JS_problems;
-    $self->driver->collector->{'Runtime.exceptionThrown'} = $collect_JS_problems;
+    $self->{consoleAPIListener} =
+        $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
+    $self->{exceptionThrownListener} =
+        $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
 
     Future->wait_all(
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
@@ -315,6 +316,27 @@ sub new($class, %options) {
 
     $self
 };
+
+=head2 C<< $mech->add_listener >>
+
+  my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
+      my( $info ) = @_;
+      warn "Loaded URL $info->{response}->{url}: $info->{response}->{status}";
+  });
+
+Returns a listener object. If that object is discarded, the listener callback
+will be removed.
+
+Calling this method in void context croaks.
+
+=cut
+
+sub add_listener( $self, $event, $callback ) {
+    if( ! defined wantarray ) {
+        croak "->add_listener called in void context";
+    };
+    return $self->driver->add_listener( $event, $callback )
+}
 
 sub _handleConsoleAPICall( $self, $msg ) {
     if( $self->{report_js_errors}) {
@@ -440,14 +462,15 @@ sub on_dialog( $self, $cb ) {
     my $s = $self;
     weaken $s;
     if( $cb ) {
-        $self->driver->set_collector('Page.javascriptDialogOpening', sub( $ev ) {
+        $self->{ on_dialog_listener } =
+        $self->add_listener('Page.javascriptDialogOpening', sub( $ev ) {
             if( $s->{ on_dialog }) {
                 $self->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
                 $s->{ on_dialog }->( $s, $ev->{params} );
             };
         });
     } else {
-        $self->driver->set_collector('Page.javascriptDialogOpening', undef );
+        delete $self->{ on_dialog_listener };
     };
     $self->{ on_dialog } = $cb;
 }
@@ -1915,7 +1938,7 @@ sub _performSearch( $self, %args ) {
             my $searchResults;
             my $searchId = $results->{searchId};
             my @childNodes;
-            $self->driver->set_collector('DOM.setChildNodes', sub( $ev ) {
+            my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
             my $childNodes = $self->driver->one_shot('DOM.setChildNodes');
@@ -1934,7 +1957,7 @@ sub _performSearch( $self, %args ) {
             #    );
             #}
             )->then( sub( $response ) {
-                $self->driver->set_collector('DOM.setChildNodes', undef );
+                undef $setChildNodes;
                 my %nodes = map {
                     $_->{nodeId} => $_
                 } @childNodes;
@@ -3178,18 +3201,19 @@ sub setScreenFrameCallback( $self, $callback, %options ) {
         $self->{ screenFrameCallbackCollector } = sub( $frame ) {
             $s->_handleScreencastFrame( $frame );
         };
-        $self->driver->collector->{'Page.screencastFrame'} = $self->{ screenFrameCallbackCollector };
+        $self->{ screenCastFrameListener } =
+            $self->add_listener('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
         $action = $self->driver->send_message(
             'Page.startScreencast',
             format => $options{ format },
             everyNthFrame => 0+$options{ everyNthFrame }
         );
     } else {
-        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {;
+        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {
             # well, actually, we should only reset this after we're sure that
             # the last frame has been processed. Maybe we should send ourselves
             # a fake event for that, or maybe Chrome tells us
-            delete $s->driver->collector->{'Page.screencastFrame'};
+            delete $self->{ screenCastFrameListener };
             Future->done(1);
         });
     }
