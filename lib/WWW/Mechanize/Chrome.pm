@@ -300,8 +300,10 @@ sub new($class, %options) {
     my $collect_JS_problems = sub( $msg ) {
         $s->_handleConsoleAPICall( $msg->{params} )
     };
-    $self->driver->collector->{'Runtime.consoleAPICalled'} = $collect_JS_problems;
-    $self->driver->collector->{'Runtime.exceptionThrown'} = $collect_JS_problems;
+    $self->{consoleAPIListener} =
+    $self->driver->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
+    $self->{exceptionThrownListener} =
+    $self->driver->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
 
     Future->wait_all(
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
@@ -440,14 +442,15 @@ sub on_dialog( $self, $cb ) {
     my $s = $self;
     weaken $s;
     if( $cb ) {
-        $self->driver->set_collector('Page.javascriptDialogOpening', sub( $ev ) {
+        $self->{ on_dialog_listener } =
+        $self->driver->add_listener('Page.javascriptDialogOpening', sub( $ev ) {
             if( $s->{ on_dialog }) {
                 $self->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
                 $s->{ on_dialog }->( $s, $ev->{params} );
             };
         });
     } else {
-        $self->driver->set_collector('Page.javascriptDialogOpening', undef );
+        delete $self->{ on_dialog_listener };
     };
     $self->{ on_dialog } = $cb;
 }
@@ -1915,7 +1918,7 @@ sub _performSearch( $self, %args ) {
             my $searchResults;
             my $searchId = $results->{searchId};
             my @childNodes;
-            $self->driver->set_collector('DOM.setChildNodes', sub( $ev ) {
+            my $setChildNodes = $self->driver->add_listener('DOM.setChildNodes', sub( $ev ) {
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
             my $childNodes = $self->driver->one_shot('DOM.setChildNodes');
@@ -1934,7 +1937,7 @@ sub _performSearch( $self, %args ) {
             #    );
             #}
             )->then( sub( $response ) {
-                $self->driver->set_collector('DOM.setChildNodes', undef );
+                undef $setChildNodes;
                 my %nodes = map {
                     $_->{nodeId} => $_
                 } @childNodes;
@@ -3178,18 +3181,19 @@ sub setScreenFrameCallback( $self, $callback, %options ) {
         $self->{ screenFrameCallbackCollector } = sub( $frame ) {
             $s->_handleScreencastFrame( $frame );
         };
-        $self->driver->collector->{'Page.screencastFrame'} = $self->{ screenFrameCallbackCollector };
+        $self->{ screenCastFrameListener } =
+        $self->driver->add_listener('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
         $action = $self->driver->send_message(
             'Page.startScreencast',
             format => $options{ format },
             everyNthFrame => 0+$options{ everyNthFrame }
         );
     } else {
-        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {;
+        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {
             # well, actually, we should only reset this after we're sure that
             # the last frame has been processed. Maybe we should send ourselves
             # a fake event for that, or maybe Chrome tells us
-            delete $s->driver->collector->{'Page.screencastFrame'};
+            delete $self->{ screenCastFrameListener };
             Future->done(1);
         });
     }
