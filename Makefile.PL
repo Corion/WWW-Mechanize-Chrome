@@ -66,13 +66,13 @@ my %module = (
         'Imager'                           => 0,
         'Imager::File::PNG'                => 0,
     },
-    TEST_REQUIRES => { # all core anyway...
+    TEST_REQUIRES => {
         'Test::More'   => 0,
         'Data::Dumper' => 0,
-        'Mojolicious'  => 0,
+        'Mojolicious'  => 0, # We want to test both, AnyEvent and Mojolicious
         'Future::Mojo' => 0,
         'Image::Info'  => 0,
-        'Test::HTTP::LocalServer' => 0,
+        'Test::HTTP::LocalServer' => 0.59, # we also want some Javascript self-tests
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
