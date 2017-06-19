@@ -2615,6 +2615,42 @@ sub field {
     );
 }
 
+=head2 C<< $mech->upload( $selector, $value ) >>
+
+  $mech->upload( user_picture => 'C:/Users/Joe/face.png' );
+
+Sets the file upload field with the name given in C<$selector> to the given
+file. The filename must be an absolute path and filename in the local
+filesystem.
+
+The method understands very basic CSS selectors in the value for C<$selector>,
+like the C<< ->field >> method.
+
+=cut
+
+sub upload($self,$name,$value) {
+    my %options;
+
+    my @fields = $self->_field_by_name(
+                     name => $name,
+                     user_info => "upload field with name '$name'",
+                     %options );
+    $value = [$value]
+        if ! ref $value;
+
+    # Stringify all files:
+    @$value = map { "$_" } @$value;
+
+    if( @fields ) {
+        $self->driver->send_message('DOM.setFileInputFiles',
+            nodeId => 0+$fields[0]->nodeId,
+            files => $value,
+            )->get;
+    }
+
+}
+
+
 =head2 C<< $mech->value( $selector_or_element, [%options] ) >>
 
     print $mech->value( 'user' );
@@ -2632,6 +2668,9 @@ in favour of the C<< ->field >> method.
 For fields that can have multiple values, like a C<select> field,
 the method is context sensitive and returns the first selected
 value in scalar context and all values in list context.
+
+Note that this method does not support file uploads. See the C<< ->upload >>
+method for that.
 
 =cut
 
