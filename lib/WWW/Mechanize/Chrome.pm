@@ -2739,11 +2739,13 @@ by C<< $mech->current_form >>.
 sub submit($self,$dom_form = $self->current_form) {
     if ($dom_form) {
         # We should prepare for navigation here as well
+        # The __proto__ invocation is so we can have a HTML form field entry
+        # named "submit"
         $self->_mightNavigate( sub {
             $self->driver->send_message(
                 'Runtime.callFunctionOn',
                 objectId => $dom_form->objectId,
-                functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}'
+                functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.__proto__.submit.apply(this) }}'
             );
         });
 
