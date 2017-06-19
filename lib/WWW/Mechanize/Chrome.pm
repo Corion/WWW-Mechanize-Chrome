@@ -848,12 +848,42 @@ sub httpRequestFromChromeRequest( $self, $event ) {
     );
 };
 
+sub getResponseBody( $self, $requestId ) {
+    $self->log('debug', "Fetching response body for $requestId");
+    $self->driver->send_message('Network.getResponseBody', requestId => $requestId)->then(sub($body_obj) {
+        my $body = $body_obj->{body};
+        $body = decode_base64( $body )
+            if $body_obj->{base64Encoded};
+        Future->done( $body )
+    });
+}
+
 sub httpResponseFromChromeResponse( $self, $res ) {
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
         HTTP::Headers->new( %{ $res->{params}->{response}->{headers} }),
     );
+
+    # Also fetch the response body and include it in the response
+    # as we can't do that lazily...
+    # This is nasty, as we will fill in the response lazily and the user has
+    # no way of knowing when we have filled in the response body
+    # The proper way might be to return a proxy object...
+    my $requestId = $res->{params}->{requestId};
+
+    my $full_response_future;
+
+    my $s = $self;
+    weaken $s;
+    $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
+        $s->log('debug', "Response body arrived");
+        $response->content( $body );
+        undef $full_response_future;
+        Future->done
+    });
+    #$response->content_ref( \$body );
+    $response
 };
 
 sub httpResponseFromChromeNetworkFail( $self, $res ) {
