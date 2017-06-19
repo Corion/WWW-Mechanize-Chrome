@@ -252,6 +252,7 @@ sub on_response( $self, $connection, $message ) {
 
             $handled++;
         };
+
         if( my $listeners = $self->listener->{ $response->{method} } ) {
             if( $self->{log}->is_trace ) {
                 $self->log( 'trace', "Notifying listeners", $response );
