@@ -3251,11 +3251,11 @@ sub _handleScreencastFrame( $self, $frame ) {
     $ack = $self->driver->send_message(
         'Page.screencastFrameAck',
         sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
-        $self->log('trace', 'Screencast frame acknowledged');
-        $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
-        $self->{ screenFrameCallback }->( $self, $frame->{params} );
-        # forget ourselves
-        undef $ack;
+            $self->log('trace', 'Screencast frame acknowledged');
+            $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
+            $self->{ screenFrameCallback }->( $self, $frame->{params} );
+            # forget ourselves
+            undef $ack;
     });
 }
 
