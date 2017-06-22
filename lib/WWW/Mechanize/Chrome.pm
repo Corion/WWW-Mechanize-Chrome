@@ -6,7 +6,7 @@ use feature 'signatures';
 use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
-use Scalar::Util qw( blessed );
+use Scalar::Util qw( blessed weaken);
 use File::Basename;
 use Carp qw(croak carp);
 use WWW::Mechanize::Link;
@@ -14,7 +14,6 @@ use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
-use Scalar::Util 'weaken';
 
 use vars qw($VERSION %link_spec @CARP_NOT);
 $VERSION = '0.01';
@@ -300,8 +299,10 @@ sub new($class, %options) {
     my $collect_JS_problems = sub( $msg ) {
         $s->_handleConsoleAPICall( $msg->{params} )
     };
-    $self->driver->collector->{'Runtime.consoleAPICalled'} = $collect_JS_problems;
-    $self->driver->collector->{'Runtime.exceptionThrown'} = $collect_JS_problems;
+    $self->{consoleAPIListener} =
+        $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
+    $self->{exceptionThrownListener} =
+        $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
 
     Future->wait_all(
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
@@ -315,6 +316,27 @@ sub new($class, %options) {
 
     $self
 };
+
+=head2 C<< $mech->add_listener >>
+
+  my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
+      my( $info ) = @_;
+      warn "Loaded URL $info->{response}->{url}: $info->{response}->{status}";
+  });
+
+Returns a listener object. If that object is discarded, the listener callback
+will be removed.
+
+Calling this method in void context croaks.
+
+=cut
+
+sub add_listener( $self, $event, $callback ) {
+    if( ! defined wantarray ) {
+        croak "->add_listener called in void context";
+    };
+    return $self->driver->add_listener( $event, $callback )
+}
 
 sub _handleConsoleAPICall( $self, $msg ) {
     if( $self->{report_js_errors}) {
@@ -440,14 +462,15 @@ sub on_dialog( $self, $cb ) {
     my $s = $self;
     weaken $s;
     if( $cb ) {
-        $self->driver->set_collector('Page.javascriptDialogOpening', sub( $ev ) {
+        $self->{ on_dialog_listener } =
+        $self->add_listener('Page.javascriptDialogOpening', sub( $ev ) {
             if( $s->{ on_dialog }) {
                 $self->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
                 $s->{ on_dialog }->( $s, $ev->{params} );
             };
         });
     } else {
-        $self->driver->set_collector('Page.javascriptDialogOpening', undef );
+        delete $self->{ on_dialog_listener };
     };
     $self->{ on_dialog } = $cb;
 }
@@ -825,12 +848,42 @@ sub httpRequestFromChromeRequest( $self, $event ) {
     );
 };
 
+sub getResponseBody( $self, $requestId ) {
+    $self->log('debug', "Fetching response body for $requestId");
+    $self->driver->send_message('Network.getResponseBody', requestId => $requestId)->then(sub($body_obj) {
+        my $body = $body_obj->{body};
+        $body = decode_base64( $body )
+            if $body_obj->{base64Encoded};
+        Future->done( $body )
+    });
+}
+
 sub httpResponseFromChromeResponse( $self, $res ) {
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
         HTTP::Headers->new( %{ $res->{params}->{response}->{headers} }),
     );
+
+    # Also fetch the response body and include it in the response
+    # as we can't do that lazily...
+    # This is nasty, as we will fill in the response lazily and the user has
+    # no way of knowing when we have filled in the response body
+    # The proper way might be to return a proxy object...
+    my $requestId = $res->{params}->{requestId};
+
+    my $full_response_future;
+
+    my $s = $self;
+    weaken $s;
+    $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
+        $s->log('debug', "Response body arrived");
+        $response->content( $body );
+        undef $full_response_future;
+        Future->done
+    });
+    #$response->content_ref( \$body );
+    $response
 };
 
 sub httpResponseFromChromeNetworkFail( $self, $res ) {
@@ -1915,7 +1968,7 @@ sub _performSearch( $self, %args ) {
             my $searchResults;
             my $searchId = $results->{searchId};
             my @childNodes;
-            $self->driver->set_collector('DOM.setChildNodes', sub( $ev ) {
+            my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
             my $childNodes = $self->driver->one_shot('DOM.setChildNodes');
@@ -1934,7 +1987,7 @@ sub _performSearch( $self, %args ) {
             #    );
             #}
             )->then( sub( $response ) {
-                $self->driver->set_collector('DOM.setChildNodes', undef );
+                undef $setChildNodes;
                 my %nodes = map {
                     $_->{nodeId} => $_
                 } @childNodes;
@@ -2562,6 +2615,42 @@ sub field {
     );
 }
 
+=head2 C<< $mech->upload( $selector, $value ) >>
+
+  $mech->upload( user_picture => 'C:/Users/Joe/face.png' );
+
+Sets the file upload field with the name given in C<$selector> to the given
+file. The filename must be an absolute path and filename in the local
+filesystem.
+
+The method understands very basic CSS selectors in the value for C<$selector>,
+like the C<< ->field >> method.
+
+=cut
+
+sub upload($self,$name,$value) {
+    my %options;
+
+    my @fields = $self->_field_by_name(
+                     name => $name,
+                     user_info => "upload field with name '$name'",
+                     %options );
+    $value = [$value]
+        if ! ref $value;
+
+    # Stringify all files:
+    @$value = map { "$_" } @$value;
+
+    if( @fields ) {
+        $self->driver->send_message('DOM.setFileInputFiles',
+            nodeId => 0+$fields[0]->nodeId,
+            files => $value,
+            )->get;
+    }
+
+}
+
+
 =head2 C<< $mech->value( $selector_or_element, [%options] ) >>
 
     print $mech->value( 'user' );
@@ -2579,6 +2668,9 @@ in favour of the C<< ->field >> method.
 For fields that can have multiple values, like a C<select> field,
 the method is context sensitive and returns the first selected
 value in scalar context and all values in list context.
+
+Note that this method does not support file uploads. See the C<< ->upload >>
+method for that.
 
 =cut
 
@@ -2716,11 +2808,13 @@ by C<< $mech->current_form >>.
 sub submit($self,$dom_form = $self->current_form) {
     if ($dom_form) {
         # We should prepare for navigation here as well
+        # The __proto__ invocation is so we can have a HTML form field entry
+        # named "submit"
         $self->_mightNavigate( sub {
             $self->driver->send_message(
                 'Runtime.callFunctionOn',
                 objectId => $dom_form->objectId,
-                functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.submit() }}'
+                functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.__proto__.submit.apply(this) }}'
             );
         });
 
@@ -3157,11 +3251,11 @@ sub _handleScreencastFrame( $self, $frame ) {
     $ack = $self->driver->send_message(
         'Page.screencastFrameAck',
         sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
-        $self->log('trace', 'Screencast frame acknowledged');
-        $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
-        $self->{ screenFrameCallback }->( $self, $frame->{params} );
-        # forget ourselves
-        undef $ack;
+            $self->log('trace', 'Screencast frame acknowledged');
+            $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
+            $self->{ screenFrameCallback }->( $self, $frame->{params} );
+            # forget ourselves
+            undef $ack;
     });
 }
 
@@ -3178,18 +3272,19 @@ sub setScreenFrameCallback( $self, $callback, %options ) {
         $self->{ screenFrameCallbackCollector } = sub( $frame ) {
             $s->_handleScreencastFrame( $frame );
         };
-        $self->driver->collector->{'Page.screencastFrame'} = $self->{ screenFrameCallbackCollector };
+        $self->{ screenCastFrameListener } =
+            $self->add_listener('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
         $action = $self->driver->send_message(
             'Page.startScreencast',
             format => $options{ format },
             everyNthFrame => 0+$options{ everyNthFrame }
         );
     } else {
-        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {;
+        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {
             # well, actually, we should only reset this after we're sure that
             # the last frame has been processed. Maybe we should send ourselves
             # a fake event for that, or maybe Chrome tells us
-            delete $s->driver->collector->{'Page.screencastFrame'};
+            delete $self->{ screenCastFrameListener };
             Future->done(1);
         });
     }

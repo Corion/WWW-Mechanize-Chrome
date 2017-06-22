@@ -44,7 +44,10 @@
             "HTTP::Headers" : "0",
             "HTTP::Response" : "0",
             "IO::Socket::INET" : "0",
+            "Imager" : "0",
+            "Imager::File::PNG" : "0",
             "JSON" : "0",
+            "Log::Log4perl" : "0",
             "Object::Import" : "0",
             "Scalar::Util" : "0",
             "WWW::Mechanize::Link" : "0",
@@ -58,7 +61,7 @@
             "Future::Mojo" : "0",
             "Image::Info" : "0",
             "Mojolicious" : "0",
-            "Test::HTTP::LocalServer" : "0",
+            "Test::HTTP::LocalServer" : "0.59",
             "Test::More" : "0"
          }
       }

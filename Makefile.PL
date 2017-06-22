@@ -57,7 +57,8 @@ my %module = (
         'WWW::Mechanize::Plugin::Selector' => 0,
         'HTTP::Response'   => 0,
         'HTTP::Headers'                    => 0,
-        'Scalar::Util'                     => 0, # we need 'weaken'
+        'Scalar::Util'                     => 0, # we need 'weaken' and 'blessed'
+		'MIME::Base64'                     => 0,
         'File::Basename'                   => 0,
         'WWW::Mechanize::Link'             => 0,
         'IO::Socket::INET'                 => 0,
@@ -66,13 +67,13 @@ my %module = (
         'Imager'                           => 0,
         'Imager::File::PNG'                => 0,
     },
-    TEST_REQUIRES => { # all core anyway...
+    TEST_REQUIRES => {
         'Test::More'   => 0,
         'Data::Dumper' => 0,
-        'Mojolicious'  => 0,
+        'Mojolicious'  => 0, # We want to test both, AnyEvent and Mojolicious
         'Future::Mojo' => 0,
         'Image::Info'  => 0,
-        'Test::HTTP::LocalServer' => 0,
+        'Test::HTTP::LocalServer' => 0.59, # we also want some Javascript self-tests
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

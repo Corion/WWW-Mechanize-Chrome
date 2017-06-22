@@ -38,7 +38,7 @@ sub new($class, %args) {
     $args{ receivers } ||= {};
     $args{ on_message } ||= undef;
     $args{ one_shot } ||= [];
-    $args{ collector } ||= {};
+    $args{ listener } ||= {};
 
     $self
 };
@@ -51,7 +51,7 @@ sub endpoint( $self ) {
 }
 sub json( $self ) { $self->{json} }
 sub ua( $self ) { $self->{ua} }
-sub collector( $self ) { $self->{collector} }
+sub listener( $self ) { $self->{listener} }
 sub tab( $self ) { $self->{tab} }
 sub transport( $self ) { $self->{transport} }
 sub future( $self ) { $self->transport->future }
@@ -65,8 +65,23 @@ sub on_message( $self, $new_message=0 ) {
     $self->{on_message}
 }
 
-sub set_collector( $self, $event, $callback ) {
-    $self->collector->{ $event } = $callback;
+sub add_listener( $self, $event, $callback ) {
+    my $listener = Chrome::DevToolsProtocol::EventListener->new(
+        protocol => $self,
+        callback => $callback,
+        event    => $event,
+    );
+    $self->listener->{ $event } ||= [];
+    push @{ $self->listener->{ $event }}, $listener;
+    $listener
+}
+
+sub remove_listener( $self, $listener ) {
+    my $event = $listener->{event};
+    $self->listener->{ $event } ||= [];
+    @{$self->listener->{ $event }} = grep { $_ != $listener }
+                                     grep { defined $_ }
+                                     @{$self->listener->{ $event }};
 }
 
 sub log( $self, $level, $message, @args ) {
@@ -227,6 +242,7 @@ sub on_response( $self, $connection, $message ) {
         # Generic message, dispatch that:
 
         (my $handler) = grep { exists $_->{events}->{ $response->{method} } and ${$_->{future}} } @{ $self->{one_shot}};
+        my $handled;
         if( $handler ) {
             $self->log( 'trace', "Dispatching one-shot event", $response );
             ${ $handler->{future} }->done( $response );
@@ -234,11 +250,23 @@ sub on_response( $self, $connection, $message ) {
             # Remove the handler we just invoked
             @{ $self->{one_shot}} = grep { $_ and ${$_->{future}} and $_ != $handler } @{ $self->{one_shot}};
 
-        } elsif( my $collector = $self->collector->{ $response->{method} } ) {
-            $self->log( 'trace', "Collecting event", $response );
-            $collector->( $response );
+            $handled++;
+        };
 
-        } elsif( $self->on_message ) {
+        if( my $listeners = $self->listener->{ $response->{method} } ) {
+            if( $self->{log}->is_trace ) {
+                $self->log( 'trace', "Notifying listeners", $response );
+            } else {
+                $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
+            };
+            for my $listener (@$listeners) {
+                $listener->notify( $response );
+            };
+
+            $handled++;
+        };
+
+        if( $self->on_message ) {
             if( $self->{log}->is_trace ) {
                 $self->log( 'trace', "Dispatching message", $response );
             } else {
@@ -246,7 +274,10 @@ sub on_response( $self, $connection, $message ) {
             };
             $self->on_message->( $response );
 
-        } else {
+            $handled++;
+        };
+
+        if( ! $handled ) {
             if( $self->{log}->is_trace ) {
                 $self->log( 'trace', "Ignored message", $response );
             } else {
@@ -303,7 +334,7 @@ sub _send_packet( $self, $response, $method, %params ) {
     if( $response ) {
         $self->{receivers}->{ $id } = $response;
     };
-    
+
     my $payload = $self->json->encode({
         id     => 0+$id,
         method => $method,
@@ -441,10 +472,43 @@ sub close_tab( $self, $tab ) {
     my $url = $self->build_url( domain => 'close/' . $tab->{id} );
     $self->ua->http_get( $url, headers => { 'Connection' => 'close' } )
     ->catch(
-        sub{ #use Data::Dumper; warn Dumper \@_; 
+        sub{ #use Data::Dumper; warn Dumper \@_;
              Future->done
         });
 };
+
+package
+    Chrome::DevToolsProtocol::EventListener;
+use strict;
+use Carp 'croak';
+use Scalar::Util 'weaken';
+use Filter::signatures;
+no warnings 'experimental::signatures';
+use feature 'signatures';
+
+sub new( $class, %args ) {
+    croak "Need a callback" unless $args{ callback };
+    croak "Need a DevToolsProtocol in protocol" unless $args{ protocol };
+
+    weaken $args{ protocol };
+
+    bless {
+        %args,
+    } => $class
+}
+
+sub notify( $self, @info ) {
+    $self->{callback}->( @info )
+}
+
+sub unregister( $self ) {
+    $self->{protocol}->remove_listener( $self )
+        if $self->{protocol}; # it's a weak ref so it might have gone away already
+}
+
+sub DESTROY {
+    $_[0]->unregister
+}
 
 1;
 
