@@ -1455,10 +1455,10 @@ sub make_link {
     if (defined $url) {
         my $res = WWW::Mechanize::Link->new({
             tag   => $tag,
-            name  => $node->{name},
+            name  => $node->get_attribute('name'),
             base  => $base,
             url   => $url,
-            text  => $node->{innerHTML},
+            text  => $node->get_attribute('innerHTML'),
             attrs => {},
         });
 
@@ -3257,6 +3257,14 @@ has 'driver' => (
 
 sub get_attribute( $self, $attribute ) {
     if( $attribute eq 'innerText' ) {
+        my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId )->get->{outerHTML};
+
+        # Strip first and last tag in a not so elegant way
+        $html =~ s!\A<[^>]+>!!;
+        $html =~ s!<[^>]+>\z!!;
+        return $html
+
+    } elsif( $attribute eq 'innerHTML' ) {
         my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId )->get->{outerHTML};
 
         # Strip first and last tag in a not so elegant way
