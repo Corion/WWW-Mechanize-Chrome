@@ -1,4 +1,5 @@
 package Chrome::DevToolsProtocol;
+use 5.010; # for //
 use strict;
 use Filter::signatures;
 no warnings 'experimental::signatures';
@@ -294,7 +295,7 @@ sub on_response( $self, $connection, $message ) {
 
         } elsif( $response->{error} ) {
             $self->log( 'debug', "Replying to error $response->{id}", $response );
-            $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data},$response->{error}->{code} );
+            $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
         } else {
             $self->log( 'debug', "Replying to $response->{id}", $response );
             $receiver->done( $response->{result} );

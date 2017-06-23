@@ -34,7 +34,7 @@ my %module = (
         x_static_install => 1, # we are pure Perl and don't do anything fancy
     },
 
-    MIN_PERL_VERSION => '5.006',
+    MIN_PERL_VERSION => '5.010', # I use // in some places
 
     'LICENSE'=> 'perl',
 
