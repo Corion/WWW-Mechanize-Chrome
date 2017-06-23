@@ -813,6 +813,9 @@ For fields that can have multiple values, like a `select` field,
 the method is context sensitive and returns the first selected
 value in scalar context and all values in list context.
 
+Note that this method does not support file uploads. See the `->upload`
+method for that.
+
 ## `$mech->get_set_value( %options )`
 
 Allows fine-grained access to getting/setting a value
