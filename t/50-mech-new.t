@@ -115,7 +115,7 @@ HTML
     $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We connected to the current tab"
         or do { diag $_->{title} for $mech->driver->list_tabs->get() };
-    $mech->autoclose_tab($mech->tab);
+    $mech->autoclose_tab(1);
 
     undef $mech; # and close that tab
 
