@@ -353,6 +353,15 @@ Goes one page forward in the page history.
 
 Returns the (new) response.
 
+## `$mech->stop()`
+
+    $mech->stop();
+
+Stops all loading in Chrome, as if you pressed `ESC`.
+
+This function is mostly of use in callbacks or in a timer callback from your
+event loop.
+
 ## `$mech->uri()`
 
     print "We are at " . $mech->uri;
