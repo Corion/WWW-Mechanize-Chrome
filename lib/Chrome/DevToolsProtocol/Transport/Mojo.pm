@@ -89,7 +89,7 @@ Returns a Future that will be resolved in the number of seconds given.
 =cut
 
 sub sleep( $self, $seconds ) {
-    my $done = $mech->driver->future;
+    my $done = $self->future;
     Mojo::IOLoop->timer( $seconds => sub {
         $done->done(1);
     });
