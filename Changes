@@ -1,4 +1,11 @@
 0.02 NEXT
+    + Many more functions
+	+ Screencast ability
+	+ ->stop() function
+	+ Handling of Javascript dialogs
+    . Tested against Chromium 60.0.3110.0 / Win64
+	. Tested against Chromium 61.0.3140.0 / Win64
+    . Tested against Chromium 58.0.3029.110 Built on Ubuntu, thanks Travis CI
 
 0.01 20170602
     . Released unto an unsuspecting audience
