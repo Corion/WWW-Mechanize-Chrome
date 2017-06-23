@@ -48,11 +48,12 @@
             "Imager::File::PNG" : "0",
             "JSON" : "0",
             "Log::Log4perl" : "0",
+            "MIME::Base64" : "0",
             "Object::Import" : "0",
             "Scalar::Util" : "0",
             "WWW::Mechanize::Link" : "0",
             "WWW::Mechanize::Plugin::Selector" : "0",
-            "perl" : "5.006"
+            "perl" : "5.010"
          }
       },
       "test" : {
@@ -74,6 +75,6 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.01",
+   "version" : "0.02",
    "x_static_install" : 1
 }
