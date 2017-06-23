@@ -1236,6 +1236,21 @@ sub forward( $self, %options ) {
     }, navigates => 1, %options);
 }
 
+=head2 C<< $mech->stop() >>
+
+    $mech->stop();
+
+Stops all loading in Chrome, as if you pressed C<ESC>.
+
+This function is mostly of use in callbacks or in a timer callback from your
+event loop.
+
+=cut
+
+sub stop( $self ) {
+    $self->driver->send_message('Page.stopLoading')->get;
+}
+
 =head2 C<< $mech->uri() >>
 
     print "We are at " . $mech->uri;
