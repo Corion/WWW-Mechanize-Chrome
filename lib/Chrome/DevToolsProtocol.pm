@@ -13,7 +13,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 
 use vars qw<$VERSION>;
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 # DOM access
 # https://chromedevtools.github.io/devtools-protocol/tot/DOM/
