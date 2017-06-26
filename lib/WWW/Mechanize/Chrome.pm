@@ -73,8 +73,9 @@ A premade L<Log::Log4perl> object
 
 Specify the path to the Chrome executable.
 
-The default is C<chrome> as found via C<$ENV{PATH}>.
-You can also provide this information from the outside
+The default is C<chrome> on Windows and C<google-chrome> elsewhere, as found via
+C<$ENV{PATH}>.
+You can also provide this information from the outside to the class
 by setting C<$ENV{CHROME_BIN}>.
 
 =item B<launch_arg>
@@ -112,9 +113,12 @@ for testing with C<use warnings qw(fatal)>.
 sub build_command_line {
     my( $class, $options )= @_;
 
-    #$options->{ "log" } ||= 'OFF';
+    # Chrome.exe on Windows
+    # google-chrome on Linux (etc?)
+    my $default_exe = $^O =~ /mswin/i ? 'chrome'
+                                      : 'google-chrome';
 
-    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || 'chrome';
+    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || $default_exe;
     $options->{ launch_arg } ||= [];
 
     $options->{port} ||= 9222;
