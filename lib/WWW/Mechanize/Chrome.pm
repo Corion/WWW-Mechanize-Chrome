@@ -89,6 +89,11 @@ Interesting parameters might be
     '--window-size=1280x1696'
     '--ignore-certificate-errors'
 
+=item B<profile>
+
+Profile directory for this session. If not given, Chrome will use your current
+user profile.
+    
 =item B<startup_timeout>
 
   startup_timeout => 20,
