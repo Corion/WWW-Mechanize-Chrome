@@ -15,10 +15,6 @@ use Scalar::Util 'weaken', 'isweak';
 use vars qw<$VERSION>;
 $VERSION = '0.02';
 
-# DOM access
-# https://chromedevtools.github.io/devtools-protocol/tot/DOM/
-# http://localhost:9222/json
-
 sub _build_log( $self ) {
     require Log::Log4perl;
     Log::Log4perl->get_logger(__PACKAGE__);
