@@ -73,8 +73,9 @@ A premade L<Log::Log4perl> object
 
 Specify the path to the Chrome executable.
 
-The default is C<chrome> as found via C<$ENV{PATH}>.
-You can also provide this information from the outside
+The default is C<chrome> on Windows and C<google-chrome> elsewhere, as found via
+C<$ENV{PATH}>.
+You can also provide this information from the outside to the class
 by setting C<$ENV{CHROME_BIN}>.
 
 =item B<launch_arg>
@@ -87,6 +88,11 @@ Interesting parameters might be
 
     '--window-size=1280x1696'
     '--ignore-certificate-errors'
+
+=item B<profile>
+
+Profile directory for this session. If not given, Chrome will use your current
+user profile.
 
 =item B<startup_timeout>
 
@@ -112,9 +118,12 @@ for testing with C<use warnings qw(fatal)>.
 sub build_command_line {
     my( $class, $options )= @_;
 
-    #$options->{ "log" } ||= 'OFF';
+    # Chrome.exe on Windows
+    # google-chrome on Linux (etc?)
+    my $default_exe = $^O =~ /mswin/i ? 'chrome'
+                                      : 'google-chrome';
 
-    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || 'chrome';
+    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || $default_exe;
     $options->{ launch_arg } ||= [];
 
     $options->{port} ||= 9222;
@@ -850,7 +859,12 @@ sub httpRequestFromChromeRequest( $self, $event ) {
 
 sub getResponseBody( $self, $requestId ) {
     $self->log('debug', "Fetching response body for $requestId");
-    $self->driver->send_message('Network.getResponseBody', requestId => $requestId)->then(sub($body_obj) {
+    return
+        $self->driver->send_message('Network.getResponseBody', requestId => $requestId)
+        ->then(sub {
+        $self->log('debug', "Have body", @_);
+        my ($body_obj) = @_;
+
         my $body = $body_obj->{body};
         $body = decode_base64( $body )
             if $body_obj->{base64Encoded};
@@ -859,6 +873,7 @@ sub getResponseBody( $self, $requestId ) {
 }
 
 sub httpResponseFromChromeResponse( $self, $res ) {
+    $self->log('debug',"Status",$res->{params}->{response}->{status});
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
