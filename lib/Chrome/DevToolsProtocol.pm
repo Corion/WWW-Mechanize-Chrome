@@ -233,7 +233,11 @@ sub one_shot( $self, @events ) {
 };
 
 sub on_response( $self, $connection, $message ) {
-    my $response = $self->json->decode( $message );
+    my $response = eval { $self->json->decode( $message ) };
+    if( $@ ) {
+        $self->log('error', $@ );
+        return;
+    };
 
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
