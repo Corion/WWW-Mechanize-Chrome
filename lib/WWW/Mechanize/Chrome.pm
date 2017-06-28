@@ -93,7 +93,7 @@ Interesting parameters might be
 
 Profile directory for this session. If not given, Chrome will use your current
 user profile.
-    
+
 =item B<startup_timeout>
 
   startup_timeout => 20,
@@ -859,7 +859,12 @@ sub httpRequestFromChromeRequest( $self, $event ) {
 
 sub getResponseBody( $self, $requestId ) {
     $self->log('debug', "Fetching response body for $requestId");
-    $self->driver->send_message('Network.getResponseBody', requestId => $requestId)->then(sub($body_obj) {
+    return
+        $self->driver->send_message('Network.getResponseBody', requestId => $requestId)
+        ->then(sub {
+        $self->log('debug', "Have body", @_);
+        my ($body_obj) = @_;
+
         my $body = $body_obj->{body};
         $body = decode_base64( $body )
             if $body_obj->{base64Encoded};
@@ -868,6 +873,7 @@ sub getResponseBody( $self, $requestId ) {
 }
 
 sub httpResponseFromChromeResponse( $self, $res ) {
+    $self->log('debug',"Status",$res->{params}->{response}->{status});
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
