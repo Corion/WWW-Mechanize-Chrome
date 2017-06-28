@@ -3388,7 +3388,9 @@ sub get_attribute( $self, $attribute ) {
 }
 
 sub get_tag_name( $self ) {
-    $self->nodeName
+    my $tag = $self->nodeName;
+    $tag =~ s!\..*!!; # strip away the eventual classname
+    $tag
 }
 
 sub get_text( $self ) {

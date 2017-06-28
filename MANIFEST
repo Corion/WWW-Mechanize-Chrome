@@ -58,9 +58,11 @@ t/58-alert.t
 t/60-mech-custom-headers.t
 t/61-screencast.t
 t/70-mech-png.t
+t/75-classnames.t
 t/helper.pm
 t/mixi_jp_index.html
 t/sophos_co_jp_index.html
+t/test-input-with-class.html
 xt/99-changes.t
 xt/99-compile.t
 xt/99-manifest.t
