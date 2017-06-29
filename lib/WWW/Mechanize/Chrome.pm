@@ -900,7 +900,7 @@ sub getResponseBody( $self, $requestId ) {
 }
 
 sub httpResponseFromChromeResponse( $self, $res ) {
-    $self->log('debug',"Status",$res->{params}->{response}->{status});
+    $self->log('debug', sprintf "Status %d",$res->{params}->{response}->{status});
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
