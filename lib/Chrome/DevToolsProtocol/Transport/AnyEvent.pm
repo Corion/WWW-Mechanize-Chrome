@@ -56,12 +56,16 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     })->then( sub( $c ) {
         $logger->( 'trace', sprintf "Connected" );
         my $connection = $c->recv;
+
         $self->{connection} = $connection;
         undef $self;
 
         # Kick off the continous polling
         $connection->on( each_message => sub( $connection,$message) {
             $handler->on_response( $connection, $message->body )
+        });
+        $connection->on( parse_error => sub( $connection, $error) {
+            $logger->('error', $error);
         });
 
         my $res = Future->done( $self );
