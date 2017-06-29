@@ -1,4 +1,5 @@
 .gitignore
+50-mech-redirect.t
 Changes
 inc/IO/Catch.pm
 lib/Chrome/DevToolsProtocol.pm
@@ -34,6 +35,7 @@ t/50-mech-content.t
 t/50-mech-ct.t
 t/50-mech-encoding.t
 t/50-mech-forms.t
+t/50-mech-get-nonexistent.t
 t/50-mech-get.t
 t/50-mech-new-dsl.t
 t/50-mech-new.t
