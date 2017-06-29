@@ -301,7 +301,7 @@ sub on_response( $self, $connection, $message ) {
             $self->log( 'debug', "Replying to error $response->{id}", $response );
             $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
         } else {
-            $self->log( 'debug', "Replying to $response->{id}", $response );
+            $self->log( 'trace', "Replying to $response->{id}", $response );
             $receiver->done( $response->{result} );
         };
     };
