@@ -1302,14 +1302,15 @@ Returns the current document URI.
 =cut
 
 sub uri( $self ) {
-    URI->new( $self->document->get->{root}->{documentURL} )
+    my $d = $self->document->get;
+    URI->new( $d->{root}->{documentURL} )
 }
 
 =head1 CONTENT METHODS
 
 =head2 C<< $mech->document() >>
 
-    print $self->document->get->{nodeId}
+    print $self->document->get->{nodeId};
 
 Returns the document object as a Future.
 
