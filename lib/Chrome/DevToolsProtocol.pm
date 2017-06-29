@@ -241,6 +241,10 @@ sub on_response( $self, $connection, $message ) {
 
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
+        if( my $error = $response->{error} ) {
+            $self->log('error', "Error response from Chrome", $error );
+            return;
+        };
 
         (my $handler) = grep { exists $_->{events}->{ $response->{method} } and ${$_->{future}} } @{ $self->{one_shot}};
         my $handled;
