@@ -12,7 +12,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
     my $mech = WWW::Mechanize::Chrome->new();
-    $mech->get('http://google.com');
+    $mech->get('https://google.com');
 
     $mech->eval_in_page('alert("Hello Chrome")');
     my $png= $mech->content_as_png();
@@ -54,9 +54,15 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     Specify the path to the Chrome executable.
 
-    The default is `chrome` as found via `$ENV{PATH}`.
-    You can also provide this information from the outside
+    The default is `chrome` on Windows and `google-chrome` elsewhere, as found via
+    `$ENV{PATH}`.
+    You can also provide this information from the outside to the class
     by setting `$ENV{CHROME_BIN}`.
+
+- **start\_url**
+
+    Launch Chrome with the given URL. Normally you would use
+    the `->get` method instead.
 
 - **launch\_arg**
 
@@ -68,6 +74,25 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
         '--window-size=1280x1696'
         '--ignore-certificate-errors'
+
+- **profile**
+
+    Profile directory for this session. If not given, Chrome will use your current
+    user profile.
+
+- **incognito**
+
+    Launch Chrome in incognito mode.
+
+- **data\_directory**
+
+    The base data directory for this session. If not given, Chrome will use your
+    current base directory.
+
+        use File::Temp 'tempdir';
+        my $mech = WWW::Mechanize::Chrome->new(
+            data_directory => tempdir(),        # create a fresh Chrome every time
+        );
 
 - **startup\_timeout**
 
@@ -372,7 +397,7 @@ Returns the current document URI.
 
 ## `$mech->document()`
 
-    print $self->document->get->{nodeId}
+    print $self->document->get->{nodeId};
 
 Returns the document object as a Future.
 
