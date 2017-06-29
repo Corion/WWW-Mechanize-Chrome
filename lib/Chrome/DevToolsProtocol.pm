@@ -340,14 +340,25 @@ sub _send_packet( $self, $response, $method, %params ) {
         $self->{receivers}->{ $id } = $response;
     };
 
-    my $payload = $self->json->encode({
-        id     => 0+$id,
-        method => $method,
-        params => \%params
-    });
+    my $payload = eval {
+        $self->json->encode({
+            id     => 0+$id,
+            method => $method,
+            params => \%params
+        });
+    };
+    if( my $err = $@ ) {
+        $self->log('error', $@ );
+    };
 
     $self->log( 'trace', "Sent message", $payload );
-    $self->transport->send( $payload );
+    my $result = eval {
+        $self->transport->send( $payload );
+    };
+    if( my $err = $@ ) {
+        $self->log('error', $@ );
+    };
+    $result
 }
 
 =head2 C<< $chrome->send_packet >>
