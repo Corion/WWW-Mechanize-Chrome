@@ -1,3 +1,9 @@
+0.03 NEXT
+    ! The "profile" option now really uses the profile, not the data directory.
+	+ New option "data_directory" to set the base data directory.
+	+ We run all tests with a temporary user now instead of the default user
+	  that might be your current Chrome user
+
 0.02 20170623
     + Many more functions
 	+ Screencast ability

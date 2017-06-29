@@ -78,6 +78,11 @@ C<$ENV{PATH}>.
 You can also provide this information from the outside to the class
 by setting C<$ENV{CHROME_BIN}>.
 
+=item B<start_url>
+
+Launch Chrome with the given URL. Normally you would use
+the C<< ->get >> method instead.
+
 =item B<launch_arg>
 
 Specify additional parameters to the Chrome executable.
@@ -93,6 +98,20 @@ Interesting parameters might be
 
 Profile directory for this session. If not given, Chrome will use your current
 user profile.
+
+=item B<incognito>
+
+Launch Chrome in incognito mode.
+
+=item B<data_directory>
+
+The base data directory for this session. If not given, Chrome will use your
+current base directory.
+
+  use File::Temp 'tempdir';
+  my $mech = WWW::Mechanize::Chrome->new(
+      data_directory => tempdir(),        # create a fresh Chrome every time
+  );
 
 =item B<startup_timeout>
 
@@ -132,8 +151,16 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
     };
 
+    if ($options->{incognito}) {
+        push @{ $options->{ launch_arg }}, "--incognito";
+    };
+
+    if ($options->{data_directory}) {
+        push @{ $options->{ launch_arg }}, "--user-data-dir=$options->{ data_directory }";
+    };
+
     if ($options->{profile}) {
-        push @{ $options->{ launch_arg }}, "--user-data-dir=$options->{ profile }";
+        push @{ $options->{ launch_arg }}, "--profile-directory=$options->{ profile }";
     };
 
     push @{ $options->{ launch_arg }}, "--headless"
