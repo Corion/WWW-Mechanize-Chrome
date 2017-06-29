@@ -9,7 +9,7 @@ use Mojo::UserAgent;
 use Future::Mojo;
 
 use vars qw<$VERSION $magic>;
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 =head1 SYNOPSIS
 

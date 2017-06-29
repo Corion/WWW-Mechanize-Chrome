@@ -5,7 +5,7 @@ no warnings 'experimental::signatures';
 use feature 'signatures';
 
 use vars qw($implementation @loops $VERSION);
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 =head1 NAME
 

@@ -12,7 +12,7 @@ use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
 use vars qw<$VERSION $magic @CARP_NOT>;
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 =head1 SYNOPSIS
 

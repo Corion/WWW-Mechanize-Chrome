@@ -1,4 +1,4 @@
-0.03 NEXT
+0.03 20170629
     ! The "profile" option now really uses the profile, not the data directory.
     + New option "data_directory" to set the base data directory.
     + We run all tests with a temporary user now instead of the default user

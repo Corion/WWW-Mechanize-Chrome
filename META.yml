@@ -48,5 +48,5 @@ requires:
   perl: '5.010'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
-version: '0.02'
+version: '0.03'
 x_static_install: 1
