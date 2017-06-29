@@ -61,6 +61,7 @@ sub runtests {
                ? ( launch_exe => $browser_instance,
                    port => $port,
                    data_directory => $tempdir,
+                   headless => 1,
                    #incognito => 1,
                  )
                : ();
