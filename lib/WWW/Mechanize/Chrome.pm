@@ -29,7 +29,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
   Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
   my $mech = WWW::Mechanize::Chrome->new();
-  $mech->get('http://google.com');
+  $mech->get('https://google.com');
 
   $mech->eval_in_page('alert("Hello Chrome")');
   my $png= $mech->content_as_png();
