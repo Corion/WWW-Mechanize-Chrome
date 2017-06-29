@@ -48,7 +48,9 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
         my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
             $logger->('debug',"Connecting to $endpoint");
-            $client = AnyEvent::WebSocket::Client->new;
+            $client = AnyEvent::WebSocket::Client->new(
+                max_payload_size => undef, # allow unlimited size for messages
+            );
             $client->connect( $endpoint )->cb( $done_cb );
         });
         $res
