@@ -9,7 +9,7 @@ use Test::HTTP::LocalServer;
 use Mojolicious;
 use t::helper;
 
-Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;

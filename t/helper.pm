@@ -6,6 +6,7 @@ use File::Glob qw(bsd_glob);
 use Config '%Config';
 use File::Spec;
 use Carp qw(croak);
+use File::Temp 'tempdir';
 
 delete $ENV{HTTP_PROXY};
 delete $ENV{HTTPS_PROXY};
@@ -47,15 +48,21 @@ sub default_unavailable {
     !scalar browser_instances
 };
 
+my @cleanup_directories;
 sub runtests {
     my ($browser_instance,$port, $new_mech, $code, $test_count) = @_;
     if ($browser_instance) {
         diag sprintf "Testing with %s",
             $browser_instance;
     };
+    my $tempdir = tempdir();
+    push @cleanup_directories, $tempdir;
     my @launch = $browser_instance
                ? ( launch_exe => $browser_instance,
-                   port => $port )
+                   port => $port,
+                   data_directory => $tempdir,
+                   #incognito => 1,
+                 )
                : ();
 
     my $mech = eval { $new_mech->(@launch) };
@@ -80,8 +87,11 @@ sub runtests {
     # reference to $mech around
     @_ = ($browser_instance, $mech);
     undef $mech;
-
+    
     goto &$code;
+}
+END {
+    File::Path::rmtree($_, 0) for @cleanup_directories;
 }
 
 sub run_across_instances {
