@@ -24,16 +24,11 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => 1*@instances;
 };
 
-my %args;
 sub new_mech {
-    # Just keep these to pass the parameters to new instances
-    if( ! keys %args ) {
-        %args = @_;
-    };
     #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        %args,
+        @_,
     );
 };
 

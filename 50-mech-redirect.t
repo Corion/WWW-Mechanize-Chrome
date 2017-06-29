@@ -6,10 +6,11 @@ use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 use lib './inc', '../inc';
 use Test::HTTP::LocalServer;
-use Mojolicious;
+#use Mojolicious;
+
 use t::helper;
 
-Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -40,8 +41,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     my ($site,$estatus) = ($server->url,200);
-
-    my $res = $mech->get($site);
+    my $res = $mech->get($server->redirect(''));
     isa_ok $res, 'HTTP::Response', "Response";
 
     is $mech->uri, $site, "Navigated to $site";
