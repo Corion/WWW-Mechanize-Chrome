@@ -911,12 +911,12 @@ sub getResponseBody( $self, $requestId ) {
 }
 
 sub httpResponseFromChromeResponse( $self, $res ) {
-    $self->log('debug', sprintf "Status %d",$res->{params}->{response}->{status});
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 200, # is 0 for files?!
         $res->{params}->{response}->{statusText},
         HTTP::Headers->new( %{ $res->{params}->{response}->{headers} }),
     );
+    $self->log('debug',sprintf "Status %0d - %s",$response->code, $response->status_line);
 
     # Also fetch the response body and include it in the response
     # as we can't do that lazily...
