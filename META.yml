@@ -32,7 +32,7 @@ requires:
   File::Basename: '0'
   Filter::signatures: '0.09'
   Future: '0'
-  Future::HTTP: '0'
+  Future::HTTP: '0.06'
   HTTP::Headers: '0'
   HTTP::Response: '0'
   IO::Socket::INET: '0'
