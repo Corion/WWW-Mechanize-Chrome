@@ -132,6 +132,11 @@ for testing with C<use warnings qw(fatal)>.
 
 =back
 
+You can override the class to implement the transport from the outside by
+setting C<< $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} >> to the transport class.
+This is mostly used for testing but can be useful to exclude the underlying
+websocket implementation(s) as source of bugs.
+
 =cut
 
 sub build_command_line {
@@ -275,6 +280,9 @@ sub new($class, %options) {
     };
 
     $options{ js_events } ||= [];
+    if( ! exists $options{ transport }) {
+        $options{ transport } ||= $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT };
+    };
 
     my $self= bless \%options => $class;
     my $host = $options{ host } || '127.0.0.1';
