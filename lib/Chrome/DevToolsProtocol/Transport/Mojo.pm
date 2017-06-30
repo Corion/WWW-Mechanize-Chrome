@@ -44,15 +44,20 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         my $res = $self->future;
         $client->websocket( $endpoint, sub( $ua, $tx ) {
             $self->{ua} = $ua;
-            $res->done( $tx );
+            # WTF? Sometimes we get an Mojolicious::Transaction::HTTP here?!
+            if( $tx->isa('Mojo::Transaction::WebSocket')) {
+                $res->done( $tx );
+            } else {
+                $res->fail( "Couldn't connect to endpoint '$endpoint'" );
+            }
         });
         $res
 
     })->then( sub( $c ) {
+        warn "$c";
         $logger->( 'trace', sprintf "Connected" );
         my $connection = $c;
-        $self->{connection} = $connection;
-        undef $self;
+        $self->{connection} ||= $connection;
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {

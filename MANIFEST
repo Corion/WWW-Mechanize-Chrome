@@ -25,6 +25,7 @@ t/49-mech-get-file.html
 t/49-mech-get-file.t
 t/49-mech-nav.t
 t/49-port.t
+t/49-port-mojo.t
 t/50-click.html
 t/50-follow-link.t
 t/50-form-with-fields.t
