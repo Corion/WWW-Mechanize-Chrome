@@ -1,9 +1,10 @@
-0.03 20170629
+0.03 20170630
     ! The "profile" option now really uses the profile, not the data directory.
     + New option "data_directory" to set the base data directory.
     + We run all tests with a temporary user now instead of the default user
       that might be your current Chrome user
     + Tests now run headless by default
+    + The backend event loop can be selected from the environment
     . Tested against Chromium 59.0.3071.115 / Win64
     . Tested against Chromium 60.0.3110.0 / Win64
     . Tested against Chromium 61.0.3140.0 / Win64
