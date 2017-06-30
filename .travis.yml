@@ -18,6 +18,10 @@ perl:
   - "dev"
   - "blead"
 
+env:
+  - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+  - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
+
 matrix:
   allow_failures:
     - perl: blead
