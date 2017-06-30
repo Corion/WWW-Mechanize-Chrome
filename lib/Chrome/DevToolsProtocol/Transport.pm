@@ -20,7 +20,7 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
     # POE support would be nice
     # IO::Async support would be nice, using Net::Async::HTTP
     
-    # The fallback, will always catch due to loading AnyEvent (for now)
+    # The fallback, will always catch due to loading strict (for now)
     ['strict.pm'      => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
 );
 
