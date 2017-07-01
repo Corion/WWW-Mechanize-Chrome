@@ -5,7 +5,7 @@ use Test::More;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
-use lib './inc', '../inc';
+use lib './inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 
 use t::helper;

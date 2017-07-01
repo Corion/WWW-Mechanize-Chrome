@@ -8,7 +8,7 @@ use File::Spec;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
-use lib '.';
+use lib './inc', '../inc', '.';
 use t::helper;
 use Test::HTTP::LocalServer;
 
