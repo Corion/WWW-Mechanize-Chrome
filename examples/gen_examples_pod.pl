@@ -30,7 +30,7 @@ sub main {
     # Get the version from the local WWW::Mechanize::PhantomJS.pm.
     push @INC, 'lib';
     require "$examples_dir/../lib/WWW/Mechanize/Chrome.pm";
-    my $version = WWW::Mechanize::PhantomJS->VERSION();
+    my $version = WWW::Mechanize::Chrome->VERSION();
 
     # Read the filenames and descriptions from the examples README file.
     open my $readme, '<', $examples_dir . '/README'
