@@ -91,7 +91,7 @@ sub get_module_info { %module }
 if( ! caller ) {
     # I should maybe use something like Shipwright...
     regen_README($main_file);
-    #regen_EXAMPLES();
+    regen_EXAMPLES();
     WriteMakefile1(get_module_info);
 };
 
@@ -201,6 +201,19 @@ sub pod_section {
     @section = map { $_ =~ s!^=\w+\s+!!; $_ } @section;
     return join "", @section;
 }
+
+sub regen_EXAMPLES {
+    my $perl = $^X;
+    if ($perl =~/\s/) {
+        $perl = qq{"$perl"};
+    };
+    my $examples = `$perl -w examples/gen_examples_pod.pl`;
+    if ($examples) {
+        warn "(Re)Creating lib/WWW/Mechanize/Chrome/Examples.pm\n";
+        $examples =~ s/\r\n/\n/g;
+        update_file( 'lib/WWW/Mechanize/Chrome/Examples.pm', $examples );
+    };
+};
 
 sub update_file {
     my( $filename, $new_content ) = @_;
