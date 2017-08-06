@@ -1,4 +1,5 @@
 .gitignore
+50-mech-redirect.t
 Changes
 examples/dump-links.pl
 examples/gen_examples_pod.pl
