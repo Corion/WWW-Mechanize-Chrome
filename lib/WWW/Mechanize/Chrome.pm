@@ -3198,22 +3198,35 @@ JS
 
 =head2 C<< $mech->render_content(%options) >>
 
-    my $pdf_data = $mech->render( format => 'pdf' );
+    my $pdf_data = $mech->render_content( format => 'pdf' );
 
-Returns the current page rendered in the specified format
-as a bytestring or stores the current page in the specified
-filename.
+Returns the current page rendered as PDF or PNG
+as a bytestring.
 
 This method is specific to WWW::Mechanize::Chrome.
 
 =cut
 
 sub render_content( $self, %options ) {
-    $options{ format } ||= 'pdf';
-    delete $options{ format };
+    $options{ format } ||= 'png';
 
-    my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get;
-    return decode_base64( $base64 );
+    my $fmt = delete $options{ format };
+    my $filename = delete $options{ filename };
+
+    my $payload;
+    if( $fmt eq 'png' ) {
+        $payload = $self->content_as_png( %options )
+    } elsif( $fmt eq 'pdf' ) {
+        $payload = $self->content_as_pdf( %options );
+    };
+
+    if( defined $filename ) {
+        open my $fh, '>:raw', $filename
+            or croak "Couldn't create to '$filename': $!";
+        print {$fh} $payload;
+    };
+
+    $payload
 }
 
 =head2 C<< $mech->content_as_pdf(%options) >>
@@ -3228,16 +3241,13 @@ Returns the current page rendered in PDF format as a bytestring.
 
 This method is specific to WWW::Mechanize::Chrome.
 
-Currently, the data transfer between Chrome and Perl
-is done through a temporary file, so directly using
-the C<filename> option may be faster.
-
 =cut
 
 sub content_as_pdf {
     my ($self, %options) = @_;
 
-    return $self->render_content( format => 'pdf', %options );
+    my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get->{data};
+    return decode_base64( $base64 );
 };
 
 =head1 INTERNAL METHODS
