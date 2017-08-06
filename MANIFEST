@@ -5,7 +5,6 @@ examples/gen_examples_pod.pl
 examples/html-to-pdf.pl
 examples/javascript.pl
 examples/README
-examples/README.txt
 examples/url-to-image.pl
 inc/IO/Catch.pm
 lib/Chrome/DevToolsProtocol.pm
