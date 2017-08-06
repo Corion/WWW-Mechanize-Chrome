@@ -2,18 +2,9 @@
 abstract: 'automate the Chrome browser'
 author:
   - 'Max Maischein <corion@cpan.org>'
-build_requires:
-  Data::Dumper: '0'
-  ExtUtils::MakeMaker: '0'
-  Future::Mojo: '0'
-  Image::Info: '0'
-  Mojolicious: '0'
-  Test::HTTP::LocalServer: '0.59'
-  Test::More: '0'
-configure_requires:
-  ExtUtils::MakeMaker: '0'
+build_requires: {}
 dynamic_config: 0
-generated_by: 'ExtUtils::MakeMaker version 7.24, CPAN::Meta::Converter version 2.143240'
+generated_by: 'ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.150005'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -23,30 +14,8 @@ no_index:
   directory:
     - t
     - inc
-requires:
-  AnyEvent: '0'
-  AnyEvent::Future: '0'
-  AnyEvent::WebSocket::Client: '0'
-  Carp: '0'
-  Exporter: '5'
-  File::Basename: '0'
-  Filter::signatures: '0.09'
-  Future: '0'
-  Future::HTTP: '0.06'
-  HTTP::Headers: '0'
-  HTTP::Response: '0'
-  IO::Socket::INET: '0'
-  Imager: '0'
-  Imager::File::PNG: '0'
-  JSON: '0'
-  Log::Log4perl: '0'
-  MIME::Base64: '0'
-  Object::Import: '0'
-  Scalar::Util: '0'
-  WWW::Mechanize::Link: '0'
-  WWW::Mechanize::Plugin::Selector: '0'
-  perl: '5.010'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
-version: '0.04'
+version: '0.05'
+x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
 x_static_install: 1
