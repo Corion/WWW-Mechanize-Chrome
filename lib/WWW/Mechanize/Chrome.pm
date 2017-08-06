@@ -172,8 +172,8 @@ sub build_command_line {
         if $options->{ headless };
     push @{ $options->{ launch_arg }}, "--disable-gpu"; # temporarily needed for now
 
-    $options->{start_url} ||= 'about:blank';
-    push @{ $options->{ launch_arg }}, "$options->{start_url}";
+    push @{ $options->{ launch_arg }}, "$options->{start_url}"
+        if exists $options->{start_url};
 
     my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /\s/)
                   ? qq("$options->{ launch_exe }")
@@ -287,6 +287,9 @@ sub new($class, %options) {
     my $self= bless \%options => $class;
     my $host = $options{ host } || '127.0.0.1';
     $self->{log} ||= $self->_build_log;
+
+    $options{start_url} = 'about:blank'
+        unless exists $options{start_url};
 
     unless ( defined $options{ port } ) {
         # Find free port
@@ -414,7 +417,7 @@ sub chrome_version_from_stdout( $self ) {
     my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, });
 
     $self->log('trace', "Retrieving version via [@cmd]" );
-    my $v = join '', readpipe(@cmd);
+    my $v = readpipe(@cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     $v =~ /^(\S+)\s+([\d\.]+)\s/
