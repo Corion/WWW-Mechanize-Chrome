@@ -751,11 +751,13 @@ sub _collectEvents( $self, @info ) {
     my @events = ();
     # This one is transport/event-loop specific:
     my $done = $self->driver->future;
+    my $s = $self;
+    weaken $s;
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
-            $self->log( 'trace', "Received final message, unwinding", $events[-1] );
-            $self->driver->on_message( undef );
+            $s->log( 'trace', "Received final message, unwinding", $events[-1] );
+            $s->driver->on_message( undef );
             $done->done( @info, @events );
         };
     });
@@ -793,15 +795,20 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
 
     my $scheduled = $self->driver->one_shot('Page.frameScheduledNavigation', 'Page.frameStartedLoading');
     my $navigated;
-    my $does_navigation = $scheduled
+    my $does_navigation;
+    {
+    my $s = $self;
+    weaken $s;
+     $does_navigation = $scheduled
           ->then(sub( $ev ) {
-              $self->log('trace', "Navigation started, logging");
+              $s->log('trace', "Navigation started, logging");
               $navigated++;
 
-              $frameId ||= $self->_fetchFrameId( $ev );
-              $self->{ frameId } = $frameId;
-              $self->_waitForNavigationEnd( %options )
+              $frameId ||= $s->_fetchFrameId( $ev );
+              $s->{ frameId } = $frameId;
+              $s->_waitForNavigationEnd( %options );
           });
+      };
 
     # Kick off the navigation ourselves
     my $nav = $get_navigation_future->()->get;
@@ -830,9 +837,11 @@ sub get($self, $url, %options ) {
     # So we need to capture all events even before we send our command to the
     # browser, as we might receive messages before we receive the answer to
     # our command:
+    my $s = $self;
+    weaken $s;
     my @events = $self->_mightNavigate( sub {
-        $self->log('trace', "Navigating to [$url]");
-        $self->driver->send_message(
+        $s->log('trace', "Navigating to [$url]");
+        $s->driver->send_message(
             'Page.navigate',
             url => "$url"
     )}, %options );
@@ -897,10 +906,12 @@ sub httpRequestFromChromeRequest( $self, $event ) {
 
 sub getResponseBody( $self, $requestId ) {
     $self->log('debug', "Fetching response body for $requestId");
+    my $s = $self;
+    weaken $s;
     return
         $self->driver->send_message('Network.getResponseBody', requestId => $requestId)
         ->then(sub {
-        $self->log('debug', "Have body", @_);
+        $s->log('debug', "Have body", @_);
         my ($body_obj) = @_;
 
         my $body = $body_obj->{body};
