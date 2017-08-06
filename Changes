@@ -1,3 +1,14 @@
+0.05 20170806
+    + More robust handling of Chrome disconnects
+      It seems that Chromium 62+ disconnects all clients when a tab is closed
+    ! ->get now always waits for an HTTP response
+    . Tested against Chromium 59.0.3071.115 / Win64
+    . Tested against Chromium 60.0.3110.0 / Win64
+    . Tested against Chromium 61.0.3140.0 / Win64
+    . Tested against Chromium 61.0.3141.0 / Win64
+    . Tested against Chromium 62.0.3178.0 / Win64
+    . Tested against Chromium 58.0.3029.110 Built on Ubuntu, thanks Travis CI
+
 0.04 20170701
     + Fix maximum websocket message size
 	  This was "randomly" breaking transfers with large assets.
