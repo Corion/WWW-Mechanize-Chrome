@@ -91,7 +91,7 @@ sub print_header {
 
     print "use strict;\n";
     print "use vars qw(\$VERSION);\n";
-    print "\$VERSION= '$version';\n\n";
+    print "\$VERSION = '$version';\n\n";
 
     print "1;\n";
     print "\n";
@@ -101,12 +101,12 @@ sub print_header {
 
     print "=head1 NAME\n\n";
 
-    print "Examples - WWW::Mechanize::PhantomJS example programs.\n\n";
+    print "Examples - WWW::Mechanize::Chrome example programs.\n\n";
 
     print "=head1 DESCRIPTION\n\n";
 
     print "This is a documentation only module showing the examples that are\n";
-    print "included in the L<WWW::Mechanize::PhantomJS> distribution.\n\n";
+    print "included in the L<WWW::Mechanize::Chrome> distribution.\n\n";
     print "This file was auto-generated via the C<gen_examples_pod.pl>\n";
     print "program that is also included in the examples directory.\n";
     print "\n";
