@@ -1,11 +1,11 @@
-package WWW::Mechanize::PhantomJS::Examples;
+package WWW::Mechanize::Chrome::Examples;
 
 ###############################################################################
 #
-# Examples - WWW::Mechanize::PhantomJS examples.
+# Examples - WWW::Mechanize::Chrome examples.
 #
 # A documentation only module showing the examples that are
-# included in the WWW::Mechanize::PhantomJS distribution. This
+# included in the WWW::Mechanize::Chrome distribution. This
 # file was generated automatically via the gen_examples_pod.pl
 # program that is also included in the examples directory.
 #
@@ -16,7 +16,7 @@ package WWW::Mechanize::PhantomJS::Examples;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 1;
 
@@ -38,7 +38,7 @@ program that is also included in the examples directory.
 
 =head1 Example programs
 
-The following is a list of the 4 example programs that are included in the WWW::Mechanize::PhantomJS distribution.
+The following is a list of the 4 example programs that are included in the WWW::Mechanize::Chrome distribution.
 
 =over
 
@@ -79,7 +79,7 @@ The following is a list of the 4 example programs that are included in the WWW::
     show_screen;
 
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-PhantomJS-0.05/examples/url-to-image.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.06/examples/url-to-image.pl>
 
 =head2 Example: html-to-pdf.pl
 
@@ -101,7 +101,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Pha
         print "\nSaved $url as $fn\n";
     };
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-PhantomJS-0.05/examples/html-to-pdf.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.06/examples/html-to-pdf.pl>
 
 =head2 Example: dump-links.pl
 
@@ -132,7 +132,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Pha
     
     =cut
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-PhantomJS-0.05/examples/dump-links.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.06/examples/dump-links.pl>
 
 =head2 Example: javascript.pl
 
@@ -164,7 +164,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Pha
     
     =cut
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-PhantomJS-0.05/examples/javascript.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.06/examples/javascript.pl>
 
 =head1 AUTHOR
 

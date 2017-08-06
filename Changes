@@ -1,3 +1,7 @@
+0.06 20170806
+    . Correct the name of the examples module
+    . No code changes, no need to upgrade
+
 0.05 20170806
     + More robust handling of Chrome disconnects
       It seems that Chromium 62+ disconnects all clients when a tab is closed

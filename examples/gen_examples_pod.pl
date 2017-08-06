@@ -27,7 +27,7 @@ sub main {
     my @examples;
     my $examples_dir = $ARGV[0] || './examples';
 
-    # Get the version from the local WWW::Mechanize::PhantomJS.pm.
+    # Get the version from the local WWW::Mechanize::Chrome.pm.
     push @INC, 'lib';
     require "$examples_dir/../lib/WWW/Mechanize/Chrome.pm";
     my $version = WWW::Mechanize::Chrome->VERSION();
@@ -71,15 +71,15 @@ sub print_header {
     my $version = shift;
 
     # I just don't like here docs.
-    print "package WWW::Mechanize::PhantomJS::Examples;\n\n";
+    print "package WWW::Mechanize::Chrome::Examples;\n\n";
 
     print '#' x 79, "\n";
     print "#\n";
-    print "# Examples - WWW::Mechanize::PhantomJS examples.\n";
+    print "# Examples - WWW::Mechanize::Chrome examples.\n";
     print "#\n";
 
     print "# A documentation only module showing the examples that are\n";
-    print "# included in the WWW::Mechanize::PhantomJS distribution. This\n";
+    print "# included in the WWW::Mechanize::Chrome distribution. This\n";
     print "# file was generated automatically via the gen_examples_pod.pl\n";
     print "# program that is also included in the examples directory.\n";
     print "#\n";
@@ -128,7 +128,7 @@ sub print_index {
     print "=head1 Example programs\n\n";
 
     print "The following is a list of the $count example programs that are ";
-    print "included in the WWW::Mechanize::PhantomJS distribution.\n\n";
+    print "included in the WWW::Mechanize::Chrome distribution.\n\n";
 
     print "=over\n\n";
 
@@ -199,7 +199,7 @@ sub print_example {
     print $verbatim, "\n\n";
 
     print 'Download this example: L<http://cpansearch.perl.org/src/CORION/';
-    print "WWW-Mechanize-PhantomJS-$version/examples/$example>\n\n";
+    print "WWW-Mechanize-Chrome-$version/examples/$example>\n\n";
 }
 
 ###############################################################################

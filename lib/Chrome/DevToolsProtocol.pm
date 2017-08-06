@@ -13,7 +13,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 
 use vars qw<$VERSION>;
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 sub _build_log( $self ) {
     require Log::Log4perl;
