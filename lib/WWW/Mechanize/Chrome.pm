@@ -753,7 +753,6 @@ sub _collectEvents( $self, @info ) {
         or die "Need a predicate as the last parameter, not '$predicate'!";
 
     my @events = ();
-    # This one is transport/event-loop specific:
     my $done = $self->driver->future;
     my $s = $self;
     weaken $s;
@@ -848,7 +847,7 @@ sub get($self, $url, %options ) {
         $s->driver->send_message(
             'Page.navigate',
             url => "$url"
-    )}, %options );
+    )}, %options, navigates => 1 );
 
     return $self->response;
 };

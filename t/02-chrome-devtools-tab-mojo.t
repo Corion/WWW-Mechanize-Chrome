@@ -49,11 +49,17 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
     $chrome->close_tab( $new )->get;
     sleep 1; # need to give Chrome some time here to clean up its act?!
 
-    my @tabs3 = $chrome->list_tabs()->get;
+    my @tabs3;
+    my $ok = eval { @tabs3 = $chrome->list_tabs()->get; 1 };
+    SKIP: {
+        if( ! $ok ) {
+            skip $@, 1;
+        };
 
-    my @old_ids = grep { $_->{id} eq $new->{id} } @tabs3;
-    if(! is 0+@old_ids, 0, "Our new tab was closed again") {
-        diag Dumper \@old_ids;
+        my @old_ids = grep { $_->{id} eq $new->{id} } @tabs3;
+        if(! is 0+@old_ids, 0, "Our new tab was closed again") {
+            diag Dumper \@old_ids;
+        };
     };
     
     undef $chrome;
