@@ -11,6 +11,7 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
+#Log::Log4perl->easy_init($DEBUG);  # Set priority of root logger to ERROR
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
@@ -49,22 +50,29 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
     $mech->driver->new_tab()->get;
 
     my @tabs = $app->list_tabs()->get;
-    diag "Tabs open: ", 0+@tabs;
+    diag "Tabs open in PID $pid: ", 0+@tabs;
 
-    diag "Releasing mechanize";
+    diag "Releasing mechanize $pid";
     undef $mech; # our own tab should now close automatically
     diag "Released mechanize";
 
     sleep 1;
 
-    diag "Listing tabs";
-    my @new_tabs = $app->list_tabs()->get;
+    SKIP: {
+        # In some Chrome versions, Chrome goes away when we closed our websocket?!
 
-    if (! is scalar @new_tabs, @tabs-1, "Our tab was presumably closed") {
-        for (@new_tabs) {
-            diag $_->{title};
+        diag "Listing tabs";
+        my @new_tabs;
+        my $ok = eval { @new_tabs = $app->list_tabs()->get; 1 };
+        if( ! $ok ) {
+            skip "$@", 6;
         };
-    };
+
+        if (! is scalar @new_tabs, @tabs-1, "Our tab was presumably closed") {
+            for (@new_tabs) {
+                diag $_->{title};
+            };
+        };
 
     my $magic = sprintf "%s - %s", basename($0), $$;
     #diag "Tab title is $magic";
@@ -135,4 +143,5 @@ HTML
 
     kill 'SIGKILL', $pid; # clean up, the hard way
     %args = ();
+    };
 });
