@@ -16,7 +16,7 @@ package WWW::Mechanize::PhantomJS::Examples;
 
 use strict;
 use vars qw($VERSION);
-$VERSION= '0.05';
+$VERSION = '0.05';
 
 1;
 
@@ -26,12 +26,12 @@ __END__
 
 =head1 NAME
 
-Examples - WWW::Mechanize::PhantomJS example programs.
+Examples - WWW::Mechanize::Chrome example programs.
 
 =head1 DESCRIPTION
 
 This is a documentation only module showing the examples that are
-included in the L<WWW::Mechanize::PhantomJS> distribution.
+included in the L<WWW::Mechanize::Chrome> distribution.
 
 This file was auto-generated via the C<gen_examples_pod.pl>
 program that is also included in the examples directory.
