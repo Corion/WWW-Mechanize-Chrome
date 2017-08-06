@@ -662,15 +662,12 @@ sub autoclose_tab( $self, $autoclose ) {
 }
 
 sub DESTROY {
-warn "DESTROY";
     my $pid= delete $_[0]->{pid};
 
     if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
-    warn "Autoclosing tab";
         $_[0]->driver->close_tab({ id => $tab_id })->get();
     };
     eval {
-    warn "Shutting down websocket";
         # Shut down our websocket connection
         $_[0]->{ driver }->close
             if $_[0]->{ driver };
@@ -678,7 +675,6 @@ warn "DESTROY";
     delete $_[0]->{ driver };
 
     if( $pid ) {
-    warn "Killing process '$pid'";
         kill 'SIGKILL' => $pid;
     };
     %{ $_[0] }= (); # clean out all other held references
