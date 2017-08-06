@@ -417,7 +417,7 @@ sub chrome_version_from_stdout( $self ) {
     my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, });
 
     $self->log('trace', "Retrieving version via [@cmd]" );
-    my $v = readpipe(@cmd);
+    my $v = readpipe(join " ", @cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     $v =~ /^(\S+)\s+([\d\.]+)\s/
