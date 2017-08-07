@@ -9,7 +9,9 @@ function myaction() {
 }
 function mysubmit(e) {
     myevents['submit']++;
-    e.preventDefault();
+    if( e ) {
+        e.preventDefault();
+    };
     return false
 }
 function myclick() {

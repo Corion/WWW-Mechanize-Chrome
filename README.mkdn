@@ -996,11 +996,10 @@ towards rendering HTML.
 
 ## `$mech->render_content(%options)`
 
-    my $pdf_data = $mech->render( format => 'pdf' );
+    my $pdf_data = $mech->render_content( format => 'pdf' );
 
-Returns the current page rendered in the specified format
-as a bytestring or stores the current page in the specified
-filename.
+Returns the current page rendered as PDF or PNG
+as a bytestring.
 
 This method is specific to WWW::Mechanize::Chrome.
 
@@ -1015,10 +1014,6 @@ This method is specific to WWW::Mechanize::Chrome.
 Returns the current page rendered in PDF format as a bytestring.
 
 This method is specific to WWW::Mechanize::Chrome.
-
-Currently, the data transfer between Chrome and Perl
-is done through a temporary file, so directly using
-the `filename` option may be faster.
 
 # INTERNAL METHODS
 

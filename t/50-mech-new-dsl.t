@@ -32,7 +32,7 @@ sub new_mech {
 
 use vars '$mech';
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
     my( $file, $mymech ) = splice @_; # so we move references
 
     use WWW::Mechanize::Chrome::DSL ();

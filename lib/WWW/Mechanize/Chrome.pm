@@ -16,7 +16,7 @@ use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION = '0.03';
+$VERSION = '0.06';
 
 =head1 NAME
 
@@ -150,7 +150,8 @@ sub build_command_line {
     $options->{ launch_exe } ||= $ENV{CHROME_BIN} || $default_exe;
     $options->{ launch_arg } ||= [];
 
-    $options->{port} ||= 9222;
+    $options->{port} ||= 9222
+        if ! exists $options->{port};
 
     if ($options->{port}) {
         push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
@@ -172,8 +173,8 @@ sub build_command_line {
         if $options->{ headless };
     push @{ $options->{ launch_arg }}, "--disable-gpu"; # temporarily needed for now
 
-    $options->{start_url} ||= 'about:blank';
-    push @{ $options->{ launch_arg }}, "$options->{start_url}";
+    push @{ $options->{ launch_arg }}, "$options->{start_url}"
+        if exists $options->{start_url};
 
     my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /\s/)
                   ? qq("$options->{ launch_exe }")
@@ -287,6 +288,9 @@ sub new($class, %options) {
     my $self= bless \%options => $class;
     my $host = $options{ host } || '127.0.0.1';
     $self->{log} ||= $self->_build_log;
+
+    $options{start_url} = 'about:blank'
+        unless exists $options{start_url};
 
     unless ( defined $options{ port } ) {
         # Find free port
@@ -411,10 +415,10 @@ needs launching the browser and asking for the version via the network.
 
 sub chrome_version_from_stdout( $self ) {
     # We can try to get at the version through the --version command line:
-    my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, });
+    my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, port => undef });
 
     $self->log('trace', "Retrieving version via [@cmd]" );
-    my $v = join '', readpipe(@cmd);
+    my $v = readpipe(join " ", @cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     $v =~ /^(\S+)\s+([\d\.]+)\s/
@@ -749,13 +753,14 @@ sub _collectEvents( $self, @info ) {
         or die "Need a predicate as the last parameter, not '$predicate'!";
 
     my @events = ();
-    # This one is transport/event-loop specific:
     my $done = $self->driver->future;
+    my $s = $self;
+    weaken $s;
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
-            $self->log( 'trace', "Received final message, unwinding", $events[-1] );
-            $self->driver->on_message( undef );
+            $s->log( 'trace', "Received final message, unwinding", $events[-1] );
+            $s->driver->on_message( undef );
             $done->done( @info, @events );
         };
     });
@@ -793,15 +798,20 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
 
     my $scheduled = $self->driver->one_shot('Page.frameScheduledNavigation', 'Page.frameStartedLoading');
     my $navigated;
-    my $does_navigation = $scheduled
+    my $does_navigation;
+    {
+    my $s = $self;
+    weaken $s;
+     $does_navigation = $scheduled
           ->then(sub( $ev ) {
-              $self->log('trace', "Navigation started, logging");
+              $s->log('trace', "Navigation started, logging");
               $navigated++;
 
-              $frameId ||= $self->_fetchFrameId( $ev );
-              $self->{ frameId } = $frameId;
-              $self->_waitForNavigationEnd( %options )
+              $frameId ||= $s->_fetchFrameId( $ev );
+              $s->{ frameId } = $frameId;
+              $s->_waitForNavigationEnd( %options );
           });
+      };
 
     # Kick off the navigation ourselves
     my $nav = $get_navigation_future->()->get;
@@ -830,12 +840,14 @@ sub get($self, $url, %options ) {
     # So we need to capture all events even before we send our command to the
     # browser, as we might receive messages before we receive the answer to
     # our command:
+    my $s = $self;
+    weaken $s;
     my @events = $self->_mightNavigate( sub {
-        $self->log('trace', "Navigating to [$url]");
-        $self->driver->send_message(
+        $s->log('trace', "Navigating to [$url]");
+        $s->driver->send_message(
             'Page.navigate',
             url => "$url"
-    )}, %options );
+    )}, %options, navigates => 1 );
 
     return $self->response;
 };
@@ -897,10 +909,12 @@ sub httpRequestFromChromeRequest( $self, $event ) {
 
 sub getResponseBody( $self, $requestId ) {
     $self->log('debug', "Fetching response body for $requestId");
+    my $s = $self;
+    weaken $s;
     return
         $self->driver->send_message('Network.getResponseBody', requestId => $requestId)
         ->then(sub {
-        $self->log('debug', "Have body", @_);
+        $s->log('debug', "Have body", @_);
         my ($body_obj) = @_;
 
         my $body = $body_obj->{body};
@@ -3198,22 +3212,35 @@ JS
 
 =head2 C<< $mech->render_content(%options) >>
 
-    my $pdf_data = $mech->render( format => 'pdf' );
+    my $pdf_data = $mech->render_content( format => 'pdf' );
 
-Returns the current page rendered in the specified format
-as a bytestring or stores the current page in the specified
-filename.
+Returns the current page rendered as PDF or PNG
+as a bytestring.
 
 This method is specific to WWW::Mechanize::Chrome.
 
 =cut
 
 sub render_content( $self, %options ) {
-    $options{ format } ||= 'pdf';
-    delete $options{ format };
+    $options{ format } ||= 'png';
 
-    my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get;
-    return decode_base64( $base64 );
+    my $fmt = delete $options{ format };
+    my $filename = delete $options{ filename };
+
+    my $payload;
+    if( $fmt eq 'png' ) {
+        $payload = $self->content_as_png( %options )
+    } elsif( $fmt eq 'pdf' ) {
+        $payload = $self->content_as_pdf( %options );
+    };
+
+    if( defined $filename ) {
+        open my $fh, '>:raw', $filename
+            or croak "Couldn't create to '$filename': $!";
+        print {$fh} $payload;
+    };
+
+    $payload
 }
 
 =head2 C<< $mech->content_as_pdf(%options) >>
@@ -3228,16 +3255,13 @@ Returns the current page rendered in PDF format as a bytestring.
 
 This method is specific to WWW::Mechanize::Chrome.
 
-Currently, the data transfer between Chrome and Perl
-is done through a temporary file, so directly using
-the C<filename> option may be faster.
-
 =cut
 
 sub content_as_pdf {
     my ($self, %options) = @_;
 
-    return $self->render_content( format => 'pdf', %options );
+    my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get->{data};
+    return decode_base64( $base64 );
 };
 
 =head1 INTERNAL METHODS
@@ -3384,7 +3408,7 @@ no warnings 'experimental::signatures';
 use feature 'signatures';
 
 use vars qw($VERSION);
-$VERSION = '0.03';
+$VERSION = '0.06';
 
 has 'attributes' => (
     is => 'lazy',

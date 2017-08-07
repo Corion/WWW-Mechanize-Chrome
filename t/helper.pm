@@ -66,28 +66,29 @@ sub runtests {
                  )
                : ();
 
-    my $mech = eval { $new_mech->(@launch) };
+    {
+        my $mech = eval { $new_mech->(@launch) };
 
-    if( ! $mech ) {
-        SKIP: {
-            skip "Couldn't create new object: $@", $test_count;
+        if( ! $mech ) {
+            SKIP: {
+                skip "Couldn't create new object: $@", $test_count;
+            };
+            my $version = eval {
+                WWW::Mechanize::Chrome::chrome_version({
+                    launch_exe => $browser_instance
+                });
+            };
+            diag sprintf "Chrome version '%s'", $version;
+            return
         };
-        my $version = eval {
-            WWW::Mechanize::Chrome::chrome_version({
-                launch_exe => $browser_instance
-            });
-        };
-        diag sprintf "Chrome version '%s'", $version;
-        return
+
+        diag sprintf "Chrome version '%s'",
+            $mech->chrome_version;
+
+        # Run the user-supplied tests, making sure we don't keep a
+        # reference to $mech around
+        @_ = ($browser_instance, $mech);
     };
-
-    diag sprintf "Chrome version '%s'",
-        $mech->chrome_version;
-
-    # Run the user-supplied tests, making sure we don't keep a
-    # reference to $mech around
-    @_ = ($browser_instance, $mech);
-    undef $mech;
     
     goto &$code;
 }

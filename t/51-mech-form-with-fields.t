@@ -4,12 +4,13 @@ use Test::More;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
-use lib './inc', '../inc';
+use lib './inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
+#Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -52,7 +53,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
 
    SKIP: {
        #skip "Chrome frame support is wonky.", 2;
-       
+
        $mech->get_local('52-frameset.html');
        $f = $mech->form_with_fields(
           'baz','bar',
@@ -63,6 +64,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
        $f = $mech->form_with_fields(
           'baz','bar',
        );
-       ok $f, "We found the form in a frame";
+       ok $f, "We found the form in an iframe";
    };
 });

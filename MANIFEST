@@ -1,6 +1,12 @@
 .gitignore
 50-mech-redirect.t
 Changes
+examples/dump-links.pl
+examples/gen_examples_pod.pl
+examples/html-to-pdf.pl
+examples/javascript.pl
+examples/README
+examples/url-to-image.pl
 inc/IO/Catch.pm
 lib/Chrome/DevToolsProtocol.pm
 lib/Chrome/DevToolsProtocol/Transport.pm
@@ -8,6 +14,7 @@ lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Chrome/DSL.pm
+lib/WWW/Mechanize/Chrome/Examples.pm
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP

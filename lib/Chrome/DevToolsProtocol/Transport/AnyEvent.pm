@@ -12,7 +12,7 @@ use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
 use vars qw<$VERSION $magic @CARP_NOT>;
-$VERSION = '0.03';
+$VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
             $logger->('debug',"Connecting to $endpoint");
             $client = AnyEvent::WebSocket::Client->new(
-                max_payload_size => undef, # allow unlimited size for messages
+                max_payload_size => 0, # allow unlimited size for messages
             );
             $client->connect( $endpoint )->cb( $done_cb );
         });

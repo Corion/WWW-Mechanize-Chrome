@@ -45,7 +45,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
     my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
-    
+
     $mech->get_local('50-click.html');
     for my $test ( @tests ) {
         my $format= $test->{format};
@@ -55,8 +55,9 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
                 skip "$@", 2;
             };
 
-            like $content, $test->{like}, "->render_content( format => '$format' )"
-                or diag substr( $content, 0, 10 );
+            my $shortcontent = substr( $content, 0, 30 );
+            like $shortcontent, $test->{like}, "->render_content( format => '$format' )"
+                or diag $shortcontent;
             my @delete;
             my( $tempfh,$outfile )= tempfile;
             close $tempfh;
@@ -64,7 +65,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
             $mech->render_content( format => $format, filename => $outfile );
             my($res, $reason)= (undef, "Outfile '$outfile' was not created");
             if(-f $outfile) {
-                if( open my $fh, '<', $outfile ) {
+                if( open my $fh, '<:raw', $outfile ) {
                     local $/;
                     my $content= <$fh>;
                     $res= $content =~ $test->{like}
