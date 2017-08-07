@@ -3217,6 +3217,10 @@ JS
 Returns the current page rendered as PDF or PNG
 as a bytestring.
 
+Note that the PDF format will only be successful with headless Chrome. At least
+on Windows, when launching Chrome with a UI, printing to PDF will
+be unavailable.
+
 This method is specific to WWW::Mechanize::Chrome.
 
 =cut
@@ -3247,11 +3251,10 @@ sub render_content( $self, %options ) {
 
     my $pdf_data = $mech->content_as_pdf();
 
-    $mech->content_as_pdf(
-        filename => '/path/to/my.pdf',
-    );
-
 Returns the current page rendered in PDF format as a bytestring.
+
+Note that this method will only be successful with headless Chrome. At least on
+Windows, when launching Chrome with a UI, printing to PDF will be unavailable.
 
 This method is specific to WWW::Mechanize::Chrome.
 

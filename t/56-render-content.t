@@ -7,11 +7,13 @@ use File::Temp qw(tempfile);
 use Test::HTTP::LocalServer;
 
 use t::helper;
+use Log::Log4perl qw(:easy);
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 my @tests= (
+    # PDF only works with headless Chrome
     { format => 'pdf', like => qr/^%PDF-/ },
     { format => 'png', like => qr/^.PNG/, },
     #{ format => 'jpg', like => qr/^......JFIF/, },
