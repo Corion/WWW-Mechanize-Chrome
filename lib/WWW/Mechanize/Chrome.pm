@@ -3640,7 +3640,7 @@ and L<https://corion.net/talks> for the slides.
 
 Please report bugs in this module via the RT CPAN bug queue at
 L<https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome>
-or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org>.
+or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org|mailto:www-mechanize-Chrome-Bugs@rt.cpan.org>.
 
 =head1 AUTHOR
 
