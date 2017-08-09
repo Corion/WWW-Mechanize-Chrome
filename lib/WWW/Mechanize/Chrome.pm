@@ -3578,6 +3578,23 @@ information to the console. Check that Chrome starts:
 
 C<< chrome >>
 
+=head1 RUNNING THE TEST SUITE
+
+The normal test invocation is 'make test'.
+
+If your executable has a different name than C<chrome-browser> or
+C<chrome.exe> or is not in your path, then set the environment variable
+C<CHROME_BIN> to the absolute path.
+
+The test suite is apt to disturb your display when a locally running
+chrome browser gets animated. On unixish systems you can avoid this
+kind of disturbance by (1) not running any chrome binary and (2) start
+a separate display with Xvfb and (3) set the DISPLAY variable
+accordingly. E.g.:
+
+  Xvfb :121 &
+  DISPLAY=:121 CHROME_BIN=/usr/bin/google-chrome-stable make test
+
 =head1 SEE ALSO
 
 =over 4
