@@ -20,7 +20,7 @@ dump-links.pl
 
 =head1 DESCRIPTION
 
-This program demonstrates how to read elements out of the PhantomJS
+This program demonstrates how to read elements out of the Chrome
 DOM and how to get at text within nodes.
 
 =cut
