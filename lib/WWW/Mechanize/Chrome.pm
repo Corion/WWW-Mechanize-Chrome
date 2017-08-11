@@ -3607,11 +3607,13 @@ accordingly. E.g.:
 
 =item *
 
-L<https://developer.chrome.com/devtools/docs/debugging-clients> - the Chrome DevTools homepage
+L<https://developer.chrome.com/devtools/docs/debugging-clients> - the Chrome
+DevTools homepage
 
 =item *
 
-L<https://github.com/GoogleChrome/lighthouse> - Google Lighthouse, the main client
+L<https://github.com/GoogleChrome/lighthouse> - Google Lighthouse, the main
+client of the Chrome API
 
 =item *
 
@@ -3620,10 +3622,12 @@ L<WWW::Mechanize> - the module whose API grandfathered this module
 =item *
 
 L<WWW::Mechanize::Firefox> - a similar module with a visible application
+automating Firefox
 
 =item *
 
 L<WWW::Mechanize::PhantomJS> - a similar module without a visible application
+automating PhantomJS
 
 =back
 
