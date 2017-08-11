@@ -3646,6 +3646,9 @@ L<https://perlmonks.org/>.
 I've given a German talk at GPW 2017, see L<http://act.yapc.eu/gpw2017/talk/7027>
 and L<https://corion.net/talks> for the slides.
 
+The slides for the English presentation at TPCiA 2017 are at
+L<L<https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html>.
+
 =head1 BUG TRACKER
 
 Please report bugs in this module via the RT CPAN bug queue at
