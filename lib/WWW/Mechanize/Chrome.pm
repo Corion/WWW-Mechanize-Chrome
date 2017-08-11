@@ -385,7 +385,8 @@ Calling this method in void context croaks.
 
 sub add_listener( $self, $event, $callback ) {
     if( ! defined wantarray ) {
-        croak "->add_listener called in void context";
+        croak "->add_listener called in void context."
+            . "Please store the result somewhere";
     };
     return $self->driver->add_listener( $event, $callback )
 }
