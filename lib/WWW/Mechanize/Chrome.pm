@@ -2059,7 +2059,6 @@ sub _performSearch( $self, %args ) {
             my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
-            my $childNodes = $self->driver->one_shot('DOM.setChildNodes');
             $self->driver->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
                 fromIndex => 0,
@@ -2110,7 +2109,7 @@ sub _performSearch( $self, %args ) {
         } else {
             return Future->done()
         };
-    })
+    });
 }
 
 # If we have the attributes, don't fetch them separately
@@ -2209,7 +2208,6 @@ sub xpath( $self, $query, %options) {
                     $self->_performSearch( query => $_, backendNodeId => $id )
                 } @$query
             )->get;
-
             @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @found;
             push @res, @found;
         };
