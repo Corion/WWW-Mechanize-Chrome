@@ -128,7 +128,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     
     =head1 DESCRIPTION
     
-    This program demonstrates how to read elements out of the PhantomJS
+    This program demonstrates how to read elements out of the Chrome
     DOM and how to get at text within nodes.
     
     =cut
