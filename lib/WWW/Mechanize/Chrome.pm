@@ -373,6 +373,7 @@ sub new($class, %options) {
   my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
       my( $info ) = @_;
       warn "Loaded URL $info->{response}->{url}: $info->{response}->{status}";
+      warn "Resource timing: " . Dumper $info->{response}->{timing}";
   });
 
 Returns a listener object. If that object is discarded, the listener callback
