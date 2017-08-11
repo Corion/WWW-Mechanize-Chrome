@@ -120,7 +120,11 @@ websocket implementation(s) as source of bugs.
 
     my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
         my( $info ) = @_;
-        warn "Loaded URL $info->{response}->{url}: $info->{response}->{status}";
+        warn "Loaded URL "
+             . $info->{params}->{response}->{url}
+             . ": "
+             . $info->{params}->{response}->{status};
+        warn "Resource timing: " . Dumper $info->{params}->{response}->{timing};
     });
 
 Returns a listener object. If that object is discarded, the listener callback
@@ -1130,6 +1134,11 @@ If your executable has a different name than `chrome-browser` or
 `chrome.exe` or is not in your path, then set the environment variable
 `CHROME_BIN` to the absolute path.
 
+If you have Chrome already running, it must have been started with the
+`<--remote-debugging-port=9222`> option to enable the developer console. You
+may want to set up a dedicated and version pinned version of Chrome for your
+automation.
+
 The test suite is apt to disturb your display when a locally running
 chrome browser gets animated. On unixish systems you can avoid this
 kind of disturbance by (1) not running any chrome binary and (2) start
@@ -1141,11 +1150,15 @@ accordingly. E.g.:
 
 # SEE ALSO
 
-- [https://developer.chrome.com/devtools/docs/debugging-clients](https://developer.chrome.com/devtools/docs/debugging-clients) - the Chrome DevTools homepage
-- [https://github.com/GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) - Google Lighthouse, the main client
+- [https://developer.chrome.com/devtools/docs/debugging-clients](https://developer.chrome.com/devtools/docs/debugging-clients) - the Chrome
+DevTools homepage
+- [https://github.com/GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) - Google Lighthouse, the main
+client of the Chrome API
 - [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
 - [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
+automating Firefox
 - [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS) - a similar module without a visible application
+automating PhantomJS
 
 # REPOSITORY
 
@@ -1161,6 +1174,9 @@ The public support forum of this module is
 
 I've given a German talk at GPW 2017, see [http://act.yapc.eu/gpw2017/talk/7027](http://act.yapc.eu/gpw2017/talk/7027)
 and [https://corion.net/talks](https://corion.net/talks) for the slides.
+
+The slides for the English presentation at TPCiA 2017 are at
+[[https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html](https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html).](https://metacpan.org/pod/https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html.)
 
 # BUG TRACKER
 
@@ -1179,3 +1195,11 @@ Copyright 2010-2017 by Max Maischein `corion@cpan.org`.
 # LICENSE
 
 This module is released under the same terms as Perl itself.
+
+# POD ERRORS
+
+Hey! **The above document had some coding errors, which are explained below:**
+
+- Around line 3653:
+
+    Unterminated L<...> sequence
