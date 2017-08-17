@@ -336,15 +336,18 @@ sub new($class, %options) {
     $self->driver->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
-    )->catch( sub {
-        $err = $_[0];
-        Future->done( 1 );
+    )->catch( sub($_err) {
+        $err = $_err;
+        Future->done( $err );
     })->get;
         
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $err ) {
-        kill 9, delete $self->{ pid } if $self->{ kill_pid };
+        if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
+            local $SIG{CHLD} = 'IGNORE';
+            kill 'SIGKILL' => $pid;
+        };
         die $err;
     }
 
@@ -683,6 +686,7 @@ sub DESTROY {
     delete $_[0]->{ driver };
 
     if( $pid ) {
+        local $SIG{CHLD} = 'IGNORE';
         kill 'SIGKILL' => $pid;
     };
     %{ $_[0] }= (); # clean out all other held references
