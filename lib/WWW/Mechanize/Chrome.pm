@@ -314,35 +314,38 @@ sub new($class, %options) {
     $options{ extra_headers } ||= {};
 
     # Connect to it
-    eval {
-        $options{ driver } ||= Chrome::DevToolsProtocol->new(
-            'port' => $options{ port },
-            host => $host,
-            auto_close => 0,
-            error_handler => sub {
-                #warn ref$_[0];
-                #warn "<<@CARP_NOT>>";
-                #warn ((caller($_))[0,1,2])
-                #    for 1..4;
-                local @CARP_NOT = (@CARP_NOT, ref $_[0],'Try::Tiny');
-                # Reraise the error
-                croak $_[1]
-            },
-            transport => $options{ transport },
-            log => $options{ log },
-        );
-        # Synchronously connect here, just for easy API compatibility
-        $self->driver->connect(
-            new_tab => !$options{ reuse },
-            tab     => $options{ tab },
-        )->get;
-    };
-
+    $options{ driver } ||= Chrome::DevToolsProtocol->new(
+        'port' => $options{ port },
+        host => $host,
+        auto_close => 0,
+        error_handler => sub {
+            #warn ref$_[0];
+            #warn "<<@CARP_NOT>>";
+            #warn ((caller($_))[0,1,2])
+            #    for 1..4;
+            local @CARP_NOT = (@CARP_NOT, ref $_[0],'Try::Tiny');
+            # Reraise the error
+            croak $_[1]
+        },
+        transport => $options{ transport },
+        log => $options{ log },
+    );
+    # Synchronously connect here, just for easy API compatibility
+    
+    my $err;
+    $self->driver->connect(
+        new_tab => !$options{ reuse },
+        tab     => $options{ tab },
+    )->catch( sub {
+        $err = $_[0];
+        Future->done( 1 );
+    })->get;
+        
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
-    if ( $@ ) {
+    if ( $err ) {
         kill 9, delete $self->{ pid } if $self->{ kill_pid };
-        die $@;
+        die $err;
     }
 
     my $s = $self;
@@ -723,7 +726,7 @@ JS
 
 Retrieves the URL C<URL>.
 
-It returns a <HTTP::Response> object for interface compatibility
+It returns a L<HTTP::Response> object for interface compatibility
 with L<WWW::Mechanize>.
 
 Note that Chrome does not support download of files.
@@ -820,6 +823,8 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
 
     # Kick off the navigation ourselves
     my $nav = $get_navigation_future->()->get;
+    # We have a race condition to find out whether Chrome navigates or not
+    $self->sleep(1); # XXX baad fix
 
     my @events;
     if( $navigated or $options{ navigates }) {
@@ -827,11 +832,12 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
         # Handle all the events, by turning them into a ->response again
         my $res = $self->httpMessageFromEvents( $self->frameId, \@events );
         $self->update_response( $res );
-        undef $scheduled;
     } else {
         $self->log('trace', "No navigation occurred, not collecting events");
-        undef $scheduled;
+        $does_navigation->cancel;
     };
+    $scheduled->cancel;
+    undef $scheduled;
 
     # Store our frame id so we know what events to listen for in the future!
     $self->{frameId} ||= $nav->{frameId};
@@ -3640,16 +3646,17 @@ L<https://github.com/Corion/www-mechanize-chrome>.
 
 =head1 SUPPORT
 
-The public support forum of this module is
-L<https://perlmonks.org/>.
+The public support forum of this module is L<https://perlmonks.org/>.
 
 =head1 TALKS
 
 I've given a German talk at GPW 2017, see L<http://act.yapc.eu/gpw2017/talk/7027>
 and L<https://corion.net/talks> for the slides.
 
+At The Perl Conference 2017 in Amsterdam, I also presented a talk, see
+L<http://act.perlconference.org/tpc-2017-amsterdam/talk/7022>.
 The slides for the English presentation at TPCiA 2017 are at
-L<L<https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html>.
+L<https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html>.
 
 =head1 BUG TRACKER
 
