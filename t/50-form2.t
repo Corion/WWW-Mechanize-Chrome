@@ -10,6 +10,7 @@ use Test::HTTP::LocalServer;
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
+#Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -19,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 13*@instances;
+    plan tests => 24*@instances;
 };
 
 sub new_mech {
@@ -34,7 +35,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 13, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 22, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form2.html');
@@ -47,13 +48,33 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 13, sub
 
     $mech->get_local('50-form2.html');
     $mech->form_id('snd2');
-    ok $mech->current_form, "We can find a form by its id";
-    is $mech->current_form->get_attribute('id'), 'snd2', "We can find a form by its id";
+    ok $mech->current_form, "After setting form_id, We have a current form";
+    $mech->sleep(1);
+    is $mech->current_form->get_attribute('id'), 'snd2', "We can ask the form with get_attribute(id)";
+    my $content = $mech->current_form->get_text;
+    ok !!$content, "We got content from asking the current form with get_text";
     $mech->field('id', 99);
+    pass "We survived setting the field 'id' to 99";
+    my $current_form = $mech->current_form;
+    ok !!$current_form, "We got a current form";
+    my $objectId = $current_form->objectId;
+    ok !!$objectId, "The form has an objectId '$objectId'";
+    like $objectId, qr{injectedScriptId}, "The objectId matches /injectedScriptId/";
+    $objectId = $current_form->objectId;
+    is $@, '', "No error when retrieving objectId twice";
+    ok !!$objectId, "The form still has an objectId '$objectId'";
+    like $objectId, qr{injectedScriptId}, "The objectId still matches /injectedScriptId/";
+    my $content2;
+    #eval {
+        $content2 = $current_form->get_text;
+    #};
+    is $@, '', "No error when retrieving form text";
+    ok !!$content2, "We got content from (again) asking the current form with get_text";
+    isnt $content2, $content, "we managed to change the form by setting the 'id' field";
     is $mech->xpath('.//*[@name="id"]',
-        node => $mech->current_form, 
+        node => $mech->current_form,
         single => 1)->get_attribute('value'), 99,
-        "We set values in the correct form";
+        "We have set field 'id' to '99' in the correct form";
 
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('r1','r2');

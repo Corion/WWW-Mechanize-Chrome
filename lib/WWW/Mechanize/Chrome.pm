@@ -259,6 +259,16 @@ sub _build_log( $self ) {
     Log::Log4perl->get_logger(__PACKAGE__);
 }
 
+# The generation of node ids
+sub _generation( $self, $val=undef ) {
+    @_ == 2 and $self->{_generation} = $_[1];
+    $self->{_generation}
+};
+
+sub new_generation( $self ) {
+    $self->_generation( $self->_generation()+1 );
+}
+
 sub log( $self, $level, $message, @args ) {
     my $logger = $self->{log};
     if( !@args ) {
@@ -360,6 +370,9 @@ sub new($class, %options) {
         $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
     $self->{exceptionThrownListener} =
         $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
+    $self->{nodeGenerationChange} =
+        $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
+    $self->new_generation;
 
     Future->wait_all(
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
@@ -2111,7 +2124,6 @@ sub _performSearch( $self, %args ) {
                     # Upgrade the attributes to a hash, ruining their order:
                     my $n = $nodes{ $_ };
                     $self->_fetchNode( 0+$_, $n );
-                    #WWW::Mechanize::Chrome::Node->new( $n )
                 } @foundNodes;
 
                 Future->wait_all( @nodes );
@@ -2125,6 +2137,8 @@ sub _performSearch( $self, %args ) {
 # If we have the attributes, don't fetch them separately
 sub _fetchNode( $self, $nodeId, $attributes = undef ) {
     $self->log('trace', sprintf "Resolving nodeId %s", $nodeId );
+    my $s = $self;
+    weaken $s;
     my $body = $self->driver->send_message( 'DOM.resolveNode', nodeId => 0+$nodeId );
     if( $attributes ) {
         $attributes = Future->done( $attributes )
@@ -2146,6 +2160,8 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
             },
             nodeName => $nodeName,
             driver => $self->driver,
+            #mech => $s,
+            _generation => $self->_generation,
         };
         Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
     });
@@ -3439,10 +3455,6 @@ has 'localName' => (
     is => 'ro',
 );
 
-has 'nodeId' => (
-    is => 'ro',
-);
-
 has 'backendNodeId' => (
     is => 'ro',
 );
@@ -3459,9 +3471,39 @@ has 'driver' => (
     is => 'ro',
 );
 
+# The generation from when our ->nodeId was valid
+has '_generation' => (
+    is => 'rw',
+);
+
+has 'mech' => (
+    is => 'ro',
+);
+
+sub _fetchNodeId($self) {
+    my $d = $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->get();
+    my $res = $d->{nodeId};
+    return $res;
+}
+
+sub nodeId($self) {
+    my $nid = $self->{nodeId};
+    #my $generation = $self->mech->_generation;
+    #warn "Mech generation is $generation";
+    #if( 1 or $self->_generation and $self->_generation != $generation ) {
+        # Re-resolve, and hopefully we still have our objectId
+        $nid = $self->_fetchNodeId();
+        #$self->_generation( $generation);
+    #};
+    $nid;
+}
+
 sub get_attribute( $self, $attribute ) {
     if( $attribute eq 'innerText' ) {
-        my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId )->get->{outerHTML};
+        #my $nid = $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->get();
+        #$nid = $nid->{nodeId};
+
+        my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId())->get()->{outerHTML};
 
         # Strip first and last tag in a not so elegant way
         $html =~ s!\A<[^>]+>!!;
