@@ -266,7 +266,7 @@ sub _generation( $self, $val=undef ) {
 };
 
 sub new_generation( $self ) {
-    $self->_generation( $self->_generation()+1 );
+    $self->_generation( ($self->_generation() ||0) +1 );
 }
 
 sub log( $self, $level, $message, @args ) {
@@ -2160,7 +2160,7 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
             },
             nodeName => $nodeName,
             driver => $self->driver,
-            #mech => $s,
+            mech => $s,
             _generation => $self->_generation,
         };
         Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
@@ -2369,10 +2369,8 @@ sub click {
     };
 
     # Get the node as an object so we can find its position and send the clicks:
-    #warn Dumper $buttons[0];
     $self->log('trace', sprintf "Resolving nodeId %d to object for clicking", $buttons[0]->nodeId );
     my $id = $buttons[0]->objectId;
-    #$buttons[0]->{objectId} = $id;
     #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
     #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
 
@@ -3439,6 +3437,8 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
+use Scalar::Util 'weaken';
+
 use vars qw($VERSION);
 $VERSION = '0.06';
 
@@ -3478,32 +3478,40 @@ has '_generation' => (
 
 has 'mech' => (
     is => 'ro',
+    weak_ref => 1,
 );
 
 sub _fetchNodeId($self) {
-    my $d = $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->get();
-    my $res = $d->{nodeId};
-    return $res;
+    $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
+        Future->done( $d->{nodeId} );
+    });
 }
 
-sub nodeId($self) {
+sub _nodeId($self) {
     my $nid = $self->{nodeId};
-    #my $generation = $self->mech->_generation;
-    #warn "Mech generation is $generation";
-    #if( 1 or $self->_generation and $self->_generation != $generation ) {
+    my $generation = $self->mech->_generation;
+    if( !$nid or ( $self->_generation and $self->_generation != $generation )) {
         # Re-resolve, and hopefully we still have our objectId
         $nid = $self->_fetchNodeId();
-        #$self->_generation( $generation);
-    #};
+        $self->_generation( $generation);
+    } else {
+        $nid = Future->done( $nid );
+    }
     $nid;
 }
 
-sub get_attribute( $self, $attribute ) {
-    if( $attribute eq 'innerText' ) {
-        #my $nid = $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->get();
-        #$nid = $nid->{nodeId};
+sub nodeId($self) {
+    $self->_nodeId()->get;
+}
 
-        my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId())->get()->{outerHTML};
+sub get_attribute( $self, $attribute ) {
+    my $nid = $self->_nodeId();
+    my $s = $self;
+    weaken $s;
+    if( $attribute eq 'innerText' ) {
+        my $html = $nid->then(sub( $nodeId ) {
+            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+        })->get()->{outerHTML};
 
         # Strip first and last tag in a not so elegant way
         $html =~ s!\A<[^>]+>!!;
@@ -3511,7 +3519,9 @@ sub get_attribute( $self, $attribute ) {
         return $html
 
     } elsif( $attribute eq 'innerHTML' ) {
-        my $html = $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$self->nodeId )->get->{outerHTML};
+        my $html = $nid->then(sub( $nodeId ) {
+            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+        })->get()->{outerHTML};
 
         # Strip first and last tag in a not so elegant way
         $html =~ s!\A<[^>]+>!!;
