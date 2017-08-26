@@ -18,7 +18,15 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my $instance_port = 9223;
 my @instances = t::helper::browser_instances();
-@instances = $instances[0]; # temp fix
+
+
+
+
+
+
+
+
+
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -47,4 +55,4 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub 
 });
 
 undef $server;
-wait; # gobble up our child process status
+#wait; # gobble up our child process status
