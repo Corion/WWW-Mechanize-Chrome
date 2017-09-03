@@ -841,7 +841,8 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     # Kick off the navigation ourselves
     my $nav = $get_navigation_future->()->get;
     # We have a race condition to find out whether Chrome navigates or not
-    $self->sleep(1); # XXX baad fix
+    # so we wait a bit to see if it will navigate in response to our click
+    $self->sleep(0.1); # XXX baad fix
 
     my @events;
     if( $navigated or $options{ navigates }) {

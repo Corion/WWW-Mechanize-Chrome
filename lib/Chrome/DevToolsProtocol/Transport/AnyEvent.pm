@@ -100,8 +100,12 @@ Returns a Future that will be resolved in the number of seconds given.
 
 sub sleep( $self, $seconds ) {
 
-    my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
-        AnyEvent->timer( after => $seconds, cb => $done_cb )
+    my $timer;
+    as_future_cb( sub( $done_cb, $fail_cb ) {
+        $timer = AnyEvent->timer( after => $seconds, cb => sub {
+            undef $timer;
+            goto &$done_cb
+        })
     });
 }
 
