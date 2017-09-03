@@ -16,7 +16,7 @@ use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
 use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 =head1 NAME
 
@@ -3441,7 +3441,7 @@ use feature 'signatures';
 use Scalar::Util 'weaken';
 
 use vars qw($VERSION);
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 has 'attributes' => (
     is => 'lazy',
