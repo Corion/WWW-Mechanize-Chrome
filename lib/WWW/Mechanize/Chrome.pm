@@ -91,8 +91,23 @@ Specify additional parameters to the Chrome executable.
 
 Interesting parameters might be
 
+    '--start-maximized',
     '--window-size=1280x1696'
     '--ignore-certificate-errors'
+    '--disable-background-networking',
+    '--disable-client-side-phishing-detection',
+    '--disable-component-update',
+    '--disable-hang-monitor',
+    '--disable-prompt-on-repost',
+    '--disable-sync',
+    '--disable-web-resources',
+
+    '--disable-default-apps',
+    '--disable-infobars',
+    '--disable-popup-blocking',
+    '--disable-default-apps',
+    '--disable-web-security',
+    '--allow-running-insecure-content',
 
 =item B<profile>
 
@@ -345,7 +360,7 @@ sub new($class, %options) {
         log => $options{ log },
     );
     # Synchronously connect here, just for easy API compatibility
-    
+
     my $err;
     $self->driver->connect(
         new_tab => !$options{ reuse },
@@ -354,7 +369,7 @@ sub new($class, %options) {
         $err = $_err;
         Future->done( $err );
     })->get;
-        
+
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $err ) {
