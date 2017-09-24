@@ -72,8 +72,23 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     Interesting parameters might be
 
+        '--start-maximized',
         '--window-size=1280x1696'
         '--ignore-certificate-errors'
+        '--disable-background-networking',
+        '--disable-client-side-phishing-detection',
+        '--disable-component-update',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-sync',
+        '--disable-web-resources',
+
+        '--disable-default-apps',
+        '--disable-infobars',
+        '--disable-popup-blocking',
+        '--disable-default-apps',
+        '--disable-web-security',
+        '--allow-running-insecure-content',
 
 - **profile**
 
