@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 24*@instances;
+    plan tests => 26*@instances;
 };
 
 sub new_mech {
@@ -91,6 +91,12 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 22, sub
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('comment');
     ok $mech->current_form, "We can find a form by its contained textarea fields";
+    $mech->field('comment', "Just another Phrome Hacker,");
+    pass "We survived setting the field 'comment' to some JAPH";
+    like $mech->xpath('.//textarea',
+        node   => $mech->current_form,
+        single => 1)->get_text, qr/Just another/,
+        "We set textarea and verified it";
 
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('quickcomment');
