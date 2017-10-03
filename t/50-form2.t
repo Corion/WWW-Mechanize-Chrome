@@ -1,6 +1,7 @@
 #!perl -w
 use strict;
 use Test::More;
+use Test::Deep;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
@@ -20,7 +21,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 24*@instances;
+    plan tests => 32*@instances;
 };
 
 sub new_mech {
@@ -35,7 +36,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 22, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 32, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form2.html');
@@ -91,8 +92,32 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 22, sub
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('comment');
     ok $mech->current_form, "We can find a form by its contained textarea fields";
+    $mech->field('comment', "Just another Phrome Hacker,");
+    pass "We survived setting the field 'comment' to some JAPH";
+    like $mech->xpath('.//textarea',
+        node   => $mech->current_form,
+        single => 1)->get_text, qr/Just another/,
+        "We set textarea and verified it";
 
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('quickcomment');
     ok $mech->current_form, "We can find a form by its contained select fields";
+    $mech->field('quickcomment', 2);
+    pass "We survived setting the field 'quickcomment' to 2";
+    my @result = $mech->field('quickcomment');
+    cmp_bag \@result, [2], "->field returned bag 2";
+    # diag explain \@result;
+
+    $mech->get_local('50-form2.html');
+    $mech->form_with_fields('multic');
+    ok $mech->current_form, "We can find a form by its contained multi-select fields";
+    @result = $mech->field('multic');
+    cmp_bag \@result, [2,2,3], "->field returned bag 2,2,3";
+    # diag explain \@result;
+
+    $mech->field('multic', [1,2]);
+    pass "We survived setting the field 'multic' to 1,2";
+    @result = $mech->field('multic');
+    cmp_bag \@result, [1,1,2,2], "->field returned bag 1,1,2,2";
+    # diag explain \@result;
 });
