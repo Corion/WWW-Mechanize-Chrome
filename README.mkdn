@@ -244,7 +244,7 @@ got the right nodes.
 
 Retrieves the URL `URL`.
 
-It returns a <HTTP::Response> object for interface compatibility
+It returns a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object for interface compatibility
 with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
 
 Note that Chrome does not support download of files.
@@ -1167,16 +1167,17 @@ The public repository of this module is
 
 # SUPPORT
 
-The public support forum of this module is
-[https://perlmonks.org/](https://perlmonks.org/).
+The public support forum of this module is [https://perlmonks.org/](https://perlmonks.org/).
 
 # TALKS
 
 I've given a German talk at GPW 2017, see [http://act.yapc.eu/gpw2017/talk/7027](http://act.yapc.eu/gpw2017/talk/7027)
 and [https://corion.net/talks](https://corion.net/talks) for the slides.
 
+At The Perl Conference 2017 in Amsterdam, I also presented a talk, see
+[http://act.perlconference.org/tpc-2017-amsterdam/talk/7022](http://act.perlconference.org/tpc-2017-amsterdam/talk/7022).
 The slides for the English presentation at TPCiA 2017 are at
-[[https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html](https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html).](https://metacpan.org/pod/https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html.)
+[https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html](https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html).
 
 # BUG TRACKER
 
@@ -1195,11 +1196,3 @@ Copyright 2010-2017 by Max Maischein `corion@cpan.org`.
 # LICENSE
 
 This module is released under the same terms as Perl itself.
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 3653:
-
-    Unterminated L<...> sequence

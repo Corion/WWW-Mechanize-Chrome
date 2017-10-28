@@ -9,7 +9,7 @@ use Mojo::UserAgent;
 use Future::Mojo;
 
 use vars qw<$VERSION $magic>;
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -45,10 +45,10 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $client->websocket( $endpoint, sub( $ua, $tx ) {
             $self->{ua} = $ua;
             # WTF? Sometimes we get an Mojolicious::Transaction::HTTP here?!
-            if( $tx->isa('Mojo::Transaction::WebSocket')) {
+            if( $tx->is_websocket) {
                 $res->done( $tx );
             } else {
-                $res->fail( "Couldn't connect to endpoint '$endpoint'" );
+                $res->fail( "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message});
             }
         });
         $res
@@ -95,7 +95,8 @@ Returns a Future that will be resolved in the number of seconds given.
 
 sub sleep( $self, $seconds ) {
     my $done = $self->future;
-    Mojo::IOLoop->timer( $seconds => sub {
+    my $t; $t = Mojo::IOLoop->timer( $seconds => sub {
+        undef $t;
         $done->done(1);
     });
     $done

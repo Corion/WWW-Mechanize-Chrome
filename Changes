@@ -1,3 +1,17 @@
+0.07 20170902
+    ! Fix timers firing or not
+    ! Implement a workaround for Chrome (not) navigating
+      This workaround means sleeping 0.1s to see whether the notification comes
+      in from Chrome after the "navigation complete" message has arrived.
+      Ideally we will find a way to make Chrome tell us when it will perform
+      HTTP transactions instead of having to wait.
+    . Tested against Chromium 59.0.3071.115 / Win64
+    . Tested against Chromium 60.0.3110.0 / Win64
+    . Tested against Chromium 61.0.3141.0 / Win64
+    . Tested against Chromium 62.0.3189.0 / Win64
+    . Tested against Chromium 63.0.3205.0 / Win64
+    . Tested against Chromium 58.0.3029.110 Built on Ubuntu, thanks Travis CI
+
 0.06 20170806
     . Correct the name of the examples module
     . No code changes, no need to upgrade
