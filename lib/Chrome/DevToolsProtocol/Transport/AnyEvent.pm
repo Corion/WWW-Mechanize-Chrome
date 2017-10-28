@@ -63,7 +63,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         undef $self;
 
         # Kick off the continous polling
-        $connection->on( each_message => sub( $connection,$message) {
+        $connection->on( each_message => sub( $connection,$message, @rest) {
+            # I haven't investigated what @rest contains...
             $handler->on_response( $connection, $message->body )
         });
         $connection->on( parse_error => sub( $connection, $error) {
