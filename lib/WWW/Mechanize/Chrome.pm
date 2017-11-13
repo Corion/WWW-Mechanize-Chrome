@@ -91,8 +91,23 @@ Specify additional parameters to the Chrome executable.
 
 Interesting parameters might be
 
+    '--start-maximized',
     '--window-size=1280x1696'
     '--ignore-certificate-errors'
+    '--disable-background-networking',
+    '--disable-client-side-phishing-detection',
+    '--disable-component-update',
+    '--disable-hang-monitor',
+    '--disable-prompt-on-repost',
+    '--disable-sync',
+    '--disable-web-resources',
+
+    '--disable-default-apps',
+    '--disable-infobars',
+    '--disable-popup-blocking',
+    '--disable-default-apps',
+    '--disable-web-security',
+    '--allow-running-insecure-content',
 
 =item B<profile>
 
@@ -167,6 +182,10 @@ sub build_command_line {
 
     if ($options->{profile}) {
         push @{ $options->{ launch_arg }}, "--profile-directory=$options->{ profile }";
+    };
+
+    if( ! exists $options->{enable_first_run}) {
+        push @{ $options->{ launch_arg }}, "--no-first-run";
     };
 
     push @{ $options->{ launch_arg }}, "--headless"
@@ -341,7 +360,7 @@ sub new($class, %options) {
         log => $options{ log },
     );
     # Synchronously connect here, just for easy API compatibility
-    
+
     my $err;
     $self->driver->connect(
         new_tab => !$options{ reuse },
@@ -350,7 +369,7 @@ sub new($class, %options) {
         $err = $_err;
         Future->done( $err );
     })->get;
-        
+
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $err ) {
@@ -2870,10 +2889,33 @@ sub get_set_value {
                 $self->driver->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
 
             } elsif( 'selected' eq $method ) {
-                # needs more logic to find the correct child
-                $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { if( newValue ) { this.selected = newValue } else { delete this.selected } }', arguments => [ $value ])->get;
+                # ignoring undef; but [] would reset to no option
+                if (defined $value) {
+                    $value = [ $value ] unless ref $value;
+                    $self->driver->send_message(
+                        'Runtime.callFunctionOn',
+                        objectId => $id,
+                        functionDeclaration => q|
+function(newValue) {
+  var i, j;
+  if (this.multiple == true) {
+    for (i=0; i<this.options.length; i++) {
+      this.options[i].selected = false
+    }
+  }
+  for (j=0; j<newValue.length; j++) {
+    for (i=0; i<this.options.length; i++) {
+      if (this.options[i].value == newValue[j]) {
+        this.options[i].selected = true
+      }
+    }
+  }
+}|,
+                        arguments => [{ value => $value }],
+                    )->get;
+                }
             } elsif( 'content' eq $method ) {
-                $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { this.innerHTML = newValue }', arguments => [ $value ])->get;
+                $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { this.innerHTML = newValue }', arguments => [{ value => $value }])->get;
             } else {
                 die "Don't know how to set the value for node '$tag', sorry";
             };
@@ -2887,8 +2929,25 @@ sub get_set_value {
         # We could save some work here for the simple case of single-select
         # dropdowns by not enumerating all options
         if ('SELECT' eq uc $tag) {
-            my @options = $self->xpath('.//option', node => $fields[0] );
-            my @values = map { $_->{value} } grep { $_->{selected} } @options;
+            my $id = $obj->{objectId};
+            my $arr = $self->driver->send_message(
+                    'Runtime.callFunctionOn',
+                    objectId => $id,
+                    functionDeclaration => '
+function() {
+  var i;
+  var arr = [];
+  for (i=0; i<this.options.length; i++) {
+    if (this.options[i].selected == true) {
+      arr.push(this.options[i].value);
+    }
+  }
+  return arr;
+}',
+                    arguments => [],
+                    returnByValue => JSON::true)->get->{result};
+
+            my @values = @{$arr->{value}};
             if (wantarray) {
                 return @values
             } else {
