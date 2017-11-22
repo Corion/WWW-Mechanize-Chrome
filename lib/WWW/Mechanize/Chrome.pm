@@ -1009,6 +1009,14 @@ sub httpResponseFromChromeNetworkFail( $self, $res ) {
     );
 };
 
+sub httpResponseFromChromeUrlUnreachable( $self, $res ) {
+    my $response = HTTP::Response->new(
+        599, # No error code exists for files
+        "Unreachable URL: " . $res->{params}->{frame}->{unreachableUrl},
+        HTTP::Headers->new( {}),
+    );
+};
+
 sub httpMessageFromEvents( $self, $frameId, $events ) {
     my ($requestId,$loaderId);
     my @events = grep {    exists $_->{params}->{frameId} && $_->{params}->{frameId} eq $frameId
@@ -1047,6 +1055,11 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
 
         } elsif ( $res = $events{ 'Network.responseReceived' }) {
             $response = $self->httpResponseFromChromeResponse( $res );
+            $response->request( $request );
+
+        } elsif ( $res = $events{ 'Page.frameNavigated' }
+                  and $res->{params}->{frame}->{unreachableUrl}) {
+            $response = $self->httpResponseFromChromeUrlUnreachable( $res );
             $response->request( $request );
 
         } else {
