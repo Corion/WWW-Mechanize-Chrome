@@ -3568,7 +3568,7 @@ sub _nodeId($self) {
     if( !$nid or ( $self->_generation and $self->_generation != $generation )) {
         # Re-resolve, and hopefully we still have our objectId
         $nid = $self->_fetchNodeId();
-        $self->_generation( $generation);
+        $self->_generation( $generation );
     } else {
         $nid = Future->done( $nid );
     }
@@ -3580,10 +3580,10 @@ sub nodeId($self) {
 }
 
 sub get_attribute( $self, $attribute ) {
-    my $nid = $self->_nodeId();
     my $s = $self;
     weaken $s;
     if( $attribute eq 'innerText' ) {
+        my $nid = $self->_nodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         })->get()->{outerHTML};
@@ -3594,6 +3594,7 @@ sub get_attribute( $self, $attribute ) {
         return $html
 
     } elsif( $attribute eq 'innerHTML' ) {
+        my $nid = $self->_nodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         })->get()->{outerHTML};
@@ -3603,7 +3604,6 @@ sub get_attribute( $self, $attribute ) {
         $html =~ s!<[^>]+>\z!!;
         return $html
     } else {
-
         return $self->attributes->{ $attribute }
     }
 }
