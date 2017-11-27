@@ -49,8 +49,6 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $client = Net::Async::WebSocket::Client->new(
             # Kick off the continous polling
             on_frame => sub {
-                use Data::Dumper;
-                warn Dumper \@_;
                 my( $connection, $message )=@_;
                 $handler->on_response( $connection, $message )
             },
@@ -58,14 +56,14 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $self->loop->add( $client );
         $self->{connection} ||= $client;
 
-        $logger->('debug',"Connecting to $endpoint");
         die "Got an undefined endpoint" unless defined $endpoint;
+        $logger->('debug',"Connecting to $endpoint");
         $client->connect( url => $endpoint, on_connected => sub {
-            $logger->('debug',"Connected to $endpoint");
+            $logger->('info',"Connected to $endpoint");
         } );
     })->catch(sub{
-        use Data::Dumper;
-        warn Dumper \@_;
+        require Data::Dumper;
+        warn Data::Dumper::Dumper \@_;
     });
 }
 

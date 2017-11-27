@@ -51,3 +51,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 3, sub 
     $mech->forward;
     is $mech->uri, $last, 'We went forward';
 });
+
+undef $server;
+
+done_testing;
