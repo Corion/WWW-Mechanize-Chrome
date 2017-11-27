@@ -399,6 +399,7 @@ sub send_message( $self, $method, %params ) {
     # miss a reply from Chrome to a request
     my $f;
     $f = $self->_send_packet( $response, $method, %params );
+    $f->on_ready( sub { undef $f });
     $response
 }
 
