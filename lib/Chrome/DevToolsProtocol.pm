@@ -361,7 +361,7 @@ sub _send_packet( $self, $response, $method, %params ) {
     } catch {
         $self->log('error', $_ );
         $result = Future->fail( $_ );
-    }
+    };
     return $result
 }
 
