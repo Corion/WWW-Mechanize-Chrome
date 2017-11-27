@@ -78,7 +78,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 }
 
 sub send( $self, $message ) {
-    $self->connection->send( $message )
+    $self->connection->send( $message );
+    $self->future->done(1);
 }
 
 sub close( $self ) {
