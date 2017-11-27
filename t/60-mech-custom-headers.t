@@ -104,7 +104,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     };
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
-    unlike $headers, qr!^X-WWW-Mechanize-PhantomJS: !m, "We can delete completely custom headers";
+    unlike $headers, qr!^X-WWW-Mechanize-Chrome: !m, "We can delete completely custom headers";
     like $headers, qr!^X-Another-Header: !m, "We can add other headers and still keep the current header settings";
     # diag $mech->content;
 
