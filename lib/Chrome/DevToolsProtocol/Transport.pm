@@ -15,10 +15,10 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
 
 @loops = (
     ['Mojo/IOLoop.pm' => 'Chrome::DevToolsProtocol::Transport::Mojo' ],
+    ['IO/Async.pm'    => 'Chrome::DevToolsProtocol::Transport::NetAsync'],
     ['AnyEvent.pm'    => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     ['AE.pm'          => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
-    # POE support would be nice
-    # IO::Async support would be nice, using Net::Async::HTTP
+    # native POE support would be nice
     
     # The fallback, will always catch due to loading strict (for now)
     ['strict.pm'      => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
@@ -65,5 +65,31 @@ sub best_implementation( $class, @candidates ) {
         };
     };
 };
+
+=head1 SUPPORTED BACKENDS
+
+The module will try to guess the best backend to use. The currently supported
+backends are
+
+=over 4
+
+=item *
+
+L<IO::Async>
+
+=item *
+
+L<AnyEvent>
+
+=item *
+
+L<Mojolicious>
+
+=back
+
+If you want to substitute another backend, pass its class name instead
+of this module which only acts as a factory.
+
+=cut
 
 1;
