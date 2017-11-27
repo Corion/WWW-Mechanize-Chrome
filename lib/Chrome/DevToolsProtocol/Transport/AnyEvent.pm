@@ -11,7 +11,7 @@ use AnyEvent;
 use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
-use vars qw<$VERSION $magic @CARP_NOT>;
+use vars qw<$VERSION @CARP_NOT>;
 $VERSION = '0.07';
 
 =head1 SYNOPSIS

@@ -8,7 +8,7 @@ use Scalar::Util 'weaken';
 use Mojo::UserAgent;
 use Future::Mojo;
 
-use vars qw<$VERSION $magic>;
+use vars qw<$VERSION>;
 $VERSION = '0.07';
 
 =head1 SYNOPSIS
