@@ -192,7 +192,9 @@ sub connect( $self, %args ) {
         croak @args;
     });
 
-    my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport';
+    my $transport = delete $args{ transport }
+                    || $self->transport
+                    || 'Chrome::DevToolsProtocol::Transport';
     if( ! ref $transport ) { # it's a classname
         (my $transport_module = $transport) =~ s!::!/!g;
         $transport_module .= '.pm';
