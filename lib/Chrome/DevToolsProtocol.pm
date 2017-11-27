@@ -211,7 +211,7 @@ sub connect( $self, %args ) {
 
 sub close( $self ) {
     if( my $t = $self->transport) {
-        $t->close();
+        $t->close() if ref $t;
     };
 };
 
