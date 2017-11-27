@@ -68,7 +68,13 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     is $mech->uri, $site, "Navigated to $site";
     # Now check for the changes
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
-    like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
+    {
+        my $version = $mech->chrome_version;
+
+        local $TODO = "Chrome v64+ doesn't send the Referer header..."
+            if $version =~ /\b(\d+)\b/ and $1 >= 64;
+        like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
+    }
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
     like $headers, qr!^X-WWW-Mechanize-Chrome: \Q$WWW::Mechanize::Chrome::VERSION\E$!m, "We can add completely custom headers";
     like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
@@ -90,7 +96,13 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
 
     # Now check for the changes
     $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
-    like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
+    {
+        my $version = $mech->chrome_version;
+
+        local $TODO = "Chrome v64+ doesn't send the Referer header..."
+            if $version =~ /\b(\d+)\b/ and $1 >= 64;
+        like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
+    };
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
     unlike $headers, qr!^X-WWW-Mechanize-PhantomJS: !m, "We can delete completely custom headers";
     like $headers, qr!^X-Another-Header: !m, "We can add other headers and still keep the current header settings";
