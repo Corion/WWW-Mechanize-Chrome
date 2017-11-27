@@ -48,6 +48,7 @@ my %module = (
         'Filter::signatures' => '0.09',
         'Carp'               => 0,
         'Future'             => 0,
+        'Try::Tiny'          => 0,
         'AnyEvent'           => 0,
         'AnyEvent::Future'   => 0,
         'AnyEvent::WebSocket::Client' => 0,

@@ -11,6 +11,7 @@ use JSON;
 use Data::Dumper;
 use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
+use Try::Tiny;
 
 use vars qw<$VERSION>;
 $VERSION = '0.07';
@@ -354,13 +355,14 @@ sub _send_packet( $self, $response, $method, %params ) {
     };
 
     $self->log( 'trace', "Sent message", $payload );
-    my $result = eval {
-        $self->transport->send( $payload );
-    };
-    if( my $err = $@ ) {
-        $self->log('error', $@ );
-    };
-    $result
+    my $result;
+    try {
+        $result = $self->transport->send( $payload );
+    } catch {
+        $self->log('error', $_ );
+        $result = Future->fail( $_ );
+    }
+    return $result
 }
 
 =head2 C<< $chrome->send_packet >>
