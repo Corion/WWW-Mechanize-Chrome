@@ -11,7 +11,7 @@ use AnyEvent;
 use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
-use vars qw<$VERSION $magic @CARP_NOT>;
+use vars qw<$VERSION @CARP_NOT>;
 $VERSION = '0.07';
 
 =head1 SYNOPSIS
@@ -63,7 +63,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         undef $self;
 
         # Kick off the continous polling
-        $connection->on( each_message => sub( $connection,$message) {
+        $connection->on( each_message => sub( $connection,$message, @rest) {
+            # I haven't investigated what @rest contains...
             $handler->on_response( $connection, $message->body )
         });
         $connection->on( parse_error => sub( $connection, $error) {
@@ -77,7 +78,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 }
 
 sub send( $self, $message ) {
-    $self->connection->send( $message )
+    $self->connection->send( $message );
+    $self->future->done(1);
 }
 
 sub close( $self ) {

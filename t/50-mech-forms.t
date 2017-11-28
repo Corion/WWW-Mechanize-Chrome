@@ -19,7 +19,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 14*@instances;
+    plan tests => 15*@instances;
 };
 
 sub new_mech {
@@ -58,13 +58,14 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 14, sub
     $f = $mech->forms;
     is ref $f, 'ARRAY', "We got an arrayref of forms";
 
-    is 0+@$f, 5, "We found five forms";
+    is 0+@$f, 6, "We found six forms";
 
     is $f->[0]->get_attribute('id'), 'snd0', "We found the first form";
     is $f->[1]->get_attribute('id'), 'snd', "We found the second form";
     is $f->[2]->get_attribute('id'), 'snd2', "We found the third form";
     is $f->[3]->get_attribute('id'), 'snd3', "We found the fourth form";
     is $f->[4]->get_attribute('id'), 'snd4', "We found the fifth form";
+    is $f->[5]->get_attribute('id'), 'snd5', "We found the sixth form";
 
     $mech->get_local('51-empty-page.html');
     @f = $mech->forms;

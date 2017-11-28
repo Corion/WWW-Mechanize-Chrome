@@ -11,6 +11,7 @@ use JSON;
 use Data::Dumper;
 use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
+use Try::Tiny;
 
 use vars qw<$VERSION>;
 $VERSION = '0.07';
@@ -192,7 +193,9 @@ sub connect( $self, %args ) {
         croak @args;
     });
 
-    my $transport = delete $args{ transport } || 'Chrome::DevToolsProtocol::Transport';
+    my $transport = delete $args{ transport }
+                    || $self->transport
+                    || 'Chrome::DevToolsProtocol::Transport';
     if( ! ref $transport ) { # it's a classname
         (my $transport_module = $transport) =~ s!::!/!g;
         $transport_module .= '.pm';
@@ -209,7 +212,7 @@ sub connect( $self, %args ) {
 
 sub close( $self ) {
     if( my $t = $self->transport) {
-        $t->close();
+        $t->close() if ref $t;
     };
 };
 
@@ -352,13 +355,14 @@ sub _send_packet( $self, $response, $method, %params ) {
     };
 
     $self->log( 'trace', "Sent message", $payload );
-    my $result = eval {
-        $self->transport->send( $payload );
+    my $result;
+    try {
+        $result = $self->transport->send( $payload );
+    } catch {
+        $self->log('error', $_ );
+        $result = Future->fail( $_ );
     };
-    if( my $err = $@ ) {
-        $self->log('error', $@ );
-    };
-    $result
+    return $result
 }
 
 =head2 C<< $chrome->send_packet >>
@@ -390,7 +394,12 @@ has sent a response to this query.
 
 sub send_message( $self, $method, %params ) {
     my $response = $self->future;
-    $self->_send_packet( $response, $method, %params );
+    # We add our response listener before we've even sent our request to
+    # Chrome. This ensures that no amount of buffering etc. will make us
+    # miss a reply from Chrome to a request
+    my $f;
+    $f = $self->_send_packet( $response, $method, %params );
+    $f->on_ready( sub { undef $f });
     $response
 }
 

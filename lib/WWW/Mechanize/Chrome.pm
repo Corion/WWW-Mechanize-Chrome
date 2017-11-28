@@ -1009,6 +1009,14 @@ sub httpResponseFromChromeNetworkFail( $self, $res ) {
     );
 };
 
+sub httpResponseFromChromeUrlUnreachable( $self, $res ) {
+    my $response = HTTP::Response->new(
+        599, # No error code exists for files
+        "Unreachable URL: " . $res->{params}->{frame}->{unreachableUrl},
+        HTTP::Headers->new( {}),
+    );
+};
+
 sub httpMessageFromEvents( $self, $frameId, $events ) {
     my ($requestId,$loaderId);
     my @events = grep {    exists $_->{params}->{frameId} && $_->{params}->{frameId} eq $frameId
@@ -1049,7 +1057,14 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
             $response = $self->httpResponseFromChromeResponse( $res );
             $response->request( $request );
 
+        } elsif ( $res = $events{ 'Page.frameNavigated' }
+                  and $res->{params}->{frame}->{unreachableUrl}) {
+            $response = $self->httpResponseFromChromeUrlUnreachable( $res );
+            $response->request( $request );
+
         } else {
+            require Data::Dumper;
+            warn Data::Dumper::Dumper( \%events );
             die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
         };
     } else {
@@ -3553,7 +3568,7 @@ sub _nodeId($self) {
     if( !$nid or ( $self->_generation and $self->_generation != $generation )) {
         # Re-resolve, and hopefully we still have our objectId
         $nid = $self->_fetchNodeId();
-        $self->_generation( $generation);
+        $self->_generation( $generation );
     } else {
         $nid = Future->done( $nid );
     }
@@ -3565,10 +3580,10 @@ sub nodeId($self) {
 }
 
 sub get_attribute( $self, $attribute ) {
-    my $nid = $self->_nodeId();
     my $s = $self;
     weaken $s;
     if( $attribute eq 'innerText' ) {
+        my $nid = $self->_nodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         })->get()->{outerHTML};
@@ -3579,6 +3594,7 @@ sub get_attribute( $self, $attribute ) {
         return $html
 
     } elsif( $attribute eq 'innerHTML' ) {
+        my $nid = $self->_nodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         })->get()->{outerHTML};
@@ -3588,7 +3604,6 @@ sub get_attribute( $self, $attribute ) {
         $html =~ s!<[^>]+>\z!!;
         return $html
     } else {
-
         return $self->attributes->{ $attribute }
     }
 }

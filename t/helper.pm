@@ -78,11 +78,11 @@ sub runtests {
                     launch_exe => $browser_instance
                 });
             };
-            diag sprintf "Chrome version '%s'", $version;
+            diag sprintf "Failed on Chrome version '%s'", $version;
             return
         };
 
-        diag sprintf "Chrome version '%s'",
+        diag sprintf "Using Chrome version '%s'",
             $mech->chrome_version;
 
         # Run the user-supplied tests, making sure we don't keep a
