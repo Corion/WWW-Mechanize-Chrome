@@ -16,6 +16,8 @@ use Try::Tiny;
 use vars qw<$VERSION>;
 $VERSION = '0.07';
 
+our @CARP_NOT;
+
 sub _build_log( $self ) {
     require Log::Log4perl;
     Log::Log4perl->get_logger(__PACKAGE__);
@@ -142,8 +144,10 @@ sub connect( $self, %args ) {
 
                 if( ! $tab ) {
                     croak "Couldn't find a tab matching /$args{ tab }/";
+                } elsif( ! $tab->{webSocketDebuggerUrl} ) {
+                    local @CARP_NOT = ('Future',@CARP_NOT);
+                    croak "Found the tab but it didn't have a webSocketDebuggerUrl";
                 };
-
                 $self->{tab} = $tab;
                 $self->log('debug', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
