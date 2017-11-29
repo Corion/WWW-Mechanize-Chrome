@@ -43,7 +43,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         die "Got an undefined endpoint" unless defined $endpoint;
         my $res = $self->future;
         #$client->on( 'start' => sub { $logger->('trace', "Starting transaction", @_ )});
-        $client->websocket( $endpoint, sub( $ua, $tx ) {
+        $client->websocket( $endpoint, { 'Sec-WebSocket-Extensions' => 'permessage-deflate' }, sub( $ua, $tx ) {
             # On error we get an Mojolicious::Transaction::HTTP here
             if( $tx->is_websocket) {
                 $logger->('trace',"Connected to $endpoint");
@@ -51,6 +51,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             } else {
                 my $msg = "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message};
                 $logger->('trace', $msg);
+                $tx->finish();
                 $res->fail( $msg );
             }
         });
