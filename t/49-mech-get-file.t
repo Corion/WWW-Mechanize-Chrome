@@ -76,6 +76,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 14, sub
     is $mech->content_type, 'text/html', "HTML content type is read from http-equiv meta tag";
 
     $mech->get_local('file-does-not-exist.html');
-    ok !$mech->success, 'We fail on non-existing file'
-        or diag $mech->content;
+    ok !$mech->success, 'We fail on non-existing file';
+        #or diag $mech->content;
 });
