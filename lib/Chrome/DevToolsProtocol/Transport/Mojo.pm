@@ -35,21 +35,23 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
     weaken $handler;
 
-    my $client;
     $got_endpoint->then( sub( $endpoint ) {
-        $client = Mojo::UserAgent->new;
+        $self->{ua} ||= Mojo::UserAgent->new();
+        my $client = $self->{ua};
 
         $logger->('debug',"Connecting to $endpoint");
         die "Got an undefined endpoint" unless defined $endpoint;
         my $res = $self->future;
+        #$client->on( 'start' => sub { $logger->('trace', "Starting transaction", @_ )});
         $client->websocket( $endpoint, sub( $ua, $tx ) {
-            $logger->('trace',"Connected to $endpoint");
-            $self->{ua} = $ua;
             # On error we get an Mojolicious::Transaction::HTTP here
             if( $tx->is_websocket) {
+                $logger->('trace',"Connected to $endpoint");
                 $res->done( $tx );
             } else {
-                $res->fail( "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message});
+                my $msg = "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message};
+                $logger->('trace', $msg);
+                $res->fail( $msg );
             }
         });
         $res
