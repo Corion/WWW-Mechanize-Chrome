@@ -1142,8 +1142,8 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
 
     } else {
         require Data::Dumper;
-        warn Data::Dumper::Dumper( \%events );
-        die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
+        warn Data::Dumper::Dumper( $events );
+        die "Didn't see a 'Network.responseReceived' event for frameId $frameId, requestId $requestId, cannot synthesize response";
     };
     $response
 }
