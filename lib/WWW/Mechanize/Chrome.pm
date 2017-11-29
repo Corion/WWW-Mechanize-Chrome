@@ -1062,19 +1062,42 @@ sub httpResponseFromChromeUrlUnreachable( $self, $res ) {
 
 sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
     my ($requestId,$loaderId);
-    my @events = grep {    exists $_->{params}->{frameId} && $_->{params}->{frameId} eq $frameId
-                        or exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id} eq $frameId
-                        or exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id} eq $frameId
-                        or $requestId && exists $_->{params}->{requestId} && $_->{params}->{requestId} eq $requestId
-                 }
-                 map {
-                     # Extract the loaderId and requestId
-                     if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
-                         $requestId ||= $_->{params}->{requestId};
-                         $loaderId ||= $_->{params}->{loaderId};
-                     };
-                     $_
-                 } @$events;
+
+    if( $url ) {
+        # Find the request id of the request
+        for( @$events ) {
+            if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
+                if( $url and $_->{params}->{request}->{url} eq $url ) {
+                    $requestId = $_->{params}->{requestId};
+                };
+            }
+        };
+    };
+
+    my @events = grep {
+        my $this_frame =    (exists $_->{params}->{frameId} && $_->{params}->{frameId})
+                         || (exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id});
+        if(     exists $_->{params}->{requestId}
+            and $_->{params}->{requestId} eq $requestId
+        ) {
+            "Matches our request id"
+        } elsif( ! exists $_->{params}->{requestId}
+                 and $this_frame eq $frameId
+        ) {
+            "Matches our frame id and has no associated request"
+        } else {
+            ""
+        }
+
+    } map {
+        # Extract the loaderId and requestId, if we haven't found it yet
+        if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
+            $requestId ||= $_->{params}->{requestId};
+            $loaderId ||= $_->{params}->{loaderId};
+        };
+        $_
+    } @$events;
+
     my %events;
     for (@events) {
         #warn join " - ", $_->{method}, $_->{params}->{loaderId}, $_->{params}->{frameId};
@@ -1088,29 +1111,29 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
     my $about_blank_loaded =    $events{ "Page.frameNavigated" }
                              && $events{ "Page.frameNavigated" }->{params}->{frame}->{url} eq 'about:blank';
     if( $about_blank_loaded ) {
-    warn "About:blank";
+    #warn "About:blank";
         $response = HTTP::Response->new(
             200,
             'OK',
         );
     } elsif ( my $res = $events{ 'Network.responseReceived' }) {
-    warn "Network.responseReceived";
+    #warn "Network.responseReceived";
             $response = $self->httpResponseFromChromeResponse( $res );
             $response->request( $request );
 
     } elsif( $res = $events{ 'Network.loadingFailed' }) {
-    warn "Network.loadingFailed";
+    #warn "Network.loadingFailed";
         $response = $self->httpResponseFromChromeNetworkFail( $res );
         $response->request( $request );
 
     } elsif ( $res = $events{ 'Page.frameNavigated' }
               and $res->{params}->{frame}->{unreachableUrl}) {
-    warn "Network.frameNavigated";
+    #warn "Network.frameNavigated";
         $response = $self->httpResponseFromChromeUrlUnreachable( $res );
         $response->request( $request );
 
     } elsif( $res = $events{ "MechanizeChrome.download" } ) {
-    warn "MechanizeChrome.download";
+    #warn "MechanizeChrome.download";
         $response = HTTP::Response->new(
             $res->{params}->{response}->{status} || 200, # is 0 for files?!
             $res->{params}->{response}->{statusText},
