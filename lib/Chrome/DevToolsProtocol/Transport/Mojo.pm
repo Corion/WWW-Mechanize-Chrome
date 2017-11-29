@@ -45,7 +45,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $client->websocket( $endpoint, sub( $ua, $tx ) {
             $logger->('trace',"Connected to $endpoint");
             $self->{ua} = $ua;
-            # WTF? Sometimes we get an Mojolicious::Transaction::HTTP here?!
+            # On error we get an Mojolicious::Transaction::HTTP here
             if( $tx->is_websocket) {
                 $res->done( $tx );
             } else {
