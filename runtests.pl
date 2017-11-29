@@ -76,12 +76,12 @@ NestedLoops( [\@instances, \@backends], sub {
     if( @tests ) {
         for my $test (@tests) {
             system(qq{perl -Ilib -w "$test"}) == 0
-                or ($continue and warn "Error while testing $vis_instance: $!/$?")
+                or ($continue and warn "Error while testing $vis_instance + $backend: $!/$?")
                 or die "Error while testing $vis_instance: $!/$?";
         };
     } else { # run all tests
         system("$Config{ make } test") == 0
-            or ($continue and warn "Error while testing $vis_instance: $!/$?")
+            or ($continue and warn "Error while testing $vis_instance + $backend: $!/$?")
             or die "Error while testing $vis_instance";
     };
     
