@@ -34,7 +34,7 @@ sub new_mech {
         autodie => 1,
         download_directory => $d,
         @_,
-        #headless => 0,
+        headless => 0,
     );
 };
 
@@ -53,9 +53,12 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
         if( $version =~ /\b(\d+)\b/ and $1 < 62 ) {
             skip "Chrome before v62 doesn't know about downloads...", 4;
 
+        } elsif( $version =~ /\b(\d+)\b/ and $1 >= 64 ) {
+            skip "Chrome after v63 doesn't tell us about downloads...", 4;
+
         } else {
 
-            #$mech->get($server->url);
+            $mech->get($server->url);
 
             my ($site,$estatus) = ($server->download('mytest.txt'),200);
             my $res = $mech->get($site);

@@ -848,7 +848,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     my $scheduled = $self->driver->one_shot(
         'Page.frameScheduledNavigation',
         'Page.frameStartedLoading',
-        'Page.frameResized',              # download
+        #'Page.frameResized',              # download
         'Inspector.detached',             # Browser (window) was closed by user
     );
     my $navigated;
@@ -860,8 +860,9 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
         ->then(sub( $ev ) {
             if(     $ev->{method} eq 'Page.frameResized'
                 and 0+keys %{ $ev->{params} } == 0 ) {
-                # This is a weird hack, since Chrome starting with v64 doesn't
-                # indicate at all to the API that a download started :-(
+                # This is dead code that is never reached (see above)
+                # Chrome v64 doesn't indicate at all to the API that a
+                # download started :-(
                 # Also, we won't know that it finished, or what name the
                 # file got
                 $s->log('trace', "Download started, returning synthesized event");
@@ -1082,29 +1083,32 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
     my $request;
     my $response;
 
-    my $about_blank_loaded =     $events{ "Page.frameNavigated" }
-                             and $events{ "Page.frameNavigated" }->{params}->{frame}->{url} eq 'about:blank';
-    if( !$about_blank_loaded ) {
-        # Create HTTP::Response object from 'Network.responseReceived'
-        if ( my $res = $events{ 'Network.responseReceived' }) {
+    my $about_blank_loaded =    $events{ "Page.frameNavigated" }
+                             && $events{ "Page.frameNavigated" }->{params}->{frame}->{url} eq 'about:blank';
+    if( $about_blank_loaded ) {
+    warn "About:blank";
+        $response = HTTP::Response->new(
+            200,
+            'OK',
+        );
+    } elsif ( my $res = $events{ 'Network.responseReceived' }) {
+    warn "Network.responseReceived";
             $response = $self->httpResponseFromChromeResponse( $res );
             $response->request( $request );
 
-        } elsif( $res = $events{ 'Network.loadingFailed' }) {
-            $response = $self->httpResponseFromChromeNetworkFail( $res );
-            $response->request( $request );
+    } elsif( $res = $events{ 'Network.loadingFailed' }) {
+    warn "Network.loadingFailed";
+        $response = $self->httpResponseFromChromeNetworkFail( $res );
+        $response->request( $request );
 
-        } elsif ( $res = $events{ 'Page.frameNavigated' }
-                  and $res->{params}->{frame}->{unreachableUrl}) {
-            $response = $self->httpResponseFromChromeUrlUnreachable( $res );
-            $response->request( $request );
+    } elsif ( $res = $events{ 'Page.frameNavigated' }
+              and $res->{params}->{frame}->{unreachableUrl}) {
+    warn "Network.frameNavigated";
+        $response = $self->httpResponseFromChromeUrlUnreachable( $res );
+        $response->request( $request );
 
-        } else {
-            require Data::Dumper;
-            warn Data::Dumper::Dumper( \%events );
-            die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
-        };
-    } elsif(my $res = $events{ "MechanizeChrome.download" } ) {
+    } elsif( $res = $events{ "MechanizeChrome.download" } ) {
+    warn "MechanizeChrome.download";
         $response = HTTP::Response->new(
             $res->{params}->{response}->{status} || 200, # is 0 for files?!
             $res->{params}->{response}->{statusText},
@@ -1112,10 +1116,9 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
         )
 
     } else {
-        $response = HTTP::Response->new(
-            200,
-            'OK',
-        );
+        require Data::Dumper;
+        warn Data::Dumper::Dumper( \%events );
+        die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
     };
     $response
 }
