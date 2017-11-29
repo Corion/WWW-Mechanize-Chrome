@@ -817,7 +817,8 @@ sub _collectEvents( $self, @info ) {
 }
 
 sub _fetchFrameId( $self, $ev ) {
-    if( $ev->{method} eq 'Page.frameStartedLoading' ) {
+    if( $ev->{method} eq 'Page.frameStartedLoading'
+        || $ev->{method} eq 'Page.frameScheduledNavigation' ) {
         $self->log('debug', sprintf "Found frame id as %s", $ev->{params}->{frameId});
         return $ev->{params}->{frameId};
     };
