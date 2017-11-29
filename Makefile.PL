@@ -76,7 +76,7 @@ my %module = (
         'Mojolicious'  => 0, # We want to test both, AnyEvent and Mojolicious
         'Future::Mojo' => 0,
         'Image::Info'  => 0,
-        'Test::HTTP::LocalServer' => 0.60, # we want the improved IPC
+        'Test::HTTP::LocalServer' => 0.61, # we want the improved IPC
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
