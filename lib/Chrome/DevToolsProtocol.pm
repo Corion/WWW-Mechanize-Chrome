@@ -30,7 +30,7 @@ sub new($class, %args) {
     $args{ host } ||= '127.0.0.1';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
-    $args{ ua } ||= Future::HTTP->new;
+    $args{ ua } ||= Future::HTTP->new();
     $args{ sequence_number } ||= 0;
     $args{ tab } ||= undef;
     $args{ log } ||= $self->_build_log;
