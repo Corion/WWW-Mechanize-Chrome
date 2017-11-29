@@ -41,6 +41,15 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
+    if( $ENV{WWW_MECHANIZE_CHROME_TRANSPORT}
+        and $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} eq 'Chrome::DevToolsProtocol::Transport::Mojo'
+    ) {
+        SKIP: {
+            skip "Chrome::DevToolsProtocol::Transport::Mojo doesn't support port reuse", 6
+        };
+        return;
+    };
+
     my $app = $mech->driver;
     $mech->{autoclose} = 1;
     my $pid = delete $mech->{pid}; # so that the process survives
