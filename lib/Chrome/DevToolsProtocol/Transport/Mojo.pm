@@ -43,6 +43,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         die "Got an undefined endpoint" unless defined $endpoint;
         my $res = $self->future;
         $client->websocket( $endpoint, sub( $ua, $tx ) {
+            $logger->('trace',"Connected to $endpoint");
             $self->{ua} = $ua;
             # WTF? Sometimes we get an Mojolicious::Transaction::HTTP here?!
             if( $tx->is_websocket) {
@@ -54,8 +55,6 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $res
 
     })->then( sub( $c ) {
-        warn "$c";
-        $logger->( 'trace', sprintf "Connected" );
         my $connection = $c;
         $self->{connection} ||= $connection;
 
