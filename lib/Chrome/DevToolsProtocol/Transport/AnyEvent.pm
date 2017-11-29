@@ -101,14 +101,7 @@ Returns a Future that will be resolved in the number of seconds given.
 =cut
 
 sub sleep( $self, $seconds ) {
-
-    my $timer;
-    as_future_cb( sub( $done_cb, $fail_cb ) {
-        $timer = AnyEvent->timer( after => $seconds, cb => sub {
-            undef $timer;
-            goto &$done_cb
-        })
-    });
+    AnyEvent::Future->new_delay( after => $seconds );
 }
 
 1;
