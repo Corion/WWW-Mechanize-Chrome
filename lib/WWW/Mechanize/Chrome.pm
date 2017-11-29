@@ -309,6 +309,10 @@ sub new($class, %options) {
         $options{ frames }= 1;
     };
 
+    if( ! exists $options{ download_directory }) {
+        $options{ download_directory }= '';
+    };
+
     $options{ js_events } ||= [];
     if( ! exists $options{ transport }) {
         $options{ transport } ||= $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT };
@@ -397,6 +401,7 @@ sub new($class, %options) {
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
         $self->driver->send_message('Network.enable'), # capture network
         $self->driver->send_message('Runtime.enable'), # capture console messages
+        $self->set_download_directory_future($self->{download_directory}),
     )->get;
 
     if( ! exists $options{ tab }) {
@@ -840,22 +845,57 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     undef $self->{frameId};
     my $frameId = $options{ frameId };
 
-    my $scheduled = $self->driver->one_shot('Page.frameScheduledNavigation', 'Page.frameStartedLoading');
+    my $scheduled = $self->driver->one_shot(
+        'Page.frameScheduledNavigation',
+        'Page.frameStartedLoading',
+        'Page.frameResized',              # download
+        'Inspector.detached',             # Browser (window) was closed by user
+    );
     my $navigated;
     my $does_navigation;
     {
     my $s = $self;
     weaken $s;
-     $does_navigation = $scheduled
-          ->then(sub( $ev ) {
-              $s->log('trace', "Navigation started, logging");
-              $navigated++;
+    $does_navigation = $scheduled
+        ->then(sub( $ev ) {
+            if(     $ev->{method} eq 'Page.frameResized'
+                and 0+keys %{ $ev->{params} } == 0 ) {
+                # This is a weird hack, since Chrome starting with v64 doesn't
+                # indicate at all to the API that a download started :-(
+                # Also, we won't know that it finished, or what name the
+                # file got
+                $s->log('trace', "Download started, returning synthesized event");
+                $navigated++;
+                $s->{ frameId } = $ev->{params}->{frameId};
+                Future->done(
+                    # Since Chrome v64,
+                    { method => 'MechanizeChrome.download', params => {
+                        frameId => $ev->{params}->{frameId},
+                        loaderId => $ev->{params}->{loaderIdId},
+                        response => {
+                            status => 200,
+                            statusText => 'faked response',
+                            headers => {
+                                'Content-Disposition' => 'attachment; filename=unknown',
+                            }
+                    }}
+                })
 
-              $frameId ||= $s->_fetchFrameId( $ev );
-              $s->{ frameId } = $frameId;
-              $s->_waitForNavigationEnd( %options );
-          });
-      };
+            } elsif( $ev->{method} eq 'Inspector.detached' ) {
+                $s->log('error', "Inspector was detached");
+                Future->fail("Inspector was detached");
+
+            } else {
+                  $s->log('trace', "Navigation started, logging");
+                  $navigated++;
+
+                  $frameId ||= $s->_fetchFrameId( $ev );
+                  $s->{ frameId } = $frameId;
+
+                  $s->_waitForNavigationEnd( %options );
+            };
+        });
+    };
 
     # Kick off the navigation ourselves
     my $nav = $get_navigation_future->()->get;
@@ -951,7 +991,7 @@ sub httpRequestFromChromeRequest( $self, $event ) {
     my $req = HTTP::Request->new(
         $event->{params}->{request}->{method},
         $event->{params}->{request}->{url},
-        HTTP::Headers->new( $event->{params}->{request}->{headers} ),
+        HTTP::Headers->new( %{ $event->{params}->{request}->{headers}} ),
     );
 };
 
@@ -1005,7 +1045,7 @@ sub httpResponseFromChromeNetworkFail( $self, $res ) {
     my $response = HTTP::Response->new(
         $res->{params}->{response}->{status} || 599, # No error code exists for files
         $res->{params}->{response}->{errorText},
-        HTTP::Headers->new( {}),
+        HTTP::Headers->new(),
     );
 };
 
@@ -1013,7 +1053,7 @@ sub httpResponseFromChromeUrlUnreachable( $self, $res ) {
     my $response = HTTP::Response->new(
         599, # No error code exists for files
         "Unreachable URL: " . $res->{params}->{frame}->{unreachableUrl},
-        HTTP::Headers->new( {}),
+        HTTP::Headers->new(),
     );
 };
 
@@ -1034,27 +1074,24 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
                  } @$events;
     my %events;
     for (@events) {
+        #warn join " - ", $_->{method}, $_->{params}->{loaderId}, $_->{params}->{frameId};
         $events{ $_->{method} } ||= $_;
     };
 
     # Create HTTP::Request object from 'Network.requestWillBeSent'
     my $request;
     my $response;
-    if( ! $events{ 'Network.requestWillBeSent' }) {
-        #warn "Didn't see a 'Network.requestWillBeSent' event, cannot synthesize response well";
-    } else {
-        # $request = $self->httpRequestFromChromeRequest( $events{ 'Network.requestWillBeSent' });
-    };
 
-    if(     $events{ "Page.frameNavigated" }
-        and $events{ "Page.frameNavigated" }->{params}->{frame}->{url} ne 'about:blank' ) {
+    my $about_blank_loaded =     $events{ "Page.frameNavigated" }
+                             and $events{ "Page.frameNavigated" }->{params}->{frame}->{url} eq 'about:blank';
+    if( !$about_blank_loaded ) {
         # Create HTTP::Response object from 'Network.responseReceived'
-        if( my $res = $events{ 'Network.loadingFailed' }) {
-            $response = $self->httpResponseFromChromeNetworkFail( $res );
+        if ( my $res = $events{ 'Network.responseReceived' }) {
+            $response = $self->httpResponseFromChromeResponse( $res );
             $response->request( $request );
 
-        } elsif ( $res = $events{ 'Network.responseReceived' }) {
-            $response = $self->httpResponseFromChromeResponse( $res );
+        } elsif( $res = $events{ 'Network.loadingFailed' }) {
+            $response = $self->httpResponseFromChromeNetworkFail( $res );
             $response->request( $request );
 
         } elsif ( $res = $events{ 'Page.frameNavigated' }
@@ -1067,6 +1104,13 @@ sub httpMessageFromEvents( $self, $frameId, $events ) {
             warn Data::Dumper::Dumper( \%events );
             die "Didn't see a 'Network.responseReceived' event, cannot synthesize response";
         };
+    } elsif(my $res = $events{ "MechanizeChrome.download" } ) {
+        $response = HTTP::Response->new(
+            $res->{params}->{response}->{status} || 200, # is 0 for files?!
+            $res->{params}->{response}->{statusText},
+            HTTP::Headers->new( %{ $res->{params}->{response}->{headers} }),
+        )
+
     } else {
         $response = HTTP::Response->new(
             200,
@@ -1182,6 +1226,37 @@ sub reload( $self, %options ) {
         $self->driver->send_message('Page.reload', %options )->get
     }, navigates => 1, %options);
 }
+
+=head2 C<< $mech->set_download_directory( $dir ) >>
+
+    my $downloads = tempdir();
+    $mech->set_download_directory( $downloads );
+
+Enables automatic file downloads and sets the directory where the files
+will be downloaded to. Setting this to undef will disable downloads again.
+
+The directory in C<$dir> must be an absolute path, since Chrome does not know
+about the current directory of your Perl script.
+
+=cut
+
+sub set_download_directory_future( $self, $dir="" ) {
+    $self->{download_directory} = $dir;
+    if( "" eq $dir ) {
+        $self->driver->send_message('Page.setDownloadBehavior',
+            behavior => 'deny',
+        )
+    } else {
+        $self->driver->send_message('Page.setDownloadBehavior',
+            behavior => 'allow',
+            downloadPath => $dir
+        )
+    };
+};
+
+sub set_download_directory( $self, $dir="" ) {
+    $self->set_download_directory_future($dir)->get
+};
 
 =head2 C<< $mech->add_header( $name => $value, ... ) >>
 
