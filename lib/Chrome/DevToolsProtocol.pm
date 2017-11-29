@@ -25,7 +25,7 @@ sub new($class, %args) {
     my $self = bless \%args => $class;
 
     # Set up defaults
-    $args{ host } ||= 'localhost';
+    $args{ host } ||= '127.0.0.1';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
     $args{ ua } ||= Future::HTTP->new;
