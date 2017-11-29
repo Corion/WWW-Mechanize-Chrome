@@ -63,6 +63,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {
+            warn "Hmm - the Websocket handler went away but I got a message for them" if( ! $handler );
             $handler->on_response( $connection, $message )
         });
 
