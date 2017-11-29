@@ -1069,6 +1069,8 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
             if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
                 if( $url and $_->{params}->{request}->{url} eq $url ) {
                     $requestId = $_->{params}->{requestId};
+                } else {
+                    $requestId ||= $_->{params}->{requestId};
                 };
             }
         };
