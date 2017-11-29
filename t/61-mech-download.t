@@ -34,7 +34,7 @@ sub new_mech {
         autodie => 1,
         download_directory => $d,
         @_,
-        headless => 0,
+        #headless => 0,
     );
 };
 
