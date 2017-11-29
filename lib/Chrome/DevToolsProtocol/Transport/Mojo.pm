@@ -96,12 +96,7 @@ Returns a Future that will be resolved in the number of seconds given.
 =cut
 
 sub sleep( $self, $seconds ) {
-    my $done = $self->future;
-    my $t; $t = Mojo::IOLoop->timer( $seconds => sub {
-        undef $t;
-        $done->done(1);
-    });
-    $done
+    Future::Mojo->new_timer( $seconds )
 }
 
 1;
