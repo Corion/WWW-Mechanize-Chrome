@@ -853,6 +853,8 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     );
     my $navigated;
     my $does_navigation;
+    my $target_url = $options{ url };
+
     {
     my $s = $self;
     weaken $s;
@@ -908,7 +910,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     if( $navigated or $options{ navigates }) {
         @events = $does_navigation->get;
         # Handle all the events, by turning them into a ->response again
-        my $res = $self->httpMessageFromEvents( $self->frameId, \@events );
+        my $res = $self->httpMessageFromEvents( $self->frameId, \@events, $target_url );
         $self->update_response( $res );
     } else {
         $self->log('trace', "No navigation occurred, not collecting events");
@@ -936,7 +938,7 @@ sub get($self, $url, %options ) {
         $s->driver->send_message(
             'Page.navigate',
             url => "$url"
-    )}, %options, navigates => 1 );
+    )}, url => "$url", %options, navigates => 1 );
 
     return $self->response;
 };
@@ -1058,7 +1060,7 @@ sub httpResponseFromChromeUrlUnreachable( $self, $res ) {
     );
 };
 
-sub httpMessageFromEvents( $self, $frameId, $events ) {
+sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
     my ($requestId,$loaderId);
     my @events = grep {    exists $_->{params}->{frameId} && $_->{params}->{frameId} eq $frameId
                         or exists $_->{params}->{frame}->{id} && $_->{params}->{frame}->{id} eq $frameId
