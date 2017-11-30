@@ -189,9 +189,11 @@ sub connect( $self, %args ) {
         };
     };
     $got_endpoint = $got_endpoint->then(sub($endpoint) {
+        $self->log('debug',"Setting endpoint to $endpoint");
         $self->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
     })->catch(sub(@args) {
+        $self->log('error',"@args / $@ / $_");
         croak @args;
     });
 
@@ -201,7 +203,11 @@ sub connect( $self, %args ) {
     if( ! ref $transport ) { # it's a classname
         (my $transport_module = $transport) =~ s!::!/!g;
         $transport_module .= '.pm';
-        require $transport_module;
+        if( !eval {
+            require $transport_module;
+        }) {
+            $self->log('error', $@ );
+        };
         $self->{transport} = $transport->new;
         $transport = $self->{transport};
     };
