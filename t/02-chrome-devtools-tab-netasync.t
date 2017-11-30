@@ -6,8 +6,13 @@ use Chrome::DevToolsProtocol;
 use WWW::Mechanize::Chrome; # for launching Chrome
 use Log::Log4perl qw(:easy);
 
+# just so we catch compilation errors early
+use Chrome::DevToolsProtocol::Transport::NetAsync;
+
 use lib 'inc', '../inc', '.';
 use t::helper;
+
+Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 my $instance_port = 9222;
 my @instances = t::helper::browser_instances();

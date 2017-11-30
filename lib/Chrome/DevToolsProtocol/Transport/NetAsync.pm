@@ -50,6 +50,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             # Kick off the continous polling
             on_frame => sub {
                 my( $connection, $message )=@_;
+                $logger->log('trace', "Got message", $message );
                 $handler->on_response( $connection, $message )
             },
         );
