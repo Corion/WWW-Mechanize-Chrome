@@ -54,6 +54,9 @@ my %module = (
         'AnyEvent::Future'   => 0,
         'AnyEvent::WebSocket::Client' => 0,
 
+        # This is a developer-only prerequisite, but oh well
+        'Algorithm::Loops'   => 0,
+
         'Log::Log4perl'      => 0, # configurable logging
         'Future::HTTP'       => 0.06, # fixes Mojolicious error handling
         'JSON'               => 0,
