@@ -15,7 +15,13 @@ use t::helper;
 Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 my $instance_port = 9222;
-my @instances = t::helper::browser_instances();
+my @instances;
+if( @ARGV ) {
+    # pass in the browser(s) via the command line
+    @instances = @ARGV;
+} else {
+    @instances = t::helper::browser_instances();
+}
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -27,6 +33,7 @@ if (my $err = t::helper::default_unavailable) {
 sub new_mech {
     my $chrome = WWW::Mechanize::Chrome->new(
         transport => 'Chrome::DevToolsProtocol::Transport::NetAsync',
+        #transport => 'Chrome::DevToolsProtocol::Transport::AnyEvent',
         @_
     );
 };
