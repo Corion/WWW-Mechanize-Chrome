@@ -32,6 +32,7 @@
       },
       "runtime" : {
          "requires" : {
+            "Algorithm::Loops" : "0",
             "AnyEvent" : "0",
             "AnyEvent::Future" : "0",
             "AnyEvent::WebSocket::Client" : "0",
@@ -51,6 +52,7 @@
             "MIME::Base64" : "0",
             "Object::Import" : "0",
             "Scalar::Util" : "0",
+            "Try::Tiny" : "0",
             "WWW::Mechanize::Link" : "0",
             "WWW::Mechanize::Plugin::Selector" : "0",
             "perl" : "5.010"
@@ -62,7 +64,7 @@
             "Future::Mojo" : "0",
             "Image::Info" : "0",
             "Mojolicious" : "0",
-            "Test::HTTP::LocalServer" : "0.59",
+            "Test::HTTP::LocalServer" : "0.61",
             "Test::More" : "0"
          }
       }
@@ -75,7 +77,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.07",
+   "version" : "0.08",
    "x_serialization_backend" : "JSON::PP version 2.94",
    "x_static_install" : 1
 }

@@ -15,7 +15,7 @@ use Chrome::DevToolsProtocol;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 our @CARP_NOT;
 
 =head1 NAME
@@ -3620,7 +3620,7 @@ use feature 'signatures';
 
 use Scalar::Util 'weaken';
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 has 'attributes' => (
     is => 'lazy',

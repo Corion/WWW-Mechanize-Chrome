@@ -8,7 +8,7 @@ build_requires:
   Future::Mojo: '0'
   Image::Info: '0'
   Mojolicious: '0'
-  Test::HTTP::LocalServer: '0.59'
+  Test::HTTP::LocalServer: '0.61'
   Test::More: '0'
 configure_requires:
   ExtUtils::MakeMaker: '0'
@@ -24,6 +24,7 @@ no_index:
     - t
     - inc
 requires:
+  Algorithm::Loops: '0'
   AnyEvent: '0'
   AnyEvent::Future: '0'
   AnyEvent::WebSocket::Client: '0'
@@ -43,11 +44,12 @@ requires:
   MIME::Base64: '0'
   Object::Import: '0'
   Scalar::Util: '0'
+  Try::Tiny: '0'
   WWW::Mechanize::Link: '0'
   WWW::Mechanize::Plugin::Selector: '0'
   perl: '5.010'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
-version: '0.07'
+version: '0.08'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
 x_static_install: 1
