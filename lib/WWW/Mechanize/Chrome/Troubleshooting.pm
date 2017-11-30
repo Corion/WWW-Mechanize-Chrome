@@ -59,3 +59,7 @@ Copyright 2010-2017 by Max Maischein C<corion@cpan.org>.
 This module is released under the same terms as Perl itself.
 
 =cut
+
+package WWW::Mechanize::Chrome::Troubleshooting;
+our $VERSION = '0.07';
+1;

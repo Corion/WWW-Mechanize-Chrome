@@ -15,8 +15,8 @@ use Chrome::DevToolsProtocol;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
-use vars qw($VERSION %link_spec @CARP_NOT);
-$VERSION = '0.07';
+our $VERSION = '0.07';
+our @CARP_NOT;
 
 =head1 NAME
 
@@ -1721,7 +1721,7 @@ or C<< ->selector >> when you want more control.
 
 =cut
 
-%link_spec = (
+our %link_spec = (
     a      => { url => 'href', },
     area   => { url => 'href', },
     frame  => { url => 'src', },
@@ -3620,8 +3620,7 @@ use feature 'signatures';
 
 use Scalar::Util 'weaken';
 
-use vars qw($VERSION);
-$VERSION = '0.07';
+our $VERSION = '0.07';
 
 has 'attributes' => (
     is => 'lazy',

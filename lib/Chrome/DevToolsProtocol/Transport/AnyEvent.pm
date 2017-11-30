@@ -11,8 +11,8 @@ use AnyEvent;
 use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
-use vars qw<$VERSION @CARP_NOT>;
-$VERSION = '0.07';
+our $VERSION = '0.07';
+our @CARP_NOT = ();
 
 =head1 SYNOPSIS
 

@@ -4,8 +4,7 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-use vars qw($implementation @loops $VERSION);
-$VERSION = '0.07';
+our $VERSION = '0.07';
 
 =head1 NAME
 
@@ -13,7 +12,7 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
 
 =cut
 
-@loops = (
+our @loops = (
     ['Mojo/IOLoop.pm' => 'Chrome::DevToolsProtocol::Transport::Mojo' ],
     ['AnyEvent.pm'    => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     ['AE.pm'          => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
@@ -23,6 +22,7 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
     # The fallback, will always catch due to loading strict (for now)
     ['strict.pm'      => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
 );
+our $implementation;
 
 =head1 METHODS
 
