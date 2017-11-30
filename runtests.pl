@@ -32,6 +32,7 @@ my $port = 9222;
 $backend ||= qr/./;
 my @backends = grep { /$backend/i } (qw(
     Chrome::DevToolsProtocol::Transport::AnyEvent
+    Chrome::DevToolsProtocol::Transport::NetAsync
     Chrome::DevToolsProtocol::Transport::Mojo
 ));
 #   Chrome::DevToolsProtocol::Transport::NetAsync
