@@ -53,6 +53,11 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
                 $logger->('trace', "Got message", $message );
                 $handler->on_response( $connection, $message )
             },
+            on_read_eof => sub {
+                my( $connection )=@_;
+                $logger->('info', "Connection closed");
+                # TODO: should we tell handler?
+            },
         );
         $self->loop->add( $client );
 
