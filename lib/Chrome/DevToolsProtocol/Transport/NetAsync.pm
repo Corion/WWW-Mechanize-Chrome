@@ -62,7 +62,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         } );
     })->catch(sub{
         require Data::Dumper;
-        warn Data::Dumper::Dumper \@_;
+        warn Data::Dumper::Dumper( \@_ );
     });
 }
 
