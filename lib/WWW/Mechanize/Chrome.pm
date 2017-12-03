@@ -997,7 +997,7 @@ sub get_local {
     } else {
         $url= "file://$fn";
     };
-    return $res = $self->get($url, %options);
+    return $self->get($url, %options);
 }
 
 sub httpRequestFromChromeRequest( $self, $event ) {
