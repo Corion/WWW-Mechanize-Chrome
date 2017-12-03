@@ -371,7 +371,7 @@ sub new($class, %options) {
         tab     => $options{ tab },
     )->catch( sub($_err) {
         $err = $_err;
-        Future->done( $err );
+        Future->fail( $err );
     })->get;
 
     # if Chrome started, but so slow or unresponsive that we cannot connect
