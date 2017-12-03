@@ -299,6 +299,54 @@ sub log( $self, $level, $message, @args ) {
     };
 }
 
+sub enable_messages_future( $self ) {
+    my $s = $self;
+    weaken $s;
+    my $collect_JS_problems = sub( $msg ) {
+        $s->_handleConsoleAPICall( $msg->{params} )
+    };
+    $self->{consoleAPIListener} =
+        $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
+    $self->{exceptionThrownListener} =
+        $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
+    $self->{nodeGenerationChange} =
+        $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
+    $self->new_generation;
+
+    return
+        Future->wait_all(
+            $s->driver->send_message('Page.enable'),    # capture DOMLoaded
+            $s->driver->send_message('Network.enable'), # capture network
+            $s->driver->send_message('Runtime.enable'), # capture console messages
+            $s->set_download_directory_future($s->{download_directory}),
+        );
+}
+
+=head2 C<< $mech->connect( %options )
+
+Connect to Chrome. This is implicitly called when you call C<< ->new() >>.
+
+=cut
+
+sub connect( $self, %options ) {
+    my $connected = $self->driver->connect(
+        new_tab => !$options{ reuse },
+        tab     => $options{ tab },
+    )->catch( sub($_err) {
+        my $err = $_err;
+        $self->log('error' => $err);
+
+        # if Chrome started, but so slow or unresponsive that we cannot connect
+        # to it, kill it manually to avoid waiting for it indefinitely
+        if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
+            local $SIG{CHLD} = 'IGNORE';
+            kill 'SIGKILL' => $pid;
+        };
+        #die $err;
+        Future->fail( $err );
+    });
+}
+
 sub new($class, %options) {
 
     if (! exists $options{ autodie }) {
@@ -363,47 +411,17 @@ sub new($class, %options) {
         transport => $options{ transport },
         log => $options{ log },
     );
-    # Synchronously connect here, just for easy API compatibility
-
-    my $err;
-    $self->driver->connect(
-        new_tab => !$options{ reuse },
-        tab     => $options{ tab },
-    )->catch( sub($_err) {
-        $err = $_err;
-        Future->fail( $err );
-    })->get;
-
-    # if Chrome started, but so slow or unresponsive that we cannot connect
-    # to it, kill it manually to avoid waiting for it indefinitely
-    if ( $err ) {
-        if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
-            local $SIG{CHLD} = 'IGNORE';
-            kill 'SIGKILL' => $pid;
-        };
-        die $err;
-    }
 
     my $s = $self;
     weaken $s;
-    my $collect_JS_problems = sub( $msg ) {
-        $s->_handleConsoleAPICall( $msg->{params} )
-    };
-    $self->{consoleAPIListener} =
-        $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
-    $self->{exceptionThrownListener} =
-        $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
-    $self->{nodeGenerationChange} =
-        $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
-    $self->new_generation;
+    my $ready = $self->connect( %options )->then( sub {
+        $s->enable_messages_future()
+    });
 
-    Future->wait_all(
-        $self->driver->send_message('Page.enable'),    # capture DOMLoaded
-        $self->driver->send_message('Network.enable'), # capture network
-        $self->driver->send_message('Runtime.enable'), # capture console messages
-        $self->set_download_directory_future($self->{download_directory}),
-    )->get;
+    # Synchronously connect here, just for easy API compatibility
+    $ready->get();
 
+    # This should become asynchronous too
     if( ! exists $options{ tab }) {
         $self->get('about:blank'); # Reset to clean state, also initialize our frame id
     };
