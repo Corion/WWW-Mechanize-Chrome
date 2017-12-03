@@ -997,16 +997,7 @@ sub get_local {
     } else {
         $url= "file://$fn";
     };
-    my $res = $self->get($url, %options);
-    ## Chrome is not helpful with its error messages for local URLs
-    #if( 0+$res->headers->header_field_names and ([$res->headers->header_field_names]->[0] ne 'x-www-mechanize-Chrome-fake-success' or $self->uri ne 'about:blank')) {
-    #    # We need to fake the content headers from <meta> tags too...
-    #    # Maybe this even needs to go into ->get()
-    #    $res->code( 200 );
-    #} else {
-    #    $res->code( 400 ); # Must have been "not found"
-    #};
-    $res
+    return $res = $self->get($url, %options);
 }
 
 sub httpRequestFromChromeRequest( $self, $event ) {
