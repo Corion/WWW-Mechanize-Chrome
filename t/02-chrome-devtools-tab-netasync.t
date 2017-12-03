@@ -23,12 +23,12 @@ if( @ARGV ) {
     @instances = t::helper::browser_instances();
 }
 
-if (my $err = t::helper::default_unavailable) {
-    plan skip_all => "Couldn't connect to Chrome: $@";
-    exit
-} else {
+#if (my $err = t::helper::default_unavailable) {
+#    plan skip_all => "Couldn't connect to Chrome: $@";
+#    exit
+#} else {
     plan tests => 4*@instances;
-};
+#};
 
 sub new_mech {
     my $chrome = WWW::Mechanize::Chrome->new(
