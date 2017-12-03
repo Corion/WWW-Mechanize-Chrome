@@ -7,6 +7,7 @@ use Config '%Config';
 use File::Spec;
 use Carp qw(croak);
 use File::Temp 'tempdir';
+use Algorithm::Loops 'NestedLoops';
 
 delete $ENV{HTTP_PROXY};
 delete $ENV{HTTPS_PROXY};
@@ -27,12 +28,18 @@ sub browser_instances {
             if $ENV{ CHROME_BIN } and -x $ENV{ CHROME_BIN };
 
     } else {
-        my ($default)=
-            map { my $exe= File::Spec->catfile($_,"chrome$Config{_exe}");
-                  -x $exe ? $exe : ()
-                } File::Spec->path();
-        push @instances, $default
-            if $default;
+        # Look through $ENV{PATH}
+        my @candidates = grep { -x $_ } NestedLoops(
+            [[ File::Spec->path() ],
+             [ "chrome$Config{_exe}",
+               "chromium$Config{_exe}",
+               "google-chrome$Config{_exe}" 
+             ]
+            ],
+            sub { File::Spec->catfile( @_ ) }
+        );
+        push @instances, $candidates[0]
+            if $candidates[0];
         my $spec = 'chrome-versions/*/{*/,}chrome*'; # sorry, likely a bad default
         push @instances, grep { -x } bsd_glob $spec;
     };
