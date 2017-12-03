@@ -56,6 +56,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         );
         $self->loop->add( $client );
 
+        die "Got an undefined endpoint" unless defined $endpoint;
         $logger->('debug',"Connecting to $endpoint");
         $client->connect( url => $endpoint, on_connected => sub {
             $logger->('info',"Connected to $endpoint");
