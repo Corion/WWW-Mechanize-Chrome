@@ -30,8 +30,8 @@ sub new_mech {
         autodie => 1,
         @_,
     );
-    $l->run;
-    $m
+#    $l->run;
+#    $m
 };
 
 my $server = Test::HTTP::LocalServer->spawn(
