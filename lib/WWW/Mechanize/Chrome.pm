@@ -551,6 +551,14 @@ sub autodie {
     $_[0]->{autodie}
 }
 
+=head2 C<< $mech->allow( %options ) >>
+
+  $mech->allow( javascript => 1 );
+
+Allow or disallow execution of Javascript
+
+=cut
+
 sub allow {
     my($self,%options)= @_;
 
