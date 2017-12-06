@@ -545,6 +545,30 @@ sub allow {
     Future->wait_all( @await )->get;
 }
 
+=head2 C<< $mech->emulateNetworkConditions( %options ) >>
+
+  $mech->emulateNetworkConditions(
+      offline => JSON::PP::true,
+      latency => 10, # ms ping
+      downloadThroughput => 1_000_000, # bytes/s
+      uploadThroughput => 100_000, # bytes/s
+      # connectionType => 'none', cellular2g, cellular3g, cellular4g, bluetooth, ethernet, wifi, wimax, other.
+  );
+
+=cut
+
+sub emulateNetworkConditions_future( $self, %options ) {
+    $options{ offline } //= JSON::PP::false,
+    $options{ latency } //= -1,
+    $options{ downloadThroughput } //= -1,
+    $options{ uploadThroughput } //= -1,
+    $self->driver->send_message('Network.emulateNetworkConditions', %options)
+}
+
+sub emulateNetworkConditions( $self, %options ) {
+    $self->emulateNetworkConditions_future( %options )->get
+}
+
 =head2 C<< $mech->on_dialog( $cb ) >>
 
   $mech->on_dialog( sub {
