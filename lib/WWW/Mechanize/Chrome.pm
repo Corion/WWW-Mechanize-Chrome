@@ -12,6 +12,7 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
+use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 

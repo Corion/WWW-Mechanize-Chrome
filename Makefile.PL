@@ -60,6 +60,7 @@ my %module = (
         'Log::Log4perl'      => 0, # configurable logging
         'Future::HTTP'       => 0.06, # fixes Mojolicious error handling
         'JSON'               => 0,
+        'JSON::PP' => 0, # for true and false
         'WWW::Mechanize::Plugin::Selector' => 0,
         'HTTP::Response'                   => 0,
         'HTTP::Headers'                    => 0,
