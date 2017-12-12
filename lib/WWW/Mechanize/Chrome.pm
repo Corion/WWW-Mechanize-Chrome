@@ -12,6 +12,7 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
+use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
@@ -555,12 +556,13 @@ sub allow {
 
 =head2 C<< $mech->emulateNetworkConditions( %options ) >>
 
+  # Go offline
   $mech->emulateNetworkConditions(
       offline => JSON::PP::true,
       latency => 10, # ms ping
-      downloadThroughput => 1_000_000, # bytes/s
-      uploadThroughput => 100_000, # bytes/s
-      # connectionType => 'none', cellular2g, cellular3g, cellular4g, bluetooth, ethernet, wifi, wimax, other.
+      downloadThroughput => 0, # bytes/s
+      uploadThroughput => 0, # bytes/s
+      connectionType => 'offline', # cellular2g, cellular3g, cellular4g, bluetooth, ethernet, wifi, wimax, other.
   );
 
 =cut
@@ -1107,6 +1109,11 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
                 };
             }
         };
+    };
+
+    # Just silence some undef warnings
+    if( ! defined $requestId) {
+        $requestId = ''
     };
 
     my @events = grep {
@@ -3854,6 +3861,11 @@ On Windows, the executable is named C<chrome.exe> and doesn't output
 information to the console. Check that Chrome starts:
 
 C<< chrome >>
+
+=head2 Chrome versions
+
+Note that the Chrome version numbers do not denote availability of features.
+Features can still be added to Chrome v62 when Chrome v64 is already out.
 
 =head1 RUNNING THE TEST SUITE
 

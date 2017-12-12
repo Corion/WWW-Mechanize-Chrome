@@ -9,8 +9,8 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-#Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
-Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
+#Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -20,13 +20,14 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 3*@instances;
+    plan tests => 4*@instances;
 };
 
 sub new_mech {
     my $m = WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
+        #headless => 0,
     );
 };
 
@@ -34,44 +35,52 @@ sub new_mech {
 #    #debug => 1,
 #);
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 3, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
 
     SKIP: {
         my $version = $mech->chrome_version;
 
-        if( $version =~ /\b(\d+)\b/ and $1 < 62 ) {
-            skip "Chrome before v62 doesn't know about online/offline mode...", 3;
-		} else {
-			#$mech->get($server->url);
-			$mech->get_local('50-click.html');
-			
-			my ($value,$type);
-			#my ($value, $type) = $mech->eval_in_page('window.navigator.connection.effectiveType');
-			#is( $value, '4g', "We are online");
-			($value, $type) = $mech->eval_in_page('window.navigator.onLine');
-			is( $value, JSON::PP::true, "We are online (.onLine)");
-			
-			$mech->emulateNetworkConditions(
-				offline => $JSON::PP::true,
-			);
-			#($value, $type) = $mech->eval('navigator.connection.effectiveType');
-			#is( $value, 'offline', "We are offline");
-			($value, $type) = $mech->eval_in_page('window.navigator.onLine');
-			is( $value, JSON::PP::false, "We are offline (.onLine)");
-			
-			# But this one still succeeds, as do outbound requests :-(
-			#$mech->get($server->url);
+        if( $version =~ /\b(\d+)\b/ and $1 < 63 ) {
+            skip "Chrome before v63 doesn't know about online/offline mode or can do throttling", 4;
+        } elsif( $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and $1 == 63 and $2 < 3239) {
+            # https://bugs.chromium.org/p/chromium/issues/detail?id=728451
+            skip "Chrome before v63.0.3239 doesn't know about online/offline mode or can do throttling", 4;
+        } else {
+            #$mech->get($server->url);
+            $mech->get_local('50-click.html');
 
-			$mech->emulateNetworkConditions(
-				offline => $JSON::PP::false,
-			);
-			#($value, $type) = $mech->eval('navigator.connection.effectiveType');
-			#is( $value, '4g', "We are online again");
-			($value, $type) = $mech->eval_in_page('window.navigator.onLine');
-			is( $value, JSON::PP::true, "We are online (.onLine)");
-		}
-	}
+            my ($value,$type);
+            ($value, $type) = $mech->eval_in_page('window.navigator.connection.effectiveType');
+            #is( $value, '4g', "We are online");
+            ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
+            is( $value, JSON::PP::true, "We are online (.onLine)");
+
+            $mech->emulateNetworkConditions(
+                offline => JSON::PP::true,
+                latency => 0,
+                downloadThroughput => 0,
+                uploadThroughput => 0,
+                #connectionType => 'none',
+            );
+            ($value, $type) = $mech->eval('navigator.connection.effectiveType');
+            #is( $value, 'offline', "We are offline");
+            ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
+            is( $value, JSON::PP::false, "We are offline (.onLine)");
+
+            my $res = $mech->get('https://google.de');
+            ok !$res->is_success, "We can't fetch pages while offline";
+            #$mech->eval_in_page(sprintf 'window.location="%s"', '49-mech-get-file.html');
+
+            $mech->emulateNetworkConditions(
+                offline => JSON::PP::false,
+            );
+            ($value, $type) = $mech->eval('navigator.connection.effectiveType');
+            #is( $value, '4g', "We are online again");
+            ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
+            is( $value, JSON::PP::true, "We are online (.onLine)");
+        }
+    }
 
     undef $mech;
 });
