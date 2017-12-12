@@ -1,3 +1,12 @@
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.0 / Win64
+    . Tested against Chromium 64.0.3282.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3293.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
+
 0.08 20171130
     + Implemented file downloads and their storage for v62 and v63
 	  You can't find out the name a file was saved as, and you can't find out
