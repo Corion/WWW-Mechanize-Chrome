@@ -592,9 +592,9 @@ A callback for Javascript dialogs (C<< alert() >>, C<< prompt() >>, ... )
 =cut
 
 sub on_dialog( $self, $cb ) {
-    my $s = $self;
-    weaken $s;
     if( $cb ) {
+        my $s = $self;
+        weaken $s;
         $self->{ on_dialog_listener } =
         $self->add_listener('Page.javascriptDialogOpening', sub( $ev ) {
             if( $s->{ on_dialog }) {
