@@ -53,6 +53,9 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
         if( $version =~ /\b(\d+)\b/ and $1 < 62 ) {
             skip "Chrome before v62 doesn't know about downloads...", 4;
 
+        } elsif( $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 63 and $2 >= 3239)) {
+            skip "Chrome before v63 build 3292 doesn't know about downloads anymore", 4;
+
         } elsif( $version =~ /\b(\d+)\b/ and $1 >= 64 ) {
             skip "Chrome after v63 doesn't tell us about downloads...", 4;
 
@@ -65,7 +68,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
             isa_ok $res, 'HTTP::Response', "Response";
             ok $mech->success, "The download (always) succeeds";
             like $res->header('Content-Disposition'), qr/attachment;/, "We got a download response";
-            
+
             $mech->sleep(2); # well, should be faster, but...
             ok -f "$d/mytest.txt", "File 'mytest.txt' was downloaded OK";
         };

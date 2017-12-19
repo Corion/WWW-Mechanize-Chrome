@@ -72,7 +72,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
         my $version = $mech->chrome_version;
 
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version =~ /\b(\d+)\b/ and $1 >= 63;
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     }
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
@@ -100,7 +100,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
         my $version = $mech->chrome_version;
 
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version =~ /\b(\d+)\b/ and $1 >= 63;
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     };
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
