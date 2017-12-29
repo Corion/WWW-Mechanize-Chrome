@@ -10,6 +10,7 @@
 0.09 to be released
     ! ->js_errors() now only returns error messages
     ! ->js_console_entries returns all entries in the browser console
+    ! Errors in JS code from ->eval_in_page are now fatal errors in Perl too
     + The ->reload() method works now
 
 0.08 20171130

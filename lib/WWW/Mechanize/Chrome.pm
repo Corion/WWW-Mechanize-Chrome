@@ -712,7 +712,13 @@ sub eval_in_page {
                            $result->{error}->{data},
                            $result->{error}->{code}
         );
-    };
+    } elsif( $result->{exceptionDetails} ) {
+        $self->signal_condition(
+            join "\n", grep { defined $_ }
+                           $result->{exceptionDetails}->{text},
+                           $result->{exceptionDetails}->{exception}->{description},
+        );
+    }
 
     return $result->{result}->{value}, $result->{result}->{type};
 };
