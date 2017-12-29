@@ -428,6 +428,12 @@ will be removed.
 
 Calling this method in void context croaks.
 
+To see the browser console live from your Perl script, use the following:
+
+  my $console = $mech->add_listener('Runtime.consoleAPICalled', sub {
+      print $_[0]->{params}->{args}->[0]->{value} || Dumper \@_;
+  });
+
 =cut
 
 sub add_listener( $self, $event, $callback ) {
