@@ -661,7 +661,7 @@ Returns the list of errors in the JEC
 
 sub js_errors {
     my ($self) = @_;
-    grep { $_->{type} ne 'log' } $self->js_console_entries
+    grep { ($_->{type} || '') ne 'log' } $self->js_console_entries
 }
 
 =head2 C<< $mech->clear_js_errors() >>
