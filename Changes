@@ -7,6 +7,10 @@
     . Tested against Chromium 65.0.3293.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
+0.09 to be released
+    ! ->js_errors() now only returns error messages
+    ! ->js_console_entries returns all entries in the browser console
+
 0.08 20171130
     + Implemented file downloads and their storage for v62 and v63
 	  You can't find out the name a file was saved as, and you can't find out

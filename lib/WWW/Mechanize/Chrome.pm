@@ -635,23 +635,33 @@ sub handle_dialog( $self, $accept, $prompt = undef ) {
     });
 };
 
-=head2 C<< $mech->js_errors() >>
+=head2 C<< $mech->js_console_entries() >>
 
-  print $_->{message}
-      for $mech->js_errors();
+  print $_->{type}, " ", $_->{message}, "\n"
+      for $mech->js_console_entries();
 
 An interface to the Javascript Error Console
 
-Returns the list of errors in the JEC
+Returns the list of entries in the JEC
 
-Maybe this should be called C<js_messages> or
-C<js_console_messages> instead.
+=cut
+
+sub js_console_entries( $self ) {
+    @{$self->{js_events}}
+}
+
+=head2 C<< $mech->js_errors() >>
+
+  print "JS error: ", $_->{message}, "\n"
+      for $mech->js_errors();
+
+Returns the list of errors in the JEC
 
 =cut
 
 sub js_errors {
     my ($self) = @_;
-    @{$self->{js_events}}
+    grep { $_->{type} ne 'log' } $self->js_console_entries
 }
 
 =head2 C<< $mech->clear_js_errors() >>
