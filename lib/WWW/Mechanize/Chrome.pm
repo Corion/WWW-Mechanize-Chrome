@@ -1303,7 +1303,7 @@ current request.
 
 sub reload( $self, %options ) {
     $self->_mightNavigate( sub {
-        $self->driver->send_message('Page.reload', %options )->get
+        $self->driver->send_message('Page.reload', %options )
     }, navigates => 1, %options);
 }
 
