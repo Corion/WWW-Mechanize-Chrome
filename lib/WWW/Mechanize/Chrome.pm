@@ -1365,9 +1365,10 @@ Note that currently, we only support one value per header.
 =cut
 
 sub _set_extra_headers( $self, %headers ) {
+    $self->log('debug',"Setting additional headers", \%headers);
     $self->driver->send_message('Network.setExtraHTTPHeaders',
         headers => \%headers
-    )->get
+    )->get;
 };
 
 sub add_header( $self, %headers ) {
