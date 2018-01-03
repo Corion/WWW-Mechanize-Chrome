@@ -4,6 +4,15 @@
 
 WWW::Mechanize::Chrome::Cookbook - Getting things done with WWW::Mechanize::Chrome
 
+=head1 Chrome versions
+
+You can find various current Chrome builds at
+L<https://chromium.woolyss.com/> .
+
+The recommended approach to automation is to save a Chrome / Chromium version
+and disable automatic updates so you can update at a defined point in time
+instead and keep the change to your automation under control.
+
 =head1 Web Application Testing with Chrome
 
 =head2 Rationale
