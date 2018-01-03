@@ -585,6 +585,63 @@ sub emulateNetworkConditions( $self, %options ) {
     $self->emulateNetworkConditions_future( %options )->get
 }
 
+=head2 C<< $mech->setRequestInterception( @patterns ) >>
+
+  $mech->setRequestInterception(
+      { urlPattern => '*', resourceType => 'Document', interceptionStage => 'Request'},
+      { urlPattern => '*', resourceType => 'Media', interceptionStage => 'Response'},
+  );
+
+Sets the list of request patterns and resource types for which the interception
+callback will be invoked.
+
+=cut
+
+sub setRequestInterception_future( $self, @patterns ) {
+    $self->driver->send_message('Network.setRequestInterception', @patterns)
+}
+
+sub setRequestInterception( $self, @patterns ) {
+    $self->requestInterception_future( @patterns )->get
+}
+
+=head2 C<< $mech->on_request_intercepted( $cb ) >>
+
+  $mech->on_request_intercepted( sub {
+      my( $mech, $info ) = @_;
+      warn $info->{request}->{url};
+      $mech->continueInterceptedRequest_future(
+          interceptionId => $info->{interceptionId}
+      )
+  });
+
+A callback for intercepted requests that match the patterns set up
+via C<setRequestInterception>.
+
+If you return a future from this callback, it will not be discarded but kept in
+a safe place.
+
+=cut
+
+sub on_request_intercepted( $self, $cb ) {
+    if( $cb ) {
+        my $s = $self;
+        weaken $s;
+        $self->{ on_request_intercept_listener } =
+        $self->add_listener('Network.requestIntercepted', sub( $ev ) {
+            if( $s->{ on_request_intercepted }) {
+                $self->log('debug', sprintf 'Request intercepted %s: %s',
+                                    $ev->{params}->{interceptionId},
+                                    $ev->{params}->{request}->{url});
+                $s->{ on_request_intercepted }->( $s, $ev->{params} );
+            };
+        });
+    } else {
+        delete $self->{ on_request_intercept_listener };
+    };
+    $self->{ on_request_intercepted } = $cb;
+}
+
 =head2 C<< $mech->on_dialog( $cb ) >>
 
   $mech->on_dialog( sub {
