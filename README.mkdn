@@ -174,6 +174,49 @@ Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsP
 Access the tab hash of the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting
 to Chrome. This represents the tab we control.
 
+## `$mech->allow( %options )`
+
+    $mech->allow( javascript => 1 );
+
+Allow or disallow execution of Javascript
+
+## `$mech->emulateNetworkConditions( %options )`
+
+    # Go offline
+    $mech->emulateNetworkConditions(
+        offline => JSON::PP::true,
+        latency => 10, # ms ping
+        downloadThroughput => 0, # bytes/s
+        uploadThroughput => 0, # bytes/s
+        connectionType => 'offline', # cellular2g, cellular3g, cellular4g, bluetooth, ethernet, wifi, wimax, other.
+    );
+
+## `$mech->setRequestInterception( @patterns )`
+
+    $mech->setRequestInterception(
+        { urlPattern => '*', resourceType => 'Document', interceptionStage => 'Request'},
+        { urlPattern => '*', resourceType => 'Media', interceptionStage => 'Response'},
+    );
+
+Sets the list of request patterns and resource types for which the interception
+callback will be invoked.
+
+## `$mech->on_request_intercepted( $cb )`
+
+    $mech->on_request_intercepted( sub {
+        my( $mech, $info ) = @_;
+        warn $info->{request}->{url};
+        $mech->continueInterceptedRequest_future(
+            interceptionId => $info->{interceptionId}
+        )
+    });
+
+A callback for intercepted requests that match the patterns set up
+via `setRequestInterception`.
+
+If you return a future from this callback, it will not be discarded but kept in
+a safe place.
+
 ## `$mech->on_dialog( $cb )`
 
     $mech->on_dialog( sub {
@@ -1151,6 +1194,11 @@ On Windows, the executable is named `chrome.exe` and doesn't output
 information to the console. Check that Chrome starts:
 
 `chrome`
+
+## Chrome versions
+
+Note that the Chrome version numbers do not denote availability of features.
+Features can still be added to Chrome v62 when Chrome v64 is already out.
 
 # RUNNING THE TEST SUITE
 
