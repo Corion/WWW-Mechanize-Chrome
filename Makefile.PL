@@ -48,6 +48,7 @@ my %module = (
         'Filter::signatures' => '0.09',
         'Carp'               => 0,
         'Future'             => 0,
+        'Future::Mojo'       => 0,
         'Try::Tiny'          => 0,
         # One day, this will become optional - maybe when we also support IO::Async
         'AnyEvent'           => 0,
@@ -60,6 +61,9 @@ my %module = (
         'Log::Log4perl'      => 0, # configurable logging
         'Future::HTTP'       => 0.06, # fixes Mojolicious error handling
         'JSON'               => 0,
+        'JSON::PP'           => 0,
+        'Mojo::UserAgent'    => 0,
+        'Moo'                => 0,
         'WWW::Mechanize::Plugin::Selector' => 0,
         'HTTP::Response'                   => 0,
         'HTTP::Headers'                    => 0,
