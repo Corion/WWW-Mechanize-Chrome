@@ -7,6 +7,7 @@
     . Tested against Chromium 65.0.3311.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
+0.09 20180104
     ! ->js_errors() now only returns error messages
     ! ->js_console_entries returns all entries in the browser console
     ! Errors in JS code from ->eval_in_page are now fatal errors in Perl too

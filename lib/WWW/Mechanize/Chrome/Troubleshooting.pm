@@ -54,7 +54,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2017 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2018 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
@@ -63,5 +63,5 @@ This module is released under the same terms as Perl itself.
 =cut
 
 package WWW::Mechanize::Chrome::Troubleshooting;
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 1;

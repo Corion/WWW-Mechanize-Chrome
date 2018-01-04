@@ -147,6 +147,12 @@ will be removed.
 
 Calling this method in void context croaks.
 
+To see the browser console live from your Perl script, use the following:
+
+    my $console = $mech->add_listener('Runtime.consoleAPICalled', sub {
+        print $_[0]->{params}->{args}->[0]->{value} || Dumper \@_;
+    });
+
 ## `$mech->chrome_version`
 
     print $mech->chrome_version;
@@ -237,17 +243,21 @@ A callback for Javascript dialogs (`alert()`, `prompt()`, ... )
 
 Closes the current Javascript dialog. Depending on
 
-## `$mech->js_errors()`
+## `$mech->js_console_entries()`
 
-    print $_->{message}
-        for $mech->js_errors();
+    print $_->{type}, " ", $_->{message}, "\n"
+        for $mech->js_console_entries();
 
 An interface to the Javascript Error Console
 
-Returns the list of errors in the JEC
+Returns the list of entries in the JEC
 
-Maybe this should be called `js_messages` or
-`js_console_messages` instead.
+## `$mech->js_errors()`
+
+    print "JS error: ", $_->{message}, "\n"
+        for $mech->js_errors();
+
+Returns the list of errors in the JEC
 
 ## `$mech->clear_js_errors()`
 
