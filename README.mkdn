@@ -1275,7 +1275,7 @@ Max Maischein `corion@cpan.org`
 
 # COPYRIGHT (c)
 
-Copyright 2010-2017 by Max Maischein `corion@cpan.org`.
+Copyright 2010-2018 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 
