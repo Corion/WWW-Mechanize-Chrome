@@ -61,6 +61,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     );
 
     $mech->agent( $ua );
+    my $version = $mech->chrome_version;
 
     $res = $mech->get($site);
     isa_ok $res, 'HTTP::Response', "Response";
@@ -69,15 +70,21 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     # Now check for the changes
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
-        my $version = $mech->chrome_version;
-
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     }
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
-    like $headers, qr!^X-WWW-Mechanize-Chrome: \Q$WWW::Mechanize::Chrome::VERSION\E$!m, "We can add completely custom headers";
-    like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
+    {
+        local $TODO = "Chrome v63.0.84+ doesn't set custom headers..."
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
+        like $headers, qr!^X-WWW-Mechanize-Chrome: \Q$WWW::Mechanize::Chrome::VERSION\E$!m, "We can add completely custom headers";
+    }
+    {
+        local $TODO = "Chrome v63.0.84+ doesn't send the Host header..."
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
+        like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
+    }
     $mech->submit_form; # retrieve the JS window.navigator.userAgent value
     is $mech->value('navigator'), $ua, "JS window.navigator.userAgent gets set as well";
     # diag $mech->content;
@@ -97,16 +104,17 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     # Now check for the changes
     $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
-        my $version = $mech->chrome_version;
-
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     };
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
     unlike $headers, qr!^X-WWW-Mechanize-Chrome: !m, "We can delete completely custom headers";
-    like $headers, qr!^X-Another-Header: !m, "We can add other headers and still keep the current header settings";
-    # diag $mech->content;
+    {
+        local $TODO = "Chrome v63.0.84+ doesn't set custom headers..."
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
+        like $headers, qr!^X-Another-Header: !m, "We can add other headers and still keep the current header settings";
+    };
 
     # Now check that the custom headers go away if we uninstall them
     $mech->reset_headers();
