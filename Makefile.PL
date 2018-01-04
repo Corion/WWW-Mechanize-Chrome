@@ -61,7 +61,7 @@ my %module = (
         'Future::HTTP'       => 0.06, # fixes Mojolicious error handling
         'JSON'               => 0,
         'JSON::PP'           => 0, # for JSON::PP::true and JSON::PP::false
-        'Moo'                => 0, # for some hashes-as-objects
+        'Moo'                => 2, # for some hashes-as-objects
 
         'WWW::Mechanize::Plugin::Selector' => 0,
         'HTTP::Response'                   => 0,
