@@ -14,6 +14,7 @@ lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/WWW/Mechanize/Chrome.pm
+lib/WWW/Mechanize/Chrome/Cookbook.pm
 lib/WWW/Mechanize/Chrome/DSL.pm
 lib/WWW/Mechanize/Chrome/Examples.pm
 lib/WWW/Mechanize/Chrome/Troubleshooting.pm
@@ -24,6 +25,7 @@ META.json
 META.yml
 README
 README.mkdn
+runtests.pl
 t/00-load.t
 t/01-chrome-devtools-protocol.t
 t/02-chrome-devtools-tab.t
@@ -32,6 +34,7 @@ t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
 t/49-mech-get-file.t
 t/49-mech-nav.t
+t/49-port-mojo.t
 t/49-port.t
 t/50-click.html
 t/50-follow-link.t
@@ -66,7 +69,9 @@ t/56-render-content.t
 t/58-alert.html
 t/58-alert.t
 t/60-mech-custom-headers.t
+t/61-mech-download.t
 t/61-screencast.t
+t/62-networkstatus.t
 t/70-mech-png.t
 t/75-classnames.t
 t/helper.pm

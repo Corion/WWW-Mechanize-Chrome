@@ -3,6 +3,7 @@ maint
 ^tags$
 .last_cover_stats
 .travis.yml
+.appveyor.yml
 Makefile$
 ^blib
 ^pm_to_blib
