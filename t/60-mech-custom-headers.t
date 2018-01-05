@@ -41,6 +41,12 @@ my $server = Test::HTTP::LocalServer->spawn(
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub {
 
+    # See https://bugs.chromium.org/p/chromium/issues/detail?id=795336
+    #     https://bugs.chromium.org/p/chromium/issues/detail?id=767683
+    # for the gory details on when things stopped working
+    # Chrome 63 and Chrome 64 are broken but Chrome 65 sends custom headers
+    # again, but does not allow to update the Referer: header
+
     my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
