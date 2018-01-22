@@ -33,31 +33,35 @@ The setup for Twiggy is as follows:
 
   use Twiggy::Server;
   use File::Temp 'tempdir';
-  
+
   my $port = 5099;
   my $server = Twiggy::Server->new(
       host => '127.0.0.1',
       port => $port,
   );
-  
+
   # Dancer specific parts
   $ENV{DANCER_APPHANDLER} = 'Dancer::Handler::PSGI';
   my $handler = Dancer::Handler->get_handler();
   Dancer::_load_app('App::mykeep');
   my $app = $handler->psgi_app();
-  
+
   # Rest of Twiggy setup
   $server->register_service($app);
-  
+
   # Fudge the config as appropriate for our test
   Dancer::config()->{mykeep}->{notes_dir} = tempdir(
       CLEANUP => 1,
   );
-  
+
   my $mech = WWW::Mechanize::Chrome->new(
   );
   my $res = $mech->get("http://127.0.0.1:$port");
   ok $res->is_success, "We can request the page";
+
+=head1 SEE ALSO
+
+L<Detecting Chrome Headless|http://antoinevastel.github.io/bot%20detection/2018/01/17/detect-chrome-headless-v2.html>
 
 =head1 REPOSITORY
 
