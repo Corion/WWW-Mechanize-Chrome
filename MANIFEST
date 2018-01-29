@@ -8,7 +8,6 @@ examples/javascript.pl
 examples/README
 examples/resource-timing.pl
 examples/url-to-image.pl
-inc/IO/Catch.pm
 lib/Chrome/DevToolsProtocol.pm
 lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
