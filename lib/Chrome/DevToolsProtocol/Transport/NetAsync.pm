@@ -63,8 +63,10 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             $logger->('info',"Connected to $endpoint");
         } );
     })->catch(sub{
-        require Data::Dumper;
-        warn Data::Dumper::Dumper \@_;
+        #require Data::Dumper;
+        #warn "caught";
+        #warn Data::Dumper::Dumper( \@_ );
+        Future->fail( @_ );
     });
 }
 
