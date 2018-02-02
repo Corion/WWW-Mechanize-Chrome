@@ -8,8 +8,7 @@ use Scalar::Util 'weaken';
 use Mojo::UserAgent;
 use Future::Mojo;
 
-use vars qw<$VERSION>;
-$VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 SYNOPSIS
 
@@ -35,32 +34,35 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
     weaken $handler;
 
-    my $client;
     $got_endpoint->then( sub( $endpoint ) {
-        $client = Mojo::UserAgent->new;
+        $self->{ua} ||= Mojo::UserAgent->new();
+        my $client = $self->{ua};
 
         $logger->('debug',"Connecting to $endpoint");
         die "Got an undefined endpoint" unless defined $endpoint;
         my $res = $self->future;
-        $client->websocket( $endpoint, sub( $ua, $tx ) {
-            $self->{ua} = $ua;
-            # WTF? Sometimes we get an Mojolicious::Transaction::HTTP here?!
+        #$client->on( 'start' => sub { $logger->('trace', "Starting transaction", @_ )});
+        $client->websocket( $endpoint, { 'Sec-WebSocket-Extensions' => 'permessage-deflate' }, sub( $ua, $tx ) {
+            # On error we get an Mojolicious::Transaction::HTTP here
             if( $tx->is_websocket) {
+                $logger->('trace',"Connected to $endpoint");
                 $res->done( $tx );
             } else {
-                $res->fail( "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message});
+                my $msg = "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message};
+                $logger->('trace', $msg);
+                $tx->finish();
+                $res->fail( $msg );
             }
         });
         $res
 
     })->then( sub( $c ) {
-        warn "$c";
-        $logger->( 'trace', sprintf "Connected" );
         my $connection = $c;
         $self->{connection} ||= $connection;
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {
+            warn "Hmm - the Websocket handler went away but I got a message for them" if( ! $handler );
             $handler->on_response( $connection, $message )
         });
 
@@ -76,9 +78,9 @@ sub send( $self, $message ) {
 }
 
 sub close( $self ) {
-    my $c = delete $self->{connection};
-    $c->finish
-        if $c;
+    if( my $c = delete $self->{connection}) {
+        $c->finish
+    };
     delete $self->{ua};
 }
 
@@ -95,12 +97,7 @@ Returns a Future that will be resolved in the number of seconds given.
 =cut
 
 sub sleep( $self, $seconds ) {
-    my $done = $self->future;
-    my $t; $t = Mojo::IOLoop->timer( $seconds => sub {
-        undef $t;
-        $done->done(1);
-    });
-    $done
+    Future::Mojo->new_timer( $seconds )
 }
 
 1;

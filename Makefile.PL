@@ -49,14 +49,19 @@ my %module = (
         'Carp'               => 0,
         'Future'             => 0,
         'Try::Tiny'          => 0,
+        # One day, this will become optional - maybe when we also support IO::Async
         'AnyEvent'           => 0,
         'AnyEvent::Future'   => 0,
         'AnyEvent::WebSocket::Client' => 0,
+
+        # This is a developer-only prerequisite, but oh well
+        'Algorithm::Loops'   => 0,
+
         'Log::Log4perl'      => 0, # configurable logging
-        'Future::HTTP'     => 0.06, # fixes Mojolicious error handling
-        'JSON'             => 0,
+        'Future::HTTP'       => 0.06, # fixes Mojolicious error handling
+        'JSON'               => 0,
         'WWW::Mechanize::Plugin::Selector' => 0,
-        'HTTP::Response'   => 0,
+        'HTTP::Response'                   => 0,
         'HTTP::Headers'                    => 0,
         'Scalar::Util'                     => 0, # we need 'weaken' and 'blessed'
 		'MIME::Base64'                     => 0,
@@ -74,7 +79,7 @@ my %module = (
         'Mojolicious'  => 0, # We want to test both, AnyEvent and Mojolicious
         'Future::Mojo' => 0,
         'Image::Info'  => 0,
-        'Test::HTTP::LocalServer' => 0.59, # we also want some Javascript self-tests
+        'Test::HTTP::LocalServer' => 0.61, # we want the improved IPC
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

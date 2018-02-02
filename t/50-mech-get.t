@@ -6,7 +6,6 @@ use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 use lib './inc', '../inc', '.';
 use Test::HTTP::LocalServer;
-use Mojolicious;
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
@@ -23,7 +22,6 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-    #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,

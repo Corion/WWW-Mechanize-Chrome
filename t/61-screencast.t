@@ -16,8 +16,6 @@ use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
-use Mojo::IOLoop::Delay;
-
 # What instances of Chrome will we try?
 my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
@@ -30,7 +28,6 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-    #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,

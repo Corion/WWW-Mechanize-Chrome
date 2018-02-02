@@ -11,8 +11,8 @@ use AnyEvent;
 use AnyEvent::WebSocket::Client;
 use AnyEvent::Future qw(as_future_cb);
 
-use vars qw<$VERSION @CARP_NOT>;
-$VERSION = '0.07';
+our $VERSION = '0.08';
+our @CARP_NOT = ();
 
 =head1 SYNOPSIS
 
@@ -46,12 +46,13 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     $got_endpoint->then( sub( $endpoint ) {
         die "Got an undefined endpoint" unless defined $endpoint;
 
-        my $res = as_future_cb( sub( $done_cb, $fail_cb ) {
-            $logger->('debug',"Connecting to $endpoint");
-            $client = AnyEvent::WebSocket::Client->new(
-                max_payload_size => 0, # allow unlimited size for messages
-            );
-            $client->connect( $endpoint )->cb( $done_cb );
+        my $res = $self->future;
+        $logger->('debug',"Connecting to $endpoint");
+        $client = AnyEvent::WebSocket::Client->new(
+            max_payload_size => 0, # allow unlimited size for messages
+        );
+        $client->connect( $endpoint )->cb( sub {
+            $res->done( @_ )
         });
         $res
 
@@ -101,14 +102,7 @@ Returns a Future that will be resolved in the number of seconds given.
 =cut
 
 sub sleep( $self, $seconds ) {
-
-    my $timer;
-    as_future_cb( sub( $done_cb, $fail_cb ) {
-        $timer = AnyEvent->timer( after => $seconds, cb => sub {
-            undef $timer;
-            goto &$done_cb
-        })
-    });
+    AnyEvent::Future->new_delay( after => $seconds );
 }
 
 1;

@@ -13,8 +13,8 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 
-use vars qw<$VERSION>;
-$VERSION = '0.07';
+our $VERSION = '0.08';
+our @CARP_NOT;
 
 sub _build_log( $self ) {
     require Log::Log4perl;
@@ -25,10 +25,10 @@ sub new($class, %args) {
     my $self = bless \%args => $class;
 
     # Set up defaults
-    $args{ host } ||= 'localhost';
+    $args{ host } ||= '127.0.0.1';
     $args{ port } ||= 9222;
     $args{ json } ||= JSON->new;
-    $args{ ua } ||= Future::HTTP->new;
+    $args{ ua } ||= Future::HTTP->new();
     $args{ sequence_number } ||= 0;
     $args{ tab } ||= undef;
     $args{ log } ||= $self->_build_log;
@@ -142,8 +142,10 @@ sub connect( $self, %args ) {
 
                 if( ! $tab ) {
                     croak "Couldn't find a tab matching /$args{ tab }/";
+                } elsif( ! $tab->{webSocketDebuggerUrl} ) {
+                    local @CARP_NOT = ('Future',@CARP_NOT);
+                    croak "Found the tab but it didn't have a webSocketDebuggerUrl";
                 };
-
                 $self->{tab} = $tab;
                 $self->log('debug', "Attached to tab $args{tab}", $tab );
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );

@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 3*@instances;
+    plan tests => 4*@instances;
 };
 
 sub new_mech {
@@ -34,22 +34,24 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 3, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
     $mech->get($server->url);
-    
+
     $mech->click_button(number => 1);
     like( $mech->uri, qr/formsubmit/, 'Clicking on button by number' );
     my $last = $mech->uri;
-    
-    diag "Going back";
+
     $mech->back;
     is $mech->uri, $server->url, 'We went back';
-    
-    diag "Going forward";
+
     $mech->forward;
+
     is $mech->uri, $last, 'We went forward';
+
+    $mech->reload;
+    is $mech->uri, $last, 'We reloaded';
 });
 
 undef $server;

@@ -40,6 +40,21 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
     my( $file, $mech ) = splice @_; # so we move references
+    my $version = $mech->chrome_version;
+
+    if( $ENV{WWW_MECHANIZE_CHROME_TRANSPORT}
+        and $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} eq 'Chrome::DevToolsProtocol::Transport::Mojo'
+    ) {
+        SKIP: {
+            skip "Chrome::DevToolsProtocol::Transport::Mojo doesn't support port reuse", 6
+        };
+        return;
+    } elsif( $version =~ /\b(\d+)\b/ and $1 == 61 ) {
+        SKIP: {
+            skip "Chrome v61 doesn't properly handle listing tabs...", 6;
+        };
+        return
+    };
 
     my $app = $mech->driver;
     $mech->{autoclose} = 1;
@@ -60,7 +75,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
 
     SKIP: {
         # In some Chrome versions, Chrome goes away when we closed our websocket?!
-
         diag "Listing tabs";
         my @new_tabs;
         my $ok = eval { @new_tabs = $app->list_tabs()->get; 1 };

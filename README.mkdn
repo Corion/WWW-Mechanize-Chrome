@@ -327,6 +327,17 @@ The history (as per the "back" method) is not altered.
 Returns the HTTP::Response object from the reload, or undef if there's no
 current request.
 
+## `$mech->set_download_directory( $dir )`
+
+    my $downloads = tempdir();
+    $mech->set_download_directory( $downloads );
+
+Enables automatic file downloads and sets the directory where the files
+will be downloaded to. Setting this to undef will disable downloads again.
+
+The directory in `$dir` must be an absolute path, since Chrome does not know
+about the current directory of your Perl script.
+
 ## `$mech->add_header( $name => $value, ... )`
 
     $mech->add_header(

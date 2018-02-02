@@ -1,3 +1,35 @@
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.0 / Win64
+    . Tested against Chromium 64.0.3282.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3293.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
+
+0.09 to be released
+    ! ->js_errors() now only returns error messages
+    ! ->js_console_entries returns all entries in the browser console
+    ! Errors in JS code from ->eval_in_page are now fatal errors in Perl too
+    + The ->reload() method works now
+
+0.08 20171130
+    + Implemented file downloads and their storage for v62 and v63
+	  You can't find out the name a file was saved as, and you can't find out
+	  when the download is done.
+	  Chrome v64 doesn't notify us at all about downloads.
+	! Redid success/failure logic of responses
+	  We try harder to associate a response with something that we actually
+	  initiated.
+	! Selecting different backends now actually works
+    . Tested against Chromium 59.0.3071.115 / Win64
+    . Tested against Chromium 60.0.3110.0 / Win64
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64
+    . Tested against Chromium 63.0.3205.0 / Win64
+    . Tested against Chromium 64.0.3282.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
+
 0.07 20170902
     ! Fix timers firing or not
     ! Implement a workaround for Chrome (not) navigating

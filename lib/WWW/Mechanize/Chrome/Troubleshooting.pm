@@ -22,7 +22,9 @@ updates. This prevents the API from changing under your scripts.
 
 =head2 File downloads don't work
 
-Chrome / Chromium doesn't have an API for that.
+Chrome / Chromium doesn't have an API for determining whether a download
+completed or not. Chrome versions v62 and v63 do have working downloads, but
+Chrome v64 does not send the appropriate API messages.
 
 =head1 REPORTING AN ISSUE
 
@@ -59,3 +61,7 @@ Copyright 2010-2017 by Max Maischein C<corion@cpan.org>.
 This module is released under the same terms as Perl itself.
 
 =cut
+
+package WWW::Mechanize::Chrome::Troubleshooting;
+our $VERSION = '0.08';
+1;
