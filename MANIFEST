@@ -12,6 +12,7 @@ lib/Chrome/DevToolsProtocol.pm
 lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
+lib/Chrome/DevToolsProtocol/Transport/NetAsync.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Chrome/Cookbook.pm
 lib/WWW/Mechanize/Chrome/DSL.pm
