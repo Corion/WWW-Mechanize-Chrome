@@ -10,7 +10,7 @@ use Net::Async::WebSocket::Client;
 Net::Async::WebSocket::Client->VERSION(0.12); # fixes some errors with masked frames
 
 use vars qw<$VERSION>;
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 =head1 NAME
 
