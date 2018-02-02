@@ -8,10 +8,11 @@
     . Tested against Chromium 66.0.3335.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
-0.10 to be released
+0.10 20180202
     + IO::Async / Net::Async support
       This was mostly held back by me not understanding the API of
-      Net::Async::WebSocket::Protocol
+      Net::Async::WebSocket::Protocol. This needs
+	  Net::Async::WebSocket::Client 0.12 (or higher) installed.
     + Workarounds in tests for new, incompatible Chrome behaviour
     . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
     . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)

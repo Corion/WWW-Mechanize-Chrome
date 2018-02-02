@@ -48,8 +48,10 @@
             "Imager" : "0",
             "Imager::File::PNG" : "0",
             "JSON" : "0",
+            "JSON::PP" : "0",
             "Log::Log4perl" : "0",
             "MIME::Base64" : "0",
+            "Moo" : "2",
             "Object::Import" : "0",
             "Scalar::Util" : "0",
             "Try::Tiny" : "0",
@@ -61,9 +63,7 @@
       "test" : {
          "requires" : {
             "Data::Dumper" : "0",
-            "Future::Mojo" : "0",
             "Image::Info" : "0",
-            "Mojolicious" : "0",
             "Test::HTTP::LocalServer" : "0.61",
             "Test::More" : "0"
          }
@@ -77,7 +77,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.09",
+   "version" : "0.10",
    "x_serialization_backend" : "JSON::PP version 2.94",
    "x_static_install" : 1
 }
