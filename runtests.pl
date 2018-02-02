@@ -12,6 +12,7 @@ GetOptions(
     't|test:s' => \my $tests,
     'b|backend:s' => \my $backend,
     'c|continue' => \my $continue,
+    'level|l:s' => \my $log_level,
 );
 my @tests;
 if( $tests ) {
@@ -47,6 +48,9 @@ NestedLoops( [\@instances, \@backends], sub {
     my $vis_instance = $instance;
     $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS} = $instance;
     $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} = $backend;
+    if( $log_level ) {
+        $ENV{TEST_LOG_LEVEL} = $log_level;
+    };
     warn "Testing $vis_instance with $backend";
     #my @launch = $instance
     #           ? (launch => [$instance,'-repl', $port, 'about:blank'])

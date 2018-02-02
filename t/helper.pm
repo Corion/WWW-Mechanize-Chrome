@@ -8,12 +8,24 @@ use File::Spec;
 use Carp qw(croak);
 use File::Temp 'tempdir';
 
+use Log::Log4perl ':easy';
+
 delete $ENV{HTTP_PROXY};
 delete $ENV{HTTPS_PROXY};
 
 sub browser_instances {
     my ($filter) = @_;
     $filter ||= qr/^/;
+
+    # (re)set the log level
+    if (my $lv = $ENV{TEST_LOG_LEVEL}) {
+        if( $lv eq 'trace' ) {
+            Log::Log4perl->easy_init($TRACE)
+        } elsif( $lv eq 'debug' ) {
+            Log::Log4perl->easy_init($DEBUG)
+        }
+    }
+
     my @instances;
     # default Chrome instance
 
