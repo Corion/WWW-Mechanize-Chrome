@@ -68,7 +68,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 }
 
 sub send( $self, $message ) {
-    $self->connection->send_frame( $message )
+    $self->connection->send_text_frame( $message )
 }
 
 sub close( $self ) {

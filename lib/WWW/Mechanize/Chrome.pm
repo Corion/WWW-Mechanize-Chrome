@@ -398,16 +398,12 @@ sub new($class, %options) {
         $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
     $self->new_generation;
 
-    #Future->wait_all(
-    #    $self->driver->send_message('Page.enable'),    # capture DOMLoaded
-    #    $self->driver->send_message('Network.enable'), # capture network
-    #    $self->driver->send_message('Runtime.enable'), # capture console messages
-    #    $self->set_download_directory_future($self->{download_directory}),
-    #)->get;
-    $self->driver->send_message('Page.enable')->get;    # capture DOMLoaded
-    $self->driver->send_message('Network.enable')->get; # capture network
-    $self->driver->send_message('Runtime.enable')->get; # capture console messages
-    $self->set_download_directory_future($self->{download_directory})->get;
+    Future->wait_all(
+        $self->driver->send_message('Page.enable'),    # capture DOMLoaded
+        $self->driver->send_message('Network.enable'), # capture network
+        $self->driver->send_message('Runtime.enable'), # capture console messages
+        $self->set_download_directory_future($self->{download_directory}),
+    )->get;
 
     if( ! exists $options{ tab }) {
         $self->get('about:blank'); # Reset to clean state, also initialize our frame id
