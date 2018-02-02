@@ -1,6 +1,5 @@
 language: perl
 perl:
-  # Selenium::Remote::Driver needs Perl 5.10
   #- "5.6.2"       # ancient
   #- "5.8"
   #- "5.8.4"
@@ -21,6 +20,7 @@ perl:
 env:
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
+  - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
 
 matrix:
   allow_failures:
@@ -56,6 +56,9 @@ before_install:
 install:
   - cpan-install ExtUtils::MakeMaker~6.68
   - cpan-install --deps
+  # For the test matrix
+  - cpan-install Mojolicious Mojo::Future
+  - cpan-install IO::Async Net::Async::WebSocket::Client
   # For author testing/compile testing
   - cpan-install HTML::Display
 
