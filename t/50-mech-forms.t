@@ -19,17 +19,15 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 15*@instances;
+    plan tests => 16*@instances;
 };
 
 sub new_mech {
 use IO::Async::Loop;
-my $l = IO::Async::Loop->new();
     my $m = WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
     );
-    $l->run;
     $m
 };
 
@@ -37,11 +35,12 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 14, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 16, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get_local('50-click.html');
+    my $res = $mech->get_local('50-click.html');
+    ok $res->is_success, "We retrieved 50-click.html";
 
     my $f = $mech->forms;
     is ref $f, 'ARRAY', "We got an arrayref of forms";
