@@ -49,7 +49,9 @@ my %module = (
         'Carp'               => 0,
         'Future'             => 0,
         'Try::Tiny'          => 0,
-        # One day, this will become optional - maybe when we also support IO::Async
+        # This actually is optional
+        # You need one of the following event loops:
+        # AnyEvent, IO::Async, Mojolicious
         'AnyEvent'           => 0,
         'AnyEvent::Future'   => 0,
         'AnyEvent::WebSocket::Client' => 0,
@@ -79,8 +81,6 @@ my %module = (
     TEST_REQUIRES => {
         'Test::More'   => 0,
         'Data::Dumper' => 0,
-        'Mojolicious'  => 0, # We want to test both, AnyEvent and Mojolicious
-        'Future::Mojo' => 0,
         'Image::Info'  => 0,
         'Test::HTTP::LocalServer' => 0.61, # we want the improved IPC
     },
