@@ -27,12 +27,15 @@ sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
+        #headless => 0,
     );
 };
 
 my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
+
+#my $url = 'https://google.de/';
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub {
     my( $file, $mech ) = splice @_; # so we move references
@@ -50,10 +53,22 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
 
     is $mech->uri, $last, 'We went forward';
 
-    $mech->reload;
-    is $mech->uri, $last, 'We reloaded';
+    my $version = $mech->chrome_version;
+    # Chrome v66+ pops up a "do you really want to reload" messagebox
+    # but provides no way of handling it :-(
+    # https://bugs.chromium.org/p/chromium/issues/detail?id=804371
+    #$mech->on_dialog(sub {
+    #    use Data::Dumper;
+    #    warn "***";
+    #    warn Dumper \@_;
+    #    warn "***";
+    #});
+    SKIP: {
+        if( $version =~ /\b(\d+)\b/ and $1 < 66 ) {
+            $mech->reload;
+            is $mech->uri, $last, 'We reloaded';
+        } else {
+            skip "Chrome v66+ doesn't know how to reload without hanging in a dialog box", 1;
+        }
+    };
 });
-
-undef $server;
-
-done_testing;

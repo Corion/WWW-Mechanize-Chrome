@@ -2,16 +2,40 @@
     . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
     . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
-    . Tested against Chromium 63.0.3239.0 / Win64
-    . Tested against Chromium 64.0.3282.0 / Win64 (some tests skipped)
-    . Tested against Chromium 65.0.3293.0 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.132 / Win64
+    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3317.0 / Win64 (some tests skipped)
+    . Tested against Chromium 66.0.3335.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
-0.09 to be released
+0.10 to be released
+    + IO::Async / Net::Async support
+      This was mostly held back by me not understanding the API of
+      Net::Async::WebSocket::Protocol
+    + Workarounds in tests for new, incompatible Chrome behaviour
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.132 / Win64
+    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3317.0 / Win64 (some tests skipped)
+    . Tested against Chromium 66.0.3335.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
+
+0.09 20180104
     ! ->js_errors() now only returns error messages
     ! ->js_console_entries returns all entries in the browser console
     ! Errors in JS code from ->eval_in_page are now fatal errors in Perl too
     + The ->reload() method works now
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.108 / Win64
+    . Tested against Chromium 64.0.3282.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3311.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
 0.08 20171130
     + Implemented file downloads and their storage for v62 and v63

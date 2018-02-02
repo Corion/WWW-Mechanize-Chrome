@@ -16,7 +16,7 @@ use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 our @CARP_NOT;
 
 =head1 NAME
@@ -587,6 +587,63 @@ sub emulateNetworkConditions( $self, %options ) {
     $self->emulateNetworkConditions_future( %options )->get
 }
 
+=head2 C<< $mech->setRequestInterception( @patterns ) >>
+
+  $mech->setRequestInterception(
+      { urlPattern => '*', resourceType => 'Document', interceptionStage => 'Request'},
+      { urlPattern => '*', resourceType => 'Media', interceptionStage => 'Response'},
+  );
+
+Sets the list of request patterns and resource types for which the interception
+callback will be invoked.
+
+=cut
+
+sub setRequestInterception_future( $self, @patterns ) {
+    $self->driver->send_message('Network.setRequestInterception', @patterns)
+}
+
+sub setRequestInterception( $self, @patterns ) {
+    $self->requestInterception_future( @patterns )->get
+}
+
+=head2 C<< $mech->on_request_intercepted( $cb ) >>
+
+  $mech->on_request_intercepted( sub {
+      my( $mech, $info ) = @_;
+      warn $info->{request}->{url};
+      $mech->continueInterceptedRequest_future(
+          interceptionId => $info->{interceptionId}
+      )
+  });
+
+A callback for intercepted requests that match the patterns set up
+via C<setRequestInterception>.
+
+If you return a future from this callback, it will not be discarded but kept in
+a safe place.
+
+=cut
+
+sub on_request_intercepted( $self, $cb ) {
+    if( $cb ) {
+        my $s = $self;
+        weaken $s;
+        $self->{ on_request_intercept_listener } =
+        $self->add_listener('Network.requestIntercepted', sub( $ev ) {
+            if( $s->{ on_request_intercepted }) {
+                $self->log('debug', sprintf 'Request intercepted %s: %s',
+                                    $ev->{params}->{interceptionId},
+                                    $ev->{params}->{request}->{url});
+                $s->{ on_request_intercepted }->( $s, $ev->{params} );
+            };
+        });
+    } else {
+        delete $self->{ on_request_intercept_listener };
+    };
+    $self->{ on_request_intercepted } = $cb;
+}
+
 =head2 C<< $mech->on_dialog( $cb ) >>
 
   $mech->on_dialog( sub {
@@ -773,6 +830,12 @@ sub DESTROY {
     if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
         $_[0]->driver->close_tab({ id => $tab_id })->get();
     };
+
+    #if( $pid and $_[0]->{cached_version} > 65) {
+    #    # Try a graceful shutdown
+    #    $_[0]->driver->send_message('Browser.close' )->get
+    #};
+
     eval {
         # Shut down our websocket connection
         $_[0]->{ driver }->close
@@ -1367,9 +1430,10 @@ Note that currently, we only support one value per header.
 =cut
 
 sub _set_extra_headers( $self, %headers ) {
+    $self->log('debug',"Setting additional headers", \%headers);
     $self->driver->send_message('Network.setExtraHTTPHeaders',
         headers => \%headers
-    )->get
+    )->get;
 };
 
 sub add_header( $self, %headers ) {
@@ -3683,7 +3747,7 @@ use feature 'signatures';
 
 use Scalar::Util 'weaken';
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 has 'attributes' => (
     is => 'lazy',
@@ -3974,7 +4038,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2017 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2018 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 

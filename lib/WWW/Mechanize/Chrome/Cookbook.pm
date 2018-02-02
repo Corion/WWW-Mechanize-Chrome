@@ -4,6 +4,15 @@
 
 WWW::Mechanize::Chrome::Cookbook - Getting things done with WWW::Mechanize::Chrome
 
+=head1 Chrome versions
+
+You can find various current Chrome builds at
+L<https://chromium.woolyss.com/> .
+
+The recommended approach to automation is to save a Chrome / Chromium version
+and disable automatic updates so you can update at a defined point in time
+instead and keep the change to your automation under control.
+
 =head1 Web Application Testing with Chrome
 
 =head2 Rationale
@@ -24,31 +33,35 @@ The setup for Twiggy is as follows:
 
   use Twiggy::Server;
   use File::Temp 'tempdir';
-  
+
   my $port = 5099;
   my $server = Twiggy::Server->new(
       host => '127.0.0.1',
       port => $port,
   );
-  
+
   # Dancer specific parts
   $ENV{DANCER_APPHANDLER} = 'Dancer::Handler::PSGI';
   my $handler = Dancer::Handler->get_handler();
   Dancer::_load_app('App::mykeep');
   my $app = $handler->psgi_app();
-  
+
   # Rest of Twiggy setup
   $server->register_service($app);
-  
+
   # Fudge the config as appropriate for our test
   Dancer::config()->{mykeep}->{notes_dir} = tempdir(
       CLEANUP => 1,
   );
-  
+
   my $mech = WWW::Mechanize::Chrome->new(
   );
   my $res = $mech->get("http://127.0.0.1:$port");
   ok $res->is_success, "We can request the page";
+
+=head1 SEE ALSO
+
+L<Detecting Chrome Headless|http://antoinevastel.github.io/bot%20detection/2018/01/17/detect-chrome-headless-v2.html>
 
 =head1 REPOSITORY
 
@@ -71,7 +84,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2017 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2018 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
@@ -80,5 +93,5 @@ This module is released under the same terms as Perl itself.
 =cut
 
 package WWW::Mechanize::Chrome::Cookbook;
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 1;
