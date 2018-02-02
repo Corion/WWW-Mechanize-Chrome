@@ -11,7 +11,6 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-#Log::Log4perl->easy_init($DEBUG);  # Set priority of root logger to ERROR
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
@@ -31,7 +30,6 @@ sub new_mech {
     if( ! keys %args ) {
         %args = @_;
     };
-    #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         %args,
@@ -147,7 +145,7 @@ HTML
             autodie => 1,
             tab => qr/\Q$magic/,
             reuse => 1,
-        %args,
+            %args,
         );
         1;
     };
