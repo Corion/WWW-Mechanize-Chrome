@@ -190,6 +190,10 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--no-first-run";
     };
 
+    if( ! exists $options->{disable_prompt_on_repost}) {
+        push @{ $options->{ launch_arg }}, "--disable-prompt-on-repost";
+    };
+
     push @{ $options->{ launch_arg }}, "--headless"
         if $options->{ headless };
     push @{ $options->{ launch_arg }}, "--disable-gpu"; # temporarily needed for now

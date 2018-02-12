@@ -8,6 +8,16 @@
     . Tested against Chromium 66.0.3346.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
+0.11 tbd
+    + Support ->reload on Chrome v66+ by adding --disable-prompt-on-repost
+      This globally disables the prompting on repost for the process. If you
+      need to test for these prompts, add
+        disable_prompt_on_repost => 0
+      to the options for the WWW::Mechanize::Chrome object. To my knowledge,
+      there is no way to programmatically find whether Chrome is prompting for
+      a repost or not. See also
+          https://bugs.chromium.org/p/chromium/issues/detail?id=804371
+
 0.10 20180202
     + IO::Async / Net::Async support
       This was mostly held back by me not understanding the API of
