@@ -102,6 +102,7 @@ Interesting parameters might be
     '--disable-prompt-on-repost',
     '--disable-sync',
     '--disable-web-resources',
+    '--disable-save-password-bubble'
 
     '--disable-default-apps',
     '--disable-infobars',

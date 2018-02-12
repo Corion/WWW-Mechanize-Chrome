@@ -82,6 +82,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
         '--disable-prompt-on-repost',
         '--disable-sync',
         '--disable-web-resources',
+        '--disable-save-password-bubble'
 
         '--disable-default-apps',
         '--disable-infobars',
