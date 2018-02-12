@@ -55,8 +55,10 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
 
     my $version = $mech->chrome_version;
     # Chrome v66+ pops up a "do you really want to reload" messagebox
-    # but provides no way of handling it :-(
+    # but provides no way of handling it in the API :-(
     # https://bugs.chromium.org/p/chromium/issues/detail?id=804371
+    # This is the reason we blindly add --disable-prompt-on-repost to
+    # the command line
     #$mech->on_dialog(sub {
     #    use Data::Dumper;
     #    warn "***";
@@ -64,11 +66,11 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
     #    warn "***";
     #});
     SKIP: {
-        if( $version =~ /\b(\d+)\b/ and $1 < 66 ) {
+        #if( $version =~ /\b(\d+)\b/ and $1 < 66 ) {
             $mech->reload;
             is $mech->uri, $last, 'We reloaded';
-        } else {
-            skip "Chrome v66+ doesn't know how to reload without hanging in a dialog box", 1;
-        }
+        #} else {
+        #    skip "Chrome v66+ doesn't know how to reload without hanging in a dialog box", 1;
+        #}
     };
 });
