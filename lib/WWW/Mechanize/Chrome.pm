@@ -1133,6 +1133,23 @@ sub httpRequestFromChromeRequest( $self, $event ) {
     );
 };
 
+sub getRequestPostData( $self, $requestId ) {
+    $self->log('debug', "Fetching request POST body for $requestId");
+    weaken( my $s = $self );
+    return
+        $self->driver->send_message('Network.getRequestPostData', requestId => $requestId)
+        ->then(sub {
+        $s->log('trace', "Have POST body", @_);
+        my ($body_obj) = @_;
+
+        my $body = $body_obj->{postData};
+        # WTF? The documentation says the body is base64 encoded, but
+        # experimentation shows it isn't, at least for JSON content :-/
+        #$body = decode_base64( $body );
+        Future->done( $body )
+    });
+}
+
 sub getResponseBody( $self, $requestId ) {
     $self->log('debug', "Fetching response body for $requestId");
     my $s = $self;
