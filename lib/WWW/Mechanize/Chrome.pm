@@ -331,12 +331,13 @@ sub new($class, %options) {
     $options{start_url} = 'about:blank'
         unless exists $options{start_url};
 
-    unless ( defined $options{ port } ) {
-        # Find free port
-        $options{ port } = $self->_find_free_port( 9222 );
-    }
-
     unless ($options{pid} or $options{reuse}) {
+
+        unless ( defined $options{ port } ) {
+            # Find free port for Chrome to listen on
+            $options{ port } = $self->_find_free_port( 9222 );
+        };
+
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
         $self->{pid} = $self->spawn_child( $host, @cmd );
@@ -344,7 +345,11 @@ sub new($class, %options) {
 
         # Just to give Chrome time to start up, make sure it accepts connections
         $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
-    }
+    } else {
+
+        # Assume some defaults for the already running Chrome executable
+        $options{ port } //= 9222;
+    };
 
     if( $options{ tab } and $options{ tab } eq 'current' ) {
         $options{ tab } = 0; # use tab at index 0
