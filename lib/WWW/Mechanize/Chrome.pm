@@ -380,9 +380,12 @@ sub new($class, %options) {
     $self->driver->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
-    )->catch( sub($_err) {
-        $err = $_err;
-        Future->done( $err );
+    )->catch( sub(@args) {
+        $err = $args[0];
+        if( ref $args[1] eq 'HASH') {
+            $err .= $args[1]->{Reason};
+        };
+        Future->done( @args );
     })->get;
 
     # if Chrome started, but so slow or unresponsive that we cannot connect
