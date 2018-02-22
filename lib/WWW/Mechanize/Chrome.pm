@@ -3865,6 +3865,14 @@ sub get_attribute( $self, $attribute ) {
         $html =~ s!\A<[^>]+>!!;
         $html =~ s!<[^>]+>\z!!;
         return $html
+
+    } elsif( $attribute eq 'outerHTML' ) {
+        my $nid = $self->_nodeId();
+        my $html = $nid->then(sub( $nodeId ) {
+            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+        })->get()->{outerHTML};
+
+        return $html
     } else {
         return $self->attributes->{ $attribute }
     }
