@@ -727,7 +727,7 @@ to count the number of matched elements, as it will otherwise emit a warning
 for each usage in scalar context without any of the above restricting options.
 - `any` - no error is raised, no matter if an item is found or not.
 
-Returns the matched results.
+Returns the matched results as [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW::Mechanize::Chrome::Node) objects.
 
 You can pass in a list of queries as an array reference for the first parameter.
 The result will then be the list of all elements matching any of the queries.
@@ -1222,15 +1222,14 @@ If your executable has a different name than `chrome-browser` or
 `CHROME_BIN` to the absolute path.
 
 If you have Chrome already running, it must have been started with the
-`<--remote-debugging-port=9222`> option to enable the developer console. You
-may want to set up a dedicated and version pinned version of Chrome for your
+`<--remote-debugging-port=9222`> option to enable access to the developer API.
+You may want to set up a dedicated and version pinned version of Chrome for your
 automation.
 
-The test suite is apt to disturb your display when a locally running
-chrome browser gets animated. On unixish systems you can avoid this
-kind of disturbance by (1) not running any chrome binary and (2) start
-a separate display with Xvfb and (3) set the DISPLAY variable
-accordingly. E.g.:
+The test suite is apt to disturb your display when a locally running chrome
+browser gets animated. On unixish systems you can avoid this kind of disturbance
+by (1) not running any chrome binary and (2) start a separate display with Xvfb
+and (3) set the DISPLAY variable accordingly. E.g.:
 
     Xvfb :121 &
     DISPLAY=:121 CHROME_BIN=/usr/bin/google-chrome-stable make test
@@ -1242,6 +1241,7 @@ DevTools homepage
 - [https://github.com/GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) - Google Lighthouse, the main
 client of the Chrome API
 - [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
+- [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW::Mechanize::Chrome::Node) - objects representing HTML in Chrome
 - [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
 automating Firefox
 - [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS) - a similar module without a visible application
