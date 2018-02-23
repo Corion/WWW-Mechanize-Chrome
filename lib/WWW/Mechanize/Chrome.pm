@@ -12,6 +12,7 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
+use WWW::Mechanize::Chrome::Node;
 use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
@@ -2356,7 +2357,7 @@ C<< any >> - no error is raised, no matter if an item is found or not.
 
 =back
 
-Returns the matched results.
+Returns the matched results as L<WWW::Mechanize::Chrome::Node> objects.
 
 You can pass in a list of queries as an array reference for the first parameter.
 The result will then be the list of all elements matching any of the queries.
@@ -3768,126 +3769,6 @@ sub sleep( $self, $seconds ) {
     $self->driver->sleep( $seconds )->get;
 }
 
-package WWW::Mechanize::Chrome::Node;
-use strict;
-use Moo 2;
-use Filter::signatures;
-no warnings 'experimental::signatures';
-use feature 'signatures';
-
-use Scalar::Util 'weaken';
-
-our $VERSION = '0.10';
-
-has 'attributes' => (
-    is => 'lazy',
-    default => sub { {} },
-);
-
-has 'nodeName' => (
-    is => 'ro',
-);
-
-has 'localName' => (
-    is => 'ro',
-);
-
-has 'backendNodeId' => (
-    is => 'ro',
-);
-
-has 'objectId' => (
-    is => 'lazy',
-    default => sub( $self ) {
-        my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => $self->nodeId)->get;
-        $obj->{object}->{objectId}
-    },
-);
-
-has 'driver' => (
-    is => 'ro',
-);
-
-# The generation from when our ->nodeId was valid
-has '_generation' => (
-    is => 'rw',
-);
-
-has 'mech' => (
-    is => 'ro',
-    weak_ref => 1,
-);
-
-sub _fetchNodeId($self) {
-    $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
-        Future->done( $d->{nodeId} );
-    });
-}
-
-sub _nodeId($self) {
-    my $nid = $self->{nodeId};
-    my $generation = $self->mech->_generation;
-    if( !$nid or ( $self->_generation and $self->_generation != $generation )) {
-        # Re-resolve, and hopefully we still have our objectId
-        $nid = $self->_fetchNodeId();
-        $self->_generation( $generation );
-    } else {
-        $nid = Future->done( $nid );
-    }
-    $nid;
-}
-
-sub nodeId($self) {
-    $self->_nodeId()->get;
-}
-
-sub get_attribute( $self, $attribute ) {
-    my $s = $self;
-    weaken $s;
-    if( $attribute eq 'innerText' ) {
-        my $nid = $self->_nodeId();
-        my $html = $nid->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->get()->{outerHTML};
-
-        # Strip first and last tag in a not so elegant way
-        $html =~ s!\A<[^>]+>!!;
-        $html =~ s!<[^>]+>\z!!;
-        return $html
-
-    } elsif( $attribute eq 'innerHTML' ) {
-        my $nid = $self->_nodeId();
-        my $html = $nid->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->get()->{outerHTML};
-
-        # Strip first and last tag in a not so elegant way
-        $html =~ s!\A<[^>]+>!!;
-        $html =~ s!<[^>]+>\z!!;
-        return $html
-
-    } elsif( $attribute eq 'outerHTML' ) {
-        my $nid = $self->_nodeId();
-        my $html = $nid->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->get()->{outerHTML};
-
-        return $html
-    } else {
-        return $self->attributes->{ $attribute }
-    }
-}
-
-sub get_tag_name( $self ) {
-    my $tag = $self->nodeName;
-    $tag =~ s!\..*!!; # strip away the eventual classname
-    $tag
-}
-
-sub get_text( $self ) {
-    $self->get_attribute('innerText')
-}
-
 1;
 
 =head1 INCOMPATIBILITIES WITH WWW::Mechanize
@@ -4032,6 +3913,10 @@ client of the Chrome API
 =item *
 
 L<WWW::Mechanize> - the module whose API grandfathered this module
+
+=item *
+
+L<WWW::Mechanize::Chrome::Node> - objects representing HTML in Chrome
 
 =item *
 
