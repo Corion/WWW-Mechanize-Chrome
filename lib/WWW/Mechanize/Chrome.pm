@@ -3174,7 +3174,7 @@ sub get_set_value {
                     $self->driver->send_message(
                         'Runtime.callFunctionOn',
                         objectId => $id,
-                        functionDeclaration => q|
+                        functionDeclaration => <<'JS',
 function(newValue) {
   var i, j;
   if (this.multiple == true) {
@@ -3189,7 +3189,8 @@ function(newValue) {
       }
     }
   }
-}|,
+}
+JS
                         arguments => [{ value => $value }],
                     )->get;
                 }
@@ -3212,7 +3213,7 @@ function(newValue) {
             my $arr = $self->driver->send_message(
                     'Runtime.callFunctionOn',
                     objectId => $id,
-                    functionDeclaration => '
+                    functionDeclaration => <<'JS',
 function() {
   var i;
   var arr = [];
@@ -3222,7 +3223,8 @@ function() {
     }
   }
   return arr;
-}',
+}
+JS
                     arguments => [],
                     returnByValue => JSON::PP::true)->get->{result};
 
