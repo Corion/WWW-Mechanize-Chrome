@@ -568,7 +568,7 @@ sub allow {
 
     my @await;
     if( exists $options{ javascript } ) {
-        my $disabled = !$options{ javascript } ? JSON::true : JSON::false;
+        my $disabled = !$options{ javascript } ? JSON::PP::true : JSON::PP::false;
         push @await,
             $self->driver->send_message('Emulation.setScriptExecutionDisabled', value => $disabled );
     };
@@ -700,7 +700,7 @@ Closes the current Javascript dialog. Depending on
 =cut
 
 sub handle_dialog( $self, $accept, $prompt = undef ) {
-    my $v = $accept ? JSON::true : JSON::false;
+    my $v = $accept ? JSON::PP::true : JSON::PP::false;
     $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
     my $f;
     $f = $self->driver->send_message(
@@ -3224,7 +3224,7 @@ function() {
   return arr;
 }',
                     arguments => [],
-                    returnByValue => JSON::true)->get->{result};
+                    returnByValue => JSON::PP::true)->get->{result};
 
             my @values = @{$arr->{value}};
             if (wantarray) {
@@ -3563,7 +3563,7 @@ towards rendering HTML.
 
 sub element_coordinates {
     my ($self, $element) = @_;
-    my $cliprect = $self->driver->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true)->get->{result}->{value};
+    my $cliprect = $self->driver->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::PP::true)->get->{result}->{value};
     function() {
         var r = this.getBoundingClientRect();
         return {
