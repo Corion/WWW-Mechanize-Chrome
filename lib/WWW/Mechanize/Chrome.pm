@@ -3889,15 +3889,14 @@ C<chrome.exe> or is not in your path, then set the environment variable
 C<CHROME_BIN> to the absolute path.
 
 If you have Chrome already running, it must have been started with the
-C<<--remote-debugging-port=9222>> option to enable the developer console. You
-may want to set up a dedicated and version pinned version of Chrome for your
+C<<--remote-debugging-port=9222>> option to enable access to the developer API.
+You may want to set up a dedicated and version pinned version of Chrome for your
 automation.
 
-The test suite is apt to disturb your display when a locally running
-chrome browser gets animated. On unixish systems you can avoid this
-kind of disturbance by (1) not running any chrome binary and (2) start
-a separate display with Xvfb and (3) set the DISPLAY variable
-accordingly. E.g.:
+The test suite is apt to disturb your display when a locally running chrome
+browser gets animated. On unixish systems you can avoid this kind of disturbance
+by (1) not running any chrome binary and (2) start a separate display with Xvfb
+and (3) set the DISPLAY variable accordingly. E.g.:
 
   Xvfb :121 &
   DISPLAY=:121 CHROME_BIN=/usr/bin/google-chrome-stable make test
