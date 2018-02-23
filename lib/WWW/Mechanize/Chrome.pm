@@ -3195,7 +3195,11 @@ JS
                     )->get;
                 }
             } elsif( 'content' eq $method ) {
-                $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function(newValue) { this.innerHTML = newValue }', arguments => [{ value => $value }])->get;
+                $self->driver->send_message('Runtime.callFunctionOn',
+                    objectId => $id,
+                    functionDeclaration => 'function(newValue) { this.innerHTML = newValue }',
+                    arguments => [{ value => $value }]
+                )->get;
             } else {
                 die "Don't know how to set the value for node '$tag', sorry";
             };
