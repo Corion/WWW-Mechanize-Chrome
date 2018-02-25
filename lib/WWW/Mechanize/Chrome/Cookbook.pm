@@ -63,6 +63,10 @@ The setup for Twiggy is as follows:
 
 L<Detecting Chrome Headless|http://antoinevastel.github.io/bot%20detection/2018/01/17/detect-chrome-headless-v2.html>
 
+L<Making Chrome Headless Undetectable|https://intoli.com/blog/making-chrome-headless-undetectable/>
+
+L<Chrome Headless Detection|https://github.com/paulirish/headless-cat-n-mouse>
+
 =head1 REPOSITORY
 
 The public repository of this module is
