@@ -412,11 +412,19 @@ sub new($class, %options) {
         $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
     $self->new_generation;
 
-    Future->wait_all(
+    my @setup = (
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
         $self->driver->send_message('Network.enable'), # capture network
         $self->driver->send_message('Runtime.enable'), # capture console messages
         $self->set_download_directory_future($self->{download_directory}),
+    );
+
+    if( my $agent = delete $options{ user_agent }) {
+        push @setup, $self->agent_async( $agent );
+    };
+
+    Future->wait_all(
+        @setup,
     )->get;
 
     if( ! exists $options{ tab }) {
@@ -826,9 +834,13 @@ sub eval_in_chrome {
     croak "Can't call eval_in_chrome";
 };
 
+sub agent_async( $self, $ua ) {
+    $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )
+}
+
 sub agent( $self, $ua ) {
     if( $ua ) {
-        $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )->get
+        $self->agent_async( $ua )->get;
     };
 
     $self->chrome_version_info->{"User-Agent"}
