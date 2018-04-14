@@ -1266,6 +1266,11 @@ At The Perl Conference 2017 in Amsterdam, I also presented a talk, see
 The slides for the English presentation at TPCiA 2017 are at
 [https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html](https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html).
 
+At the London Perl Workshop 2017 in London, I also presented a talk, see
+[Youtube](https://www.youtube.com/watch?v=V3WeO-iVkAc) . The slides for
+that talk are
+[here](https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.html).
+
 # BUG TRACKER
 
 Please report bugs in this module via the RT CPAN bug queue at
