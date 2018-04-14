@@ -4,8 +4,9 @@
     . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
     . Tested against Chromium 63.0.3239.132 / Win64
     . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
-    . Tested against Chromium 65.0.3317.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
     . Tested against Chromium 66.0.3346.0 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
     . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
 0.11 20180414
@@ -28,6 +29,16 @@
 	  These fixes might have unwanted side-effects for other versions of Chrome
 	  and other protocols, but the test suite doesn't show any of them. If this
 	  change breaks your workflow, please submit a (failing) test case.
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.132 / Win64
+    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
+    . Tested against Chromium 66.0.3346.0 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
 
 0.10 20180202
     + IO::Async / Net::Async support
