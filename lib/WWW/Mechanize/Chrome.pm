@@ -666,6 +666,35 @@ sub on_request_intercepted( $self, $cb ) {
     $self->{ on_request_intercepted } = $cb;
 }
 
+=head2 C<< $mech->searchInResponseBody( $id, %options ) >>
+
+  my $request_id = ...;
+  my @matches = $mech->searchInResponseBody(
+      requestId     => $request_id,
+      query         => 'rumpelstiltskin',
+      caseSensitive => JSON::PP::true,
+      isRegex       => JSON::PP::false,
+  );
+  for( @matches ) {
+      print $_->{lineNumber}, ":", $_->{lineContent}, "\n";
+  };
+
+Returns the matches (if any) for a string or regular expression within
+a response.
+
+=cut
+
+sub searchInResponseBody_future( $self, %options ) {
+    $self->driver->send_message('Network.searchInResponseBody', %options)
+    ->then(sub( $res ) {
+        return Future->done( @{ $res->{result}} )
+    })
+}
+
+sub searchInResponseBody( $self, @patterns ) {
+    $self->searchInResponseBody_future( @patterns )->get
+}
+
 =head2 C<< $mech->on_dialog( $cb ) >>
 
   $mech->on_dialog( sub {
