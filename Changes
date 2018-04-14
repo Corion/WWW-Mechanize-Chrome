@@ -17,6 +17,9 @@
       there is no way to programmatically find whether Chrome is prompting for
       a repost or not. See also
           https://bugs.chromium.org/p/chromium/issues/detail?id=804371
+    + Support ->getRequestPostData() to retrieve the data when sending a POST
+	  request
+
 
 0.10 20180202
     + IO::Async / Net::Async support

@@ -1178,7 +1178,17 @@ sub httpRequestFromChromeRequest( $self, $event ) {
     );
 };
 
-sub getRequestPostData( $self, $requestId ) {
+=head2 C<< $mech->getRequestPostData >>
+
+    if( $info->{params}->{response}->{requestHeaders}->{":method"} eq 'POST' ) {
+        $req->{postBody} = $m->getRequestPostData( $id );
+    };
+
+Retrieves the data sent with a POST request
+
+=cut
+
+sub getRequestPostData_future( $self, $requestId ) {
     $self->log('debug', "Fetching request POST body for $requestId");
     weaken( my $s = $self );
     return
@@ -1193,6 +1203,10 @@ sub getRequestPostData( $self, $requestId ) {
         #$body = decode_base64( $body );
         Future->done( $body )
     });
+}
+
+sub getRequestPostData( $self, $requestId ) {
+    $self->getRequestPostData_future( $requestId )->get
 }
 
 sub getResponseBody( $self, $requestId ) {
