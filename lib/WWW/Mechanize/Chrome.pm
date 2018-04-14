@@ -1224,17 +1224,19 @@ sub httpResponseFromChromeResponse( $self, $res ) {
     # The proper way might be to return a proxy object...
     my $requestId = $res->{params}->{requestId};
 
-    my $full_response_future;
+    if( $requestId ) {
+        my $full_response_future;
 
-    my $s = $self;
-    weaken $s;
-    $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
-        $s->log('debug', "Response body arrived");
-        $response->content( $body );
-        undef $full_response_future;
-        Future->done
-    });
-    #$response->content_ref( \$body );
+        my $s = $self;
+        weaken $s;
+        $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
+            $s->log('debug', "Response body arrived");
+            $response->content( $body );
+            undef $full_response_future;
+            Future->done
+        });
+        #$response->content_ref( \$body );
+    };
     $response
 };
 
