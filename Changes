@@ -19,7 +19,15 @@
           https://bugs.chromium.org/p/chromium/issues/detail?id=804371
     + Support ->getRequestPostData() to retrieve the data when sending a POST
 	  request
-
+    + Support ->searchInResponseBody() to search in a response body without
+	  retrieving the body to Perl space. This doesn't work reliably in my
+	  experience, as Chrome seems to forget response bodies rather quickly.
+    + outerHTML is now a gettable property
+	+ The User-Agent string can be set in the constructor
+	+ Fixes for Chrome v67 when retrieving file:// resources
+	  These fixes might have unwanted side-effects for other versions of Chrome
+	  and other protocols, but the test suite doesn't show any of them. If this
+	  change breaks your workflow, please submit a (failing) test case.
 
 0.10 20180202
     + IO::Async / Net::Async support
