@@ -17,7 +17,7 @@ use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 our @CARP_NOT;
 
 =head1 NAME

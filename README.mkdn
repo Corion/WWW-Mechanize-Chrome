@@ -226,6 +226,22 @@ via `setRequestInterception`.
 If you return a future from this callback, it will not be discarded but kept in
 a safe place.
 
+## `$mech->searchInResponseBody( $id, %options )`
+
+    my $request_id = ...;
+    my @matches = $mech->searchInResponseBody(
+        requestId     => $request_id,
+        query         => 'rumpelstiltskin',
+        caseSensitive => JSON::PP::true,
+        isRegex       => JSON::PP::false,
+    );
+    for( @matches ) {
+        print $_->{lineNumber}, ":", $_->{lineContent}, "\n";
+    };
+
+Returns the matches (if any) for a string or regular expression within
+a response.
+
 ## `$mech->on_dialog( $cb )`
 
     $mech->on_dialog( sub {
@@ -349,6 +365,14 @@ also exist in WWW::Mechanize through a plugin.
 
 **Warning**: Chrome does not handle local files well. Especially
 subframes do not get loaded properly.
+
+## `$mech->getRequestPostData`
+
+    if( $info->{params}->{response}->{requestHeaders}->{":method"} eq 'POST' ) {
+        $req->{postBody} = $m->getRequestPostData( $id );
+    };
+
+Retrieves the data sent with a POST request
 
 ## `$mech->post( $url, %options )`
 
