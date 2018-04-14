@@ -1334,8 +1334,31 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
 
     } elsif ( $res = $events{ 'Page.frameNavigated' }
               and $res->{params}->{frame}->{unreachableUrl}) {
-    #warn "Network.frameNavigated";
+    #warn "Network.frameNavigated (unreachable)";
         $response = $self->httpResponseFromChromeUrlUnreachable( $res );
+        $response->request( $request );
+
+    } elsif ( $res = $events{ 'Page.frameNavigated' }
+              and $res->{params}->{frame}->{url} =~ m!^file://!) {
+    #warn "Network.frameNavigated (file)";
+        # Chrome v67+ doesn't send network events for file:// navigation
+        $response = HTTP::Response->new(
+            200, # is 0 for files?!
+            "OK",
+            HTTP::Headers->new(),
+        );
+        $response->request( $request );
+
+    } elsif ( $res = $events{ 'Page.frameStoppedLoading' }
+              and $res->{params}->{frameId} eq $frameId) {
+    #warn "Network.frameStoppedLoading";
+        # Chrome v67+ doesn't send network events for file:// navigation
+        # so we need to fake it completely
+        $response = HTTP::Response->new(
+            200, # is 0 for files?!
+            "OK",
+            HTTP::Headers->new(),
+        );
         $response->request( $request );
 
     } elsif( $res = $events{ "MechanizeChrome.download" } ) {
