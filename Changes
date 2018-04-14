@@ -25,7 +25,7 @@
     + IO::Async / Net::Async support
       This was mostly held back by me not understanding the API of
       Net::Async::WebSocket::Protocol. This needs
-	  Net::Async::WebSocket::Client 0.12 (or higher) installed.
+      Net::Async::WebSocket::Client 0.12 (or higher) installed.
     + Workarounds in tests for new, incompatible Chrome behaviour
     . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
     . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
@@ -53,13 +53,13 @@
 
 0.08 20171130
     + Implemented file downloads and their storage for v62 and v63
-	  You can't find out the name a file was saved as, and you can't find out
-	  when the download is done.
-	  Chrome v64 doesn't notify us at all about downloads.
-	! Redid success/failure logic of responses
-	  We try harder to associate a response with something that we actually
-	  initiated.
-	! Selecting different backends now actually works
+      You can't find out the name a file was saved as, and you can't find out
+      when the download is done.
+      Chrome v64 doesn't notify us at all about downloads.
+    ! Redid success/failure logic of responses
+      We try harder to associate a response with something that we actually
+      initiated.
+    ! Selecting different backends now actually works
     . Tested against Chromium 59.0.3071.115 / Win64
     . Tested against Chromium 60.0.3110.0 / Win64
     . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
@@ -99,7 +99,7 @@
 
 0.04 20170701
     + Fix maximum websocket message size
-	  This was "randomly" breaking transfers with large assets.
+      This was "randomly" breaking transfers with large assets.
 
 0.03 20170630
     ! The "profile" option now really uses the profile, not the data directory.
