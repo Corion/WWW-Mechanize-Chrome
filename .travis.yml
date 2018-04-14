@@ -57,7 +57,7 @@ install:
   - cpan-install ExtUtils::MakeMaker~6.68
   - cpan-install --deps
   # For the test matrix
-  - cpan-install Mojolicious Mojo::Future
+  - cpan-install Mojolicious Future::Mojo
   - cpan-install IO::Async Net::Async::WebSocket::Client
   # For author testing/compile testing
   - cpan-install HTML::Display
