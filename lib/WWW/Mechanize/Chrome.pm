@@ -994,10 +994,12 @@ sub _collectEvents( $self, @info ) {
 
 sub _fetchFrameId( $self, $ev ) {
     if( $ev->{method} eq 'Page.frameStartedLoading'
-        || $ev->{method} eq 'Page.frameScheduledNavigation' ) {
+        || $ev->{method} eq 'Page.frameScheduledNavigation'
+        || $ev->{method} eq 'Network.requestWillBeSent'
+    ) {
         $self->log('debug', sprintf "Found frame id as %s", $ev->{params}->{frameId});
         return $ev->{params}->{frameId};
-    };
+    }
 };
 
 sub _waitForNavigationEnd( $self, %options ) {
@@ -1025,6 +1027,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     my $scheduled = $self->driver->one_shot(
         'Page.frameScheduledNavigation',
         'Page.frameStartedLoading',
+        'Network.requestWillBeSent',      # trial
         #'Page.frameResized',              # download
         'Inspector.detached',             # Browser (window) was closed by user
     );
