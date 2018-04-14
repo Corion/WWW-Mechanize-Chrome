@@ -3735,7 +3735,7 @@ sub report_js_errors
     ( @{$_->{trace}} ? " at $_->{trace}->[-1]->{file} line $_->{trace}->[-1]->{line}" : '') .
     ( @{$_->{trace}} && $_->{trace}->[-1]->{function} ? " in function $_->{trace}->[-1]->{function}" : '')
     } @errors;
-    Carp::carp("javascript error: @errors") ;
+    Carp::carp("javascript error: @errors") if @errors;
 }
 
 =head1 DEBUGGING METHODS
