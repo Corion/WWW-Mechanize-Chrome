@@ -1293,6 +1293,9 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
     if( ! defined $requestId) {
         $requestId = ''
     };
+    if( ! defined $frameId) {
+        $frameId = ''
+    };
 
     my @events = grep {
         my $this_frame =    (exists $_->{params}->{frameId} && $_->{params}->{frameId})
