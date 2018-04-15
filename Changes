@@ -7,7 +7,7 @@
     . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
     . Tested against Chromium 66.0.3346.0 / Win64 (some tests skipped)
     . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
-    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
+    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
 
 0.11 20180414
     + Support ->reload on Chrome v66+ by adding --disable-prompt-on-repost
@@ -38,7 +38,7 @@
     . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
     . Tested against Chromium 66.0.3346.0 / Win64 (some tests skipped)
     . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
-    . Tested against Chromium 62.0.3202.94 Built on Ubuntu, thanks Travis CI
+    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
 
 0.10 20180202
     + IO::Async / Net::Async support
