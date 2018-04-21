@@ -67,3 +67,5 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
        ok $f, "We found the form in an iframe";
    };
 });
+$server->kill;
+undef $server;

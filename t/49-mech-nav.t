@@ -74,3 +74,5 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
         #}
     };
 });
+$server->kill;
+undef $server;
