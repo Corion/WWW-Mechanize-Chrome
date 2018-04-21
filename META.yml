@@ -6,6 +6,7 @@ build_requires:
   Data::Dumper: '0'
   ExtUtils::MakeMaker: '0'
   Image::Info: '0'
+  Test::Deep: '0'
   Test::HTTP::LocalServer: '0.61'
   Test::More: '0'
 configure_requires:
