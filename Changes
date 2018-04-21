@@ -12,6 +12,17 @@
 0.12 20180421
     . Fix erroneous use of IO::Async::Loop in the tests
       This fixes RT 125156, diagnosed by Slaven Rezic
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.132 / Win64
+    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
+    . Tested against Chromium 66.0.3346.0 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
+
 0.11 20180414
     + Support ->reload on Chrome v66+ by adding --disable-prompt-on-repost
       This globally disables the prompting on repost for the process. If you
