@@ -142,5 +142,5 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     # diag $mech->content;
 });
 
+$server->kill;
 undef $server;
-wait; # gobble up our child process status
