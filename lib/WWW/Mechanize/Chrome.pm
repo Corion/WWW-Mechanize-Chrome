@@ -267,6 +267,7 @@ sub spawn_child_posix( $self, @cmd ) {
     open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
     open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
     exec @cmd;
+    exit 1;
 }
 
 sub spawn_child( $self, $localhost, @cmd ) {
