@@ -23,7 +23,6 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-use IO::Async::Loop;
     my $m = WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,

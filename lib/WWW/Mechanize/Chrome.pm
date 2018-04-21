@@ -17,7 +17,7 @@ use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 our @CARP_NOT;
 
 =head1 NAME
@@ -111,6 +111,8 @@ Interesting parameters might be
     '--disable-default-apps',
     '--disable-web-security',
     '--allow-running-insecure-content',
+
+    '--load-extension'
 
 =item B<profile>
 

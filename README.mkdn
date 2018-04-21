@@ -91,6 +91,8 @@ WWW::Mechanize::Chrome - automate the Chrome browser
         '--disable-web-security',
         '--allow-running-insecure-content',
 
+        '--load-extension'
+
 - **profile**
 
     Profile directory for this session. If not given, Chrome will use your current
