@@ -5,7 +5,7 @@ use File::Basename;
 use WWW::Mechanize::Chrome;
 use Log::Log4perl qw(:easy);
 
-use lib 'inc', '../inc', '.';
+use lib '.';
 use Test::HTTP::LocalServer;
 
 use t::helper;

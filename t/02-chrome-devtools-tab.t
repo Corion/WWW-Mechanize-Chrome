@@ -6,7 +6,7 @@ use Chrome::DevToolsProtocol;
 use WWW::Mechanize::Chrome; # for launching Chrome
 use Log::Log4perl qw(:easy);
 
-use lib 'inc', '../inc', '.';
+use lib '.';
 use t::helper;
 
 #Log::Log4perl->easy_init($DEBUG);  # Set priority of root logger to ERROR

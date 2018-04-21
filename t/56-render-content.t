@@ -2,7 +2,7 @@
 use strict;
 use Test::More;
 use WWW::Mechanize::Chrome;
-use lib 'inc', '../inc', '.';
+use lib '.';
 use File::Temp qw(tempfile);
 use Test::HTTP::LocalServer;
 

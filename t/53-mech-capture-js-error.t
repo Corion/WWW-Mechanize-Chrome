@@ -8,7 +8,7 @@ use File::Spec;
 use Data::Dumper;
 
 use WWW::Mechanize::Chrome;
-use lib 'inc', '../inc', '.';
+use lib '.';
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;

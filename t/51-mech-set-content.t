@@ -2,7 +2,7 @@
 use strict;
 use Test::More;
 use WWW::Mechanize::Chrome;
-use lib 'inc', '../inc', '.';
+use lib '.';
 use Test::HTTP::LocalServer;
 use Log::Log4perl qw(:easy);
 
