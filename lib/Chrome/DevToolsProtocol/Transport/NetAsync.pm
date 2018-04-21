@@ -53,6 +53,13 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
                 $handler->on_response( $connection, $message )
             },
         );
+
+        # Patch unlimited frame size into the client so we can receive large
+        # buffers. This should become an RT ticket against Net::Async::WebSocket::Client
+        $client->{framebuffer} = Protocol::WebSocket::Frame->new(
+            max_payload_size => undef
+        );
+
         $self->loop->add( $client );
         $self->{connection} ||= $client;
 
@@ -98,3 +105,32 @@ sub sleep( $self, $seconds ) {
 }
 
 1;
+
+=head1 REPOSITORY
+
+The public repository of this module is
+L<https://github.com/Corion/www-mechanize-chrome>.
+
+=head1 SUPPORT
+
+The public support forum of this module is L<https://perlmonks.org/>.
+
+=head1 BUG TRACKER
+
+Please report bugs in this module via the RT CPAN bug queue at
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome>
+or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org|mailto:www-mechanize-Chrome-Bugs@rt.cpan.org>.
+
+=head1 AUTHOR
+
+Max Maischein C<corion@cpan.org>
+
+=head1 COPYRIGHT (c)
+
+Copyright 2010-2018 by Max Maischein C<corion@cpan.org>.
+
+=head1 LICENSE
+
+This module is released under the same terms as Perl itself.
+
+=cut
