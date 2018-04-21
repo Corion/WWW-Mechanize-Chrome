@@ -105,5 +105,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 17, sub
     ok $triggered, "We can submit a form without an onsubmit handler";
 });
 
+$server->kill;
 undef $server;
-wait; # gobble up our child process status
+#wait; # gobble up our child process status
