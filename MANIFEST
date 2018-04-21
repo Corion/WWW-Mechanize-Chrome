@@ -83,6 +83,7 @@ xt/99-compile.t
 xt/99-manifest.t
 xt/99-pod.t
 xt/99-synopsis.t
+xt/99-test-prerequisites.t
 xt/99-todo.t
 xt/99-unix-text.t
 xt/99-versions.t

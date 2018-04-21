@@ -1,7 +1,6 @@
 #!perl -w
 use strict;
 use Test::More;
-use Test::Deep;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
