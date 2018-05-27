@@ -61,8 +61,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
 
         } else {
 
-            $mech->get($server->url);
-
             my ($site,$estatus) = ($server->download('mytest.txt'),200);
             my $res = $mech->get($site);
             isa_ok $res, 'HTTP::Response', "Response";
