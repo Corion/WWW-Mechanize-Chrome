@@ -496,6 +496,10 @@ sub frameId( $self ) {
     $self->{frameId}
 }
 
+sub requestId( $self ) {
+    $self->{requestId}
+}
+
 =head2 C<< $mech->chrome_version >>
 
   print $mech->chrome_version;
