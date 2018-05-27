@@ -8,6 +8,28 @@
     . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
     . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
     . Tested against Chromium 68.0.3417.0 / Win64 (some tests skipped)
+    . Tested against Chromium 69.0.3443.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
+
+0.14 to be determined
+    + The "tab" parameter to ->new() was documented
+    ! The "reuse" parameter to reconnect to an existing Chrome instance is
+      not needed anymore if you pass in a true value for the "tab" parameter.
+    ! Downloads are now detected in a better way on Chrome 66+
+      This needed some general rework in how responses are treated, so please
+      retest your scripts and send me failing tests if a case has now become
+      time-critical.
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.132 / Win64
+    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
+    . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
+    . Tested against Chromium 68.0.3417.0 / Win64 (some tests skipped)
+    . Tested against Chromium 69.0.3443.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
 
 0.13 20180424
