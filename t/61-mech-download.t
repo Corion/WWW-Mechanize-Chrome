@@ -28,7 +28,9 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => 5*@instances;
 };
 
-my $d = tempdir;
+my $d = tempdir( CLEANUP => 1 );
+-d $d or diag "Temp directory '$d' doesn't exist?!: $!";
+
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
