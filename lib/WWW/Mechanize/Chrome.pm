@@ -67,6 +67,15 @@ Specify the port of Chrome to connect to
 
   port => 9222
 
+=item B<tab>
+
+Specify which tab to connect to
+
+  tab => 'current'
+
+If you want to connect to a tab by title, you can pass in a regular expression
+matching that title. If you want to create a new tab, pass in a false value.
+
 =item B<log>
 
 A premade L<Log::Log4perl> object
@@ -335,6 +344,7 @@ sub new($class, %options) {
     $options{start_url} = 'about:blank'
         unless exists $options{start_url};
 
+    $options{ reuse } ||= defined $options{ tab };
     unless ($options{pid} or $options{reuse}) {
 
         unless ( defined $options{ port } ) {

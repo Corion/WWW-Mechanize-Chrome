@@ -129,7 +129,6 @@ HTML
         autodie   => 0,
         autoclose => 0,
         tab       => 'current',
-        reuse     => 1,
         %args,
     );
     $c = $mech->content;
