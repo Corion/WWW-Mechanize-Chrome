@@ -11,7 +11,7 @@
     . Tested against Chromium 69.0.3443.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
 
-0.14 to be determined
+0.14 20180527
     + The "tab" parameter to ->new() was documented
     ! The "reuse" parameter to reconnect to an existing Chrome instance is
       not needed anymore if you pass in a true value for the "tab" parameter.

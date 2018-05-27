@@ -46,6 +46,15 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
         port => 9222
 
+- **tab**
+
+    Specify which tab to connect to
+
+        tab => 'current'
+
+    If you want to connect to a tab by title, you can pass in a regular expression
+    matching that title. If you want to create a new tab, pass in a false value.
+
 - **log**
 
     A premade [Log::Log4perl](https://metacpan.org/pod/Log::Log4perl) object
