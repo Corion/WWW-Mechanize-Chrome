@@ -1943,7 +1943,7 @@ This method is specific to WWW::Mechanize::Chrome.
 sub base {
     my ($self) = @_;
     (my $base) = $self->selector('base');
-    $base = $base->{href}
+    $base = $base->get_attribute('href')
         if $base;
     $base ||= $self->uri;
 };
