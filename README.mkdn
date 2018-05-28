@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://github.com/Corion/WWW-Mechanize-Chrome)
+[![Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
 
 # NAME
 
