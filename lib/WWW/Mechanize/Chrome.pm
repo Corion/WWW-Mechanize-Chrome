@@ -2043,7 +2043,7 @@ sub make_link {
             carp "Unknown link-spec tag '$tag'";
             $url= '';
         } else {
-            $url = $node->{ $link_spec{ $tag }->{url} };
+            $url = $node->get_attribute( $link_spec{ $tag }->{url} );
         };
     };
 
