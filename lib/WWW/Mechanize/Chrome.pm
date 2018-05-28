@@ -2068,11 +2068,20 @@ sub make_link {
             attrs => {},
         });
 
-        $res
+        return $res
     } else {
         ()
     };
 }
+
+sub links {
+    my ($self) = @_;
+    my @links = $self->selector( join ",", sort keys %link_spec);
+    my $base = $self->base;
+    return map {
+        $self->make_link($_,$base)
+    } @links;
+};
 
 =head2 C<< $mech->selector( $css_selector, %options ) >>
 

@@ -90,6 +90,8 @@ my %module = (
         'Data::Dumper' => 0,
         'Image::Info'  => 0,
         'Test::HTTP::LocalServer' => 0.61, # we want the improved IPC
+        'URI'          => 0,
+        'URI::file'    => 0,
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
