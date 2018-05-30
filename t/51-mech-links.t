@@ -30,7 +30,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 8*@instances;
+    plan tests => 7*@instances;
 };
 
 sub new_mech {
@@ -45,7 +45,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
@@ -63,14 +63,24 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
     $mech->get_local('51-mech-links-base.html');
     
     @found_links = $mech->links;
-    is scalar @found_links, 2, 'The two links were found'
-        or diag $_->url for @found_links;
-    my $url = URI->new_abs($found_links[0]->url, $found_links[0]->base);
-    is $url, 'http://somewhere.example/relative',
-        'BASE tags get respected';
-    $url = URI->new_abs($found_links[1]->url, $found_links[1]->base);
-    is $url, 'http://somewhere.example/myiframe',
-        'BASE tags get respected for iframes';
+    SKIP: {
+        my $version = $mech->chrome_version;
+
+        if( $version =~ /\b(\d+)\b/ and $1 < 60 ) {
+            skip "Chrome before v60 recognizes some weird links", 3;
+        } else {
+
+            if( ! is scalar @found_links, 2, 'The two links were found') {
+                diag $_->url for @found_links;
+            };
+            my $url = URI->new_abs($found_links[0]->url, $found_links[0]->base);
+            is $url, 'http://somewhere.example/relative',
+                'BASE tags get respected';
+            $url = URI->new_abs($found_links[1]->url, $found_links[1]->base);
+            is $url, 'http://somewhere.example/myiframe',
+                'BASE tags get respected for iframes';
+        };
+    }
         
     # There is a FRAME tag, but FRAMES are exclusive elements
     # so Firefox ignores it while WWW::Mechanize picks it up
