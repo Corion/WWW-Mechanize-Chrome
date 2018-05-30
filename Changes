@@ -11,7 +11,7 @@
     . Tested against Chromium 69.0.3443.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
 
-0.15 to be released
+0.15 20180530
     . Added ->links() method, pasted from WWW::Mechanize::PhantomJS
       Thanks to Alain Rioux for spotting
 
