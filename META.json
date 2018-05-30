@@ -69,7 +69,9 @@
             "Image::Info" : "0",
             "Test::Deep" : "0",
             "Test::HTTP::LocalServer" : "0.61",
-            "Test::More" : "0"
+            "Test::More" : "0",
+            "URI" : "0",
+            "URI::file" : "0"
          }
       }
    },
@@ -81,7 +83,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.14",
+   "version" : "0.15",
    "x_serialization_backend" : "JSON::PP version 2.94",
    "x_static_install" : 1
 }

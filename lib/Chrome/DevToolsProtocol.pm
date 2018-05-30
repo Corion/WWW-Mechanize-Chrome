@@ -13,7 +13,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 our @CARP_NOT;
 
 sub _build_log( $self ) {
