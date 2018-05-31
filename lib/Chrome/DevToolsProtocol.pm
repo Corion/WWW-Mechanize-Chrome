@@ -406,6 +406,19 @@ sub send_message( $self, $method, %params ) {
     $response
 }
 
+=head2 C<< $chrome->callFunctionOn >>
+
+=cut
+
+sub callFunctionOn( $self, $function, %options ) {
+    $self->send_message('Runtime.callFunctionOn',
+        functionDeclaration => $function,
+        returnByValue => JSON::true,
+        arguments => $options{ arguments },
+        objectId => $options{ objectId },
+    )
+};
+
 =head2 C<< $chrome->evaluate >>
 
 =cut

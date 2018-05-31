@@ -895,9 +895,9 @@ sub clear_js_errors {
     $self->driver->send_message('Runtime.discardConsoleEntries')->get;
 };
 
-=head2 C<< $mech->eval_in_page( $str, @args ) >>
+=head2 C<< $mech->eval_in_page( $str ) >>
 
-=head2 C<< $mech->eval( $str, @args ) >>
+=head2 C<< $mech->eval( $str ) >>
 
   my ($value, $type) = $mech->eval( '2+2' );
 
@@ -913,7 +913,7 @@ This method is special to WWW::Mechanize::Chrome.
 =cut
 
 sub eval_in_page {
-    my ($self,$str,@args) = @_;
+    my ($self,$str) = @_;
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
     local @Chrome::DevToolsProtocol::CARP_NOT
@@ -963,6 +963,49 @@ sub eval_in_chrome {
     my ($self, $code, @args) = @_;
     croak "Can't call eval_in_chrome";
 };
+
+=head2 C<< $mech->callFunctionOn( $function, @arguments ) >>
+
+  my ($value, $type) = $mech->callFunctionOn( 'function(greeting) { alert(greeting)}', 'Hello World' );
+
+Runs the given function with the specified arguments.
+
+This method is special to WWW::Mechanize::Chrome.
+
+=cut
+
+sub callFunctionOn {
+    my ($self,$str, @args) = @_;
+    # Report errors from scope of caller
+    # This feels weirdly backwards here, but oh well:
+    local @Chrome::DevToolsProtocol::CARP_NOT
+        = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
+    local @CARP_NOT
+        = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
+    my $result = $self->driver->callFunctionOn($str, @args)->get;
+
+    if( $result->{error} ) {
+        $self->signal_condition(
+            join "\n", grep { defined $_ }
+                           $result->{error}->{message},
+                           $result->{error}->{data},
+                           $result->{error}->{code}
+        );
+    } elsif( $result->{exceptionDetails} ) {
+        $self->signal_condition(
+            join "\n", grep { defined $_ }
+                           $result->{exceptionDetails}->{text},
+                           $result->{exceptionDetails}->{exception}->{description},
+        );
+    }
+
+    return $result->{result}->{value}, $result->{result}->{type};
+};
+
+{
+    no warnings 'once';
+    *eval = \&eval_in_page;
+}
 
 sub agent_async( $self, $ua ) {
     $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )
