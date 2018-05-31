@@ -173,30 +173,6 @@ also looks in `$ENV{ProgramFiles}` and `$ENV{ProgramFiles(x86)}`.
 This is used to find the default Chrome executable if none was given through
 the `launch_exe` option.
 
-## `$mech->add_listener`
-
-    my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
-        my( $info ) = @_;
-        warn "Loaded URL "
-             . $info->{params}->{response}->{url}
-             . ": "
-             . $info->{params}->{response}->{status};
-        warn "Resource timing: " . Dumper $info->{params}->{response}->{timing};
-    });
-
-Returns a listener object. If that object is discarded, the listener callback
-will be removed.
-
-Calling this method in void context croaks.
-
-To see the browser console live from your Perl script, use the following:
-
-    my $console = $mech->add_listener('Runtime.consoleAPICalled', sub {
-      warn join ", ",
-          map { $_->{value} // $_->{description} }
-          @{ $_[0]->{params}->{args} };
-    });
-
 ## `$mech->chrome_version`
 
     print $mech->chrome_version;
@@ -250,6 +226,30 @@ Allow or disallow execution of Javascript
 
 Sets the list of request patterns and resource types for which the interception
 callback will be invoked.
+
+## `$mech->add_listener`
+
+    my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
+        my( $info ) = @_;
+        warn "Loaded URL "
+             . $info->{params}->{response}->{url}
+             . ": "
+             . $info->{params}->{response}->{status};
+        warn "Resource timing: " . Dumper $info->{params}->{response}->{timing};
+    });
+
+Returns a listener object. If that object is discarded, the listener callback
+will be removed.
+
+Calling this method in void context croaks.
+
+To see the browser console live from your Perl script, use the following:
+
+    my $console = $mech->add_listener('Runtime.consoleAPICalled', sub {
+      warn join ", ",
+          map { $_->{value} // $_->{description} }
+          @{ $_[0]->{params}->{args} };
+    });
 
 ## `$mech->on_request_intercepted( $cb )`
 
@@ -325,9 +325,9 @@ Returns the list of errors in the JEC
 
 Clears all Javascript messages from the console
 
-## `$mech->eval_in_page( $str, @args )`
+## `$mech->eval_in_page( $str )`
 
-## `$mech->eval( $str, @args )`
+## `$mech->eval( $str )`
 
     my ($value, $type) = $mech->eval( '2+2' );
 
@@ -351,6 +351,14 @@ Evaluates Javascript code in the context of Chrome.
 This allows you to modify properties of Chrome.
 
 This is currently not implemented.
+
+## `$mech->callFunctionOn( $function, @arguments )`
+
+    my ($value, $type) = $mech->callFunctionOn( 'function(greeting) { alert(greeting)}', 'Hello World' );
+
+Runs the given function with the specified arguments.
+
+This method is special to WWW::Mechanize::Chrome.
 
 ## `$mech->highlight_node( @nodes )`
 
@@ -1075,6 +1083,77 @@ field name and value pairs. If there is more than one field with the same
 name, the first one found is set. If you want to select which of the
 duplicate field to set, use a value which is an anonymous array which
 has the field value and its number as the 2 elements.
+
+# CONTENT MONITORING METHODS
+
+## `$mech->is_visible( $element )`
+
+## `$mech->is_visible(  %options )`
+
+    if ($mech->is_visible( selector => '#login' )) {
+        print "You can log in now.";
+    };
+
+Returns true if the element is visible, that is, it is
+a member of the DOM and neither it nor its ancestors have
+a CSS `visibility` attribute of `hidden` or
+a `display` attribute of `none`.
+
+You can either pass in a DOM element or a set of key/value
+pairs to search the document for the element you want.
+
+- `xpath` - the XPath query
+- `selector` - the CSS selector
+- `dom` - a DOM node
+
+The remaining options are passed through to either the
+[/$mech->xpath](https://metacpan.org/pod/xpath) or [/$mech->selector](https://metacpan.org/pod/selector) method.
+
+## `$mech->wait_until_invisible( $element )`
+
+## `$mech->wait_until_invisible( %options )`
+
+    $mech->wait_until_invisible( $please_wait );
+
+Waits until an element is not visible anymore.
+
+Takes the same options as ["->is\_visible" in $mech->is\_visible](https://metacpan.org/pod/$mech->is_visible#is_visible).
+
+In addition, the following options are accepted:
+
+- `timeout` - the timeout after which the function will `croak`. To catch
+the condition and handle it in your calling program, use an [eval](https://metacpan.org/pod/eval) block.
+A timeout of `0` means to never time out.
+- `sleep` - the interval in seconds used to [sleep](https://metacpan.org/pod/sleep). Subsecond
+intervals are possible.
+
+Note that when passing in a selector, that selector is requeried
+on every poll instance. So the following query will work as expected:
+
+    xpath => '//*[contains(text(),"stand by")]'
+
+This also means that if your selector query relies on finding
+a changing text, you need to pass the node explicitly instead of
+passing the selector.
+
+## `$mech->wait_until_visible( %options )`
+
+    $mech->wait_until_visible( selector => 'a.download' );
+
+Waits until an query returns a visible element.
+
+Takes the same options as ["->is\_visible" in $mech->is\_visible](https://metacpan.org/pod/$mech->is_visible#is_visible).
+
+In addition, the following options are accepted:
+
+- `timeout` - the timeout after which the function will `croak`. To catch
+the condition and handle it in your calling program, use an [eval](https://metacpan.org/pod/eval) block.
+A timeout of `0` means to never time out.
+- `sleep` - the interval in seconds used to [sleep](https://metacpan.org/pod/sleep). Subsecond
+intervals are possible.
+
+Note that when passing in a selector, that selector is requeried
+on every poll instance. So the following query will work as expected:
 
 # CONTENT RENDERING METHODS
 
