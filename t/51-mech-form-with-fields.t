@@ -61,6 +61,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub 
         ok $f, "We found the form in a frame";
  
         $mech->get($server->local('52-iframeset.html'));
+        $mech->sleep(1); # debug for AppVeyor failures?!
         my $ok = eval {
             $f = $mech->form_with_fields(
                 'baz','bar',
