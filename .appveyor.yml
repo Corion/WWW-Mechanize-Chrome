@@ -3,9 +3,8 @@ cache:
 
 install:
   - if not exist "C:\strawberry" choco install strawberryperl -y
-  - if not exist "%PROGRAMFILES%\Google\Chrome\Application\chrome.exe" choco install googlechrome -y
+  - if not exist "%PROGRAMFILES(x86)%\Google\Chrome\Application\chrome.exe" choco install googlechrome -y
   - choco upgrade googlechrome -y
-  - dir "%PROGRAMFILES%\Google\Chrome\Application\chrome.exe"
   - set PATH=C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
   - cd %APPVEYOR_BUILD_FOLDER%
   - cpanm --quiet --installdeps --with-develop --notest .
