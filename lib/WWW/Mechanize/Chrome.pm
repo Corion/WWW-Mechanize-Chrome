@@ -3682,6 +3682,237 @@ sub do_set_fields {
     }
 };
 
+=head1 CONTENT MONITORING METHODS
+
+=head2 C<< $mech->is_visible( $element ) >>
+
+=head2 C<< $mech->is_visible(  %options ) >>
+
+  if ($mech->is_visible( selector => '#login' )) {
+      print "You can log in now.";
+  };
+
+Returns true if the element is visible, that is, it is
+a member of the DOM and neither it nor its ancestors have
+a CSS C<visibility> attribute of C<hidden> or
+a C<display> attribute of C<none>.
+
+You can either pass in a DOM element or a set of key/value
+pairs to search the document for the element you want.
+
+=over 4
+
+=item *
+
+C<xpath> - the XPath query
+
+=item *
+
+C<selector> - the CSS selector
+
+=item *
+
+C<dom> - a DOM node
+
+=back
+
+The remaining options are passed through to either the
+L<< /$mech->xpath|xpath >> or L<< /$mech->selector|selector >> method.
+
+=cut
+
+sub is_visible ( $self, @ ) {
+    my %options;
+    if (2 == @_) {
+        ($self,$options{dom}) = @_;
+    } else {
+        ($self,%options) = @_;
+    };
+    _default_limiter( 'maybe', \%options );
+    if (! $options{dom}) {
+        $options{dom} = $self->_option_query(%options);
+    };
+    # No element means not visible
+    return
+        unless $options{ dom };
+    #$options{ window } ||= $self->tab->{linkedBrowser}->{contentWindow};
+
+    my $id = $options{ dom }->objectId;
+    my ($val, $type) = $self->callFunctionOn(<<'JS', objectId => $id, arguments => []); #->get;
+    function ()
+    {
+        var obj = this;
+        while (obj) {
+            // No object
+            if (!obj) return false;
+
+            try {
+                if( obj["parentNode"] ) 1;
+            } catch (e) {
+                // Dead object
+                return false
+            };
+            // Descends from document, so we're done
+            if (obj.parentNode === obj.ownerDocument) {
+                return true;
+            };
+            // Not in the DOM
+            if (!obj.parentNode) {
+                return false;
+            };
+            // Direct style check
+            if (obj.style) {
+                if (obj.style.display == 'none') return false;
+                if (obj.style.visibility == 'hidden') return false;
+            };
+
+            if (window.getComputedStyle) {
+                var style = window.getComputedStyle(obj, null);
+                if (style.display == 'none') {
+                    return false; }
+                if (style.visibility == 'hidden') {
+                    return false;
+                };
+            };
+            obj = obj.parentNode;
+        };
+        // The object does not live in the DOM at all
+        return false
+    }
+JS
+    $type eq 'boolean'
+        or die "Don't know how to handle Javascript type '$type'";
+    return $val
+};
+
+=head2 C<< $mech->wait_until_invisible( $element ) >>
+
+=head2 C<< $mech->wait_until_invisible( %options ) >>
+
+  $mech->wait_until_invisible( $please_wait );
+
+Waits until an element is not visible anymore.
+
+Takes the same options as L<< $mech->is_visible/->is_visible >>.
+
+In addition, the following options are accepted:
+
+=over 4
+
+=item *
+
+C<timeout> - the timeout after which the function will C<croak>. To catch
+the condition and handle it in your calling program, use an L<eval> block.
+A timeout of C<0> means to never time out.
+
+=item *
+
+C<sleep> - the interval in seconds used to L<sleep>. Subsecond
+intervals are possible.
+
+=back
+
+Note that when passing in a selector, that selector is requeried
+on every poll instance. So the following query will work as expected:
+
+  xpath => '//*[contains(text(),"stand by")]'
+
+This also means that if your selector query relies on finding
+a changing text, you need to pass the node explicitly instead of
+passing the selector.
+
+=cut
+
+sub wait_until_invisible( $self, %options ) {
+    if (2 == @_) {
+        ($self,$options{dom}) = @_;
+    } else {
+        ($self,%options) = @_;
+    };
+    my $sleep = delete $options{ sleep } || 0.3;
+    my $timeout = delete $options{ timeout } || 0;
+
+    _default_limiter( 'maybe', \%options );
+
+    my $timeout_after;
+    if ($timeout) {
+        $timeout_after = time + $timeout;
+    };
+    my $v;
+    my $node;
+    do {
+        $node = $options{ dom };
+        if (! $node) {
+            $node = $self->_option_query(%options);
+        };
+        return
+            unless $node;
+        $self->sleep( $sleep );
+
+        # If $node goes away due to a page reload, ->is_visible could die:
+        $v = eval { $self->is_visible($node) };
+    } while ( $v
+           and (!$timeout_after or time < $timeout_after ));
+    if ($node and time >= $timeout_after) {
+        croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
+    };
+};
+
+=head2 C<< $mech->wait_until_visible( %options ) >>
+
+  $mech->wait_until_visible( selector => 'a.download' );
+
+Waits until an query returns a visible element.
+
+Takes the same options as L<< $mech->is_visible/->is_visible >>.
+
+In addition, the following options are accepted:
+
+=over 4
+
+=item *
+
+C<timeout> - the timeout after which the function will C<croak>. To catch
+the condition and handle it in your calling program, use an L<eval> block.
+A timeout of C<0> means to never time out.
+
+=item *
+
+C<sleep> - the interval in seconds used to L<sleep>. Subsecond
+intervals are possible.
+
+=back
+
+Note that when passing in a selector, that selector is requeried
+on every poll instance. So the following query will work as expected:
+
+=cut
+
+sub wait_until_visible( $self, %options ) {
+    my $sleep = delete $options{ sleep } || 0.3;
+    my $timeout = delete $options{ timeout } || 0;
+
+    _default_limiter( 'maybe', \%options );
+
+    my $timeout_after;
+    if ($timeout) {
+        $timeout_after = time + $timeout;
+    };
+    do {
+        # If $node goes away due to a page reload, ->is_visible could die:
+        my @nodes =
+            grep { eval { $self->is_visible( dom => $_ ) } }
+            $self->_option_query(%options);
+
+        if( @nodes ) {
+            return @nodes
+        };
+        $self->sleep( $sleep );
+    } while (!$timeout_after or time < $timeout_after );
+    if (time >= $timeout_after) {
+        croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
+    };
+};
 
 =head1 CONTENT RENDERING METHODS
 

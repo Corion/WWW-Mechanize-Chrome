@@ -1,0 +1,23 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<title>65-is_visible_none_to_visible.html</title>
+<script>
+var timer=2;
+
+function start() {
+     var el = document.getElementById('retry');
+     el.style.display='none';
+     window.setTimeout(function () {
+        el.style.display='block';
+     }, timer*1000);
+};
+</script>
+</head>
+<body>
+<p id="before">Text before</p>
+<input id="start" onclick="javascript:start()" type="button" value="start"/>
+<div id="retry" style="display: none;">Please retry now</div>
+<p>Text after</p>
+</body>
+</html>
