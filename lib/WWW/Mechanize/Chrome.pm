@@ -298,7 +298,6 @@ sub find_executable( $class, $program=undef, @search ) {
     my $found;
     for my $path (@search) {
         my $this = File::Spec->catfile( $path, $program );
-        warn $this;
         if( -x $this ) {
             $found = $this;
             last;
