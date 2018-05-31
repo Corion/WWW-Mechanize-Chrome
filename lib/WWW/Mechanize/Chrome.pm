@@ -974,32 +974,44 @@ This method is special to WWW::Mechanize::Chrome.
 
 =cut
 
-sub callFunctionOn {
-    my ($self,$str, @args) = @_;
+sub callFunctionOn_future( $self, $str, %options ) {
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
     local @Chrome::DevToolsProtocol::CARP_NOT
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->driver->callFunctionOn($str, @args)->get;
+    $self->driver->callFunctionOn($str, %options)
+    ->then( sub( $result ) {
 
-    if( $result->{error} ) {
-        $self->signal_condition(
-            join "\n", grep { defined $_ }
-                           $result->{error}->{message},
-                           $result->{error}->{data},
-                           $result->{error}->{code}
-        );
-    } elsif( $result->{exceptionDetails} ) {
-        $self->signal_condition(
-            join "\n", grep { defined $_ }
-                           $result->{exceptionDetails}->{text},
-                           $result->{exceptionDetails}->{exception}->{description},
-        );
-    }
+        if( $result->{error} ) {
+            $self->signal_condition(
+                join "\n", grep { defined $_ }
+                               $result->{error}->{message},
+                               $result->{error}->{data},
+                               $result->{error}->{code}
+            );
+        } elsif( $result->{exceptionDetails} ) {
+            $self->signal_condition(
+                join "\n", grep { defined $_ }
+                               $result->{exceptionDetails}->{text},
+                               $result->{exceptionDetails}->{exception}->{description},
+            );
+        }
 
-    return $result->{result}->{value}, $result->{result}->{type};
+        return Future->done( $result->{result}->{value}, $result->{result}->{type} );
+    })
+};
+
+sub callFunctionOn {
+    my ($self,$str, %options) = @_;
+    # Report errors from scope of caller
+    # This feels weirdly backwards here, but oh well:
+    local @Chrome::DevToolsProtocol::CARP_NOT
+        = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
+    local @CARP_NOT
+        = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
+    $self->callFunctionOn_future($str, %options)->get;
 };
 
 {
@@ -1007,13 +1019,13 @@ sub callFunctionOn {
     *eval = \&eval_in_page;
 }
 
-sub agent_async( $self, $ua ) {
+sub agent_future( $self, $ua ) {
     $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )
 }
 
 sub agent( $self, $ua ) {
     if( $ua ) {
-        $self->agent_async( $ua )->get;
+        $self->agent_future( $ua )->get;
     };
 
     $self->chrome_version_info->{"User-Agent"}

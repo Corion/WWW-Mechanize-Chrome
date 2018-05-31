@@ -416,6 +416,7 @@ sub callFunctionOn( $self, $function, %options ) {
         returnByValue => JSON::true,
         arguments => $options{ arguments },
         objectId => $options{ objectId },
+        %options
     )
 };
 
