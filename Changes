@@ -16,6 +16,9 @@
     + Added ->is_visible, ->wait_until_visible and ->wait_until_invisible
     + Better way to find the system browser by default
       This can be overridden by explicitly specifying the executable to use
+    . Rename ->agent_async() to ->agent_future()
+    . Add ->callFunctionOn_future() and ->callFunctionOn()
+    ! "start_url" now actually gets you the first URL
 
 0.15 20180530
     . Added ->links() method, pasted from WWW::Mechanize::PhantomJS

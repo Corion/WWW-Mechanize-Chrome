@@ -517,15 +517,16 @@ sub new($class, %options) {
     );
 
     if( my $agent = delete $options{ user_agent }) {
-        push @setup, $self->agent_async( $agent );
+        push @setup, $self->agent_future( $agent );
     };
 
     Future->wait_all(
         @setup,
     )->get;
 
-    if( ! exists $options{ tab }) {
-        $self->get('about:blank'); # Reset to clean state, also initialize our frame id
+    # ->get() doesn't have ->get_future() yet
+    if( ! (exists $options{ tab } )) {
+        $self->get($options{ start_url }); # Reset to clean state, also initialize our frame id
     };
 
     $self

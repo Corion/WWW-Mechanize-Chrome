@@ -10,6 +10,7 @@ Makefile$
 ^.*.bak
 ^.*.old
 ^t.*sessions
+^t/.*\.disabled$
 ^cover_db
 ^.*\.log
 ^.*\.swp$
