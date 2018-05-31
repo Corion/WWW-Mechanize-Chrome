@@ -14,6 +14,22 @@
 0.15 20180530
     . Added ->links() method, pasted from WWW::Mechanize::PhantomJS
       Thanks to Alain Rioux for spotting
+    + Add some more command line switches to disable more background behaviour
+      of Chrome by default:
+        background_networking
+        client_side_phishing_detection
+        component_update
+        hang_monitor
+        prompt_on_repost
+        sync
+        web_resources
+        default_apps
+        infobars
+        default_apps
+        popup_blocking
+      You can re-enable this by passing a true value to the option in
+      the constructor
+
 
 0.14 20180527
     + The "tab" parameter to ->new() was documented

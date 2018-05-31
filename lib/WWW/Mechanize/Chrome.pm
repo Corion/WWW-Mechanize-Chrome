@@ -122,6 +122,7 @@ Interesting parameters might be
     '--allow-running-insecure-content',
 
     '--load-extension'
+    '--no-sandbox'
 
 =item B<profile>
 
@@ -158,6 +159,28 @@ A premade L<Chrome::DevToolsProtocol> object.
 
 If set to 1, after each request tests for Javascript errors and warns. Useful
 for testing with C<use warnings qw(fatal)>.
+
+=item B<background_networking>
+
+=item B<client_side_phishing_detection>
+
+=item B<component_update>
+
+=item B<hang_monitor>
+
+=item B<prompt_on_repost>
+
+=item B<sync>
+
+=item B<web_resources>
+
+=item B<default_apps>
+
+=item B<infobars>
+
+=item B<default_apps>
+
+=item B<popup_blocking>
 
 =back
 
@@ -204,6 +227,29 @@ sub build_command_line {
 
     if( ! exists $options->{disable_prompt_on_repost}) {
         push @{ $options->{ launch_arg }}, "--disable-prompt-on-repost";
+    } else {
+        carp "Option 'disable_prompt_on_repost' is deprecated, use prompt_on_repost instead";
+    };
+
+    for my $option (qw(
+        background_networking
+        client_side_phishing_detection
+        component_update
+        hang_monitor
+        prompt_on_repost
+        sync
+        web_resources
+        default_apps
+        infobars
+        default_apps
+        popup_blocking
+    )) {
+        (my $optname = $option) =~ s!_!-!g;
+        if( ! exists $options->{$option}) {
+            push @{ $options->{ launch_arg }}, "--disable-$optname";
+        } elsif( ! (my $value = delete $options->{$option}))  {
+            push @{ $options->{ launch_arg }}, "--disable-$optname";
+        };
     };
 
     push @{ $options->{ launch_arg }}, "--headless"
