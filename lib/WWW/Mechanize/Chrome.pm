@@ -531,40 +531,6 @@ sub new($class, %options) {
     $self
 };
 
-=head2 C<< $mech->add_listener >>
-
-  my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
-      my( $info ) = @_;
-      warn "Loaded URL "
-           . $info->{params}->{response}->{url}
-           . ": "
-           . $info->{params}->{response}->{status};
-      warn "Resource timing: " . Dumper $info->{params}->{response}->{timing};
-  });
-
-Returns a listener object. If that object is discarded, the listener callback
-will be removed.
-
-Calling this method in void context croaks.
-
-To see the browser console live from your Perl script, use the following:
-
-  my $console = $mech->add_listener('Runtime.consoleAPICalled', sub {
-    warn join ", ",
-        map { $_->{value} // $_->{description} }
-        @{ $_[0]->{params}->{args} };
-  });
-
-=cut
-
-sub add_listener( $self, $event, $callback ) {
-    if( ! defined wantarray ) {
-        croak "->add_listener called in void context."
-            . "Please store the result somewhere";
-    };
-    return $self->driver->add_listener( $event, $callback )
-}
-
 sub _handleConsoleAPICall( $self, $msg ) {
     if( $self->{report_js_errors}) {
         my $desc = $msg->{exceptionDetails}->{exception}->{description};
@@ -728,6 +694,40 @@ sub setRequestInterception_future( $self, @patterns ) {
 
 sub setRequestInterception( $self, @patterns ) {
     $self->requestInterception_future( @patterns )->get
+}
+
+=head2 C<< $mech->add_listener >>
+
+  my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
+      my( $info ) = @_;
+      warn "Loaded URL "
+           . $info->{params}->{response}->{url}
+           . ": "
+           . $info->{params}->{response}->{status};
+      warn "Resource timing: " . Dumper $info->{params}->{response}->{timing};
+  });
+
+Returns a listener object. If that object is discarded, the listener callback
+will be removed.
+
+Calling this method in void context croaks.
+
+To see the browser console live from your Perl script, use the following:
+
+  my $console = $mech->add_listener('Runtime.consoleAPICalled', sub {
+    warn join ", ",
+        map { $_->{value} // $_->{description} }
+        @{ $_[0]->{params}->{args} };
+  });
+
+=cut
+
+sub add_listener( $self, $event, $callback ) {
+    if( ! defined wantarray ) {
+        croak "->add_listener called in void context."
+            . "Please store the result somewhere";
+    };
+    return $self->driver->add_listener( $event, $callback )
 }
 
 =head2 C<< $mech->on_request_intercepted( $cb ) >>
