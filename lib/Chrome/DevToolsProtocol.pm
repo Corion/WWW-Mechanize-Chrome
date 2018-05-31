@@ -212,7 +212,10 @@ sub connect( $self, %args ) {
 
 sub close( $self ) {
     if( my $t = $self->transport) {
-        $t->close() if ref $t;
+        if( ref $t ) {
+            undef $self->{transport};
+            $t->close();
+        };
     };
 };
 

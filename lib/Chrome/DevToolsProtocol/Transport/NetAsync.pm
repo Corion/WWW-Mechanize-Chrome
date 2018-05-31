@@ -82,8 +82,9 @@ sub send( $self, $message ) {
 
 sub close( $self ) {
     my $c = delete $self->{connection};
-    $c->finish
-        if $c;
+    if( $c) {
+        $c->close
+    };
     delete $self->{ua};
 }
 

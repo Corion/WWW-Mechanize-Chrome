@@ -956,8 +956,9 @@ sub DESTROY {
 
     eval {
         # Shut down our websocket connection
-        $_[0]->{ driver }->close
-            if $_[0]->{ driver };
+        if( $_[0]->{ driver }) {
+            $_[0]->{ driver }->close
+        };
     };
     delete $_[0]->{ driver };
 
