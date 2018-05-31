@@ -1277,29 +1277,43 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     };
 
     # Kick off the navigation ourselves
-    my $nav = $get_navigation_future->()->get;
-    # We have a race condition to find out whether Chrome navigates or not
-    # so we wait a bit to see if it will navigate in response to our click
-    $self->sleep(0.1); # X XX baad fix
+    my $nav;
+    $get_navigation_future->()
+    ->then( sub {
+        $nav = $_[0];
 
-    my @events;
-    if( $navigated or $options{ navigates }) {
-        #warn "Now collecting the navigation events from the backlog";
-        @events = $does_navigation->get;
-        # Handle all the events, by turning them into a ->response again
-        my $res = $self->httpMessageFromEvents( $self->frameId, \@events, $target_url );
-        $self->update_response( $res );
-    } else {
-        $self->log('trace', "No navigation occurred, not collecting events");
-        $does_navigation->cancel;
-    };
-    $scheduled->cancel;
-    undef $scheduled;
+        # We have a race condition to find out whether Chrome navigates or not
+        # so we wait a bit to see if it will navigate in response to our click
+        $self->sleep_future(0.1); # X XX baad fix
+    })->then( sub {
 
-    # Store our frame id so we know what events to listen for in the future!
-    $self->{frameId} ||= $nav->{frameId};
+        my $f;
+        my @events;
+        if( $navigated or $options{ navigates }) {
+            #warn "Now collecting the navigation events from the backlog";
+            $f = $does_navigation->then( sub {
+                @events = @_;
+                # Handle all the events, by turning them into a ->response again
+                my $res = $self->httpMessageFromEvents( $self->frameId, \@events, $target_url );
+                $self->update_response( $res );
+                $scheduled->cancel;
+                undef $scheduled;
 
-    @events
+                # Store our frame id so we know what events to listen for in the future!
+                $self->{frameId} ||= $nav->{frameId};
+
+                Future->done( @events )
+            })
+        } else {
+            $self->log('trace', "No navigation occurred, not collecting events");
+            $does_navigation->cancel;
+            $f = Future->done(@events);
+            $scheduled->cancel;
+            undef $scheduled;
+        };
+
+        $f
+    })
 }
 
 sub get($self, $url, %options ) {
@@ -1315,7 +1329,8 @@ sub get($self, $url, %options ) {
         $s->driver->send_message(
             'Page.navigate',
             url => "$url"
-    )}, url => "$url", %options, navigates => 1 );
+    )}, url => "$url", %options, navigates => 1 )
+    ->get;
 
     return $self->response;
 };
@@ -1696,7 +1711,8 @@ current request.
 sub reload( $self, %options ) {
     $self->_mightNavigate( sub {
         $self->driver->send_message('Page.reload', %options )
-    }, navigates => 1, %options);
+    }, navigates => 1, %options)
+    ->get;
 }
 
 =head2 C<< $mech->set_download_directory( $dir ) >>
@@ -1892,7 +1908,8 @@ sub back( $self, %options ) {
             my $entry = $history->{entries}->[ $history->{currentIndex}-1 ];
             $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
-    }, navigates => 1, %options);
+    }, navigates => 1, %options)
+    ->get;
 };
 
 =head2 C<< $mech->forward() >>
@@ -1911,7 +1928,8 @@ sub forward( $self, %options ) {
             my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
             $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
-    }, navigates => 1, %options);
+    }, navigates => 1, %options)
+    ->get;
 }
 
 =head2 C<< $mech->stop() >>
@@ -2969,7 +2987,8 @@ sub click {
     my $response =
     $self->_mightNavigate( sub {
         $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
-    }, %options);
+    }, %options)
+    ->get;
 }
 
 # Internal method to run either an XPath, CSS or id query against the DOM
@@ -3564,7 +3583,8 @@ sub submit($self,$dom_form = $self->current_form) {
                 objectId => $dom_form->objectId,
                 functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.__proto__.submit.apply(this) }}'
             );
-        });
+        })
+        ->get;
 
         $self->clear_current_form;
     } else {
@@ -4295,8 +4315,12 @@ screencast frames and to catch up before shutting down the connection.
 
 =cut
 
+sub sleep_future( $self, $seconds ) {
+    $self->driver->sleep( $seconds );
+}
+
 sub sleep( $self, $seconds ) {
-    $self->driver->sleep( $seconds )->get;
+    $self->sleep_future( $seconds )->get;
 }
 
 1;
