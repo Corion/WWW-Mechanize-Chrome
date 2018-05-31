@@ -25,8 +25,8 @@ my %module = (
         "meta-spec" => { version => 2 },
         resources => {
             repository => {
-                web => 'https://github.com/Corion/WWW-Mechanize-Chrome',
-                url => 'git://github.com/Corion/WWW-Mechanize-Chrome.git',
+                web => "https://github.com/Corion/$distbase",
+                url => "git://github.com/Corion/$distbase.git",
                 type => 'git',
             }
         },
@@ -191,7 +191,9 @@ INSTALL
         $parser->parse_from_file($_[0]);
         my $readme_mkdn = <<STATUS . $parser->as_markdown;
 
-[![Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
+[![Travis Build Status](https://travis-ci.org/Corion/$distbase.svg?branch=master)](https://travis-ci.org/Corion/$distbase)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/$distbase?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/$distbase)
+
 
 STATUS
         update_file( 'README.mkdn', $readme_mkdn );
