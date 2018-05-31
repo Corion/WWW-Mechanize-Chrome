@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 1*@instances;
+    plan tests => 2*@instances;
 };
 
 sub new_mech {
@@ -32,17 +32,23 @@ sub new_mech {
 
 use vars '$mech';
 
+my $imported;
+
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
     my( $file, $mymech ) = splice @_; # so we move references
+    $mech = $mymech;
+    undef $mymech;
 
-    use WWW::Mechanize::Chrome::DSL ();
-    Object::Import->import( $mymech );
-    
+    if( ! $imported++ ) {
+        use WWW::Mechanize::Chrome::DSL ();
+        Object::Import->import( \$mech, deref => 1 );
+    };
+
     get_local( '49-mech-get-file.html' );
-    sleep 1;
     is title(), '49-mech-get-file.html', 'We opened the right page';
-    #is ct(), 'text/html', "Content-Type is text/html";
-    diag uri();
+    is ct(), 'text/html', "Content-Type is text/html";
+
+    $mech->DESTROY;
 
     undef $mech;
 });
