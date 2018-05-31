@@ -3,6 +3,7 @@ use strict;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
+use File::Spec;
 use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
@@ -194,12 +195,7 @@ websocket implementation(s) as source of bugs.
 sub build_command_line {
     my( $class, $options )= @_;
 
-    # Chrome.exe on Windows
-    # google-chrome on Linux (etc?)
-    my $default_exe = $^O =~ /mswin/i ? 'chrome'
-                                      : 'google-chrome';
-
-    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || $default_exe;
+    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || $class->find_executable();
     $options->{ launch_arg } ||= [];
 
     $options->{port} ||= 9222
@@ -267,6 +263,49 @@ sub build_command_line {
 
     @cmd
 };
+
+=head2 C<< WWW::Mechanize::Chrome->find_executable >>
+
+    my $chrome = WWW::Mechanize::Chrome->find_executable();
+
+    my $chrome = WWW::Mechanize::Chrome->find_executable(
+        'chromium.exe',
+        '.\\my-chrome-versions\\',
+    );
+
+Finds the first Chrome executable in the path (C<$ENV{PATH}>). For Windows, it
+also looks in C<< $ENV{ProgramFiles} >> and C<< $ENV{ProgramFiles(x86)} >>.
+
+This is used to find the default Chrome executable if none was given through
+the C<launch_exe> option.
+
+=cut
+
+sub find_executable( $class, $program=undef, @search ) {
+    $program ||= $^O =~ /mswin/i
+        ? 'chrome.exe'
+        : 'google-chrome';
+
+    push @search, File::Spec->path();
+
+    if( $^O =~ /MSWin/i ) {
+        push @search,
+            map { "$_\\Google\\Chrome\\Application\\" }
+            grep {defined}
+            ($ENV{'ProgramFiles'}, $ENV{'ProgramFiles(x86)'});
+    };
+
+    my $found;
+    for my $path (@search) {
+        my $this = File::Spec->catfile( $path, $program );
+        warn $this;
+        if( -x $this ) {
+            $found = $this;
+            last;
+        };
+    }
+    return defined $found ? $found : ()
+}
 
 sub _find_free_port( $self, $start ) {
     my $port = $start;

@@ -158,6 +158,21 @@ setting `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` to the transport class.
 This is mostly used for testing but can be useful to exclude the underlying
 websocket implementation(s) as source of bugs.
 
+## `WWW::Mechanize::Chrome->find_executable`
+
+    my $chrome = WWW::Mechanize::Chrome->find_executable();
+
+    my $chrome = WWW::Mechanize::Chrome->find_executable(
+        'chromium.exe',
+        '.\\my-chrome-versions\\',
+    );
+
+Finds the first Chrome executable in the path (`$ENV{PATH}`). For Windows, it
+also looks in `$ENV{ProgramFiles}` and `$ENV{ProgramFiles(x86)}`.
+
+This is used to find the default Chrome executable if none was given through
+the `launch_exe` option.
+
 ## `$mech->add_listener`
 
     my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
