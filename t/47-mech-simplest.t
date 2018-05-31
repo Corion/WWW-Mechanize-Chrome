@@ -8,6 +8,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 my $mech = eval { WWW::Mechanize::Chrome->new( 
     autodie => 0,
     startup_timeout => 2,
+    headless => 1,
 )};
 
 if (! $mech) {
