@@ -7,6 +7,7 @@ use Config '%Config';
 use File::Spec;
 use Carp qw(croak);
 use File::Temp 'tempdir';
+use WWW::Mechanize::Chrome;
 
 use Log::Log4perl ':easy';
 

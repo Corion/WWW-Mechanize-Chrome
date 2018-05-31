@@ -6,11 +6,16 @@
     . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
     . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
-    . Tested against Chromium 67.0.3394.0 / Win64 (some tests skipped)
-    . Tested against Chromium 68.0.3417.0 / Win64 (some tests skipped)
-    . Tested against Chromium 69.0.3443.0 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3396.62 / Win64 (some tests skipped)
+    . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
+    . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
+
+0.16 to be released
+    + Added ->is_visible, ->wait_until_visible and ->wait_until_invisible
+    + Better way to find the system browser by default
+      This can be overridden by explicitly specifying the executable to use
 
 0.15 20180530
     . Added ->links() method, pasted from WWW::Mechanize::PhantomJS
@@ -30,7 +35,6 @@
         popup_blocking
       You can re-enable this by passing a true value to the option in
       the constructor
-
 
 0.14 20180527
     + The "tab" parameter to ->new() was documented
