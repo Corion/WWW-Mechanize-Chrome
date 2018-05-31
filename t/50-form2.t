@@ -10,8 +10,14 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
-#Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
+# (re)set the log level
+if (my $lv = $ENV{TEST_LOG_LEVEL}) {
+    if( $lv eq 'trace' ) {
+        Log::Log4perl->easy_init($TRACE)
+    } elsif( $lv eq 'debug' ) {
+        Log::Log4perl->easy_init($DEBUG)
+    }
+}
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
