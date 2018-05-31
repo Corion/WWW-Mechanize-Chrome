@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 5*@instances;
+    plan tests => 6*@instances;
 };
 
 sub new_mech {
@@ -37,35 +37,40 @@ my $server = Test::HTTP::LocalServer->spawn(
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub {
     my ($browser_instance, $mech) = @_;
-   isa_ok $mech, 'WWW::Mechanize::Chrome';
-
-   $mech->get_local('51-mech-submit.html');
-   my $f = $mech->form_with_fields(
-      'r',
-   );
-   ok $f, "We found the form";
-
-   $mech->get_local('51-mech-submit.html');
-   $f = $mech->form_with_fields(
-      'q','r',
-   );
-   ok $f, "We found the form";
-
-   SKIP: {
-       #skip "Chrome frame support is wonky.", 2;
-
-       $mech->get_local('52-frameset.html');
-       $f = $mech->form_with_fields(
-          'baz','bar',
-       );
-       ok $f, "We found the form in a frame";
-
-       $mech->get($server->local('52-iframeset.html'));
-       $f = $mech->form_with_fields(
-          'baz','bar',
-       );
-       ok $f, "We found the form in an iframe";
-   };
+    isa_ok $mech, 'WWW::Mechanize::Chrome';
+    
+    $mech->get_local('51-mech-submit.html');
+    my $f = $mech->form_with_fields(
+       'r',
+    );
+    ok $f, "We found the form";
+    
+    $mech->get_local('51-mech-submit.html');
+    $f = $mech->form_with_fields(
+       'q','r',
+    );
+    ok $f, "We found the form";
+    
+    SKIP: {
+        #skip "Chrome frame support is wonky.", 2;
+ 
+        $mech->get_local('52-frameset.html');
+        $f = $mech->form_with_fields(
+           'baz','bar',
+        );
+        ok $f, "We found the form in a frame";
+ 
+        $mech->get($server->local('52-iframeset.html'));
+        my $ok = eval {
+            $f = $mech->form_with_fields(
+                'baz','bar',
+            );
+            1;
+        };
+        is $ok, 1, "We didn't crash"
+            or diag $@;
+        ok $f, "We found the form in an iframe";
+    };
 });
 $server->kill;
 undef $server;
