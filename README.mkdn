@@ -1,5 +1,7 @@
 
-[![Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
+[![Travis Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/WWW-Mechanize-Chrome?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/WWW-Mechanize-Chrome)
+
 
 # NAME
 
@@ -101,6 +103,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
         '--allow-running-insecure-content',
 
         '--load-extension'
+        '--no-sandbox'
 
 - **profile**
 
@@ -137,6 +140,18 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     If set to 1, after each request tests for Javascript errors and warns. Useful
     for testing with `use warnings qw(fatal)`.
+
+- **background\_networking**
+- **client\_side\_phishing\_detection**
+- **component\_update**
+- **hang\_monitor**
+- **prompt\_on\_repost**
+- **sync**
+- **web\_resources**
+- **default\_apps**
+- **infobars**
+- **default\_apps**
+- **popup\_blocking**
 
 You can override the class to implement the transport from the outside by
 setting `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` to the transport class.
