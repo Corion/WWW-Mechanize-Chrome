@@ -4036,6 +4036,7 @@ sub fetchResources_future( $self, $save=undef, $seen={} ) {
 
         for my $res (@{ $tree->{resources}}) {
             next if $seen->{ $res->{url} };
+            next if $res->{url} =~ /^data:/;
             my $fetch = $self->getResourceContent_future( $res );
             if( $save ) {
                 $fetch = $fetch->then( $save );
