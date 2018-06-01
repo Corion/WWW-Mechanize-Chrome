@@ -19,7 +19,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 1*@instances;
+    plan tests => 2*@instances;
 };
 
 sub new_mech {
@@ -34,13 +34,18 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     
-    $mech->get('http://corion.net/econsole/');
+    #$mech->get('http://corion.net/econsole/');
+    $mech->get($server->url);
     use Data::Dumper;
-    my @r = $mech->saveResources_future->get();
+    my %r = $mech->saveResources_future(
+    )->get();
+    is_deeply \%r, {
+        $server->url => '',
+    }, "We return a map of the saved files";
 });
 $server->kill;
 undef $server;
