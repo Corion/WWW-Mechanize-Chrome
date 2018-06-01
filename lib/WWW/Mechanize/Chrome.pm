@@ -4022,8 +4022,25 @@ sub getResourceContent_future( $self, $url_or_resource, $frameId=$self->frameId,
     })
 }
 
+# XXX Replace that later with MIME::Detect
+our %extensions = (
+    'image/jpeg' => '.jpg',
+    'image/png'  => '.png',
+    'image/gif'  => '.gif',
+    'text/html'  => '.html',
+    'text/plain'  => '.txt',
+    'text/stylesheet'  => '.css',
+);
+
 # Allow the options to specify whether to filter duplicates here
-sub fetchResources_future( $self, $save=undef, $seen={} ) {
+sub fetchResources_future( $self, %options ) {
+    $options{ save } ||= undef;
+    $options{ seen } ||= {};
+    $options{ names } ||= {};
+    my $seen = $options{ seen };
+    my $names = $options{ names };
+    my $save = $options{ save };
+
     $self->getResourceTree_future
     ->then( sub( $tree ) {
         my @requested;
@@ -4032,11 +4049,30 @@ sub fetchResources_future( $self, $save=undef, $seen={} ) {
         # Or better reuse ->content?!
         # $tree->{frame}
 
-        # Also fetch the ->{childFrames}
-        push @requested,
-            map { $self->fetchResources_future( $save, $seen ) }
-            @{ $tree->{childFrames} };
+        # build the map from URLs to file names
+        # This should become a separate method
+        # Also something like get_page_resources, that returns the linear
+        # list of resources for all frames etc.
+        for my $res (@{ $tree->{resources}}) {
+            # XXX Also include childFrames and subresources here, recursively
 
+            next if $names->{ $res->{url} };
+
+            # we will only scrape HTTP resources
+            next if $res->{url} !~ /^https?:/i;
+            my $target = $self->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
+            my %filenames = reverse %$names;
+
+            my $duplicates;
+            my $old_target = $target;
+            while( $filenames{ $target }) {
+                $duplicates++;
+                ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
+            };
+            $names->{ $res->{url} } = $target;
+        };
+
+        # retrieve and save the resource content for each resource
         for my $res (@{ $tree->{resources}}) {
             next if $seen->{ $res->{url} };
 
@@ -4048,56 +4084,56 @@ sub fetchResources_future( $self, $save=undef, $seen={} ) {
             };
             push @requested, $fetch;
         };
-        Future->wait_all( @requested );
-    })
+        Future->wait_all( @requested )->catch(sub {
+            warn $@;
+        });
+    })->catch(sub {
+            warn $@;
+        });
 }
 
-sub saveResources_future( $self, $target_file, $target_dir="$target_file files" ) {
+# XXX move to %options
+sub saveResources_future( $self, $target_file, $target_dir=undef ) {
+    if( ! defined $target_dir ) {
+        ($target_dir = $target_file) =~ s!\.\w+$! files!i;
+    };
     if( not -e $target_dir ) {
         mkdir $target_dir
             or croak "Couldn't create '$target_dir': $!";
     }
 
-    my %map;
-    my %seen;
-    $self->fetchResources_future( sub( $resource ) {
-        my $target = $self->filenameFromUrl(
-            $resource->{url},
-            $resource->{mimeType}
-        );
+    my %names = (
+        $self->uri => $target_file,
+    );
+    $self->fetchResources_future( save => sub( $resource ) {
 
         # For mime/html targets without a name, use the title?!
 
-        my $duplicates;
-        my $old_target = $target;
-        while( $seen{ $target }) {
-            $duplicates++;
-            ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
-        };
-        $target = File::Spec->catfile( $target_dir, $target );
-
         # Rewrite all HTML, CSS links
 
+        my $target = File::Spec->catfile( $target_dir, $names{ $resource->{url} })
+            or die "Don't have a filename for URL '$resource->{url}' ?!";
         open my $fh, '>', $target
             or croak "Couldn't save url '$resource->{url}' to $target: $!";
         binmode $fh;
         print $fh $resource->{content};
         close $fh;
 
-        $map{ $resource->{url} } = $target;
-        $seen{ $target }++;
         Future->done( $resource );
-    }, \%map )->then( sub( @resources ) {
-        Future->done( %map );
-    });
+    }, names => \%names, seen => \my %seen )->then( sub( @resources ) {
+        Future->done( %names );
+    })
+->catch(sub {
+            warn $@;
+        });
 }
 
-sub filenameFromUrl( $self, $url, $mime_type=undef ) {
+sub filenameFromUrl( $self, $url, $extension ) {
     my $target = $url;
     $target =~ s![\&\?\<\>\{\}\|\:\*]!_!g;
     $target =~ s!.*[/\\]!!;
 
-    # XXX Add extension according to mime type
+    # XXX Add/change extension
 
     return $target
 }
