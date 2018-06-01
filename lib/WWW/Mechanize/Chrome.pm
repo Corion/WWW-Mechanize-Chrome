@@ -4002,6 +4002,77 @@ sub content_as_png($self, $rect={}, $target={}) {
     return $self->_as_raw_png( $img );
 };
 
+sub getResourceTree_future( $self ) {
+    $self->driver->send_message( 'Page.getResourceTree' )
+    ->then( sub( $result ) {
+        Future->done( $result->{frameTree} )
+    })
+}
+
+sub getResourceContent_future( $self, $url_or_resource, $frameId=$self->frameId, %additional ) {
+    my $url = ref $url_or_resource ? $url_or_resource->{url} : $url_or_resource;
+    %additional = (%$url_or_resource,%additional) if ref $url_or_resource;
+    $self->driver->send_message( 'Page.getResourceContent', frameId => $frameId, url => $url )
+    ->then( sub( $result ) {
+        if( delete $result->{base64Encoded}) {
+            $result->{content} = decode_base64( $result->{content} )
+        }
+        %$result = (%additional, %$result);
+        Future->done( $result )
+    })
+}
+
+sub fetchResources_future( $self, $save=undef, $seen={} ) {
+    $self->getResourceTree_future
+    ->then( sub( $tree ) {
+        my @requested;
+
+        # Also fetch the frame itself?!
+
+        # Also fetch the ->{childFrames}
+        push @requested,
+            map { $self->fetchResources_future( $save ) }
+            @{ $tree->{childFrames} };
+
+        for my $res (@{ $tree->{resources}}) {
+            next if $seen->{ $res->{url} };
+            my $fetch = $self->getResourceContent_future( $res );
+            if( $save ) {
+                $fetch = $fetch->then( $save );
+            };
+            push @requested, $fetch;
+        };
+        Future->wait_all( @requested );
+    })
+}
+
+sub saveResources_future( $self ) {
+    my %map;
+    my %seen;
+    $self->fetchResources_future( sub( $resource ) {
+        my $target = $resource->{url};
+        $target =~ s![\?<>{}|]!_!g;
+        $target =~ s!.*/!!;
+
+        # For mime/html targets without a name, use the title?!
+
+        # XXX Add extension according to mime type
+
+        my $duplicates;
+        my $old_target = $target;
+        while( $seen{ $target }) {
+            $duplicates++;
+            ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
+        };
+        warn "$resource->{mimeType} $resource->{url} => $target";
+        $map{ $resource->{url} } = $target;
+        $seen{ $target }++;
+        Future->done( $resource );
+    }, \%map )->then( sub( @resources ) {
+        Future->done( %map );
+    });
+}
+
 =head2 C<< $mech->viewport_size >>
 
   print Dumper $mech->viewport_size;
