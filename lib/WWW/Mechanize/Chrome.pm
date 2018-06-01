@@ -4083,8 +4083,8 @@ sub saveResources_future( $self, $target_file, $target_dir="$target_file files" 
 
 sub filenameFromUrl( $self, $url, $mime_type=undef ) {
     my $target = $url;
-    $target =~ s![\?<>{}|]!_!g;
-    $target =~ s!.*/!!;
+    $target =~ s![\&\?\<\>\{\}\|\:\*]!_!g;
+    $target =~ s!.*[/\\]!!;
 
     # XXX Add extension according to mime type
 
