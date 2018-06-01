@@ -4049,17 +4049,21 @@ sub fetchResources_future( $self, $save=undef, $seen={} ) {
     })
 }
 
-sub saveResources_future( $self ) {
+sub saveResources_future( $self, $target_file, $target_dir="$target_file files" ) {
+    if( not -e $target_dir ) {
+        mkdir $target_dir
+            or croak "Couldn't create '$target_dir': $!";
+    }
+
     my %map;
     my %seen;
     $self->fetchResources_future( sub( $resource ) {
-        my $target = $resource->{url};
-        $target =~ s![\?<>{}|]!_!g;
-        $target =~ s!.*/!!;
+        my $target = $self->filenameFromUrl(
+            $resource->{url},
+            $resource->{mimeType}
+        );
 
         # For mime/html targets without a name, use the title?!
-
-        # XXX Add extension according to mime type
 
         my $duplicates;
         my $old_target = $target;
@@ -4067,13 +4071,24 @@ sub saveResources_future( $self ) {
             $duplicates++;
             ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
         };
-        warn "$resource->{mimeType} $resource->{url} => $target";
+        $target = File::Spec->catfile( $target_dir, $target );
+
         $map{ $resource->{url} } = $target;
         $seen{ $target }++;
         Future->done( $resource );
     }, \%map )->then( sub( @resources ) {
         Future->done( %map );
     });
+}
+
+sub filenameFromUrl( $self, $url, $mime_type=undef ) {
+    my $target = $url;
+    $target =~ s![\?<>{}|]!_!g;
+    $target =~ s!.*/!!;
+
+    # XXX Add extension according to mime type
+
+    return $target
 }
 
 =head2 C<< $mech->viewport_size >>
