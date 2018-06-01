@@ -4176,9 +4176,7 @@ This method is specific to WWW::Mechanize::Chrome.
 
 =cut
 
-sub content_as_pdf {
-    my ($self, %options) = @_;
-
+sub content_as_pdf($self, %options) {
     my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get->{data};
     return decode_base64( $base64 );
 };
@@ -4403,7 +4401,7 @@ I have no use for it
 
 C<< ->post >>
 
-Selenium does not support POST requests
+This module does not yet support POST requests
 
 =back
 
