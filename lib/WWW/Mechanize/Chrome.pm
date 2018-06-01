@@ -4031,7 +4031,7 @@ sub fetchResources_future( $self, $save=undef, $seen={} ) {
 
         # Also fetch the ->{childFrames}
         push @requested,
-            map { $self->fetchResources_future( $save ) }
+            map { $self->fetchResources_future( $save, $seen ) }
             @{ $tree->{childFrames} };
 
         for my $res (@{ $tree->{resources}}) {
