@@ -4028,6 +4028,8 @@ sub fetchResources_future( $self, $save=undef, $seen={} ) {
         my @requested;
 
         # Also fetch the frame itself?!
+        # Or better reuse ->content?!
+        # $tree->{frame}
 
         # Also fetch the ->{childFrames}
         push @requested,
