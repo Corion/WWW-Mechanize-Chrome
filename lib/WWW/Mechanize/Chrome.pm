@@ -4022,6 +4022,7 @@ sub getResourceContent_future( $self, $url_or_resource, $frameId=$self->frameId,
     })
 }
 
+# Allow the options to specify whether to filter duplicates here
 sub fetchResources_future( $self, $save=undef, $seen={} ) {
     $self->getResourceTree_future
     ->then( sub( $tree ) {
@@ -4074,6 +4075,14 @@ sub saveResources_future( $self, $target_file, $target_dir="$target_file files" 
             ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
         };
         $target = File::Spec->catfile( $target_dir, $target );
+
+        # Rewrite all HTML, CSS links
+
+        open my $fh, '>', $target
+            or croak "Couldn't save url '$resource->{url}' to $target: $!";
+        binmode $fh;
+        print $fh $resource->{content};
+        close $fh;
 
         $map{ $resource->{url} } = $target;
         $seen{ $target }++;
