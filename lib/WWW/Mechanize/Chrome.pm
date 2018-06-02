@@ -1960,28 +1960,32 @@ Returns the current document URI.
 =cut
 
 sub uri( $self ) {
-    my $d = $self->document->get;
+    my $d = $self->document;
     URI->new( $d->{root}->{documentURL} )
 }
 
 =head1 CONTENT METHODS
 
+=head2 C<< $mech->document_future() >>
+
 =head2 C<< $mech->document() >>
 
-    print $self->document->get->{nodeId};
-
-Returns the document object as a Future.
+    print $self->document->{nodeId};
 
 This is WWW::Mechanize::Chrome specific.
 
 =cut
 
-sub document( $self ) {
+sub document_future( $self ) {
     $self->driver->send_message( 'DOM.getDocument' )
 }
 
+sub document( $self ) {
+    $self->document_future->get
+}
+
 sub decoded_content($self) {
-    $self->document->then(sub( $root ) {
+    $self->document_future->then(sub( $root ) {
         # Join _all_ child nodes together to also fetch DOCTYPE nodes
         # and the stuff that comes after them
         my @content = map {
@@ -2082,7 +2086,7 @@ implemented as a convenience method for L<HTML::Display::MozRepl>.
 =cut
 
 sub update_html( $self, $content ) {
-    $self->document->then(sub( $root ) {
+    $self->document_future->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
         $self->log('trace', "Setting HTML for node " . $nodeId );
@@ -2820,7 +2824,7 @@ sub xpath( $self, $query, %options) {
     };
 
     DOCUMENTS: {
-        my $doc= $options{ document } || $self->document->get;
+        my $doc= $options{ document } || $self->document;
 
         # This stores the path to this document
         # $doc->{__path}||= [];
