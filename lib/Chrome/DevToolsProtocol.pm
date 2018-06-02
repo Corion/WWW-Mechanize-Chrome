@@ -107,11 +107,10 @@ sub connect( $self, %args ) {
     } elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         $endpoint = $args{ tab }->{webSocketDebuggerUrl};
 
-    } elsif( exists $args{ new_tab } ) {
-        $endpoint = undef;
-        #$args{ tab } ||= 0;
-
     } elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
+        $endpoint = undef;
+
+    } elsif( $args{ new_tab } ) {
         $endpoint = undef;
 
     } else {
