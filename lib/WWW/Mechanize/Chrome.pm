@@ -274,7 +274,8 @@ sub build_command_line {
     );
 
 Finds the first Chrome executable in the path (C<$ENV{PATH}>). For Windows, it
-also looks in C<< $ENV{ProgramFiles} >> and C<< $ENV{ProgramFiles(x86)} >>.
+also looks in C<< $ENV{ProgramFiles} >>, C<< $ENV{ProgramFiles(x86)} >>
+and C<< $ENV{"ProgramFilesW6432"} >>.
 
 This is used to find the default Chrome executable if none was given through
 the C<launch_exe> option.
@@ -292,7 +293,10 @@ sub find_executable( $class, $program=undef, @search ) {
         push @search,
             map { "$_\\Google\\Chrome\\Application\\" }
             grep {defined}
-            ($ENV{'ProgramFiles'}, $ENV{'ProgramFiles(x86)'});
+            ($ENV{'ProgramFiles'},
+             $ENV{'ProgramFiles(x86)'},
+             $ENV{"ProgramFilesW6432"},
+            );
     };
 
     my $found;
