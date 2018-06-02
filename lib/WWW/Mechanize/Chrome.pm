@@ -255,7 +255,7 @@ sub build_command_line {
     push @{ $options->{ launch_arg }}, "$options->{start_url}"
         if exists $options->{start_url};
 
-    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /\s/)
+    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /[\s|<>&]/)
                   ? qq("$options->{ launch_exe }")
                   : $options->{ launch_exe };
 
