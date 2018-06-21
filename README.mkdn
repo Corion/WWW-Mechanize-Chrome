@@ -168,7 +168,8 @@ websocket implementation(s) as source of bugs.
     );
 
 Finds the first Chrome executable in the path (`$ENV{PATH}`). For Windows, it
-also looks in `$ENV{ProgramFiles}` and `$ENV{ProgramFiles(x86)}`.
+also looks in `$ENV{ProgramFiles}`, `$ENV{ProgramFiles(x86)}`
+and `$ENV{"ProgramFilesW6432"}`.
 
 This is used to find the default Chrome executable if none was given through
 the `launch_exe` option.
@@ -559,11 +560,11 @@ Returns the current document URI.
 
 # CONTENT METHODS
 
+## `$mech->document_future()`
+
 ## `$mech->document()`
 
-    print $self->document->get->{nodeId};
-
-Returns the document object as a Future.
+    print $self->document->{nodeId};
 
 This is WWW::Mechanize::Chrome specific.
 
@@ -1334,7 +1335,7 @@ they make little sense in the context of Chrome.
 
 - `->post`
 
-    Selenium does not support POST requests
+    This module does not yet support POST requests
 
 # INSTALLING
 

@@ -17,6 +17,7 @@ use WWW::Mechanize::Chrome::Node;
 use JSON::PP;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
+use Storable 'dclone';
 
 our $VERSION = '0.15';
 our @CARP_NOT;
@@ -4166,12 +4167,45 @@ The recognized keys are:
 
 =cut
 
-sub viewport_size( $self, $new ) {
-    if( $new and keys %$new) {
-        $self->driver->send_message('Emulation.setDeviceMetricsOverride', %$new )->get();
+sub viewport_size_future( $self, $new={} ) {
+    my $params = dclone $new;
+    if( keys %$params) {
+        my %reset = (
+            mobile => $JSON::PP::false,
+            width  => 0,
+            height => 0,
+            deviceScaleFactor => 0,
+            scale  => 1,
+            screenWidth => 0,
+            screenHeight => 0,
+            positionX => 0,
+            positionY => 0,
+            dontSetVisibleSize => $JSON::PP::false,
+            screenOrientation => {
+                type => 'landscapePrimary',
+                angle => 0,
+            },
+            #viewport => {
+            #    'x' => 0,
+            #    'y' => 0,
+            #    width => 0,
+            #    height => 0,
+            #    scale  => 1,
+            #}
+        );
+        for my $field (qw( mobile width height deviceScaleFactor )) {
+            if( ! exists $params->{ $field }) {
+                $params->{$field} = $reset{ $field };
+            };
+        };
+        return $self->driver->send_message('Emulation.setDeviceMetricsOverride', %$params );
     } else {
-        $self->driver->send_message('Emulation.clearDeviceMetricsOverride' )->get();
+        return $self->driver->send_message('Emulation.clearDeviceMetricsOverride' );
     };
+};
+
+sub viewport_size( $self, $new={} ) {
+    $self->viewport_size_future($new)->get
 };
 
 =head2 C<< $mech->element_as_png( $element ) >>

@@ -1,0 +1,137 @@
+#!perl -w
+use strict;
+use Test::More;
+use Log::Log4perl qw(:easy);
+
+use WWW::Mechanize::Chrome;
+use lib './inc', '../inc', '.';
+use Test::HTTP::LocalServer;
+use Data::Dumper;
+
+use t::helper;
+
+# (re)set the log level
+if (my $lv = $ENV{TEST_LOG_LEVEL}) {
+    if( $lv eq 'trace' ) {
+        Log::Log4perl->easy_init($TRACE)
+    } elsif( $lv eq 'debug' ) {
+        Log::Log4perl->easy_init($DEBUG)
+    }
+}
+
+# What instances of Chrome will we try?
+my $instance_port = 9222;
+my @instances = t::helper::browser_instances();
+
+if (my $err = t::helper::default_unavailable) {
+    plan skip_all => "Couldn't connect to Chrome: $@";
+    exit
+} else {
+    plan tests => 6*@instances;
+};
+
+sub new_mech {
+    my $m = WWW::Mechanize::Chrome->new(
+        autodie => 1,
+        @_,
+        #headless => 0,
+    );
+};
+
+my $server = Test::HTTP::LocalServer->spawn(
+    #debug => 1,
+);
+
+sub get_viewport_size {
+    my( $mech ) = @_;
+    my ($width,$height,$wwidth,$wheight,$type);
+    ($width,$type)  = $mech->eval_in_page( 'window.screen.width' );
+    ($height,$type) = $mech->eval_in_page( 'window.screen.height' );
+    ($wwidth,$type)  = $mech->eval_in_page( 'window.innerWidth' );
+    ($wheight,$type) = $mech->eval_in_page( 'window.innerHeight' );
+    my $res = { width => $wwidth, height => $wheight, screenWidth => $width, screenHeight => $height };
+    return $res;
+}
+
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
+    my ($browser_instance, $mech) = @_;
+    
+    my $version = $mech->chrome_version;
+
+    if( $version =~ /\b(\d+)\b/ and $1 < 62 ) {
+        SKIP: {
+            skip "Chrome before v62 needs unsupported parameters for the viewport", 6;
+        };
+        return
+    } elsif( $version =~ /\b(\d+)\b/ and $1 < 63 ) {
+        SKIP: {
+            skip "Chrome v62 doesn't resize the screen for the viewport", 6;
+        };
+        return
+    } elsif( 0 and $version =~ /\b(\d+)\b/ and $1 < 65 ) {
+        SKIP: {
+            skip "Chrome before v65 doesn't restore the screen metrics for the viewport", 6;
+        };
+        return
+    } elsif( 0 and $version =~ /\b(\d+)\b/ and $1 >= 68 and $1 <= 69) {
+        SKIP: {
+            skip "Chrome v68,v69 doesn't restore the window metrics for the viewport properly", 6;
+        };
+        return
+    } elsif( $mech->chrome_version !~ /headless/i ) {
+        SKIP: {
+            skip "A headful browser can't fake its dimensions", 6;
+        };
+        return
+    }
+    
+    $mech->get( $server->url );
+    
+    my $start_size = get_viewport_size( $mech );
+    
+    my $huuge = {
+            screenWidth => 4096,
+            screenHeight => 1920,
+            width => 1388,
+            height => 792,
+    };
+    my $res;
+    my $lives = eval {
+        $res = $mech->viewport_size($huuge);
+        1;
+    };
+    ok $lives, "We don't crash"
+        or diag $@;
+    
+    # Now, ask the browser about its size:
+    my $resized = get_viewport_size( $mech );
+    is_deeply $resized, $huuge, "We resized the viewport"
+        or diag Dumper $resized;
+
+    # Restore device/screen settings
+    $lives = eval {
+        $res = $mech->viewport_size();
+        1;
+    };
+    ok $lives, "We don't crash"
+        or diag $@;
+
+    $resized = get_viewport_size( $mech );
+    is_deeply [@{$resized}{qw(screenWidth screenHeight)}], [@{$start_size}{qw(screenWidth screenHeight)}],
+              "We restored the old screen metrics"
+        or diag Dumper $resized;
+
+    # Restore window settings
+    $lives = eval {
+        $res = $mech->viewport_size({ width => 0, height => 0 });
+        1;
+    };
+    ok $lives, "We don't crash"
+        or diag $@;
+    $resized = get_viewport_size( $mech );
+    is_deeply [@{$resized}{qw(width height)}], [@{$start_size}{qw(width height)}],
+              "We restored the old window metrics"
+        or diag Dumper $resized;
+
+    undef $mech;
+});
