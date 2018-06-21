@@ -19,6 +19,7 @@
     . Rename ->agent_async() to ->agent_future()
     . Add ->callFunctionOn_future() and ->callFunctionOn()
     ! "start_url" now actually gets you the first URL
+    ! Fixed ->viewport_size() to actually work
 
 0.15 20180530
     . Added ->links() method, pasted from WWW::Mechanize::PhantomJS
