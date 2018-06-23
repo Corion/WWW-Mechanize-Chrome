@@ -556,7 +556,7 @@ sub DESTROY {
 =head1 SEE ALSO
 
 The inofficial Chrome debugger API documentation at
-L< https://github.com/buggerjs/bugger-daemon/blob/master/README.md#api >
+L<https://github.com/buggerjs/bugger-daemon/blob/master/README.md#api>
 
 Chrome DevTools at L<https://chromedevtools.github.io/devtools-protocol/1-2>
 
