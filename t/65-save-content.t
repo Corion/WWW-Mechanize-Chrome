@@ -53,7 +53,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testco
     my $topdir = tempdir( CLEANUP => 1 );
     $mech->get($server->url);
     #my %r = $mech->saveResources_future(
-    #    "test page.html"
+    #    target_file => "test page.html"
     #)->get();
     #is_deeply \%r, {
     #    $server->url => 'test page.html',

@@ -4031,7 +4031,7 @@ sub getResourceContent_future( $self, $url_or_resource, $frameId=$self->frameId,
     })
 }
 
-# XXX Replace that later with MIME::Detect
+# Replace that later with MIME::Detect
 our %extensions = (
     'image/jpeg' => '.jpg',
     'image/png'  => '.png',
@@ -4063,7 +4063,7 @@ sub fetchResources_future( $self, %options ) {
         # Also something like get_page_resources, that returns the linear
         # list of resources for all frames etc.
         for my $res (@{ $tree->{resources}}) {
-            # XXX Also include childFrames and subresources here, recursively
+            # Also include childFrames and subresources here, recursively
 
             if( $names->{ $res->{url} } ) {
                 #warn "Skipping $res->{url} (already saved)";
@@ -4105,7 +4105,17 @@ sub fetchResources_future( $self, %options ) {
         });
 }
 
-# XXX move to %options
+=head2 C<< $mech->saveResources_future >>
+
+    my $file_map = $mech->saveResources_future(
+        target_file => 'this_page.html',
+        target_dir  => 'this_page_files/',
+    )->get();
+
+Rough prototype of "Save Complete Page" feature
+
+=cut
+
 sub saveResources_future( $self, %options ) {
     my $target_file = $options{ target_file }
         or croak "Need filename to save as ('target_file')";
@@ -4151,7 +4161,7 @@ sub filenameFromUrl( $self, $url, $extension ) {
     $target =~ s![\&\?\<\>\{\}\|\:\*]!_!g;
     $target =~ s!.*[/\\]!!;
 
-    # XXX Add/change extension
+    # Add/change extension here
 
     return $target
 }
