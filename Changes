@@ -12,7 +12,7 @@
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
 
-0.16 to be released
+0.16 20180623
     + Added ->is_visible, ->wait_until_visible and ->wait_until_invisible
     + Better way to find the system browser by default
       This can be overridden by explicitly specifying the executable to use

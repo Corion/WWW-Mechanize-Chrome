@@ -56,6 +56,7 @@
             "Object::Import" : "0",
             "POSIX" : "0",
             "Scalar::Util" : "0",
+            "Storable" : "0",
             "Try::Tiny" : "0",
             "URI" : "0",
             "URI::file" : "0",
@@ -84,7 +85,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.15",
+   "version" : "0.16",
    "x_serialization_backend" : "JSON::PP version 2.94",
    "x_static_install" : 1
 }

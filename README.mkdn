@@ -1171,6 +1171,15 @@ All parameters are optional.
 
 This method is specific to WWW::Mechanize::Chrome.
 
+## `$mech->saveResources_future`
+
+    my $file_map = $mech->saveResources_future(
+        target_file => 'this_page.html',
+        target_dir  => 'this_page_files/',
+    )->get();
+
+Rough prototype of "Save Complete Page" feature
+
 ## `$mech->viewport_size`
 
     print Dumper $mech->viewport_size;

@@ -19,7 +19,7 @@ use MIME::Base64 'decode_base64';
 use Data::Dumper;
 use Storable 'dclone';
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 our @CARP_NOT;
 
 =head1 NAME
