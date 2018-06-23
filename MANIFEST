@@ -85,6 +85,7 @@ t/65-is_visible_none_to_visible.html
 t/65-is_visible_reload.html
 t/65-is_visible_remove.html
 t/65-is_visible_text.html
+t/65-save-content.t
 t/65-wait_until_visible.t
 t/70-mech-png.t
 t/75-classnames.t

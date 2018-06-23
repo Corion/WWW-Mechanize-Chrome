@@ -20,6 +20,8 @@
     . Add ->callFunctionOn_future() and ->callFunctionOn()
     ! "start_url" now actually gets you the first URL
     ! Fixed ->viewport_size() to actually work
+    . Experimental prototype of self-implemented Save Page As feature
+      (undocumented)
 
 0.15 20180530
     . Added ->links() method, pasted from WWW::Mechanize::PhantomJS

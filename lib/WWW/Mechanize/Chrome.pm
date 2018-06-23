@@ -4065,7 +4065,10 @@ sub fetchResources_future( $self, %options ) {
         for my $res (@{ $tree->{resources}}) {
             # XXX Also include childFrames and subresources here, recursively
 
-            next if $names->{ $res->{url} };
+            if( $names->{ $res->{url} } ) {
+                #warn "Skipping $res->{url} (already saved)";
+                next;
+            };
 
             # we will only scrape HTTP resources
             next if $res->{url} !~ /^https?:/i;
@@ -4089,6 +4092,7 @@ sub fetchResources_future( $self, %options ) {
             next if $res->{url} !~ /^https?:/i;
             my $fetch = $self->getResourceContent_future( $res );
             if( $save ) {
+                #warn "Will save $res->{url}";
                 $fetch = $fetch->then( $save );
             };
             push @requested, $fetch;
@@ -4102,7 +4106,10 @@ sub fetchResources_future( $self, %options ) {
 }
 
 # XXX move to %options
-sub saveResources_future( $self, $target_file, $target_dir=undef ) {
+sub saveResources_future( $self, %options ) {
+    my $target_file = $options{ target_file }
+        or croak "Need filename to save as ('target_file')";
+    my $target_dir = $options{ target_dir };
     if( ! defined $target_dir ) {
         ($target_dir = $target_file) =~ s!\.\w+$! files!i;
     };
@@ -4120,8 +4127,11 @@ sub saveResources_future( $self, $target_file, $target_dir=undef ) {
 
         # Rewrite all HTML, CSS links
 
-        my $target = File::Spec->catfile( $target_dir, $names{ $resource->{url} })
+        # We want to store the top HTML under the name passed in (!)
+        $names{ $resource->{url} } ||= File::Spec->catfile( $target_dir, $names{ $resource->{url} });
+        my $target = $names{ $resource->{url} }
             or die "Don't have a filename for URL '$resource->{url}' ?!";
+        $self->log( 'debug', "Saving '$resource->{url}' to '$target'" );
         open my $fh, '>', $target
             or croak "Couldn't save url '$resource->{url}' to $target: $!";
         binmode $fh;
@@ -4131,10 +4141,9 @@ sub saveResources_future( $self, $target_file, $target_dir=undef ) {
         Future->done( $resource );
     }, names => \%names, seen => \my %seen )->then( sub( @resources ) {
         Future->done( %names );
-    })
-->catch(sub {
+    })->catch(sub {
             warn $@;
-        });
+    });
 }
 
 sub filenameFromUrl( $self, $url, $extension ) {
