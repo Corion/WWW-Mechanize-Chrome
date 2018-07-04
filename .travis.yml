@@ -36,6 +36,7 @@ dist: trusty
 addons:
   chrome: stable
   apt:
+    update: true
     sources:
       - google-chrome
     packages:
@@ -43,12 +44,12 @@ addons:
       - chromium-browser
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; export DISPLAY=:99.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sh -e /etc/init.d/xvfb start; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   - export SPLIT_BUILD=0
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; export CHROME_BIN=/usr/bin/chromium-browser; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; export CHROME_BIN=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome; fi
   - $CHROME_BIN --version
   - source ~/travis-perl-helpers/init
   - build-perl
