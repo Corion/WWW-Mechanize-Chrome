@@ -4618,6 +4618,12 @@ information to the console. Check that Chrome starts:
 
 C<< chrome >>
 
+On MacOS, the executable can usually be be found inside the `Google Chrome`
+package in the `Applications` directory and so can be tested with
+something like the following:
+
+`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
+
 =head2 Chrome versions
 
 Note that the Chrome version numbers do not denote availability of features.
