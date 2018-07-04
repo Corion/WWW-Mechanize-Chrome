@@ -50,7 +50,7 @@ before_install:
   - export SPLIT_BUILD=0
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
-  - $CHROME_BIN --version
+  - "$CHROME_BIN" --version
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V
