@@ -2,6 +2,7 @@ Makefile
 Makefile.old
 *.tar.gz
 *.bak
+*.swp
 pm_to_blib
 blib/
 WWW-Mechanize-Chrome-*
