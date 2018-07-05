@@ -256,9 +256,9 @@ sub build_command_line {
     push @{ $options->{ launch_arg }}, "$options->{start_url}"
         if exists $options->{start_url};
 
-    my $program = ($^O =~ /mswin|darwin/i and $options->{ launch_exe } =~ /[\s|<>&]/)
-                  ? qq("$options->{ launch_exe }")
-                  : $options->{ launch_exe };
+    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /[\s|<>&]/)
+        ?  qq("$options->{ launch_exe }")
+        :  $options->{ launch_exe };
 
     my @cmd=( $program, @{ $options->{launch_arg}} );
 
@@ -574,6 +574,9 @@ sub chrome_version_from_stdout( $self ) {
     my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, port => undef });
 
     $self->log('trace', "Retrieving version via [@cmd]" );
+    if ($^O =~ /darwin/) {
+      s/ /\\ /g for @cmd;
+    }
     my $v = readpipe(join " ", @cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
