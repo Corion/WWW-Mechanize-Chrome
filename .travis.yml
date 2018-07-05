@@ -73,8 +73,6 @@ addons:
       - chromium-browser
 
 before_install:
-  - pwd
-  - echo $TRAVIS_BUILD_DIR
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
@@ -82,13 +80,19 @@ before_install:
   - "\"$CHROME_BIN\" --version"
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   # Install perlbrew the hard way, at least on OSX
-  #- if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then \curl -L http://install.perlbrew.pl | bash; fi
-  #- if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then source ~/perl5/perlbrew/etc/bashrc; fi
-  #- if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export PATH=$HOME/perl5/perlbrew/bin:$PATH; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install perl; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libpng --universal; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --cflags; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --libs; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then \curl -L http://install.perlbrew.pl | bash; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then source ~/perl5/perlbrew/etc/bashrc; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export PATH=$HOME/perl5/perlbrew/bin:$PATH; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then perlbrew install perl-5.28; perlbrew use perl-5.28; perlbrew install-cpanm; fi
   #
   # Install local::lib
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -L http://cpanmin.us | perl - --notest --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib); fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -L http://cpanmin.us | perl - --notest App::cpanminus; fi
+  # install libpng for OSX
   - export SPLIT_BUILD=0
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ~/travis-perl-helpers/init; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then build-perl; fi
@@ -103,7 +107,8 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib); fi
   - cpanm --notest ExtUtils::MakeMaker~6.68
   # Imager::File::PNG fails to install on OSX :(
-  - cpanm --verbose Imager::File::PNG
+  - cpanm --notest Imager
+  - IM_VERBOSE=1 cpanm --verbose Imager::File::PNG
   - cpanm --notest --installdeps .
   # For the test matrix
   - cpanm --notest Mojolicious Future::Mojo
