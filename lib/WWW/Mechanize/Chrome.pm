@@ -256,7 +256,7 @@ sub build_command_line {
     push @{ $options->{ launch_arg }}, "$options->{start_url}"
         if exists $options->{start_url};
 
-    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /[\s|<>&]/)
+    my $program = ($^O =~ /mswin|darwin/i and $options->{ launch_exe } =~ /[\s|<>&]/)
                   ? qq("$options->{ launch_exe }")
                   : $options->{ launch_exe };
 
@@ -284,8 +284,9 @@ the C<launch_exe> option.
 =cut
 
 sub find_executable( $class, $program=undef, @search ) {
-    $program ||= $^O =~ /mswin/i
-        ? 'chrome.exe'
+    $program ||=
+          $^O =~ /mswin/i ? 'chrome.exe'
+        : $^O =~ /darwin/i ? 'Google Chrome'
         : 'google-chrome';
 
     push @search, File::Spec->path();
@@ -298,7 +299,10 @@ sub find_executable( $class, $program=undef, @search ) {
              $ENV{'ProgramFiles(x86)'},
              $ENV{"ProgramFilesW6432"},
             );
-    };
+    } elsif( $^O =~ /darwin/i ) {
+        push @search, "/Applications/Google Chrome.app/Contents/MacOS/";
+    }
+
 
     my $found;
     for my $path (@search) {
