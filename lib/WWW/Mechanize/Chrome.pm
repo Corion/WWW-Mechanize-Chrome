@@ -4613,23 +4613,52 @@ This module does not yet support POST requests
 
 =head2 Install the C<chrome> executable
 
-Test it has been installed on your system:
+C<WWW::Mechanize::Chrome> requires that you have the Chrome browser installed
+on your system. If Chrome is not installed, please consult
+L<Google's instructions|https://support.google.com/chrome/answer/95346> for
+help installing the Chrome browser.
 
-On unixish systems, the executable is named C<chrome-browser>. Check
-that Chrome starts:
+C<WWW::Mechanize::Chrome> will do its best to locate Chrome's executable file
+on your system. With any luck, it will find it but it may not succeed. In such
+cases, you should verify Chrome is installed and working properly by running a
+command from your command line. The command you run will vary based on your
+operating sytem and possibly the version of Chrome installed.
 
-C<< chrome-browser --version >>
+On Ubuntu, the executable is typically named C<chrome-browser> and so you can
+check for the existence of the executable with:
+
+C<chrome-browser --version>
+
+and you should see something like C<Google Chrome 67.0.3396.99> returned.
+
+On a Debian system, the command would most likely be something like:
+
+C<`google-chrome-stable --version> or
+C<`google-chrome-beta --version> or
+C<google-chrome-unstable --version>
 
 On Windows, the executable is named C<chrome.exe> and doesn't output
-information to the console. Check that Chrome starts:
+information to the console but you can check that Chrome starts by running:
 
-C<< chrome >>
+C<chrome>
 
-On MacOS, the executable can usually be be found inside the `Google Chrome`
-package in the `Applications` directory and so can be tested with
-something like the following:
+in the terminal.
 
-`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
+On MacOS, the executable can usually be be found inside the C<Google Chrome>
+package in the C<Applications> directory and so can its installation can be
+tested with something like the following:
+
+C</Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version>
+
+Unfortunatley, we aren't able to provide an exhaustive list of commands
+to determine if Chrome is installed for your particular system here. If you
+are having trouble determining whether Chrome is installed,
+please consult your system's documentation or a knowledgeable expert.
+
+Once you have found the path or command to launch Chrome's executable on your
+system, you can pass it manually to C<WWW::Mechanize::Chrome> using the 
+C<launch_exe> argument during construction. You can alse set the C<CHROME_BIN>
+environment variable to the absolute path of the executable.
 
 =head2 Chrome versions
 
