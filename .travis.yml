@@ -114,7 +114,7 @@ install:
   - cpanm --notest Mojolicious Future::Mojo
   - cpanm --notest IO::Async Net::Async::WebSocket::Client
   # For author testing/compile testing
-  - cpanm --notest CPAN::META::Prereqs
+  - cpanm --notest CPAN::Meta
 
 script:
   - cd $TRAVIS_BUILD_DIR
