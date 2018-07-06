@@ -1357,7 +1357,7 @@ help installing the Chrome browser.
 
 `WWW::Mechanize::Chrome` will do its best to locate Chrome's executable file
 on your system. With any luck, it will find the executable you want to use. If
-`WWW::Mechanize::Chrome` does not find Chrome on your system or you want to 
+`WWW::Mechanize::Chrome` does not find Chrome on your system or you want to
 use a different executable, you can use the `launch_exe` constructor argument
 to tell `WWW::Mechanize::Chrome` where to find it. You can alse set the
 `CHROME_BIN` environment variable to the absolute path of the executable.
@@ -1406,6 +1406,26 @@ system, please consult the appropriate documentation or a knowledgeable expert.
 
 Note that the Chrome version numbers do not denote availability of features.
 Features can still be added to Chrome v62 when Chrome v64 is already out.
+
+If you are serious about automating a website, use a separate copy of Chrome
+and disable its automatic updates.
+
+## Module prerequisites on OSX
+
+### [Imager::File::PNG](https://metacpan.org/pod/Imager::File::PNG)
+
+This module relies on [Imager](https://metacpan.org/pod/Imager) for processing screenshots. If you don't need
+this functionality, you can ignore the [Imager](https://metacpan.org/pod/Imager) and [Imager::File::PNG](https://metacpan.org/pod/Imager::File::PNG)
+installation and use this module with the system Perl provided by Apple.
+
+The installation of [Imager::File::PNG](https://metacpan.org/pod/Imager::File::PNG) works on OSX using the Homebrew tool
+and the Perl installable through Homebrew:
+
+    brew install perl-5.28
+    brew install libpng
+    cpan Imager::File::PNG
+
+I haven't been able to make it work using the system Perl.
 
 # RUNNING THE TEST SUITE
 

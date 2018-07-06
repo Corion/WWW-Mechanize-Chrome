@@ -303,7 +303,7 @@ sub find_executable( $class, $program=undef, @search ) {
         my $path = '/Applications/Google Chrome.app/Contents/MacOS';
         push @search,
             $path,
-            $ENV{"HOME"} . "/$path"; 
+            $ENV{"HOME"} . "/$path";
     }
 
 
@@ -4623,11 +4623,11 @@ help installing the Chrome browser.
 
 C<WWW::Mechanize::Chrome> will do its best to locate Chrome's executable file
 on your system. With any luck, it will find the executable you want to use. If
-C<WWW::Mechanize::Chrome> does not find Chrome on your system or you want to 
+C<WWW::Mechanize::Chrome> does not find Chrome on your system or you want to
 use a different executable, you can use the C<launch_exe> constructor argument
 to tell C<WWW::Mechanize::Chrome> where to find it. You can alse set the
 C<CHROME_BIN> environment variable to the absolute path of the executable.
- 
+
 =head2 Test the C<chrome> executable
 
 You should verify that Chrome's executable is working properly. On Ubuntu, the
@@ -4672,6 +4672,26 @@ system, please consult the appropriate documentation or a knowledgeable expert.
 
 Note that the Chrome version numbers do not denote availability of features.
 Features can still be added to Chrome v62 when Chrome v64 is already out.
+
+If you are serious about automating a website, use a separate copy of Chrome
+and disable its automatic updates.
+
+=head2 Module prerequisites on OSX
+
+=head3 L<Imager::File::PNG>
+
+This module relies on L<Imager> for processing screenshots. If you don't need
+this functionality, you can ignore the L<Imager> and L<Imager::File::PNG>
+installation and use this module with the system Perl provided by Apple.
+
+The installation of L<Imager::File::PNG> works on OSX using the Homebrew tool
+and the Perl installable through Homebrew:
+
+    brew install perl-5.28
+    brew install libpng
+    cpan Imager::File::PNG
+
+I haven't been able to make it work using the system Perl.
 
 =head1 RUNNING THE TEST SUITE
 
