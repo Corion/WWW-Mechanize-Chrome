@@ -1356,19 +1356,27 @@ on your system. If Chrome is not installed, please consult
 help installing the Chrome browser.
 
 `WWW::Mechanize::Chrome` will do its best to locate Chrome's executable file
-on your system. With any luck, it will find it but it may not succeed. In such
-cases, you should verify Chrome is installed and working properly by running a
-command from your command line. The command you run will vary based on your
-operating sytem and possibly the version of Chrome installed.
+on your system. With any luck, it will find the executable you want to use. If
+`WWW::Mechanize::Chrome` does not find Chrome on your system or you want to 
+use a different executable, you can use the `launch_exe` constructor argument
+to tell `WWW::Mechanize::Chrome` where to find it. You can alse set the
+`CHROME_BIN` environment variable to the absolute path of the executable.
 
-On Ubuntu, the executable is typically named `chrome-browser` and so you can
-check for the existence of the executable with:
+## Test the `chrome` executable
+
+You should verify that Chrome's executable is working properly. On Ubuntu, the
+executable is typically named `chrome-browser` and so you can test Chrome's
+installation with:
 
 `chrome-browser --version`
 
 and you should see something like `Google Chrome 67.0.3396.99` returned.
 
-On a Debian system, the command would most likely be something like:
+Note that the command you run will vary based on your operating sytem and
+possibly the version of Chrome installed.
+
+On a Debian system, for example, the command will most likely be something
+like:
 
 `` `google-chrome-stable --version `` or
 `` `google-chrome-beta --version `` or
@@ -1381,21 +1389,18 @@ information to the console but you can check that Chrome starts by running:
 
 in the terminal.
 
-On MacOS, the executable can usually be be found inside the `Google Chrome`
-package in the `Applications` directory and so can its installation can be
+On MacOS, the executable can usually be be found inside the `Google Chrome.app`
+package in the `/Applications` directory and its installation can be
 tested with something like the following:
 
 `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
 
-Unfortunatley, we aren't able to provide an exhaustive list of commands
-to determine if Chrome is installed for your particular system here. If you
-are having trouble determining whether Chrome is installed,
-please consult your system's documentation or a knowledgeable expert.
+or, if Chrome is installed for a single user:
 
-Once you have found the path or command to launch Chrome's executable on your
-system, you can pass it manually to `WWW::Mechanize::Chrome` using the 
-`launch_exe` argument during construction. You can alse set the `CHROME_BIN`
-environment variable to the absolute path of the executable.
+`/Users/<user_name>/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
+
+If you are having trouble finding, installing, or running Chrome on your
+system, please consult the appropriate documentation or a knowledgeable expert.
 
 ## Chrome versions
 
@@ -1465,6 +1470,12 @@ that talk are
 Please report bugs in this module via the RT CPAN bug queue at
 [https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome](https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome)
 or via mail to [www-mechanize-Chrome-Bugs@rt.cpan.org](mailto:www-mechanize-Chrome-Bugs@rt.cpan.org).
+
+# KNOWN ISSUES
+
+When Chrome is run in headless mode, Chrome throws a `Lost UI shared context`
+error. This error can be ignored and does not affect the operation of this
+module.
 
 # AUTHOR
 
