@@ -211,7 +211,7 @@ Allow or disallow execution of Javascript
 
     # Go offline
     $mech->emulateNetworkConditions(
-        offline => JSON::PP::true,
+        offline => JSON::true,
         latency => 10, # ms ping
         downloadThroughput => 0, # bytes/s
         uploadThroughput => 0, # bytes/s
@@ -274,8 +274,8 @@ a safe place.
     my @matches = $mech->searchInResponseBody(
         requestId     => $request_id,
         query         => 'rumpelstiltskin',
-        caseSensitive => JSON::PP::true,
-        isRegex       => JSON::PP::false,
+        caseSensitive => JSON::true,
+        isRegex       => JSON::false,
     );
     for( @matches ) {
         print $_->{lineNumber}, ":", $_->{lineContent}, "\n";

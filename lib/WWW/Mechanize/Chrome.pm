@@ -14,7 +14,7 @@ use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
 use WWW::Mechanize::Chrome::Node;
-use JSON::PP;
+use JSON;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 use Storable 'dclone';
@@ -656,7 +656,7 @@ sub allow {
 
     my @await;
     if( exists $options{ javascript } ) {
-        my $disabled = !$options{ javascript } ? JSON::PP::true : JSON::PP::false;
+        my $disabled = !$options{ javascript } ? JSON::true : JSON::false;
         push @await,
             $self->driver->send_message('Emulation.setScriptExecutionDisabled', value => $disabled );
     };
@@ -668,7 +668,7 @@ sub allow {
 
   # Go offline
   $mech->emulateNetworkConditions(
-      offline => JSON::PP::true,
+      offline => JSON::true,
       latency => 10, # ms ping
       downloadThroughput => 0, # bytes/s
       uploadThroughput => 0, # bytes/s
@@ -678,7 +678,7 @@ sub allow {
 =cut
 
 sub emulateNetworkConditions_future( $self, %options ) {
-    $options{ offline } //= JSON::PP::false,
+    $options{ offline } //= JSON::false,
     $options{ latency } //= -1,
     $options{ downloadThroughput } //= -1,
     $options{ uploadThroughput } //= -1,
@@ -786,8 +786,8 @@ sub on_request_intercepted( $self, $cb ) {
   my @matches = $mech->searchInResponseBody(
       requestId     => $request_id,
       query         => 'rumpelstiltskin',
-      caseSensitive => JSON::PP::true,
-      isRegex       => JSON::PP::false,
+      caseSensitive => JSON::true,
+      isRegex       => JSON::false,
   );
   for( @matches ) {
       print $_->{lineNumber}, ":", $_->{lineContent}, "\n";
@@ -851,7 +851,7 @@ Closes the current Javascript dialog. Depending on
 =cut
 
 sub handle_dialog( $self, $accept, $prompt = undef ) {
-    my $v = $accept ? JSON::PP::true : JSON::PP::false;
+    my $v = $accept ? JSON::true : JSON::false;
     $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
     my $f;
     $f = $self->driver->send_message(
@@ -3558,7 +3558,7 @@ function() {
 }
 JS
                     arguments => [],
-                    returnByValue => JSON::PP::true)->get->{result};
+                    returnByValue => JSON::true)->get->{result};
 
             my @values = @{$arr->{value}};
             if (wantarray) {
@@ -4197,7 +4197,7 @@ sub viewport_size_future( $self, $new={} ) {
     my $params = dclone $new;
     if( keys %$params) {
         my %reset = (
-            mobile => $JSON::PP::false,
+            mobile => $JSON::false,
             width  => 0,
             height => 0,
             deviceScaleFactor => 0,
@@ -4206,7 +4206,7 @@ sub viewport_size_future( $self, $new={} ) {
             screenHeight => 0,
             positionX => 0,
             positionY => 0,
-            dontSetVisibleSize => $JSON::PP::false,
+            dontSetVisibleSize => $JSON::false,
             screenOrientation => {
                 type => 'landscapePrimary',
                 angle => 0,
@@ -4317,7 +4317,7 @@ towards rendering HTML.
 
 sub element_coordinates {
     my ($self, $element) = @_;
-    my $cliprect = $self->driver->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::PP::true)->get->{result}->{value};
+    my $cliprect = $self->driver->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true)->get->{result}->{value};
     function() {
         var r = this.getBoundingClientRect();
         return {
