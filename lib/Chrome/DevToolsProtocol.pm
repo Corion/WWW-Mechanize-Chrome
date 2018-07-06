@@ -16,6 +16,12 @@ use Try::Tiny;
 our $VERSION = '0.16';
 our @CARP_NOT;
 
+=head1 NAME
+
+Chrome::DevToolsProtocol - asynchronous dispatcher for the DevTools protocol
+
+=cut
+
 sub _build_log( $self ) {
     require Log::Log4perl;
     Log::Log4perl->get_logger(__PACKAGE__);
