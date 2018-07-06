@@ -254,6 +254,7 @@ sub build_command_line {
         infobars
         default_apps
         popup_blocking
+        gpu
     )) {
         (my $optname = $option) =~ s!_!-!g;
         if( ! exists $options->{$option}) {
@@ -265,7 +266,6 @@ sub build_command_line {
 
     push @{ $options->{ launch_arg }}, "--headless"
         if $options->{ headless };
-    push @{ $options->{ launch_arg }}, "--disable-gpu"; # temporarily needed for now
 
     push @{ $options->{ launch_arg }}, "$options->{start_url}"
         if exists $options->{start_url};
