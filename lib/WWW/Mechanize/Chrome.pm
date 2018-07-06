@@ -224,7 +224,7 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--profile-directory=$options->{ profile }";
     };
 
-    if( ! exists $options->{enable_first_run}) {
+    if( ! exists $options->{enable_first_run} || ! $options->{enable_first_run}) {
         push @{ $options->{ launch_arg }}, "--no-first-run";
     };
 
