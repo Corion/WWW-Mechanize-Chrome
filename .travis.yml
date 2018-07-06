@@ -89,9 +89,6 @@ install:
   # Initialize local::lib on OSX, a second time as this is a new shell session
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib); fi
   - cpanm --notest ExtUtils::MakeMaker~6.68
-  # Imager::File::PNG fails to install on OSX :(
-  - cpanm --notest Imager
-  - IM_VERBOSE=1 cpanm --verbose Imager::File::PNG
   - cpanm --notest --installdeps .
   # For the test matrix
   - cpanm --notest Mojolicious Future::Mojo
