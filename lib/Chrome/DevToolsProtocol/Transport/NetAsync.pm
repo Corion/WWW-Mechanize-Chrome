@@ -13,7 +13,7 @@ our $VERSION = '0.16';
 
 =head1 NAME
 
-Chrome::DevToolsProtocol::Transport::NetAsync - IO::Async backend
+Chrome::DevToolsProtocol::Transport::NetAsync - IO::Async backend for Chrome communication
 
 =head1 SYNOPSIS
 

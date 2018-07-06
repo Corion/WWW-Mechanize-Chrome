@@ -10,6 +10,10 @@ use Future::Mojo;
 
 our $VERSION = '0.16';
 
+=head1 NAME
+
+Chrome::DevToolsProtocol::Transport::Mojo - Mojolicious backend for Chrome communication
+
 =head1 SYNOPSIS
 
     my $got_endpoint = Future->done( "ws://..." );

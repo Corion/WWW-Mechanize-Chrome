@@ -14,6 +14,10 @@ use AnyEvent::Future qw(as_future_cb);
 our $VERSION = '0.16';
 our @CARP_NOT = ();
 
+=head1 NAME
+
+Chrome::DevToolsProtocol::Transport::AnyEvent - AnyEvent backend for Chrome communication
+
 =head1 SYNOPSIS
 
     my $got_endpoint = Future->done( "ws://..." );
