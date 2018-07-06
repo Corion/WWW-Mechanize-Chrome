@@ -4200,7 +4200,7 @@ sub viewport_size_future( $self, $new={} ) {
     my $params = dclone $new;
     if( keys %$params) {
         my %reset = (
-            mobile => $JSON::false,
+            mobile => JSON::false,
             width  => 0,
             height => 0,
             deviceScaleFactor => 0,
@@ -4209,7 +4209,7 @@ sub viewport_size_future( $self, $new={} ) {
             screenHeight => 0,
             positionX => 0,
             positionY => 0,
-            dontSetVisibleSize => $JSON::false,
+            dontSetVisibleSize => JSON::false,
             screenOrientation => {
                 type => 'landscapePrimary',
                 angle => 0,
