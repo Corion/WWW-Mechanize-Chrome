@@ -23,6 +23,11 @@ env:
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
 
+os:
+  - linux
+  # Don't include OSX in the list here as we'd have to exclude it for most builds again
+  #- osx
+
 matrix:
   # Exclude almost anything on OSX except the system Perl
   exclude:
@@ -55,10 +60,6 @@ matrix:
     - perl: blead
     - perl: 5.6.2
 
-os:
-  - linux
-  #- osx
-
 sudo: required
 
 dist: trusty
@@ -71,6 +72,7 @@ addons:
     packages:
       - google-chrome-stable
       - chromium-browser
+      - libpng-dev
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
@@ -80,7 +82,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
   - "\"$CHROME_BIN\" --version"
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
-  # Install perlbrew the hard way, at least on OSX
+  # Install perlbrew the hard way, on OSX
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install perl; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libpng --universal; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --cflags; fi
@@ -88,7 +90,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then \curl -L http://install.perlbrew.pl | bash; fi
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then source ~/perl5/perlbrew/etc/bashrc; fi
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export PATH=$HOME/perl5/perlbrew/bin:$PATH; fi
-  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then perlbrew install perl-5.28; perlbrew use perl-5.28; perlbrew install-cpanm; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then echo $TRAVIS_PERL_VERSION; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then perlbrew install perl-$TRAVIS_PERL_VERSION; perlbrew use perl-$TRAVIS_PERL_VERSION; perlbrew install-cpanm; fi
   #
   # Install local::lib
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -L http://cpanmin.us | perl - --notest --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib); fi
