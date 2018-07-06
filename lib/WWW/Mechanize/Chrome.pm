@@ -300,7 +300,10 @@ sub find_executable( $class, $program=undef, @search ) {
              $ENV{"ProgramFilesW6432"},
             );
     } elsif( $^O =~ /darwin/i ) {
-        push @search, "/Applications/Google Chrome.app/Contents/MacOS/";
+        my $path = '/Applications/Google Chrome.app/Contents/MacOS';
+        push @search,
+            $path,
+            $ENV{"HOME"} . "/$path"; 
     }
 
 
@@ -4619,19 +4622,27 @@ L<Google's instructions|https://support.google.com/chrome/answer/95346> for
 help installing the Chrome browser.
 
 C<WWW::Mechanize::Chrome> will do its best to locate Chrome's executable file
-on your system. With any luck, it will find it but it may not succeed. In such
-cases, you should verify Chrome is installed and working properly by running a
-command from your command line. The command you run will vary based on your
-operating sytem and possibly the version of Chrome installed.
+on your system. With any luck, it will find the executable you want to use. If
+C<WWW::Mechanize::Chrome> does not find Chrome on your system or you want to 
+use a different executable, you can use the C<launch_exe> constructor argument
+to tell C<WWW::Mechanize::Chrome> where to find it. You can alse set the
+C<CHROME_BIN> environment variable to the absolute path of the executable.
+ 
+=head2 Test the C<chrome> executable
 
-On Ubuntu, the executable is typically named C<chrome-browser> and so you can
-check for the existence of the executable with:
+You should verify that Chrome's executable is working properly. On Ubuntu, the
+executable is typically named C<chrome-browser> and so you can test Chrome's
+installation with:
 
 C<chrome-browser --version>
 
 and you should see something like C<Google Chrome 67.0.3396.99> returned.
 
-On a Debian system, the command would most likely be something like:
+Note that the command you run will vary based on your operating sytem and
+possibly the version of Chrome installed.
+
+On a Debian system, for example, the command will most likely be something
+like:
 
 C<`google-chrome-stable --version> or
 C<`google-chrome-beta --version> or
@@ -4644,21 +4655,18 @@ C<chrome>
 
 in the terminal.
 
-On MacOS, the executable can usually be be found inside the C<Google Chrome>
-package in the C<Applications> directory and so can its installation can be
+On MacOS, the executable can usually be be found inside the C<Google Chrome.app>
+package in the C</Applications> directory and its installation can be
 tested with something like the following:
 
 C</Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version>
 
-Unfortunatley, we aren't able to provide an exhaustive list of commands
-to determine if Chrome is installed for your particular system here. If you
-are having trouble determining whether Chrome is installed,
-please consult your system's documentation or a knowledgeable expert.
+or, if Chrome is installed for a single user:
 
-Once you have found the path or command to launch Chrome's executable on your
-system, you can pass it manually to C<WWW::Mechanize::Chrome> using the 
-C<launch_exe> argument during construction. You can alse set the C<CHROME_BIN>
-environment variable to the absolute path of the executable.
+C</Users/<user_nameE<gt>/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version>
+
+If you are having trouble finding, installing, or running Chrome on your
+system, please consult the appropriate documentation or a knowledgeable expert.
 
 =head2 Chrome versions
 
