@@ -1370,8 +1370,8 @@ and you should see something like `Google Chrome 67.0.3396.99` returned.
 
 On a Debian system, the command would most likely be something like:
 
-`google-chrome-stable --version` or
-`google-chrome-beta --version` or
+`` `google-chrome-stable --version `` or
+`` `google-chrome-beta --version `` or
 `google-chrome-unstable --version`
 
 On Windows, the executable is named `chrome.exe` and doesn't output
@@ -1387,9 +1387,9 @@ tested with something like the following:
 
 `/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
 
-Unfortunatley, we aren't able to provide you with an exhaustive list of 
-commands you can run to determine if Chrome is installed for your particular
-system here. If you are having trouble determining whether Chrome is installed,
+Unfortunatley, we aren't able to provide an exhaustive list of commands
+to determine if Chrome is installed for your particular system here. If you
+are having trouble determining whether Chrome is installed,
 please consult your system's documentation or a knowledgeable expert.
 
 Once you have found the path or command to launch Chrome's executable on your

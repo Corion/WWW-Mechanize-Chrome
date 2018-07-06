@@ -12,7 +12,7 @@
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
 
-0.17 2018-07-04
+0.17 2018-07-06
     + Added installation instructions for MacOS, contributed by Sdonley
     + Added default path on MacOS for using the default Chrome executable
 
