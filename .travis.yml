@@ -64,7 +64,7 @@ install:
   - cpan-install Mojolicious Future::Mojo
   - cpan-install IO::Async Net::Async::WebSocket::Client
   # For author testing/compile testing
-  - cpan-install HTML::Display
+  - cpan-install CPAN::META::Prereqs
 
 script:
   - cd $BUILD_DIR
