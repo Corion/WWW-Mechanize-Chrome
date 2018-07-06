@@ -17,6 +17,7 @@ use JSON;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
 use Storable 'dclone';
+use HTML::Selector::XPath 'selector_to_xpath';
 
 our $VERSION = '0.16';
 our @CARP_NOT;
