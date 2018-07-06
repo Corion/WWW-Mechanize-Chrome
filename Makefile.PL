@@ -70,7 +70,6 @@ my %module = (
         'JSON'               => 0,
         'Moo'                => 2, # for some hashes-as-objects
 
-        'WWW::Mechanize::Plugin::Selector' => 0,
         'HTTP::Response'                   => 0,
         'HTTP::Headers'                    => 0,
         'Scalar::Util'                     => 0, # we need 'weaken' and 'blessed'

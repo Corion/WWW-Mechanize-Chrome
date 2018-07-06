@@ -2274,10 +2274,17 @@ This takes the same options that C<< ->xpath >> does.
 This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 =cut
-{
-    no warnings 'once';
-    *selector = \&WWW::Mechanize::Plugin::Selector::selector;
-}
+
+sub selector {
+    my ($self,$query,%options) = @_;
+    $options{ user_info } ||= "CSS selector '$query'";
+    if ('ARRAY' ne (ref $query || '')) {
+        $query = [$query];
+    };
+    my $root = $options{ node } ? './' : '';
+    my @q = map { selector_to_xpath($_, root => $root) } @$query;
+    $self->xpath(\@q, %options);
+};
 
 =head2 C<< $mech->find_link_dom( %options ) >>
 

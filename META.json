@@ -4,7 +4,7 @@
       "Max Maischein <corion@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "ExtUtils::MakeMaker version 7.24, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "ExtUtils::MakeMaker version 7.34, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
@@ -49,7 +49,6 @@
             "Imager" : "0",
             "Imager::File::PNG" : "0",
             "JSON" : "0",
-            "JSON::PP" : "0",
             "Log::Log4perl" : "0",
             "MIME::Base64" : "0",
             "Moo" : "2",
@@ -61,7 +60,6 @@
             "URI" : "0",
             "URI::file" : "0",
             "WWW::Mechanize::Link" : "0",
-            "WWW::Mechanize::Plugin::Selector" : "0",
             "perl" : "5.010"
          }
       },

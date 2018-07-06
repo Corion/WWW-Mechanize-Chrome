@@ -14,7 +14,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: '0'
 dynamic_config: 0
-generated_by: 'ExtUtils::MakeMaker version 7.24, CPAN::Meta::Converter version 2.150010'
+generated_by: 'ExtUtils::MakeMaker version 7.34, CPAN::Meta::Converter version 2.150010'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -42,7 +42,6 @@ requires:
   Imager: '0'
   Imager::File::PNG: '0'
   JSON: '0'
-  JSON::PP: '0'
   Log::Log4perl: '0'
   MIME::Base64: '0'
   Moo: '2'
@@ -54,7 +53,6 @@ requires:
   URI: '0'
   URI::file: '0'
   WWW::Mechanize::Link: '0'
-  WWW::Mechanize::Plugin::Selector: '0'
   perl: '5.010'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
