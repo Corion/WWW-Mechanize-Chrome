@@ -1988,7 +1988,7 @@ will likely want to make this much more reasonable.
 
 The method returns a value of '1' if it detects it successfully loaded new
 content or '0' if it does not. You can use the return value to continually
-scroll down the page, like so:
+scroll down the page until it reaches the end of the infinite scroll, like so:
 
     while($mech->infinite_scroll(10)) {
         # You can place additional tests below to exit the loop earlier
