@@ -4758,6 +4758,12 @@ Please report bugs in this module via the RT CPAN bug queue at
 L<https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome>
 or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org|mailto:www-mechanize-Chrome-Bugs@rt.cpan.org>.
 
+=head1 KNOWN ISSUES
+
+When Chrome is run in headless mode, Chrome throws a C<Lost UI shared context>
+error. This error can be ignored and does not affect the operation of this
+module.
+
 =head1 AUTHOR
 
 Max Maischein C<corion@cpan.org>
