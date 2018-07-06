@@ -162,6 +162,10 @@ A premade L<Chrome::DevToolsProtocol> object.
 If set to 1, after each request tests for Javascript errors and warns. Useful
 for testing with C<use warnings qw(fatal)>.
 
+=item B<mute_audio>
+
+Mutes the audio output. This setting is enabled by default.
+
 =item B<background_networking>
 
 =item B<client_side_phishing_detection>
@@ -183,6 +187,8 @@ for testing with C<use warnings qw(fatal)>.
 =item B<default_apps>
 
 =item B<popup_blocking>
+
+=item B<hide_scrollbars>
 
 =back
 
@@ -220,6 +226,14 @@ sub build_command_line {
 
     if( ! exists $options->{enable_first_run}) {
         push @{ $options->{ launch_arg }}, "--no-first-run";
+    };
+
+    if( ! exists $options->{mute_audio} || $options->{mute_audio}) {
+        push @{ $options->{ launch_arg }}, "--mute-audio";
+    };
+
+    if( $options->{hide_scrollbars}) {
+        push @{ $options->{ launch_arg }}, "--hide-scrollbars";
     };
 
     if( ! exists $options->{disable_prompt_on_repost}) {
