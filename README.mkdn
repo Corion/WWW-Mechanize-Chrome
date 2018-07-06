@@ -1473,7 +1473,7 @@ or via mail to [www-mechanize-Chrome-Bugs@rt.cpan.org](mailto:www-mechanize-Chro
 
 # KNOWN ISSUES
 
-When Chrome is run in headless mode, Chrome throws a C<Lost UI shared context>
+When Chrome is run in headless mode, Chrome throws a `Lost UI shared context`
 error. This error can be ignored and does not affect the operation of this
 module.
 
