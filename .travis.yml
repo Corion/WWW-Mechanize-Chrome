@@ -29,32 +29,11 @@ os:
   #- osx
 
 matrix:
-  # Exclude almost anything on OSX except the system Perl
-  exclude:
-    - env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
-      os: "osx"
-    - env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
-      os: "osx"
-    - perl: "5.10"
-      os: "osx"
-    - perl: "5.12"
-      os: "osx"
-    - perl: "5.14"
-      os: "osx"
-    - perl: "5.16"
-      os: "osx"
-    #- perl: "5.18"
-    #- perl: "5.18.1-thr"
-    - perl: "5.20"
-      os: "osx"
-    - perl: "5.22"
-      os: "osx"
-    - perl: "5.24"
-      os: "osx"
-    - perl: "5.26"
-      os: "osx"
+  # Add one job for testing OSX
+  include:
     - perl: "5.28"
       os: "osx"
+      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
 
   allow_failures:
     - perl: blead
