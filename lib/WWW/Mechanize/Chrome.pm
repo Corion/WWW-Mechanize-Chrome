@@ -4,7 +4,6 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use File::Spec;
-use WWW::Mechanize::Plugin::Selector;
 use HTTP::Response;
 use HTTP::Headers;
 use Scalar::Util qw( blessed weaken);
