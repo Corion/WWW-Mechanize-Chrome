@@ -10,11 +10,27 @@
     . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
     . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
+    . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
 
 0.17 2018-07-06
-    + Added installation instructions for MacOS, contributed by Sdonley
-    + Added default path on MacOS for using the default Chrome executable
+    . Added installation instructions for MacOS / OSX, contributed by Sdonley
+    . Added default path on MacOS for using the default Chrome executable
+    . Automatic testing for OSX on Travis CI is now enabled
+    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
+    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
+    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
+    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
+    . Tested against Chromium 63.0.3239.132 / Win64
+    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
+    . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3396.62 / Win64 (some tests skipped)
+    . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
+    . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
+    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
+    . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
+    . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
 
 0.16 2018-06-23
     + Added ->is_visible, ->wait_until_visible and ->wait_until_invisible
