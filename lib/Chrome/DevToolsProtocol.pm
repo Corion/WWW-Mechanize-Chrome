@@ -197,10 +197,6 @@ sub connect( $self, %args ) {
     my $got_endpoint2 = $got_endpoint->then(sub($endpoint) {
         $self->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
-    })->catch(sub(@args) {
-        #croak @args;
-        warn "got_endpoint failed with [[@args]]";
-        Future->fail( @args );
     });
 
     my $transport = delete $args{ transport }

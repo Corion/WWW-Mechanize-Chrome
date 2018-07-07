@@ -57,19 +57,6 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             max_payload_size => 0, # allow unlimited size for messages
         );
 
-
-*Protocol::WebSocket::Response::_parse_first_line = sub {
-    my ($self, $line) = @_;
-
-    my $status = $self->status;
-    unless ($line =~ m{^HTTP/1\.1 $status }) {
-        warn 'Wrong response line: [[' . $line . "]], expected [[HTTP/1.1 $status ]]";
-        $self->error('Wrong response line');
-        return;
-    }
-
-    return $self;
-};
         $self->{ws_client}->connect( $endpoint )->cb( sub {
             $res->done( @_ )
         });
@@ -95,7 +82,6 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         undef $self;
         $res
     })->catch( sub {
-        warn "Transport::AnyEvent: Connecting failed with [[@_]], reraising";
         Future->fail( @_ );
     });
 }
