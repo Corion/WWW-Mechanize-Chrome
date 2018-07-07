@@ -193,7 +193,8 @@ sub connect( $self, %args ) {
             id => $1,
         };
     };
-    $got_endpoint = $got_endpoint->then(sub($endpoint) {
+
+    my $got_endpoint2 = $got_endpoint->then(sub($endpoint) {
         $self->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
     })->catch(sub(@args) {
@@ -213,7 +214,7 @@ sub connect( $self, %args ) {
         $transport = $self->{transport};
     };
 
-    return $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } );
+    return $transport->connect( $self, $got_endpoint2, sub { $self->log( @_ ) } );
 };
 
 sub close( $self ) {

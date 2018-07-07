@@ -94,6 +94,9 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         my $res = Future->done( $self );
         undef $self;
         $res
+    })->catch( sub {
+        warn "Transport::AnyEvent: Connecting failed with [[@_]], reraising";
+        Future->fail( @_ );
     });
 }
 
