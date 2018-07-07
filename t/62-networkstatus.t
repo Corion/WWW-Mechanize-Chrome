@@ -4,6 +4,7 @@ use Test::More;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
+use JSON;
 use lib './inc', '../inc', '.';
 use Test::HTTP::LocalServer;
 
@@ -53,10 +54,10 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
             ($value, $type) = $mech->eval_in_page('window.navigator.connection.effectiveType');
             #is( $value, '4g', "We are online");
             ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
-            is( $value, JSON::PP::true, "We are online (.onLine)");
+            is( $value, JSON::true, "We are online (.onLine)");
 
             $mech->emulateNetworkConditions(
-                offline => JSON::PP::true,
+                offline => JSON::true,
                 latency => 0,
                 downloadThroughput => 0,
                 uploadThroughput => 0,
@@ -65,19 +66,19 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
             ($value, $type) = $mech->eval('navigator.connection.effectiveType');
             #is( $value, 'offline', "We are offline");
             ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
-            is( $value, JSON::PP::false, "We are offline (.onLine)");
+            is( $value, JSON::false, "We are offline (.onLine)");
 
             my $res = $mech->get('https://google.de');
             ok !$res->is_success, "We can't fetch pages while offline";
             #$mech->eval_in_page(sprintf 'window.location="%s"', '49-mech-get-file.html');
 
             $mech->emulateNetworkConditions(
-                offline => JSON::PP::false,
+                offline => JSON::false,
             );
             ($value, $type) = $mech->eval('navigator.connection.effectiveType');
             #is( $value, '4g', "We are online again");
             ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
-            is( $value, JSON::PP::true, "We are online (.onLine)");
+            is( $value, JSON::true, "We are online (.onLine)");
         }
     }
 
