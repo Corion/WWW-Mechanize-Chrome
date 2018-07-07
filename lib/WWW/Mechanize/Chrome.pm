@@ -237,6 +237,10 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--no-zygote";
     };
 
+    if( ! exists $options->{no_zygote} || $options->{no_sandbox}) {
+        push @{ $options->{ launch_arg }}, "--no-sandbox";
+    };
+
     if( $options->{hide_scrollbars}) {
         push @{ $options->{ launch_arg }}, "--hide-scrollbars";
     };
