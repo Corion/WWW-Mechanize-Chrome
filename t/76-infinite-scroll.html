@@ -46,16 +46,27 @@ document.addEventListener("scroll", function (event) {
 if (getDocHeight() - 20 <= getScrollXY()[1] + window.innerHeight)
 { 
   // simulate reaching bottom of page
-  if (scroll_count > 10) {
+  if (scroll_count > 5) {
     return;
   }
+  // simulate network delay
+  sleep(500);
   var oldcontent = document.getElementById('scrollcontent');
-  oldcontent.innerHTML = oldcontent.innerHTML + '<div class="page"><div> <div> <div> <div> <div> <div> <div> <div> <div> <div> <div>new content loaded </div> </div> </div> </div> </div> </div> </div> </div> </div> </div>';
+  oldcontent.innerHTML = oldcontent.innerHTML + '<div class="page">new content loaded</div>';
   document.getElementById("scrollcontent").innerHTML=oldcontent.innerHTML;
   scroll_count++;
 
 }
 });
+
+function sleep(milliseconds) {
+	var start = new Date().getTime();
+	for (var i = 0; i < 1e7; i++) {
+		if ((new Date().getTime() - start) > milliseconds){
+			break;
+		}
+	}
+}
 </script>
 </body>
 </html>

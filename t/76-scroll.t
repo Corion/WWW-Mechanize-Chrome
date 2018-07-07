@@ -10,7 +10,7 @@ use Test::HTTP::LocalServer;
 use lib '.';
 use t::helper;
 
-Log::Log4perl->easy_init($ERROR);
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
@@ -27,7 +27,6 @@ sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
-        #headless => 0,
     );
 };
 
@@ -35,23 +34,21 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->autodie(1);
-
-    $mech->get_local('76-infinite-scroll.html');
     $mech->allow('javascript' => 1);
+    $mech->get_local('76-infinite-scroll.html');
 
     is ($mech->infinite_scroll, 1, 'Can scroll down and retrieve new content');
-    is (scroll_to_bottom($mech), 0, 'Can scroll down to end of infinite scroll');
+    is (scroll_to_bottom($mech), 0, 'Can scroll to end of infinite scroll'); 
+
 });
 
 sub scroll_to_bottom {
   my $self = shift;
-  my $return_val;
-  while ($self->infinite_scroll(2)) {
-
+  while ($self->infinite_scroll(2)) { 
   }
 }
 

@@ -566,23 +566,23 @@ event loop.
 
 Returns the current document URI.
 
-## `$mech->infinite_scroll( $wait_time_in_seconds )`
+## `$mech->infinite_scroll( [$wait_time_in_seconds] )`
 
-    $mech->infinite_scroll(10);
+    $new_content_found = $mech->infinite_scroll(3);
 
-This method is useful for webpages that load content via "infinite scroll"
-javascript functions. It scrolls to the bottom of the web page and waits for
-up to the number of seconds via `$wait_time_in_seconds` for new content
-to be loaded into the web page. The default is to wait up to 120 seconds so you
-will likely want to make this much more reasonable.
+Loads content into pages that have "infinite scroll" capabilities by scrolling
+to the bottom of the web page and waiting up to the number of seconds, as set by
+the optional `$wait_time_in_seconds` argument, for the browser to load more
+content. The default is to wait up to 20 seconds. For reasonbly fast sites,
+the wait time can be set much lower.
 
-The method returns a value of '1' if it detects it successfully loaded new
-content or '0' if it does not. You can use the return value to continually
-scroll down the page until it reaches the end of the infinite scroll, like so:
+The method returns a boolean `true` if new content is loaded, `false`
+otherwise. You can scroll to the end (if there is one) of an infinitely
+scrolling page like so:
 
-    while($mech->infinite_scroll(10)) {
-        # You can place additional tests below to exit the loop earlier
-        last if ...
+    while( $mech->infinite_scroll ) {
+        # Tests for exiting the loop earlier
+        last if $count++ >= 10;
     }
 
 # CONTENT METHODS
@@ -1405,8 +1405,8 @@ possibly the version of Chrome installed.
 On a Debian system, for example, the command will most likely be something
 like:
 
-`` `google-chrome-stable --version `` or
-`` `google-chrome-beta --version `` or
+`google-chrome-stable --version` or
+`google-chrome-beta --version` or
 `google-chrome-unstable --version`
 
 On Windows, the executable is named `chrome.exe` and doesn't output
