@@ -9,6 +9,7 @@ use Carp qw(croak);
 
 use AnyEvent;
 use AnyEvent::WebSocket::Client;
+use Protocol::WebSocket::Response;
 use AnyEvent::Future qw(as_future_cb);
 
 our $VERSION = '0.16';
@@ -55,6 +56,19 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $client = AnyEvent::WebSocket::Client->new(
             max_payload_size => 0, # allow unlimited size for messages
         );
+
+
+*Protocol::WebSocket::Response::_parse_first_line = sub {
+    my ($self, $line) = @_;
+
+    my $status = $self->status;
+    unless ($line =~ m{^HTTP/1\.1 $status }) {
+        $self->error('Wrong response line: [[' . $line . ']]');
+        return;
+    }
+
+    return $self;
+};
         $client->connect( $endpoint )->cb( sub {
             $res->done( @_ )
         });
