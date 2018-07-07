@@ -1,5 +1,8 @@
 language: perl
 perl:
+  - "5.28"
+  - "5.18"
+  - "5.26"
   #- "5.6.2"       # ancient
   #- "5.8"
   #- "5.8.4"
@@ -9,7 +12,6 @@ perl:
   - "5.12"
   - "5.14"
   - "5.16"
-  - "5.18"
   - "5.18.1-thr"
   - "5.20"
   - "5.22"
@@ -21,14 +23,21 @@ env:
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
 
+os:
+  - linux
+  # Don't include OSX in the list here as we'd have to exclude it for most builds again
+  #- osx
+
 matrix:
+  # Add one job for testing OSX
+  include:
+    - perl: "5.28"
+      os: "osx"
+      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+
   allow_failures:
     - perl: blead
     - perl: 5.6.2
-
-os:
-  - linux
-  #- osx
 
 sudo: required
 
@@ -40,36 +49,57 @@ addons:
     sources:
       - google-chrome
     packages:
-      - google-chrome-stable
+      #- google-chrome-stable
       - chromium-browser
+      - libpng-dev
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
-  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
-  - export SPLIT_BUILD=0
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then grep -v blank /etc/fonts/fonts.conf | sudo tee /etc/fonts/fonts.conf; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
   - "\"$CHROME_BIN\" --version"
-  - source ~/travis-perl-helpers/init
-  - build-perl
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  # Install perlbrew the hard way, on OSX
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install perl; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libpng --universal; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --cflags; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --libs; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then \curl -L http://install.perlbrew.pl | bash; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then source ~/perl5/perlbrew/etc/bashrc; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then export PATH=$HOME/perl5/perlbrew/bin:$PATH; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then echo $TRAVIS_PERL_VERSION; fi
+  - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then perlbrew install perl-$TRAVIS_PERL_VERSION; perlbrew use perl-$TRAVIS_PERL_VERSION; perlbrew install-cpanm; fi
+  #
+  # Install local::lib
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -L http://cpanmin.us | perl - --notest --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib); fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then curl -L http://cpanmin.us | perl - --notest App::cpanminus; fi
+  # install libpng for OSX
+  - export SPLIT_BUILD=0
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then source ~/travis-perl-helpers/init; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then build-perl; fi
   - perl -V
-  - build-dist
-  - cd $BUILD_DIR
+  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then build-dist; fi
+  - cd $TRAVIS_BUILD_DIR
 
 install:
-  - cpan-install ExtUtils::MakeMaker~6.68
-  - cpan-install --deps
+  - cd $TRAVIS_BUILD_DIR
+  - pwd
+  # Initialize local::lib on OSX, a second time as this is a new shell session
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib); fi
+  - cpanm --notest ExtUtils::MakeMaker~6.68
+  - cpanm --notest --installdeps .
   # For the test matrix
-  - cpan-install Mojolicious Future::Mojo
-  - cpan-install IO::Async Net::Async::WebSocket::Client
+  - cpanm --notest Mojolicious Future::Mojo
+  - cpanm --notest IO::Async Net::Async::WebSocket::Client
   # For author testing/compile testing
-  - cpan-install CPAN::META::Prereqs
+  - cpanm --notest CPAN::Meta
 
 script:
-  - cd $BUILD_DIR
+  - cd $TRAVIS_BUILD_DIR
   - perl Makefile.PL && make
-  - prove -blv $(test-dirs)
+  - prove -blv xt/ t/
 
 branches:
   except:
