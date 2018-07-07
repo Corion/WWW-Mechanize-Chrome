@@ -11,7 +11,7 @@
     . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
-    . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
+    . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
 0.17 2018-07-06
     . Added installation instructions for MacOS / OSX, contributed by Sdonley
@@ -30,7 +30,7 @@
     . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
-    . Tested against Chrome 67.0.3396.62 / Win64, thanks AppVeyor
+    . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
 0.16 2018-06-23
     + Added ->is_visible, ->wait_until_visible and ->wait_until_invisible
