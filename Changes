@@ -17,6 +17,14 @@
     . Added installation instructions for MacOS / OSX, contributed by Sdonley
     . Added default path on MacOS for using the default Chrome executable
     . Automatic testing for OSX on Travis CI is now enabled
+    . We now always launch Chrome / Chromium with --no-zygote and --no-sandbox
+      This behaviour can be disabled by passing
+          no_zygote => 0,
+          no_sandbox => 0,
+      to the constructor
+    . Skip constructor failure tests for Perl < 5.014
+      $@ is not always preserved when a destructor calls eval{} on those
+      versions of Perl.
     . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
     . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
     . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
