@@ -8,7 +8,7 @@ use lib '.';
 
 use t::helper;
 
-Log::Log4perl->easy_init($ERROR)
+Log::Log4perl->easy_init($ERROR);
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
