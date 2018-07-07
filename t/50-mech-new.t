@@ -32,7 +32,6 @@ sub new_mech {
     };
     WWW::Mechanize::Chrome->new(
         autodie => 1,
-        launch_args => ['--use-gl=swiftshader-webgl'],
         %args,
     );
 };
