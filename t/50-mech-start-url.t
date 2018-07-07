@@ -8,14 +8,7 @@ use lib '.';
 
 use t::helper;
 
-# (re)set the log level
-if (my $lv = $ENV{TEST_LOG_LEVEL}) {
-    if( $lv eq 'trace' ) {
-        Log::Log4perl->easy_init($TRACE)
-    } elsif( $lv eq 'debug' ) {
-        Log::Log4perl->easy_init($DEBUG)
-    }
-}
+Log::Log4perl->easy_init($ERROR)
 
 # What instances of Chrome will we try?
 my $instance_port = 9222;
