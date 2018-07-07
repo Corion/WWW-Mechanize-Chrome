@@ -25,6 +25,8 @@
     . Skip constructor failure tests for Perl < 5.014
       $@ is not always preserved when a destructor calls eval{} on those
       versions of Perl.
+    . Add ->infinite_scroll as experimental API, together with ->scroll_to_bottom
+      Added by sdondley
     . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
     . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
     . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
