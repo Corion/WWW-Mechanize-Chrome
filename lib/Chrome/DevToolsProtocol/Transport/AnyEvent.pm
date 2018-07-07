@@ -9,7 +9,6 @@ use Carp qw(croak);
 
 use AnyEvent;
 use AnyEvent::WebSocket::Client;
-use Protocol::WebSocket::Response;
 use AnyEvent::Future qw(as_future_cb);
 
 our $VERSION = '0.16';
