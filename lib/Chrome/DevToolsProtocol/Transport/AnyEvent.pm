@@ -48,13 +48,12 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     croak "Need an endpoint to connect to" unless $got_endpoint;
     $self->close;
 
-    my $client;
     $got_endpoint->then( sub( $endpoint ) {
         die "Got an undefined endpoint" unless defined $endpoint;
 
         my $res = $self->future;
         $logger->('debug',"Connecting to $endpoint");
-        $client = AnyEvent::WebSocket::Client->new(
+        $self->{ws_client} = AnyEvent::WebSocket::Client->new(
             max_payload_size => 0, # allow unlimited size for messages
         );
 
@@ -71,7 +70,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
     return $self;
 };
-        $client->connect( $endpoint )->cb( sub {
+        $self->{ws_client}->connect( $endpoint )->cb( sub {
             $res->done( @_ )
         });
         $res
@@ -79,7 +78,6 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     })->then( sub( $c ) {
         $logger->( 'trace', sprintf "Connected" );
         my $connection = $c->recv;
-        undef $client;
 
         $self->{connection} = $connection;
         undef $self;
@@ -108,6 +106,7 @@ sub close( $self ) {
     my $c = delete $self->{connection};
     $c->close
         if $c;
+    delete $self->{ws_client};
 }
 
 sub future {
