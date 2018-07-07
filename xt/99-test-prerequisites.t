@@ -18,7 +18,7 @@ the optional prerequisite.
 
 BEGIN {
     eval {
-        require CPAN::META::Prereqs;
+        require CPAN::Meta::Prereqs;
         require Parse::CPAN::Meta;
         require Perl::PrereqScanner::Lite;
         require Module::CoreList;
