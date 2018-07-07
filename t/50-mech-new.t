@@ -150,7 +150,13 @@ HTML
     };
     my $err = $@;
     is $lived, undef, 'We died trying to connect to a non-existing tab';
-    like $err, qr/Couldn't find a tab matching/, 'We got the correct error message';
+    if( $] < 5.014 ) {
+        SKIP: {
+            skip 1, "Perl pre 5.14 destructor eval clears \$\@ sometimes";
+        };
+    } else {
+        like $err, qr/Couldn't find a tab matching/, 'We got the correct error message';
+    };
 
     local $SIG{CHLD} = 'IGNORE';
     kill 'SIGKILL', $pid; # clean up, the hard way
