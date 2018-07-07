@@ -304,7 +304,7 @@ sub find_executable( $class, $program=undef, @search ) {
         my $path = '/Applications/Google Chrome.app/Contents/MacOS';
         push @search,
             $path,
-            $ENV{"HOME"} . "/$path"; 
+            $ENV{"HOME"} . "/$path";
     }
 
 
@@ -1976,71 +1976,67 @@ sub uri( $self ) {
     URI->new( $d->{root}->{documentURL} )
 }
 
-=head2 C<< $mech->infinite_scroll( $wait_time_in_seconds ) >>
+=head2 C<< $mech->infinite_scroll( [$wait_time_in_seconds] ) >>
 
-    $mech->infinite_scroll(10);
+    $new_content_found = $mech->infinite_scroll(3);
 
-This method is useful for webpages that load content via "infinite scroll"
-javascript functions. It scrolls to the bottom of the web page and waits for
-up to the number of seconds via C<$wait_time_in_seconds> for new content
-to be loaded into the web page. The default is to wait up to 120 seconds so you
-will likely want to make this much more reasonable.
+Loads content into pages that have "infinite scroll" capabilities by scrolling
+to the bottom of the web page and waiting up to the number of seconds, as set by
+the optional C<$wait_time_in_seconds> argument, for the browser to load more
+content. The default is to wait up to 20 seconds. For reasonbly fast sites,
+the wait time can be set much lower.
 
-The method returns a value of '1' if it detects it successfully loaded new
-content or '0' if it does not. You can use the return value to continually
-scroll down the page until it reaches the end of the infinite scroll, like so:
+The method returns a boolean C<true> if new content is loaded, C<false>
+otherwise. You can scroll to the end (if there is one) of an infinitely
+scrolling page like so:
 
-    while($mech->infinite_scroll(10)) {
-        # You can place additional tests below to exit the loop earlier
-        last if ...
+    while( $mech->infinite_scroll ) {
+        # Tests for exiting the loop earlier
+        last if $count++ >= 10;
     }
 
 =cut
 
 sub infinite_scroll {
-    my $self = shift;
-    my $wait_time = shift || 120;
+    my $self        = shift;
+    my $wait_time   = shift || 20;
 
-    my $current_element_count = $self->_get_element_count;
-    $self->log('debug', $current_element_count);
-    
+    my $current_height = $self->_get_body_height;
+    $self->log('debug', "Current page body height: $current_height");
+
     $self->_scroll_to_bottom;
 
-    # wait 1/10th sec for more of the page to load
-    usleep 100000;
-
-    my $new_element_count = $self->_get_element_count;
-    $self->log('debug', $new_element_count);
+    my $new_height = $self->_get_body_height;
+    $self->log('debug', "New page body height: $new_height");
 
     my $start_time = time();
-    while (($new_element_count - $current_element_count) < 5) {
+    while (!($new_height > $current_height)) {
 
-        # keep waiting for new elements to load until $wait_time is reached
+        # wait for new elements to load until $wait_time is reached
         if (time() - $start_time > $wait_time) {
           return 0;
         }
 
-        # wait 1/10th sec for more of the page to load
+        # wait 1/10th sec for new elements to load
         usleep 100000;
-        $new_element_count = $self->_get_element_count;
+        $new_height = $self->_get_body_height;
     }
-    usleep 100000;
     return 1;
 }
 
-sub _scroll_to_bottom {
-  my $self = shift;
+sub _get_body_height {
+    my $self = shift;
 
-  # scroll to the bottom twice, just to make sure javascript is triggered
-  $self->eval( 'window.scroll(0,document.body.scrollHeight + 100)' );
-  usleep 100000;
-  $self->eval( 'window.scroll(0,document.body.scrollHeight + 200)' );
+    my ($height) = $self->eval( 'document.body.scrollHeight' );
+    return $height;
 }
 
-sub _get_element_count {
-  my $self = shift;
-  my ($el_count) = $self->eval( 'document.getElementsByTagName("*").length' );
-  return $el_count;
+sub _scroll_to_bottom {
+    my $self = shift;
+
+    # scroll to bottom and wait for some content to load
+    $self->eval( 'window.scroll(0,document.body.scrollHeight + 200)' );
+    usleep 100000;
 }
 
 =head1 CONTENT METHODS
@@ -4691,11 +4687,11 @@ help installing the Chrome browser.
 
 C<WWW::Mechanize::Chrome> will do its best to locate Chrome's executable file
 on your system. With any luck, it will find the executable you want to use. If
-C<WWW::Mechanize::Chrome> does not find Chrome on your system or you want to 
+C<WWW::Mechanize::Chrome> does not find Chrome on your system or you want to
 use a different executable, you can use the C<launch_exe> constructor argument
 to tell C<WWW::Mechanize::Chrome> where to find it. You can alse set the
 C<CHROME_BIN> environment variable to the absolute path of the executable.
- 
+
 =head2 Test the C<chrome> executable
 
 You should verify that Chrome's executable is working properly. On Ubuntu, the
@@ -4712,8 +4708,8 @@ possibly the version of Chrome installed.
 On a Debian system, for example, the command will most likely be something
 like:
 
-C<`google-chrome-stable --version> or
-C<`google-chrome-beta --version> or
+C<google-chrome-stable --version> or
+C<google-chrome-beta --version> or
 C<google-chrome-unstable --version>
 
 On Windows, the executable is named C<chrome.exe> and doesn't output
