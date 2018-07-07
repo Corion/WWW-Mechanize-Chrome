@@ -79,6 +79,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     })->then( sub( $c ) {
         $logger->( 'trace', sprintf "Connected" );
         my $connection = $c->recv;
+        undef $client;
 
         $self->{connection} = $connection;
         undef $self;
