@@ -20,14 +20,13 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 2*@instances;
+    plan tests => 9*@instances;
 };
 
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
-        headless => 0,
     );
 };
 
@@ -35,7 +34,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
+t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 9, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->autodie(1);
@@ -51,9 +50,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub 
 
 sub scroll_to_bottom {
   my $self = shift;
-  my $return_val;
-  while ($self->infinite_scroll(2)) {
-
+  while ($self->infinite_scroll(2)) { 
   }
 }
 
