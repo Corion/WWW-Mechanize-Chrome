@@ -46,6 +46,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     local @CARP_NOT = (@CARP_NOT, 'Chrome::DevToolsProtocol::Transport');
 
     croak "Need an endpoint to connect to" unless $got_endpoint;
+    $self->close;
 
     my $client;
     $got_endpoint->then( sub( $endpoint ) {
