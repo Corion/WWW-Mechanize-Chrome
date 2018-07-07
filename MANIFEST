@@ -14,6 +14,7 @@ lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/Chrome/DevToolsProtocol/Transport/NetAsync.pm
 lib/WWW/Mechanize/Chrome.pm
+lib/WWW/Mechanize/Chrome/Contributing.pod
 lib/WWW/Mechanize/Chrome/Cookbook.pm
 lib/WWW/Mechanize/Chrome/DSL.pm
 lib/WWW/Mechanize/Chrome/Examples.pm
@@ -89,6 +90,8 @@ t/65-save-content.t
 t/65-wait_until_visible.t
 t/70-mech-png.t
 t/75-classnames.t
+t/76-infinite-scroll.html
+t/76-scroll.t
 t/helper.pm
 t/mixi_jp_index.html
 t/sophos_co_jp_index.html

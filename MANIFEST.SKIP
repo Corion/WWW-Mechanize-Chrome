@@ -4,6 +4,7 @@ maint
 .last_cover_stats
 .travis.yml
 .appveyor.yml
+^\.github
 Makefile$
 ^blib
 ^pm_to_blib
