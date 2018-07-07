@@ -514,6 +514,7 @@ sub new($class, %options) {
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
     )->catch( sub(@args) {
+    warn "Caught error in \$self->driver->connect: @_!";
         $err = $args[0];
         if( ref $args[1] eq 'HASH') {
             $err .= $args[1]->{Reason};
@@ -524,10 +525,12 @@ sub new($class, %options) {
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $err ) {
+    warn "Cleaning up";
         if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
             local $SIG{CHLD} = 'IGNORE';
             kill 'SIGKILL' => $pid;
         };
+        warn "Reraising top level error";
         die $err;
     }
 
