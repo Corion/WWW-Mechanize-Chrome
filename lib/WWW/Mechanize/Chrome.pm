@@ -4869,7 +4869,7 @@ or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org|mailto:www-mechanize-Chro
 
 =head1 CONTRIBUTING
 
-Please see L< WWW::Mechanize::Chrome::Contributing >.
+Please see L<WWW::Mechanize::Chrome::Contributing>.
 
 =head1 KNOWN ISSUES
 

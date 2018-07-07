@@ -2,6 +2,9 @@
 [![Travis Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/WWW-Mechanize-Chrome?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/WWW-Mechanize-Chrome)
 
+CONTRIBUTING
+
+See lib/WWW/Mechanize/Chrome/Contributing.pod
 
 # NAME
 
@@ -569,7 +572,7 @@ Returns the current document URI.
 
 This method is useful for webpages that load content via "infinite scroll"
 javascript functions. It scrolls to the bottom of the web page and waits for
-up to the number of seconds via C<$wait_time_in_seconds> for new content
+up to the number of seconds via `$wait_time_in_seconds` for new content
 to be loaded into the web page. The default is to wait up to 120 seconds so you
 will likely want to make this much more reasonable.
 
@@ -581,8 +584,6 @@ scroll down the page until it reaches the end of the infinite scroll, like so:
         # You can place additional tests below to exit the loop earlier
         last if ...
     }
-
-=cut
 
 # CONTENT METHODS
 
@@ -1516,6 +1517,10 @@ that talk are
 Please report bugs in this module via the RT CPAN bug queue at
 [https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome](https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome)
 or via mail to [www-mechanize-Chrome-Bugs@rt.cpan.org](mailto:www-mechanize-Chrome-Bugs@rt.cpan.org).
+
+# CONTRIBUTING
+
+Please see [WWW::Mechanize::Chrome::Contributing](https://metacpan.org/pod/WWW::Mechanize::Chrome::Contributing).
 
 # KNOWN ISSUES
 

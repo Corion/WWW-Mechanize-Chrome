@@ -173,7 +173,11 @@ Should you wish to install this module manually, the procedure is
 INSTALL
             pod_section($_[0], 'REPOSITORY'),
             pod_section($_[0], 'SUPPORT'),
+            pod_section($_[0], 'TALKS'),
+            pod_section($_[0], 'KNOWN ISSUES'),
             pod_section($_[0], 'BUG TRACKER'),
+            pod_section($_[0], 'CONTRIBUTING'),
+            pod_section($_[0], 'SEE ALSO'),
             pod_section($_[0], 'AUTHOR'),
             pod_section($_[0], 'LICENSE' ),
             pod_section($_[0], 'COPYRIGHT' ),
@@ -197,7 +201,7 @@ INSTALL
 
 CONTRIBUTING
 
-See Contributing.pod
+See lib/WWW/Mechanize/Chrome/Contributing.pod
 
 STATUS
         update_file( 'README.mkdn', $readme_mkdn );
