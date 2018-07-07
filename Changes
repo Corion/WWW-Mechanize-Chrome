@@ -6,14 +6,14 @@
     . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
     . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
-    . Tested against Chromium 67.0.3396.62 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3396.99 / Win64 (some tests skipped)
     . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
-    . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
+    . Tested against Chromium 69.0.3481.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
-0.17 2018-07-06
+0.17 2018-07-07
     . Added installation instructions for MacOS / OSX, contributed by Sdonley
     . Added default path on MacOS for using the default Chrome executable
     . Automatic testing for OSX on Travis CI is now enabled
@@ -35,9 +35,9 @@
     . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
     . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
-    . Tested against Chromium 67.0.3396.62 / Win64 (some tests skipped)
+    . Tested against Chromium 67.0.3396.99 / Win64 (some tests skipped)
     . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
-    . Tested against Chromium 69.0.3447.0 / Win64 (some tests skipped)
+    . Tested against Chromium 69.0.3481.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
