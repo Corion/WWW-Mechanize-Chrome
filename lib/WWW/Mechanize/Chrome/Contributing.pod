@@ -1,0 +1,239 @@
+=pod
+
+=encoding utf8
+
+=head1 WWW::Mechanize::Chrome::Contributing
+
+Welcome!
+
+This is the documentation for how to contribute to WWW::Mechanize::Chrome,
+shamelessly copied from Zilla::Dist::Contributing.
+
+This Project is targeted to ship to CPAN and uses a plain C< Makefile.PL > setup
+to do that.
+This means that things are laid out mostly in the traditional way "normal" Perl
+module repositories look. The distribution directory
+looks like this at the top level:
+
+=over
+
+=item C<Changes>
+
+A changelog history, formatted in a way that L<CPAN::Changes> can read.
+
+=item C<Contributing>
+
+This file
+
+=item C<README>
+
+A short file with installation instructions.
+
+=item C<README.mkdn>
+
+Top level doc in a format for GitHub
+
+=item C<runtests.pl>
+
+A helper to run the test suite across a set of Chrome versions.
+
+=item C<.travis.yml>
+
+A Travis-CI instruction file for automatically running the test suite across
+OSX and Ubuntu and various versions of Perl.
+
+=item C<examples/>
+
+A directory of Project examples.
+
+=item C<lib/>
+
+Project library code.
+
+=item C<t/>
+
+Project test suite.
+
+=back
+
+=head1 Development
+
+This module uses C<git> for development.
+
+=head2 Installation
+
+Installation for development is fairly straightforward:
+
+=over 4
+
+=item 1 Check out the repository
+
+    git clone https://github.com/Corion/WWW-Mechanize-Chrome.git
+
+=item 2 Install the prerequisites
+
+    cd WWW-Mechanize-Chrome
+    cpanm --notest --installdeps .
+
+=back
+
+=head2 Testing
+
+The test suite can be run in two ways, depending on whether you want to
+run a matrix of combinations of backends and browser versions or not.
+
+=head3 Running a single test
+
+To run a single test during development of a new feature, run
+that test as follows:
+
+    perl -Ilib -w t/50-form2.t
+
+=head3 Running the complete test suite
+
+To run the complete test suite, use C<make> / C<gmake>:
+
+    perl Makefile.PL
+    make test
+
+Alternatively, you can use the C<prove> tool:
+
+    perl Makefile.PL
+    make
+    prove -wl
+
+=head3 Running tests with different transport backends
+
+To run a test program with the different backends, L<Mojolicious>, L<AnyEvent>
+and L<IO::Async>, use the C<runtests.pl> program:
+
+    perl Makefile.PL
+    perl -w runtests.pl -t t/50-form2.t
+
+=head2 Author Tests
+
+The author tests live in C< xt/ >. These mostly cover problems that
+I encountered when engineering a release. These must pass before making a
+release.
+
+=head2 Installing Dependencies
+
+There are no hard dependencies that need to be installed for development
+outside of the normal dependencies picked up by the CPAN installation
+process. Just run the following command in the C<git> checkout
+directory:
+
+    cpanm --installdeps .
+
+=head3 OSX
+
+The suggested environment for OSX is the Homebrew environment. This
+environment provides a C<libpng> libraries and Perl binary that are compatible
+with each other. Using the system C<perl> did not work out for me, as
+L<Imager::File::PNG> does not install for the system C<perl>. If you
+do not use any of the screenshot features, you can also develop using
+the system C<perl> with a L<local::lib> setup for the dependencies.
+
+=head2 Workflow
+
+The development workflow described here is mostly geared towards Github.
+If you want to send your patches by mail or other means, they are still
+very welcome.
+
+=head3 Create a new branch
+
+    git checkout -b my-new-feature
+
+=head3 Develop the new feature
+
+The new feature ideally has at least one test file that exercises it.
+The new feature should have documentation.
+An entry in the C<Changes> file is welcome so your feature doesn't get
+lost in the mists of release engineering.
+
+=head3 Run the new feature test
+
+Ideally the new feature test you added passes on your machine.
+
+=head3 Run the test suite
+
+Ideally the test suite passes without failure on your machine.
+
+=head3 Rebase your changes to clean up your commit history
+
+Not every commit is perfect, so here you get the chance to rewrite history
+a bit.
+
+    git rebase -i github/master
+
+Note that even if you pushed your changes to Github already, it's
+still OK to rebase even published commits. That's why you do your development
+in a separate feature branch.
+
+Please don't make such changes to the C<master> branch.
+
+=head3 Push the changes to Github
+
+    git push github my-new-feature
+    
+Push the changes to Github to enable Travis CI to run the test suite across
+some other architectures and versions of Perl.
+
+=head3 Rebase your changes to the master branch
+
+    git rebase github/master
+    git push github --force my-new-feature
+
+Yes, this will ruin the "immutable" history of your branch. That's OK - a
+feature branch is allowed to have its history rewritten.
+
+=head3 Open a Github pull request
+
+Opening the pull request will notify me, and Travis CI and AppVeyor will
+automatically run the test suite for the change.
+
+=head3 Send a change set via mail
+
+If you don't want to use Github, you can use git to send the changes
+via mail:
+
+    git send-email --compose --to corion@cpan.org
+
+If you want to use a separate mail client, just format your changes as files
+and attach them to the mail manually:
+
+    git format-patch master..my-new-feature   
+
+=head1 Coding style
+
+Ideally your code mimics the existing style.
+
+The important style points of this module are:
+
+=over 4
+
+=item Perl Version
+
+Be compatible with Perl 5.10.
+
+If you need features from a newer version of Perl, this should be discussed
+before you invest too much work in it.
+
+=item Use function signatures
+
+Use the function signatures feature, as provided by L<Filter::signatures>.
+
+=item Structure your code as testable units
+
+Ideally, your code is not one huge method but a set of methods that can
+be tested in isolation.
+
+=item Strike a balance when introducing new dependencies
+
+Ideally, your change only pulls in the bare dependencies necessary.
+If you think you need an object system, L<Moo> is already there, so any module
+that relies on another object system should be avoided.
+
+=back
+
+=cut
