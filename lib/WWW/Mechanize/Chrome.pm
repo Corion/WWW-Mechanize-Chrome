@@ -16,6 +16,7 @@ use WWW::Mechanize::Chrome::Node;
 use JSON;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
+use Time::HiRes qw(usleep);
 use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 
@@ -1987,6 +1988,73 @@ Returns the current document URI.
 sub uri( $self ) {
     my $d = $self->document;
     URI->new( $d->{root}->{documentURL} )
+}
+
+=head2 C<< $mech->infinite_scroll( $wait_time_in_seconds ) >>
+
+    $mech->infinite_scroll(10);
+
+This method is useful for webpages that load content via "infinite scroll"
+javascript functions. It scrolls to the bottom of the web page and waits for
+up to the number of seconds via C<$wait_time_in_seconds> for new content
+to be loaded into the web page. The default is to wait up to 120 seconds so you
+will likely want to make this much more reasonable.
+
+The method returns a value of '1' if it detects it successfully loaded new
+content or '0' if it does not. You can use the return value to continually
+scroll down the page until it reaches the end of the infinite scroll, like so:
+
+    while($mech->infinite_scroll(10)) {
+        # You can place additional tests below to exit the loop earlier
+        last if ...
+    }
+
+=cut
+
+sub infinite_scroll {
+    my $self = shift;
+    my $wait_time = shift || 120;
+
+    my $current_element_count = $self->_get_element_count;
+    $self->log('debug', $current_element_count);
+    
+    $self->_scroll_to_bottom;
+
+    # wait 1/10th sec for more of the page to load
+    usleep 100000;
+
+    my $new_element_count = $self->_get_element_count;
+    $self->log('debug', $new_element_count);
+
+    my $start_time = time();
+    while (($new_element_count - $current_element_count) < 5) {
+
+        # keep waiting for new elements to load until $wait_time is reached
+        if (time() - $start_time > $wait_time) {
+          return 0;
+        }
+
+        # wait 1/10th sec for more of the page to load
+        usleep 100000;
+        $new_element_count = $self->_get_element_count;
+    }
+    usleep 100000;
+    return 1;
+}
+
+sub _scroll_to_bottom {
+  my $self = shift;
+
+  # scroll to the bottom twice, just to make sure javascript is triggered
+  $self->eval( 'window.scroll(0,document.body.scrollHeight + 100)' );
+  usleep 100000;
+  $self->eval( 'window.scroll(0,document.body.scrollHeight + 200)' );
+}
+
+sub _get_element_count {
+  my $self = shift;
+  my ($el_count) = $self->eval( 'document.getElementsByTagName("*").length' );
+  return $el_count;
 }
 
 =head1 CONTENT METHODS
