@@ -152,7 +152,7 @@ HTML
     is $lived, undef, 'We died trying to connect to a non-existing tab';
     if( $] < 5.014 ) {
         SKIP: {
-            skip 1, "Perl pre 5.14 destructor eval clears \$\@ sometimes";
+            skip "Perl pre 5.14 destructor eval clears \$\@ sometimes", 1;
         };
     } else {
         like $err, qr/Couldn't find a tab matching/, 'We got the correct error message';
