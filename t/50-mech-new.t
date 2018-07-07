@@ -157,7 +157,7 @@ HTML
     };
     my $err = $@;
     is $lived, undef, 'We died trying to connect to a non-existing tab';
-    like $err, q{/Couldn't find a tab matching/}, 'We got the correct error message';
+    like $err, qr/Couldn't find a tab matching/, 'We got the correct error message';
 
     local $SIG{CHLD} = 'IGNORE';
     kill 'SIGKILL', $pid; # clean up, the hard way
