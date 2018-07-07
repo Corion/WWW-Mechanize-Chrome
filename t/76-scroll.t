@@ -51,7 +51,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub 
     $mech->allow('javascript' => 1);
 
     is ($mech->infinite_scroll, 1, 'Can scroll down and retrieve new content');
-    is (scroll_to_bottom($mech), 0, 'Can scroll down to end of infinite scroll'); 
+    is (scroll_to_bottom($mech), 0, 'Can scroll down to end of infinite scroll');
 });
 
 sub scroll_to_bottom {
