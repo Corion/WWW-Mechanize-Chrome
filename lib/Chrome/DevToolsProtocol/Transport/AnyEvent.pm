@@ -63,7 +63,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
     my $status = $self->status;
     unless ($line =~ m{^HTTP/1\.1 $status }) {
-        $self->error('Wrong response line: [[' . $line . ']]');
+        warn 'Wrong response line: [[' . $line . "]], expected [[HTTP/1.1 $status ]]";
+        $self->error('Wrong response line');
         return;
     }
 
