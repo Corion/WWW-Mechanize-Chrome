@@ -198,6 +198,7 @@ sub connect( $self, %args ) {
         return Future->done( $endpoint );
     })->catch(sub(@args) {
         #croak @args;
+        warn "got_endpoint failed with [[@args]]";
         Future->fail( @args );
     });
 
