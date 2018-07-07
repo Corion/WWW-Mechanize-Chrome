@@ -23,6 +23,8 @@ use HTML::Selector::XPath 'selector_to_xpath';
 our $VERSION = '0.16';
 our @CARP_NOT;
 
+=encoding utf-8
+
 =head1 NAME
 
 WWW::Mechanize::Chrome - automate the Chrome browser
@@ -4884,6 +4886,12 @@ module.
 =head1 AUTHOR
 
 Max Maischein C<corion@cpan.org>
+
+=head1 CONTRIBUTORS
+
+Andreas König C<andk@cpan.org>
+Tobias Leich C<froggs@cpan.org>
+Steven Dondley C<s@dondley.org>
 
 =head1 COPYRIGHT (c)
 
