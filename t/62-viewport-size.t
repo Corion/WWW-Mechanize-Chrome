@@ -124,7 +124,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
     $resized = get_viewport_size( $mech );
     is_deeply [@{$resized}{qw(width height)}], [@{$start_size}{qw(width height)}],
               "We restored the old window metrics"
-        or diag Dumper $resized;
+        or diag Dumper [$start_size,$resized];
 
     undef $mech;
 });
