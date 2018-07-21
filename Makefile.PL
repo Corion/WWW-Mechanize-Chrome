@@ -203,6 +203,8 @@ CONTRIBUTING
 
 See lib/WWW/Mechanize/Chrome/Contributing.pod
 
+[Google Keep Extraction](https://github.com/Corion/WWW-Mechanize-Chrome/raw/master/demo/keep-export-demo.mp4)
+
 STATUS
         update_file( 'README.mkdn', $readme_mkdn );
     };

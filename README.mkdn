@@ -6,6 +6,8 @@ CONTRIBUTING
 
 See lib/WWW/Mechanize/Chrome/Contributing.pod
 
+[Google Keep Extraction](https://github.com/Corion/WWW-Mechanize-Chrome/raw/master/demo/keep-export-demo.mp4)
+
 # NAME
 
 WWW::Mechanize::Chrome - automate the Chrome browser
