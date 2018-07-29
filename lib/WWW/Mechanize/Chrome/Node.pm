@@ -185,6 +185,35 @@ sub get_attribute( $self, $attribute ) {
     }
 }
 
+=head2 C<< ->set_attribute >>
+
+  $node->set_attribute('href' => 'https://example.com');
+
+Sets or creates an attribute of a node. To remove an attribute,
+pass in the attribute value as C<undef>.
+
+=cut
+
+sub set_attribute_future( $self, $attribute, $value ) {
+    my $s = $self;
+    weaken $s;
+    my $r;
+    if( defined $value ) {
+        $r = $self->driver->send_message(
+            'DOM.setAttributeValue',
+            name => $attribute,
+            value => $value )
+    } else {
+        $r = $self->driver->send_message('DOM.removeAttribute',
+            name => $attribute )
+    }
+    return $r
+}
+
+sub set_attribute( $self, $attribute, $value ) {
+    $self->set_attribute_future( $attribute, $value )->get
+}
+
 =head2 C<< ->get_tag_name >>
 
   print $node->get_tag_name();
@@ -209,6 +238,27 @@ Returns the text of the node and the contained child nodes.
 
 sub get_text( $self ) {
     $self->get_attribute('innerText')
+}
+
+=head2 C<< ->set_text >>
+
+  $node->set_text("Hello World");
+
+Sets the text of the node and the contained child nodes.
+
+=cut
+
+sub set_text_future( $self, $value ) {
+    my $s = $self;
+    weaken $s;
+    my $nid = $self->_nodeId();
+    $nid->then(sub( $nodeId ) {
+        $self->driver->send_message('DOM.setNodeValue', nodeId => 0+$nodeId, value => $value )
+    });
+}
+
+sub set_text( $self, $value ) {
+    $self->set_text_future->get()
 }
 
 1;
