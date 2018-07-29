@@ -66,9 +66,9 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
             skip "Chrome before v65 doesn't restore the screen metrics for the viewport", 6;
         };
         return
-    } elsif( 0 and $version =~ /\b(\d+)\b/ and $1 >= 68 and $1 <= 69) {
+    } elsif( 0 and $version =~ /\b(\d+)\b/ and $1 >= 68 and $1 <= 70) {
         SKIP: {
-            skip "Chrome v68,v69 doesn't restore the window metrics for the viewport properly", 6;
+            skip "Chrome v68-v70 doesn't restore the window metrics for the viewport properly", 6;
         };
         return
     } elsif( $mech->chrome_version !~ /headless/i ) {
