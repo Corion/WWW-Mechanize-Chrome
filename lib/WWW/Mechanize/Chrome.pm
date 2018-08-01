@@ -1330,11 +1330,9 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
         # so we wait a bit to see if it will navigate in response to our click
         $self->sleep_future(0.1); # X XX baad fix
     })->then( sub {
-
         my $f;
         my @events;
-        if( $navigated or $options{ navigates }) {
-            #warn "Now collecting the navigation events from the backlog";
+        if( $navigated ) { #or $options{ navigates }) {
             $f = $does_navigation->then( sub {
                 @events = @_;
                 # Handle all the events, by turning them into a ->response again
