@@ -1372,7 +1372,7 @@ sub get($self, $url, %options ) {
         $s->driver->send_message(
             'Page.navigate',
             url => "$url"
-        })
+        )
         }, url => "$url", %options, navigates => 1 )
     ->get;
 
