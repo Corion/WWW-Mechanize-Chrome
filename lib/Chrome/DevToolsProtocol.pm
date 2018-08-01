@@ -1,6 +1,7 @@
 package Chrome::DevToolsProtocol;
 use 5.010; # for //
 use strict;
+use warnings;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';

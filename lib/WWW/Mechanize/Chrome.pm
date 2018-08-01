@@ -1,5 +1,6 @@
 package WWW::Mechanize::Chrome;
 use strict;
+use warnings;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
