@@ -1356,7 +1356,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
             undef $scheduled;
         };
 
-        $f
+        return $f
     })
 }
 
