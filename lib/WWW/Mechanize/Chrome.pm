@@ -1346,12 +1346,12 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                 # Store our frame id so we know what events to listen for in the future!
                 $self->{frameId} ||= $nav->{frameId};
 
-                Future->done( @events )
+                Future->done( \@events )
             })
         } else {
             $self->log('trace', "No navigation occurred, not collecting events");
             $does_navigation->cancel;
-            $f = Future->done(@events);
+            $f = Future->done(\@events);
             $scheduled->cancel;
             undef $scheduled;
         };
@@ -1368,12 +1368,13 @@ sub get($self, $url, %options ) {
     # our command:
     my $s = $self;
     weaken $s;
-    my @events = $self->_mightNavigate( sub {
-        $s->log('trace', "Navigating to [$url]");
+    my $events = $self->_mightNavigate( sub {
+        $s->log('debug', "Navigating to [$url]");
         $s->driver->send_message(
             'Page.navigate',
             url => "$url"
-    )}, url => "$url", %options, navigates => 1 )
+        })
+        }, url => "$url", %options, navigates => 1 )
     ->get;
 
     return $self->response;
