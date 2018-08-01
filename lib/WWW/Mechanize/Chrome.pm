@@ -1275,6 +1275,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     weaken $s;
     $does_navigation = $scheduled
         ->then(sub( $ev ) {
+            my $res;
             if(     $ev->{method} eq 'Page.frameResized'
                 and 0+keys %{ $ev->{params} } == 0 ) {
                 # This is dead code that is never reached (see above)
@@ -1286,7 +1287,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                 $s->log('trace', "Download started, returning synthesized event");
                 $navigated++;
                 $s->{ frameId } = $ev->{params}->{frameId};
-                Future->done(
+                $res = Future->done(
                     # Since Chrome v64,
                     { method => 'MechanizeChrome.download', params => {
                         frameId => $ev->{params}->{frameId},
@@ -1302,10 +1303,10 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
 
             } elsif( $ev->{method} eq 'Inspector.detached' ) {
                 $s->log('error', "Inspector was detached");
-                Future->fail("Inspector was detached");
+                $res = Future->fail("Inspector was detached");
 
             } else {
-                  $s->log('trace', "Navigation started, logging");
+                  $s->log('trace', "Navigation started, logging ($ev->{method})");
                   $navigated++;
 
                   $frameId ||= $s->_fetchFrameId( $ev );
@@ -1313,8 +1314,9 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                   $s->{ frameId } = $frameId;
                   $s->{ requestId } = $requestId;
 
-                  $s->_waitForNavigationEnd( %options );
+                  $res = $s->_waitForNavigationEnd( %options )
             };
+            return $res
         });
     };
 
