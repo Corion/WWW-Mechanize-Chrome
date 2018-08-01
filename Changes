@@ -9,9 +9,15 @@
     . Tested against Chromium 67.0.3396.99 / Win64 (some tests skipped)
     . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
     . Tested against Chromium 69.0.3481.0 / Win64 (some tests skipped)
+    . Tested against Chromium 70.0.3500.0 / Win64 (some tests skipped)
     . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
+
+0.18 {NEXT}
+    . Properly handling moving from http://example.com/#1
+      to http://example.com#2 (reported via Perlmonks.org)
+      This kind of navigation does not work on Chrome 64.
 
 0.17 2018-07-07
     . Added installation instructions for MacOS / OSX, contributed by Sdonley

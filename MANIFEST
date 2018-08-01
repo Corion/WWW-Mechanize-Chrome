@@ -92,6 +92,7 @@ t/70-mech-png.t
 t/75-classnames.t
 t/76-infinite-scroll.html
 t/76-scroll.t
+t/77-reload-fragment.t
 t/helper.pm
 t/mixi_jp_index.html
 t/sophos_co_jp_index.html
