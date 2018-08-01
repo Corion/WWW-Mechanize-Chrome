@@ -1225,7 +1225,7 @@ sub _waitForNavigationEnd( $self, %options ) {
     my $frameId = $options{ frameId } || $self->frameId;
     my $requestId = $options{ requestId } || $self->requestId;
     my $msg = "Capturing events until 'Page.frameStoppedLoading' for frame $frameId";
-    $msg .= " or 'Network.loadingFailed' for request '$requestId'"
+    $msg .= " or 'Network.loadingFailed' or 'Network.loadingFinished' for request '$requestId'"
         if $requestId;
 
     $self->log('trace', $msg);
@@ -1233,9 +1233,11 @@ sub _waitForNavigationEnd( $self, %options ) {
         # Let's assume that the first frame id we see is "our" frame
         $frameId ||= $self->_fetchFrameId($ev);
         $requestId ||= $self->_fetchRequestId($ev);
-
         my $stopped = (    $ev->{method} eq 'Page.frameStoppedLoading'
                        && $ev->{params}->{frameId} eq $frameId);
+        my $finished= (   $ev->{method} eq 'Network.loadingFinished'
+                       && $requestId
+                       && $ev->{params}->{requestId} eq $requestId);
         my $failed  = (   $ev->{method} eq 'Network.loadingFailed'
                        && $requestId
                        && $ev->{params}->{requestId} eq $requestId);
@@ -1245,7 +1247,7 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && exists $ev->{params}->{response}->{headers}->{"Content-Disposition"}
                        && $ev->{params}->{response}->{headers}->{"Content-Disposition"} =~ m!^attachment\b!
                        );
-        return $stopped || $failed || $download;
+        return $stopped || $finished || $failed || $download;
     });
 
     $events_f;
