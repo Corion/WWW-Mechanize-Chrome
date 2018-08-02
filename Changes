@@ -17,7 +17,7 @@
 0.18 {NEXT}
     . Properly handling moving from http://example.com/#1
       to http://example.com#2 (reported via Perlmonks.org)
-      This kind of navigation does not work on Chrome 64.
+      This kind of navigation does not work on Chrome 64 and Chrome 59.
 
 0.17 2018-07-07
     . Added installation instructions for MacOS / OSX, contributed by Sdonley
