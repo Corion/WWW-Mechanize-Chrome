@@ -1309,7 +1309,6 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                 $res = Future->fail("Inspector was detached");
 
             } elsif( $ev->{method} eq 'Page.navigatedWithinDocument' ) {
-                warn "No real navigation will happen, maybe?!";
                 $s->log('trace', "Intra-page navigation started, logging ($ev->{method})");
                 $frameId ||= $s->_fetchFrameId( $ev );
                 $res = Future->done(

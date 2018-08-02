@@ -56,7 +56,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 2, sub 
     SKIP: {
         my $version = $mech->chrome_version;
 
-        if( $version =~ /\b(\d+)\b/ and $1 == 64 ) {
+        if( $version =~ /\b(\d+)\b/ and ($1 == 64 or $1 == 59)) {
             skip "Chrome 64 doesn't handle self-navigating well", 2;
         } else {
             for my $url (@urls) {
