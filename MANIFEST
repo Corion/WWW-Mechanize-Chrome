@@ -20,6 +20,7 @@ lib/WWW/Mechanize/Chrome/DSL.pm
 lib/WWW/Mechanize/Chrome/Examples.pm
 lib/WWW/Mechanize/Chrome/Node.pm
 lib/WWW/Mechanize/Chrome/Troubleshooting.pm
+LICENSE
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP

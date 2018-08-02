@@ -24,3 +24,4 @@ Makefile$
 ^WWW-Mechanize-Chrome
 ^frame-\d+.png
 ^demo/
+^android-remote.pl
