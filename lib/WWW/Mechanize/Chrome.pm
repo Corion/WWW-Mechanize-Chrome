@@ -1236,7 +1236,8 @@ sub _waitForNavigationEnd( $self, %options ) {
         $requestId ||= $self->_fetchRequestId($ev);
         my $stopped = (    $ev->{method} eq 'Page.frameStoppedLoading'
                        && $ev->{params}->{frameId} eq $frameId);
-        my $finished= (   $ev->{method} eq 'Network.loadingFinished'
+        # This means basically no navigation events will follow:
+        my $internal_navigation = (   $ev->{method} eq 'Page.navigatedWithinDocument'
                        && $requestId
                        && $ev->{params}->{requestId} eq $requestId);
         my $failed  = (   $ev->{method} eq 'Network.loadingFailed'
@@ -1248,7 +1249,7 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && exists $ev->{params}->{response}->{headers}->{"Content-Disposition"}
                        && $ev->{params}->{response}->{headers}->{"Content-Disposition"} =~ m!^attachment\b!
                        );
-        return $stopped || $finished || $failed || $download;
+        return $stopped || $internal_navigation || $failed || $download;
     });
 
     $events_f;
@@ -1266,6 +1267,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
         'Network.requestWillBeSent',      # trial
         #'Page.frameResized',              # download
         'Inspector.detached',             # Browser (window) was closed by user
+        'Page.navigatedWithinDocument',
     );
     my $navigated;
     my $does_navigation;
@@ -1306,6 +1308,21 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                 $s->log('error', "Inspector was detached");
                 $res = Future->fail("Inspector was detached");
 
+            } elsif( $ev->{method} eq 'Page.navigatedWithinDocument' ) {
+                warn "No real navigation will happen, maybe?!";
+                $s->log('trace', "Intra-page navigation started, logging ($ev->{method})");
+                $frameId ||= $s->_fetchFrameId( $ev );
+                $res = Future->done(
+                    # Since Chrome v64,
+                    { method => 'Page.intra-page-navigation', params => {
+                        frameId => $ev->{params}->{frameId},
+                        loaderId => $ev->{params}->{loaderId},
+                        response => {
+                            status => 200,
+                            statusText => 'faked response',
+                    }}
+                })
+            
             } else {
                   $s->log('trace', "Navigation started, logging ($ev->{method})");
                   $navigated++;
