@@ -91,19 +91,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
         '--start-maximized',
         '--window-size=1280x1696'
         '--ignore-certificate-errors'
-        '--disable-background-networking',
-        '--disable-client-side-phishing-detection',
-        '--disable-component-update',
-        '--disable-hang-monitor',
-        '--disable-prompt-on-repost',
-        '--disable-sync',
-        '--disable-web-resources',
-        '--disable-save-password-bubble'
 
-        '--disable-default-apps',
-        '--disable-infobars',
-        '--disable-popup-blocking',
-        '--disable-default-apps',
         '--disable-web-security',
         '--allow-running-insecure-content',
 
@@ -125,8 +113,9 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     current base directory.
 
         use File::Temp 'tempdir';
+        # create a fresh Chrome every time
         my $mech = WWW::Mechanize::Chrome->new(
-            data_directory => tempdir(),        # create a fresh Chrome every time
+            data_directory => tempdir(CLEANUP => 1 ),
         );
 
 - **startup\_timeout**
@@ -151,17 +140,76 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     Mutes the audio output. This setting is enabled by default.
 
 - **background\_networking**
+
+    Enable "background networking".
+
+    Default is disabled.
+
 - **client\_side\_phishing\_detection**
+
+    Enable "client side phising detection".
+
+    Default is disabled.
+
 - **component\_update**
+
+    Enable "component update".
+
+    Default is disabled.
+
+- **default\_apps**
+
+    Enable "default apps".
+
+    Default is disabled.
+
 - **hang\_monitor**
-- **prompt\_on\_repost**
-- **sync**
-- **web\_resources**
-- **default\_apps**
-- **infobars**
-- **default\_apps**
-- **popup\_blocking**
+
+    Enable "hang monitor".
+
+    Default is disabled.
+
 - **hide\_scrollbars**
+
+    Hide scrollbars.
+
+    Default is disabled.
+
+- **infobars**
+
+    Enable "infobars".
+
+    Default is disabled.
+
+- **popup\_blocking**
+
+    Enable "popup blocking".
+
+    Default is disabled.
+
+- **prompt\_on\_repost**
+
+    Enable "prompt on repost".
+
+    Default is disabled.
+
+- **save\_password\_bubble**
+
+    Enable the "save password" bubble.
+
+    Default is disabled.
+
+- **sync**
+
+    Enable "sync".
+
+    Default is disabled.
+
+- **web\_resources**
+
+    Enable "Web resources".
+
+    Default is disabled.
 
 You can override the class to implement the transport from the outside by
 setting `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` to the transport class.
@@ -1377,105 +1425,7 @@ they make little sense in the context of Chrome.
 
 # INSTALLING
 
-## Install the `chrome` executable
-
-`WWW::Mechanize::Chrome` requires that you have the Chrome browser installed
-on your system. If Chrome is not installed, please consult
-[Google's instructions](https://support.google.com/chrome/answer/95346) for
-help installing the Chrome browser.
-
-`WWW::Mechanize::Chrome` will do its best to locate Chrome's executable file
-on your system. With any luck, it will find the executable you want to use. If
-`WWW::Mechanize::Chrome` does not find Chrome on your system or you want to
-use a different executable, you can use the `launch_exe` constructor argument
-to tell `WWW::Mechanize::Chrome` where to find it. You can alse set the
-`CHROME_BIN` environment variable to the absolute path of the executable.
-
-## Test the `chrome` executable
-
-You should verify that Chrome's executable is working properly. On Ubuntu, the
-executable is typically named `chrome-browser` and so you can test Chrome's
-installation with:
-
-`chrome-browser --version`
-
-and you should see something like `Google Chrome 67.0.3396.99` returned.
-
-Note that the command you run will vary based on your operating sytem and
-possibly the version of Chrome installed.
-
-On a Debian system, for example, the command will most likely be something
-like:
-
-`google-chrome-stable --version` or
-`google-chrome-beta --version` or
-`google-chrome-unstable --version`
-
-On Windows, the executable is named `chrome.exe` and doesn't output
-information to the console but you can check that Chrome starts by running:
-
-`chrome`
-
-in the terminal.
-
-On MacOS, the executable can usually be be found inside the `Google Chrome.app`
-package in the `/Applications` directory and its installation can be
-tested with something like the following:
-
-`/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
-
-or, if Chrome is installed for a single user:
-
-`/Users/<user_name>/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --version`
-
-If you are having trouble finding, installing, or running Chrome on your
-system, please consult the appropriate documentation or a knowledgeable expert.
-
-## Chrome versions
-
-Note that the Chrome version numbers do not denote availability of features.
-Features can still be added to Chrome v62 when Chrome v64 is already out.
-
-If you are serious about automating a website, use a separate copy of Chrome
-and disable its automatic updates.
-
-## Module prerequisites on OSX
-
-### [Imager::File::PNG](https://metacpan.org/pod/Imager::File::PNG)
-
-This module relies on [Imager](https://metacpan.org/pod/Imager) for processing screenshots. If you don't need
-this functionality, you can ignore the [Imager](https://metacpan.org/pod/Imager) and [Imager::File::PNG](https://metacpan.org/pod/Imager::File::PNG)
-installation and use this module with the system Perl provided by Apple.
-
-The installation of [Imager::File::PNG](https://metacpan.org/pod/Imager::File::PNG) works on OSX using the Homebrew tool
-and the Perl installable through Homebrew:
-
-    brew install perl-5.28
-    brew install libpng
-    cpan Imager::File::PNG
-
-I haven't been able to make it work using the system Perl.
-
-# RUNNING THE TEST SUITE
-
-The normal test invocation is 'make test'.
-
-If your executable has a different name than `chrome-browser` or
-`chrome.exe` or is not in your path, then set the environment variable
-`CHROME_BIN` to the absolute path.
-
-If you have Chrome already running, it must have been started with the
-`<--remote-debugging-port=9222`> option to enable access to the developer API.
-You may want to set up a dedicated and version pinned version of Chrome for your
-automation.
-
-The test suite is apt to disturb your display when a locally running chrome
-browser gets animated. On unixish systems you can avoid this kind of disturbance
-by (1) not running any chrome binary and (2) start a separate display with Xvfb
-and (3) set the DISPLAY variable accordingly. E.g.:
-
-    Xvfb :121 &
-    DISPLAY=:121 CHROME_BIN=/usr/bin/google-chrome-stable make test
+See [WWW::Mechanize::Chrome::Install](https://metacpan.org/pod/WWW::Mechanize::Chrome::Install)
 
 # SEE ALSO
 
