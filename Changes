@@ -22,6 +22,23 @@
     . Disable the "save password" bubble by default.
       You can re-enable this by passing a true value to the option
       save_password_bubble in the constructor.
+    . Tested against Chrome/59.0.3071.115
+    . Tested against HeadlessChrome/60.0.3110.0
+    . Tested against HeadlessChrome/61.0.3141.0
+    . Tested against HeadlessChrome/62.0.3202.94
+    . Tested against HeadlessChrome/63.0.3239.132
+    . Tested against HeadlessChrome/64.0.3282.119
+    . Tested against HeadlessChrome/65.0.3325.181
+    . Tested against HeadlessChrome/66.0.3359.139
+    . Tested against HeadlessChrome/67.0.3396.99
+    . Tested against HeadlessChrome/68.0.3435.0
+    . Tested against HeadlessChrome/68.0.3440.84
+    . Tested against HeadlessChrome/69.0.3496.0
+    . Tested against HeadlessChrome/70.0.3500.0
+    . Tested against HeadlessChrome/70.0.3509.0
+    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
+    . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
+    . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
 0.17 2018-07-07
     . Added installation instructions for MacOS / OSX, contributed by Sdonley
