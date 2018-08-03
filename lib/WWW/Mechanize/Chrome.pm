@@ -304,6 +304,7 @@ sub build_command_line {
         default_apps
         popup_blocking
         gpu
+        save-password-bubble
     )) {
         (my $optname = $option) =~ s!_!-!g;
         if( ! exists $options->{$option}) {

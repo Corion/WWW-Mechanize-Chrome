@@ -15,9 +15,13 @@
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
 0.18 {NEXT}
-    . Properly handling moving from http://example.com/#1
-      to http://example.com#2 (reported via Perlmonks.org)
+    . Properly handling moving between fragments, for example
+      from http://example.com/#1 to http://example.com#2
+      (reported via Perlmonks.org)
       This kind of navigation does not work on Chrome 64 and Chrome 59.
+    . Disable the "save password" bubble by default.
+      You can re-enable this by passing a true value to the option
+      save_password_bubble in the constructor.
 
 0.17 2018-07-07
     . Added installation instructions for MacOS / OSX, contributed by Sdonley
