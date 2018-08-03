@@ -111,19 +111,7 @@ Interesting parameters might be
     '--start-maximized',
     '--window-size=1280x1696'
     '--ignore-certificate-errors'
-    '--disable-background-networking',
-    '--disable-client-side-phishing-detection',
-    '--disable-component-update',
-    '--disable-hang-monitor',
-    '--disable-prompt-on-repost',
-    '--disable-sync',
-    '--disable-web-resources',
-    '--disable-save-password-bubble'
 
-    '--disable-default-apps',
-    '--disable-infobars',
-    '--disable-popup-blocking',
-    '--disable-default-apps',
     '--disable-web-security',
     '--allow-running-insecure-content',
 
@@ -172,27 +160,75 @@ Mutes the audio output. This setting is enabled by default.
 
 =item B<background_networking>
 
+Enable "background networking".
+
+Default is disabled.
+
 =item B<client_side_phishing_detection>
+
+Enable "client side phising detection".
+
+Default is disabled.
 
 =item B<component_update>
 
-=item B<hang_monitor>
+Enable "component update".
 
-=item B<prompt_on_repost>
-
-=item B<sync>
-
-=item B<web_resources>
+Default is disabled.
 
 =item B<default_apps>
+
+Enable "default apps".
+
+Default is disabled.
+
+=item B<hang_monitor>
+
+Enable "hang monitor".
+
+Default is disabled.
+
+=item B<hide_scrollbars>
+
+Hide scrollbars.
+
+Default is disabled.
 
 =item B<infobars>
 
-=item B<default_apps>
+Enable "infobars".
+
+Default is disabled.
 
 =item B<popup_blocking>
 
-=item B<hide_scrollbars>
+Enable "popup blocking".
+
+Default is disabled.
+
+=item B<prompt_on_repost>
+
+Enable "prompt on repost".
+
+Default is disabled.
+
+=item B<save_password_bubble>
+
+Enable the "save password" bubble.
+
+Default is disabled.
+
+=item B<sync>
+
+Enable "sync".
+
+Default is disabled.
+
+=item B<web_resources>
+
+Enable "Web resources".
+
+Default is disabled.
 
 =back
 
