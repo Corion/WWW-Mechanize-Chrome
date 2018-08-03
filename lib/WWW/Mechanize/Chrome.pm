@@ -133,8 +133,9 @@ The base data directory for this session. If not given, Chrome will use your
 current base directory.
 
   use File::Temp 'tempdir';
+  # create a fresh Chrome every time
   my $mech = WWW::Mechanize::Chrome->new(
-      data_directory => tempdir(),        # create a fresh Chrome every time
+      data_directory => tempdir(CLEANUP => 1 ),
   );
 
 =item B<startup_timeout>
