@@ -8,6 +8,7 @@ examples/javascript.pl
 examples/README
 examples/resource-timing.pl
 examples/url-to-image.pl
+INSTALL
 lib/Chrome/DevToolsProtocol.pm
 lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
@@ -18,6 +19,7 @@ lib/WWW/Mechanize/Chrome/Contributing.pod
 lib/WWW/Mechanize/Chrome/Cookbook.pm
 lib/WWW/Mechanize/Chrome/DSL.pm
 lib/WWW/Mechanize/Chrome/Examples.pm
+lib/WWW/Mechanize/Chrome/Install.pod
 lib/WWW/Mechanize/Chrome/Node.pm
 lib/WWW/Mechanize/Chrome/Troubleshooting.pm
 LICENSE
@@ -28,7 +30,6 @@ META.json
 META.yml
 README
 README.mkdn
-runtests.pl
 t/00-load.t
 t/01-chrome-devtools-protocol.t
 t/02-chrome-devtools-tab.t
