@@ -47,7 +47,6 @@ NestedLoops( [\@instances, \@backends], sub {
     ## Launch one Chrome instance to reuse
     my $vis_instance = $instance;
     $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS} = $instance;
-    $ENV{CHROME_BIN} = $instance;
     $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} = $backend;
     if( $log_level ) {
         $ENV{TEST_LOG_LEVEL} = $log_level;
