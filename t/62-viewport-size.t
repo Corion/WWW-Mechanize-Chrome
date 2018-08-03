@@ -61,16 +61,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
             skip "Chrome v62 doesn't resize the screen for the viewport", 6;
         };
         return
-    } elsif( 0 and $version =~ /\b(\d+)\b/ and $1 < 65 ) {
-        SKIP: {
-            skip "Chrome before v65 doesn't restore the screen metrics for the viewport", 6;
-        };
-        return
-    } elsif( 0 and $version =~ /\b(\d+)\b/ and $1 >= 68 and $1 <= 70) {
-        SKIP: {
-            skip "Chrome v68-v70 doesn't restore the window metrics for the viewport properly", 6;
-        };
-        return
     } elsif( $mech->chrome_version !~ /headless/i ) {
         SKIP: {
             skip "A headful browser can't fake its dimensions", 6;
