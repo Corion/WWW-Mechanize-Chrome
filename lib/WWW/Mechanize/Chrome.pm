@@ -1439,7 +1439,8 @@ sub get($self, $url, %options ) {
 
 Shorthand method to construct the appropriate
 C<< file:// >> URI and load it into Chrome. Relative
-paths will be interpreted as relative to C<$0>.
+paths will be interpreted as relative to C<$0>
+or the C<basedir> option.
 
 This method accepts the same options as C<< ->get() >>.
 
@@ -1453,14 +1454,16 @@ subframes do not get loaded properly.
 
 sub get_local {
     my ($self, $htmlfile, %options) = @_;
-    require Cwd;
-    require File::Spec;
-    my $fn= File::Spec->file_name_is_absolute( $htmlfile )
-          ? $htmlfile
-          : File::Spec->rel2abs(
-                 File::Spec->catfile(dirname($0),$htmlfile),
-                 Cwd::getcwd(),
-             );
+    my $basedir;
+    if( exists $options{ basedir }) {
+        $basedir = $options{ basedir };
+    } else {
+        require Cwd;
+        require File::Spec;
+        $basedir = dirname($0);
+    };
+
+    my $fn = File::Spec->rel2abs( $htmlfile, $basedir );
     $fn =~ s!\\!/!g; # fakey "make file:// URL"
     my $url;
     if( $^O =~ /mswin/i ) {
