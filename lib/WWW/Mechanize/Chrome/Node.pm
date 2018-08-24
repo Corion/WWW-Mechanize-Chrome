@@ -111,7 +111,7 @@ has 'mech' => (
 
 sub _fetchNodeId($self) {
     $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
-        Future->done( $d->{nodeId} );
+        Future->done( 0+$d->{nodeId} );
     });
 }
 
@@ -123,7 +123,7 @@ sub _nodeId($self) {
         $nid = $self->_fetchNodeId();
         $self->_generation( $generation );
     } else {
-        $nid = Future->done( $nid );
+        $nid = Future->done( 0+$nid );
     }
     $nid;
 }
@@ -191,6 +191,9 @@ sub get_attribute( $self, $attribute ) {
 
 Sets or creates an attribute of a node. To remove an attribute,
 pass in the attribute value as C<undef>.
+
+Note that this invalidates the C<nodeId> of every node so you may or may not
+need to refetch all other nodes or receive stale values.
 
 =cut
 
