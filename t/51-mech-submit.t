@@ -19,7 +19,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 17*@instances;
+    plan tests => 19*@instances;
 };
 
 sub new_mech {
@@ -78,6 +78,12 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 17, sub
     is $triggered->{click},  0, 'Click    was not triggered';
     my $r = $mech->xpath('//input[@name="r"]', single => 1 );
     is $r->get_attribute('value'), 'Hello Chrome', "We set the new value";
+    $r->set_attribute('value', 'Hello Chrome2');
+    # Somehow we lose the node id resp. fetch a stale value here without re-fetching
+    $r = $mech->xpath('//input[@name="r"]', single => 1 );
+    is $r->get_attribute('value'), 'Hello Chrome2', "We retrieve the new value via ->get_attribute";
+    $mech->form_number(2);
+    is $mech->value('r'), 'Hello Chrome2', "We retrieve set the new value via ->value()";
     
     $mech->get_local('51-mech-submit.html');
     $mech->allow('javascript' => 1);
