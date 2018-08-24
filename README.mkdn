@@ -464,7 +464,8 @@ The result is a Future that will return all captured events.
 
 Shorthand method to construct the appropriate
 `file://` URI and load it into Chrome. Relative
-paths will be interpreted as relative to `$0`.
+paths will be interpreted as relative to `$0`
+or the `basedir` option.
 
 This method accepts the same options as `->get()`.
 
