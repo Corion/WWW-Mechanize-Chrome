@@ -1277,7 +1277,7 @@ sub _waitForNavigationEnd( $self, %options ) {
         # This means basically no navigation events will follow:
         my $internal_navigation = (   $ev->{method} eq 'Page.navigatedWithinDocument'
                        && $requestId
-                       && $ev->{params}->{requestId} eq $requestId);
+                       && (! exists $ev->{params}->{requestId} or $ev->{params}->{requestId} eq $requestId));
         my $failed  = (   $ev->{method} eq 'Network.loadingFailed'
                        && $requestId
                        && $ev->{params}->{requestId} eq $requestId);
