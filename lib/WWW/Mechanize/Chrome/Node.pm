@@ -27,7 +27,7 @@ our $VERSION = '0.18';
 The attributes this node has
 
 =cut
-    
+
 has 'attributes' => (
     is => 'lazy',
     default => sub { {} },
@@ -199,13 +199,24 @@ sub set_attribute_future( $self, $attribute, $value ) {
     weaken $s;
     my $r;
     if( defined $value ) {
-        $r = $self->driver->send_message(
-            'DOM.setAttributeValue',
-            name => $attribute,
-            value => $value )
+        $r = $self->_nodeId()
+           ->then(sub( $nodeId ) {
+            $self->driver->send_message(
+                'DOM.setAttributeValue',
+                name => $attribute,
+                value => $value,
+                nodeId => 0+$nodeId
+            )
+        })
+
     } else {
-        $r = $self->driver->send_message('DOM.removeAttribute',
-            name => $attribute )
+        $r = $self->_nodeId()
+           ->then(sub( $nodeId ) {
+            $self->driver->send_message('DOM.removeAttribute',
+                name => $attribute,
+                nodeId => 0+$nodeId
+            )
+        })
     }
     return $r
 }
