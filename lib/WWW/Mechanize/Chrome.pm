@@ -4589,7 +4589,13 @@ This method is specific to WWW::Mechanize::Chrome.
 
 sub content_as_pdf($self, %options) {
     my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get->{data};
-    return decode_base64( $base64 );
+    my $payload = decode_base64( $base64 );
+    if( my $filename = delete $options{ filename } ) {
+        open my $fh, '>:raw', $filename
+            or croak "Couldn't create '$filename': $!";
+        print {$fh} $payload;
+    };
+    return $payload;
 };
 
 =head1 INTERNAL METHODS
