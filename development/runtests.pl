@@ -38,6 +38,7 @@ my @backends = grep { /$backend/i } (qw(
 ));
 
 my $windows = ($^O =~ /mswin/i);
+delete $ENV{CHROME_BIN};
 
 # Later, we could even parallelize the test suite
 NestedLoops( [\@instances, \@backends], sub {
