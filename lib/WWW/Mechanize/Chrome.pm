@@ -1179,6 +1179,7 @@ sub DESTROY {
     #    $_[0]->driver->send_message('Browser.close' )->get
     #};
 
+    local $@;
     eval {
         # Shut down our websocket connection
         if( $_[0]->{ driver }) {
