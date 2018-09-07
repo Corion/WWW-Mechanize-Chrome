@@ -1332,7 +1332,8 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && (! exists $ev->{params}->{requestId} or $ev->{params}->{requestId} eq $requestId));
         # This is far too early, but some requests only send this?!
         # Maybe this can be salvaged by setting a timeout when we see this?!
-        my $finished = (   $ev->{method} eq 'Network.responseReceived'
+        my $finished = (  1 # $options{ just_request }
+                       && $ev->{method} eq 'Network.responseReceived'
                        && $requestId
                        && $ev->{params}->{requestId} eq $requestId
         );
