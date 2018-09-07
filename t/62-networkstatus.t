@@ -5,7 +5,8 @@ use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
 use JSON;
-use lib './inc', '../inc', '.';
+use lib '.';
+
 use Test::HTTP::LocalServer;
 
 use t::helper;
