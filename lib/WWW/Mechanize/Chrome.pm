@@ -4203,7 +4203,7 @@ sub wait_until_visible( $self, %options ) {
     my $sleep = delete $options{ sleep } || 0.3;
     my $timeout = delete $options{ timeout } || 0;
 
-    _default_limiter( 'maybe', \%options );
+    _default_limiter( 'any', \%options );
 
     my $timeout_after;
     if ($timeout) {
