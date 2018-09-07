@@ -1391,7 +1391,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     })->then( sub {
         my $f;
         my @events;
-        if( $navigated ) { #or $options{ navigates }) {
+        if( !$options{ intrapage } and $navigated ) {
             $f = $does_navigation->then( sub {
                 @events = @_;
                 # Handle all the events, by turning them into a ->response again
