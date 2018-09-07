@@ -3043,45 +3043,30 @@ sub xpath( $self, $query, %options) {
 
     my @res;
 
-    # Save the current frame, because maybe we switch frames while searching
-    # We should ideally save the complete path here, not just the current position
     if( $options{ document }) {
         warn sprintf "Document %s", $options{ document }->{id};
     };
 
-    DOCUMENTS: {
-        my $doc= $options{ document } || $self->document;
+    my $doc= $options{ document } ? Future->done( $options{ document } ) : $self->document_future;
 
-        # This stores the path to this document
-        # $doc->{__path}||= [];
+    $doc->then( sub {
+        my $q = join "|", @$query;
 
-        # @documents stores pairs of (containing document element, child element)
-        my @documents= ($doc);
-
-        # recursively join the results of sub(i)frames if wanted
-
-        while (@documents) {
-            my $doc = shift @documents;
-
-            #$self->activate_container( $doc );
-
-            my $q = join "|", @$query;
-            #warn $q;
-
-            my @found;
-            my $id;
-            if ($options{ node }) {
-                $id = $options{ node }->backendNodeId;
-            };
-            @found = Future->wait_all(
-                map {
-                    $self->_performSearch( query => $_, backendNodeId => $id )
-                } @$query
-            )->get;
-            @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @found;
-            push @res, @found;
+        my @found;
+        my $id;
+        if ($options{ node }) {
+            $id = $options{ node }->backendNodeId;
         };
-    };
+        Future->wait_all(
+            map {
+                $self->_performSearch( query => $_, backendNodeId => $id )
+            } @$query
+        );
+    })->then( sub {
+        my @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @_;
+        push @res, @found;
+        Future->done( 1 );
+    })->get;
 
     # Determine if we want only one element
     #     or a list, like WWW::Mechanize::Chrome
