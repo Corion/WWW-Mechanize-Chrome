@@ -4108,8 +4108,8 @@ sub wait_until_invisible( $self, %options ) {
         # If $node goes away due to a page reload, ->is_visible could die:
         $v = eval { $self->is_visible($node) };
     } while ( $v
-           and (!$timeout_after or time < $timeout_after ));
-    if ($node and time >= $timeout_after) {
+           and (!$timeout or time < $timeout_after ));
+    if ($v and $timeout and time >= $timeout_after) {
         croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
     };
 };
