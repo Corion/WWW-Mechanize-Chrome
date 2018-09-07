@@ -3515,6 +3515,50 @@ sub field {
     );
 }
 
+=head2 C<< $mech->sendkeys( %options ) >>
+
+    $mech->sendkeys( string => "Hello World" );
+
+Sends a series of keystrokes. The keystrokes can be either a string or a
+reference to an array containing the detailed data as hashes.
+
+=over 4
+
+=item B<string> - the string to send as keystrokes
+
+=item B<keys> - reference of the array to send as keystrokes
+
+=item B<delay> - delay in ms to sleep between keys
+
+=back
+
+=cut
+
+sub sendkeys_future( $self, %options ) {
+    $options{ keys } ||= [ map sub { type => 'char', text => $_ },
+                           split m//, $options{ string }
+                         ];
+
+    my $f = Future->done(1);
+
+    for my $key (@{ $options{ keys }}) {
+        $f = $f->then(sub {
+            $self->driver->send_message('Input.dispatchKeyEvent', %$key );
+        });
+        if( defined $options{ delay }) {
+            $f->then(sub {
+                $self->sleep( $options{ delay });
+            });
+        };
+    };
+
+    return $f
+};
+
+sub sendkeys( $self, %options ) {
+    $self->sendkeys_future( %options )->get
+}
+
 =head2 C<< $mech->upload( $selector, $value ) >>
 
   $mech->upload( user_picture => 'C:/Users/Joe/face.png' );
