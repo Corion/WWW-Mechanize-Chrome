@@ -292,10 +292,9 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--hide-scrollbars";
     };
 
-    if( ! exists $options->{disable_prompt_on_repost}) {
-        push @{ $options->{ launch_arg }}, "--disable-prompt-on-repost";
-    } else {
+    if( exists $options->{disable_prompt_on_repost}) {
         carp "Option 'disable_prompt_on_repost' is deprecated, use prompt_on_repost instead";
+        $options->{prompt_on_repost} = !$options->{disable_prompt_on_repost};
     };
 
     for my $option (qw(
