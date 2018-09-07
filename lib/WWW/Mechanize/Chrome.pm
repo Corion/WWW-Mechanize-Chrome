@@ -3590,7 +3590,7 @@ reference to an array containing the detailed data as hashes.
 =cut
 
 sub sendkeys_future( $self, %options ) {
-    $options{ keys } ||= [ map sub { type => 'char', text => $_ },
+    $options{ keys } ||= [ map +{ type => 'char', text => $_ },
                            split m//, $options{ string }
                          ];
 
