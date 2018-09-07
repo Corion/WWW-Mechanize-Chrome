@@ -1363,7 +1363,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                             statusText => 'faked response',
                     }}
                 })
-            
+
             } else {
                   $s->log('trace', "Navigation started, logging ($ev->{method})");
                   $navigated++;
