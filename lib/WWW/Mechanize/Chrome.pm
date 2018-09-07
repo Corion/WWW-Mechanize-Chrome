@@ -1320,7 +1320,7 @@ sub _waitForNavigationEnd( $self, %options ) {
     $msg .= " or 'Network.loadingFailed' or 'Network.loadingFinished' for request '$requestId'"
         if $requestId;
 
-    $self->log('trace', $msg);
+    $self->log('debug', $msg);
     my $events_f = $self->_collectEvents( sub( $ev ) {
         # Let's assume that the first frame id we see is "our" frame
         $frameId ||= $self->_fetchFrameId($ev);
