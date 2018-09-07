@@ -637,6 +637,7 @@ sub new($class, %options) {
     $self->new_generation;
 
     my @setup = (
+        $self->driver->send_message('DOM.enable'),
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
         $self->driver->send_message('Network.enable'), # capture network
         $self->driver->send_message('Runtime.enable'), # capture console messages
