@@ -4662,7 +4662,8 @@ out of them or dumps them to disk as sequential images.
 
   sub saveFrame {
       my( $mech, $framePNG ) = @_;
-      # just ignore this frame
+      print $framePNG->{data};
+
   }
 
   $mech->setScreenFrameCallback( \&saveFrame );
