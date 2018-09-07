@@ -14,6 +14,13 @@
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
+0.20 2018-09-07
+    . Add better diagnostics when the Chrome binary is not found
+    . Better search logic for Chrome binary, also support chromium-browser
+    . ->sendkeys() method to type input into browser
+    . ->content_as_pdf() now can also save to a file (as documented)
+    . Docfix for screencast data
+
 0.19 2018-08-25
     . Make ->set_attribute() actually work
     . Recognize more intra-page navigation events
