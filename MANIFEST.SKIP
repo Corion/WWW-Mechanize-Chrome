@@ -24,5 +24,6 @@ Makefile$
 ^WWW-Mechanize-Chrome
 ^frame-\d+.png
 ^demo/
-^android-remote.pl
 ^development/
+^[^/]*\.pl$ # ignore all test scripts
+^[^/]*\.png$ # ignore all test images

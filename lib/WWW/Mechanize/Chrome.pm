@@ -247,7 +247,10 @@ websocket implementation(s) as source of bugs.
 sub build_command_line {
     my( $class, $options )= @_;
 
-    $options->{ launch_exe } ||= $ENV{CHROME_BIN} || $class->find_executable();
+    my @program_names = $class->default_executable_names( $options->{launch_exe} );
+    my( $program, $error) = $class->find_executable(\@program_names);
+    croak $error if ! $program;
+
     $options->{ launch_arg } ||= [];
 
     $options->{port} ||= 9222
@@ -324,9 +327,9 @@ sub build_command_line {
     push @{ $options->{ launch_arg }}, "$options->{start_url}"
         if exists $options->{start_url};
 
-    my $program = ($^O =~ /mswin/i and $options->{ launch_exe } =~ /[\s|<>&]/)
-        ?  qq("$options->{ launch_exe }")
-        :  $options->{ launch_exe };
+    my $quoted_program = ($^O =~ /mswin/i and $program =~ /[\s|<>&]/)
+        ?  qq("$program")
+        :  $program;
 
     my @cmd=( $program, @{ $options->{launch_arg}} );
 
@@ -339,51 +342,97 @@ sub build_command_line {
 
     my $chrome = WWW::Mechanize::Chrome->find_executable(
         'chromium.exe',
-        '.\\my-chrome-versions\\',
+        '.\\my-chrome-66\\',
     );
+
+    my( $chrome, $diagnosis ) = WWW::Mechanize::Chrome->find_executable(
+        ['chromium-browser','google-chrome'],
+        './my-chrome-66/',
+    );
+    die $diagnosis if ! $chrome;
 
 Finds the first Chrome executable in the path (C<$ENV{PATH}>). For Windows, it
 also looks in C<< $ENV{ProgramFiles} >>, C<< $ENV{ProgramFiles(x86)} >>
-and C<< $ENV{"ProgramFilesW6432"} >>.
+and C<< $ENV{"ProgramFilesW6432"} >>. For OSX it also looks in the user home
+directory as given through C<< $ENV{HOME} >>.
 
 This is used to find the default Chrome executable if none was given through
-the C<launch_exe> option.
+the C<launch_exe> option or if the executable is given and does not exist
+and does not contain a directory separator.
 
 =cut
 
-sub find_executable( $class, $program=undef, @search ) {
-    $program ||=
+sub default_executable_names( $class, @other ) {
+    my @program_names
+        = grep { defined($_) } (
+        $ENV{CHROME_BIN},
+        @other,
+    );
+    if( ! @other ) {
+        push @program_names,
           $^O =~ /mswin/i ? 'chrome.exe'
         : $^O =~ /darwin/i ? 'Google Chrome'
-        : 'google-chrome';
+        : ('google-chrome', 'chromium-browser')
+    };
+    @program_names
+}
 
-    push @search, File::Spec->path();
+sub find_executable( $class, $program=[$class->default_executable_names], @search) {
+    my $looked_for = '';
+    if( ! ref $program) {
+        $program = [$program]
+    };
+    my $program_name = join ", ", map { qq('$_') } @$program;
 
-    if( $^O =~ /MSWin/i ) {
-        push @search,
-            map { "$_\\Google\\Chrome\\Application\\" }
-            grep {defined}
-            ($ENV{'ProgramFiles'},
-             $ENV{'ProgramFiles(x86)'},
-             $ENV{"ProgramFilesW6432"},
-            );
-    } elsif( $^O =~ /darwin/i ) {
-        my $path = '/Applications/Google Chrome.app/Contents/MacOS';
-        push @search,
-            $path,
-            $ENV{"HOME"} . "/$path";
-    }
+    if( my($first_program) = grep { -x $_ } @$program) {
+        # We've got a complete path, done!
+        return $first_program
+    };
 
+    # Not immediately found, so we need to search
+    my @without_path = grep { !m![/\\]! } @$program;
+
+    if( @without_path) {
+        push @search, File::Spec->path();
+        if( $^O =~ /MSWin/i ) {
+            push @search,
+                map { "$_\\Google\\Chrome\\Application\\" }
+                grep {defined}
+                ($ENV{'ProgramFiles'},
+                 $ENV{'ProgramFiles(x86)'},
+                 $ENV{"ProgramFilesW6432"},
+                );
+        } elsif( $^O =~ /darwin/i ) {
+            my $path = '/Applications/Google Chrome.app/Contents/MacOS';
+            push @search,
+                $path,
+                $ENV{"HOME"} . "/$path";
+        }
+
+        $looked_for = ' in searchpath ' . join " ", @search;
+    };
 
     my $found;
+
     for my $path (@search) {
-        my $this = File::Spec->catfile( $path, $program );
-        if( -x $this ) {
-            $found = $this;
-            last;
+        for my $p (@without_path) {
+            my $this = File::Spec->catfile( $path, $p );
+            if( -x $this ) {
+                $found = $this;
+                last;
+            };
         };
-    }
-    return defined $found ? $found : ()
+    };
+
+    if( wantarray ) {
+        my $msg;
+        if( ! $found) {
+            $msg = "No Chrome executable like $program_name found$looked_for";
+        };
+        return $found, $msg
+    } else {
+        return $found
+    };
 }
 
 sub _find_free_port( $self, $start ) {
