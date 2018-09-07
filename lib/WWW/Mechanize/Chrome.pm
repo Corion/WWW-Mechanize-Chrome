@@ -307,7 +307,6 @@ sub build_command_line {
         web_resources
         default_apps
         infobars
-        default_apps
         popup_blocking
         gpu
         save-password-bubble
