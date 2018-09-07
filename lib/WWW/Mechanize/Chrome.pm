@@ -4567,7 +4567,7 @@ sub render_content( $self, %options ) {
 
     if( defined $filename ) {
         open my $fh, '>:raw', $filename
-            or croak "Couldn't create to '$filename': $!";
+            or croak "Couldn't create '$filename': $!";
         print {$fh} $payload;
     };
 
