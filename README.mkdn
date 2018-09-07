@@ -71,7 +71,11 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     Specify the path to the Chrome executable.
 
     The default is `chrome` on Windows and `google-chrome` elsewhere, as found via
-    `$ENV{PATH}`.
+    `$ENV{PATH}`. If you want to use Chromium, you need to specify that explicitly
+    via:
+
+        launch_exe => 'chromium-browser', # if Chromium is named chromium-browser on your OS
+
     You can also provide this information from the outside to the class
     by setting `$ENV{CHROME_BIN}`.
 
@@ -222,15 +226,23 @@ websocket implementation(s) as source of bugs.
 
     my $chrome = WWW::Mechanize::Chrome->find_executable(
         'chromium.exe',
-        '.\\my-chrome-versions\\',
+        '.\\my-chrome-66\\',
     );
+
+    my( $chrome, $diagnosis ) = WWW::Mechanize::Chrome->find_executable(
+        ['chromium-browser','google-chrome'],
+        './my-chrome-66/',
+    );
+    die $diagnosis if ! $chrome;
 
 Finds the first Chrome executable in the path (`$ENV{PATH}`). For Windows, it
 also looks in `$ENV{ProgramFiles}`, `$ENV{ProgramFiles(x86)}`
-and `$ENV{"ProgramFilesW6432"}`.
+and `$ENV{"ProgramFilesW6432"}`. For OSX it also looks in the user home
+directory as given through `$ENV{HOME}`.
 
 This is used to find the default Chrome executable if none was given through
-the `launch_exe` option.
+the `launch_exe` option or if the executable is given and does not exist
+and does not contain a directory separator.
 
 ## `$mech->chrome_version`
 
@@ -1061,6 +1073,17 @@ By default, the events set in the
 constructor for `pre_events` and `post_events`
 are triggered.
 
+## `$mech->sendkeys( %options )`
+
+    $mech->sendkeys( string => "Hello World" );
+
+Sends a series of keystrokes. The keystrokes can be either a string or a
+reference to an array containing the detailed data as hashes.
+
+- **string** - the string to send as keystrokes
+- **keys** - reference of the array to send as keystrokes
+- **delay** - delay in ms to sleep between keys
+
 ## `$mech->upload( $selector, $value )`
 
     $mech->upload( user_picture => 'C:/Users/Joe/face.png' );
@@ -1359,7 +1382,8 @@ out of them or dumps them to disk as sequential images.
 
     sub saveFrame {
         my( $mech, $framePNG ) = @_;
-        # just ignore this frame
+        print $framePNG->{data};
+
     }
 
     $mech->setScreenFrameCallback( \&saveFrame );
