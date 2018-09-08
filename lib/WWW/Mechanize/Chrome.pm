@@ -1274,6 +1274,8 @@ sub _collectEvents( $self, @info ) {
     $self->driver->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
+            my $frameId = $events[-1]->{params}->{frameId};
+            $s->log( 'debug', "Received final message, unwinding", sprintf "(%s)", $frameId || '-');
             $s->log( 'trace', "Received final message, unwinding", $events[-1] );
             $s->driver->on_message( undef );
             $done->done( @info, @events );
