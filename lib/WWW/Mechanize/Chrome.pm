@@ -1334,10 +1334,17 @@ sub _waitForNavigationEnd( $self, %options ) {
         # This is far too early, but some requests only send this?!
         # Maybe this can be salvaged by setting a timeout when we see this?!
         my $finished = (  1 # $options{ just_request }
-                       && $ev->{method} eq 'Network.responseReceived'
-                       && $requestId
-                       && $ev->{params}->{requestId} eq $requestId
+                       && $ev->{method} eq 'Page.domContentEventFired', # this should be the only one we need (!)
+                       # but we never learn which page (!)
+                       #&& $requestId
+                       #&& $ev->{params}->{requestId} eq $requestId
         );
+
+        #my $finished = (  0 # $options{ just_request }
+        #               && $ev->{method} eq 'Network.responseReceived'
+        #               && $requestId
+        #               && $ev->{params}->{requestId} eq $requestId
+        #);
         my $failed  = (   $ev->{method} eq 'Network.loadingFailed'
                        && $requestId
                        && $ev->{params}->{requestId} eq $requestId);
