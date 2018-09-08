@@ -285,9 +285,15 @@ sub on_response( $self, $connection, $message ) {
 
         if( $self->on_message ) {
             if( $self->{log}->is_trace ) {
-                $self->log( 'trace', "Dispatching message", $response );
+                $self->log( 'trace', "Dispatching", $response );
             } else {
-                $self->log( 'debug', sprintf "Dispatching message '%s'", $response->{method} );
+                my $frameId = $response->{params}->{frameId};
+                my $requestId = $response->{params}->{requestId};
+                if( $frameId || $requestId ) {
+                    $self->log( 'debug', sprintf "Dispatching '%s' (%s:%s)", $response->{method}, $frameId || '-', $requestId || '-');
+                } else {
+                    $self->log( 'debug', sprintf "Dispatching '%s'", $response->{method} );
+                };
             };
             $self->on_message->( $response );
 
@@ -298,8 +304,15 @@ sub on_response( $self, $connection, $message ) {
             if( $self->{log}->is_trace ) {
                 $self->log( 'trace', "Ignored message", $response );
             } else {
-                $self->log( 'debug', sprintf "Ignored message '%s'", $response->{method} );
+                my $frameId = $response->{params}->{frameId};
+                my $requestId = $response->{params}->{requestId};
+                if( $frameId || $requestId ) {
+                    $self->log( 'debug', sprintf "Ignoring '%s' (%s:%s)", $response->{method}, $frameId || '-', $requestId || '-');
+                } else {
+                    $self->log( 'debug', sprintf "Ignoring '%s'", $response->{method} );
+                };
             };
+
         };
     } else {
 
