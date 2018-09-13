@@ -642,6 +642,8 @@ sub new($class, %options) {
         $self->driver->send_message('Network.enable'), # capture network
         $self->driver->send_message('Runtime.enable'), # capture console messages
         $self->set_download_directory_future($self->{download_directory}),
+
+        keys %{$options{ extra_headers }} ? $self->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
     );
 
     if( my $agent = delete $options{ user_agent }) {
@@ -1930,10 +1932,16 @@ Note that currently, we only support one value per header.
 
 =cut
 
-sub _set_extra_headers( $self, %headers ) {
+sub _set_extra_headers_future( $self, %headers ) {
     $self->log('debug',"Setting additional headers", \%headers);
     $self->driver->send_message('Network.setExtraHTTPHeaders',
         headers => \%headers
+    );
+};
+
+sub _set_extra_headers( $self, %headers ) {
+    $self->_set_extra_headers_future(
+        %headers
     )->get;
 };
 

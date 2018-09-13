@@ -24,13 +24,16 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 20*@instances;
+    plan tests => 21*@instances;
 };
 
 sub new_mech {
     #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
+        extra_headers => {
+            'X-My-Initial-Header' => '1',
+        },
         @_,
     );
 };
@@ -75,6 +78,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     is $mech->uri, $site, "Navigated to $site";
     # Now check for the changes
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
+    like $headers, qr!^X-My-Initial-Header: 1$!m, "We can add completely custom headers at start";
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
