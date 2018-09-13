@@ -2,6 +2,7 @@ package Chrome::DevToolsProtocol;
 use 5.010; # for //
 use strict;
 use warnings;
+use Moo;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
@@ -28,47 +29,70 @@ sub _build_log( $self ) {
     Log::Log4perl->get_logger(__PACKAGE__);
 }
 
-sub new($class, %args) {
-    my $self = bless \%args => $class;
+has 'host' => (
+    is => 'ro',
+    default => '127.0.0.1',
+);
 
-    # Set up defaults
-    $args{ host } ||= '127.0.0.1';
-    $args{ port } ||= 9222;
-    $args{ json } ||= JSON->new;
-    $args{ ua } ||= Future::HTTP->new();
-    $args{ sequence_number } ||= 0;
-    $args{ tab } ||= undef;
-    $args{ log } ||= $self->_build_log;
+has 'port' => (
+    is => 'ro',
+    default => 9222,
+);
 
-    $args{ receivers } ||= {};
-    $args{ on_message } ||= undef;
-    $args{ one_shot } ||= [];
-    $args{ listener } ||= {};
+has 'json' => (
+    is => 'ro',
+    default => sub { JSON->new },
+);
 
-    $self
-};
+has 'ua' => (
+    is => 'ro',
+    default => sub { Future::HTTP->new },
+);
 
-sub host( $self ) { $self->{host} }
-sub port( $self ) { $self->{port} }
+has 'tab' => (
+    is => 'rw',
+);
+
+has '_log' => (
+    is => 'ro',
+    default => \&_build_log,
+);
+
+has 'receivers' => (
+    is => 'ro',
+    default => sub { {} },
+);
+
+has 'on_message' => (
+    is => 'rw',
+    default => undef,
+);
+
+has '_one_shot' => (
+    is => 'ro',
+    default => sub { [] },
+);
+
+has 'listener' => (
+    is => 'ro',
+    default => sub { {} },
+);
+
 sub endpoint( $self ) {
     $self->tab
         and $self->tab->{webSocketDebuggerUrl}
 }
-sub json( $self ) { $self->{json} }
-sub ua( $self ) { $self->{ua} }
-sub listener( $self ) { $self->{listener} }
-sub tab( $self ) { $self->{tab} }
-sub transport( $self ) { $self->{transport} }
-sub future( $self ) { $self->transport->future }
 
-sub on_message( $self, $new_message=0 ) {
-    if( $new_message ) {
-        $self->{on_message} = $new_message
-    } elsif( ! defined $new_message ) {
-        $self->{on_message} = undef
-    };
-    $self->{on_message}
-}
+has 'transport' => (
+    is => 'ro',
+);
+
+around BUILDARGS => sub( $orig, $class, %args ) {
+    $args{ _log } = delete $args{ 'log' };
+    $class->$orig( %args )
+};
+
+sub future( $self ) { $self->transport->future }
 
 sub add_listener( $self, $event, $callback ) {
     my $listener = Chrome::DevToolsProtocol::EventListener->new(
@@ -90,7 +114,7 @@ sub remove_listener( $self, $listener ) {
 }
 
 sub log( $self, $level, $message, @args ) {
-    my $logger = $self->{log};
+    my $logger = $self->_log;
     if( !@args ) {
         $logger->$level( $message )
     } else {
@@ -240,14 +264,17 @@ sub one_shot( $self, @events ) {
     weaken $ref;
     my %events;
     undef @events{ @events };
-    push @{ $self->{one_shot} }, { events => \%events, future => \$ref };
+    push @{ $self->_one_shot }, { events => \%events, future => \$ref };
     $result
 };
 
+my %stack;
+my $r;
 sub on_response( $self, $connection, $message ) {
     my $response = eval { $self->json->decode( $message ) };
     if( $@ ) {
         $self->log('error', $@ );
+        warn $message;
         return;
     };
 
@@ -258,33 +285,35 @@ sub on_response( $self, $connection, $message ) {
             return;
         };
 
-        (my $handler) = grep { exists $_->{events}->{ $response->{method} } and ${$_->{future}} } @{ $self->{one_shot}};
+        (my $handler) = grep { exists $_->{events}->{ $response->{method} } and ${$_->{future}} } @{ $self->_one_shot };
         my $handled;
         if( $handler ) {
             $self->log( 'trace', "Dispatching one-shot event", $response );
             ${ $handler->{future} }->done( $response );
 
             # Remove the handler we just invoked
-            @{ $self->{one_shot}} = grep { $_ and ${$_->{future}} and $_ != $handler } @{ $self->{one_shot}};
+            @{ $self->_one_shot } = grep { $_ and ${$_->{future}} and $_ != $handler } @{ $self->_one_shot };
 
             $handled++;
         };
 
         if( my $listeners = $self->listener->{ $response->{method} } ) {
-            if( $self->{log}->is_trace ) {
+            if( $self->_log->is_trace ) {
                 $self->log( 'trace', "Notifying listeners", $response );
             } else {
                 $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
             };
-            for my $listener (@$listeners) {
+            for my $listener (@$listeners) { eval {
                 $listener->notify( $response );
+                };
+                warn $@ if $@;
             };
 
             $handled++;
         };
 
         if( $self->on_message ) {
-            if( $self->{log}->is_trace ) {
+            if( $self->_log->is_trace ) {
                 $self->log( 'trace', "Dispatching", $response );
             } else {
                 my $frameId = $response->{params}->{frameId};
@@ -301,7 +330,7 @@ sub on_response( $self, $connection, $message ) {
         };
 
         if( ! $handled ) {
-            if( $self->{log}->is_trace ) {
+            if( $self->_log->is_trace ) {
                 $self->log( 'trace', "Ignored message", $response );
             } else {
                 my $frameId = $response->{params}->{frameId};
@@ -541,30 +570,34 @@ sub close_tab( $self, $tab ) {
 package
     Chrome::DevToolsProtocol::EventListener;
 use strict;
+use Moo;
 use Carp 'croak';
-use Scalar::Util 'weaken';
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-sub new( $class, %args ) {
+has 'protocol' => (
+    is => 'ro',
+    weak_ref => 1,
+);
+
+has 'callback' => (
+    is => 'ro',
+);
+
+around BUILDARGS => sub( $orig, $class, %args ) {
     croak "Need a callback" unless $args{ callback };
     croak "Need a DevToolsProtocol in protocol" unless $args{ protocol };
-
-    weaken $args{ protocol };
-
-    bless {
-        %args,
-    } => $class
-}
+    return $class->$orig( %args )
+};
 
 sub notify( $self, @info ) {
-    $self->{callback}->( @info )
+    $self->callback->( @info )
 }
 
 sub unregister( $self ) {
-    $self->{protocol}->remove_listener( $self )
-        if $self->{protocol}; # it's a weak ref so it might have gone away already
+    $self->protocol->remove_listener( $self )
+        if $self->protocol; # it's a weak ref so it might have gone away already
 }
 
 sub DESTROY {
