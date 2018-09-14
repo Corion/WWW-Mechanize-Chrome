@@ -61,13 +61,27 @@ sub build_command_line( $class, $options ) {
     @cmd
 };
 
+sub _setup_driver_future( $self, %options ) {
+    $self->driver->connect(
+        #new_tab => !$options{ reuse },
+        tab     => qr/^about:blank$/i,
+    )->catch( sub(@args) {
+        my $err = $args[0];
+        if( ref $args[1] eq 'HASH') {
+            $err .= $args[1]->{Reason};
+        };
+        Future->fail( $err );
+    })
+}
+
 1;
 package main;
 use strict;
 use Log::Log4perl ':easy';
 Log::Log4perl->easy_init($TRACE);
 
-my $mech = WWW::Mechanize::Edge->new();
+my $mech = WWW::Mechanize::Edge->new(
+);
 
 $mech->get('https://example.com');
 
