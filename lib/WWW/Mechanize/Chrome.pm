@@ -425,7 +425,7 @@ sub find_executable( $class, $program=[$class->default_executable_names], @searc
     if( wantarray ) {
         my $msg;
         if( ! $found) {
-            $msg = "No Chrome executable like $program_name found$looked_for";
+            $msg = "No executable like $program_name found$looked_for";
         };
         return $found, $msg
     } else {
