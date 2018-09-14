@@ -487,7 +487,7 @@ sub get_domains( $self ) {
 
 sub list_tabs( $self, $type = 'page' ) {
     return $self->json_get('list')->then(sub( $info ) {
-        @$info = grep { defined $type ? $_->{type} eq $type : 1 } @$info;
+        @$info = grep { defined $type ? $_->{type} =~ /$type/i : 1 } @$info;
         return Future->done( @$info );
     });
 };
