@@ -613,17 +613,25 @@ sub new($class, %options) {
     $self
 };
 
-# This (tries to) connects to the devtools in the browser
-sub _connect( $self, %options ) {
-    my $err;
+sub _setup_driver_future( $self, %options ) {
     $self->driver->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
     )->catch( sub(@args) {
-        $err = $args[0];
+        my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
             $err .= $args[1]->{Reason};
         };
+        Future->fail( $err );
+    })
+}
+
+# This (tries to) connects to the devtools in the browser
+sub _connect( $self, %options ) {
+    my $err;
+    $self->_setup_driver_future( %options )
+        ->catch( sub(@args) {
+        $err = $args[0];
         Future->done( @args );
     })->get;
 
