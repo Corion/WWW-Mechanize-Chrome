@@ -366,7 +366,7 @@ sub default_executable_names( $class, @other ) {
         $ENV{CHROME_BIN},
         @other,
     );
-    if( ! @other ) {
+    if( ! @program_names ) {
         push @program_names,
           $^O =~ /mswin/i ? 'chrome.exe'
         : $^O =~ /darwin/i ? 'Google Chrome'
