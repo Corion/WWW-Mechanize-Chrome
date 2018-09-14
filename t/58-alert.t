@@ -49,10 +49,9 @@ sub load_file_ok {
 };
 
 t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub {
-
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
-    
+
     my @alerts;
 
     $mech->on_dialog( sub {
@@ -60,8 +59,10 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 4, sub 
         push @alerts, $dialog;
         $mech->handle_dialog(1); # I always click "OK", why?
     });
-    
+
     load_file_ok($mech, '58-alert.html', javascript => 1);
 
     is 0+@alerts, 2, "got two alerts";
+
+    undef $mech;
 });
