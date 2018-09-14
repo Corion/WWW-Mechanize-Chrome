@@ -18,7 +18,7 @@ our @loops = (
     ['AnyEvent.pm'    => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     ['AE.pm'          => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     # native POE support would be nice
-    
+
     # The fallback, will always catch due to loading strict (for now)
     ['strict.pm'      => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
 );
@@ -37,13 +37,13 @@ for implementation. The default event loop is currently L<AnyEvent>.
 
 sub new($factoryclass, @args) {
     $implementation ||= $factoryclass->best_implementation();
-    
+
     # return a new instance
     $implementation->new(@args);
 }
 
 sub best_implementation( $class, @candidates ) {
-    
+
     if(! @candidates) {
         @candidates = @loops;
     };
@@ -57,7 +57,7 @@ sub best_implementation( $class, @candidates ) {
     } grep {
         $INC{$_->[0]}
     } @candidates;
-    
+
     # Check which one we can load:
     for my $impl (@applicable_implementations) {
         if( eval "require $impl; 1" ) {
