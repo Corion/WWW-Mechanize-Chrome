@@ -375,6 +375,27 @@ sub default_executable_names( $class, @other ) {
     @program_names
 }
 
+# Returns additional directories where the default executable can be found
+# on this OS
+sub additional_executable_search_directories( $class, $os_style=$^O ) {
+    my @search;
+    if( $os_style =~ /MSWin/i ) {
+        push @search,
+            map { "$_\\Google\\Chrome\\Application\\" }
+            grep {defined}
+            ($ENV{'ProgramFiles'},
+             $ENV{'ProgramFiles(x86)'},
+             $ENV{"ProgramFilesW6432"},
+            );
+    } elsif( $os_style =~ /darwin/i ) {
+        my $path = '/Applications/Google Chrome.app/Contents/MacOS';
+        push @search,
+            $path,
+            $ENV{"HOME"} . "/$path";
+    }
+    @search
+}
+
 sub find_executable( $class, $program=[$class->default_executable_names], @search) {
     my $looked_for = '';
     if( ! ref $program) {
@@ -392,21 +413,7 @@ sub find_executable( $class, $program=[$class->default_executable_names], @searc
 
     if( @without_path) {
         push @search, File::Spec->path();
-        if( $^O =~ /MSWin/i ) {
-            push @search,
-                map { "$_\\Google\\Chrome\\Application\\" }
-                grep {defined}
-                ($ENV{'ProgramFiles'},
-                 $ENV{'ProgramFiles(x86)'},
-                 $ENV{"ProgramFilesW6432"},
-                );
-        } elsif( $^O =~ /darwin/i ) {
-            my $path = '/Applications/Google Chrome.app/Contents/MacOS';
-            push @search,
-                $path,
-                $ENV{"HOME"} . "/$path";
-        }
-
+        push @search, $class->additional_executable_search_directories();
         $looked_for = ' in searchpath ' . join " ", @search;
     };
 
