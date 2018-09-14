@@ -1337,18 +1337,11 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && (! exists $ev->{params}->{requestId} or $ev->{params}->{requestId} eq $requestId));
         # This is far too early, but some requests only send this?!
         # Maybe this can be salvaged by setting a timeout when we see this?!
-        my $finished = (  1 # $options{ just_request }
+        my $domcontent = (  1 # $options{ just_request }
                        && $ev->{method} eq 'Page.domContentEventFired', # this should be the only one we need (!)
-                       # but we never learn which page (!)
-                       #&& $requestId
-                       #&& $ev->{params}->{requestId} eq $requestId
+                       # but we never learn which page (!). So this does not play well with iframes :(
         );
 
-        #my $finished = (  0 # $options{ just_request }
-        #               && $ev->{method} eq 'Network.responseReceived'
-        #               && $requestId
-        #               && $ev->{params}->{requestId} eq $requestId
-        #);
         my $failed  = (   $ev->{method} eq 'Network.loadingFailed'
                        && $requestId
                        && $ev->{params}->{requestId} eq $requestId);
@@ -1358,7 +1351,7 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && exists $ev->{params}->{response}->{headers}->{"Content-Disposition"}
                        && $ev->{params}->{response}->{headers}->{"Content-Disposition"} =~ m!^attachment\b!
                        );
-        return $stopped || $internal_navigation || $failed || $download || $finished;
+        return $stopped || $internal_navigation || $failed || $download # || $domcontent;
     });
 
     $events_f;
