@@ -108,6 +108,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
     # Restore window settings
     $lives = eval {
         $res = $mech->viewport_size({ width => 0, height => 0 });
+        $mech->sleep(0.1); # There is some weirdo race condition in Chrome here
         1;
     };
     ok $lives, "We don't crash"
