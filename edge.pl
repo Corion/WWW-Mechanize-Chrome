@@ -67,14 +67,7 @@ use strict;
 use Log::Log4perl ':easy';
 Log::Log4perl->easy_init($TRACE);
 
-my ($edge, $comment) = WWW::Mechanize::Edge->find_executable();
-warn $edge;
-
-my $mech = WWW::Mechanize::Edge->new(
-    #port => 9222,
-    #launch_exe => 'c:/Users/Corion/AppData/Local/Microsoft/WindowsApps/MicrosoftEdge.exe',
-    #launch_arg => ['--devtools-server-port','9222'],
-);
+my $mech = WWW::Mechanize::Edge->new();
 
 $mech->get('https://example.com');
 
