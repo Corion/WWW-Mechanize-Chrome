@@ -478,6 +478,31 @@ sub log( $self, $level, $message, @args ) {
     };
 }
 
+sub handlers($self, $phase, $o) {
+    my @h;
+    if ($o->{handlers} && $o->{handlers}{$phase}) {
+        push(@h, @{$o->{handlers}{$phase}});
+    }
+    if (my $conf = $self->{handlers}{$phase}) {
+        push(@h, $conf->matching($o));
+    }
+    return @h;
+}
+
+sub run_handlers($self, $phase, $o) {
+    if (defined(wantarray)) {
+        for my $h ($self->handlers($phase, $o)) {
+            my $ret = $h->{callback}->($o, $self, $h);
+            return $ret if $ret;
+        }
+        return undef;
+    }
+
+    for my $h ($self->handlers($phase, $o)) {
+        $h->{callback}->($o, $self, $h);
+    }
+}
+
 sub new($class, %options) {
 
     if (! exists $options{ autodie }) {
