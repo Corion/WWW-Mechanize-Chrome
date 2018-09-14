@@ -78,7 +78,6 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     is $mech->uri, $site, "Navigated to $site";
     # Now check for the changes
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
-    like $headers, qr!^X-My-Initial-Header: 1$!m, "We can add completely custom headers at start";
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
@@ -93,6 +92,7 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 20, sub
     {
         local $TODO = "Chrome v63.0.84+ doesn't send the Host header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
+        like $headers, qr!^X-My-Initial-Header: 1$!m, "We can add completely custom headers at start";
         like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
     }
     $mech->submit_form; # retrieve the JS window.navigator.userAgent value
