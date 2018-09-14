@@ -608,6 +608,13 @@ sub new($class, %options) {
     );
     # Synchronously connect here, just for easy API compatibility
 
+    $self->_connect(%options);
+
+    $self
+};
+
+# This (tries to) connects to the devtools in the browser
+sub _connect( $self, %options ) {
     my $err;
     $self->driver->connect(
         new_tab => !$options{ reuse },
@@ -662,9 +669,7 @@ sub new($class, %options) {
     if( ! (exists $options{ tab } )) {
         $self->get($options{ start_url }); # Reset to clean state, also initialize our frame id
     };
-
-    $self
-};
+}
 
 sub _handleConsoleAPICall( $self, $msg ) {
     if( $self->{report_js_errors}) {
