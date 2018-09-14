@@ -1358,7 +1358,7 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && exists $ev->{params}->{response}->{headers}->{"Content-Disposition"}
                        && $ev->{params}->{response}->{headers}->{"Content-Disposition"} =~ m!^attachment\b!
                        );
-        return $stopped || $internal_navigation || $failed || $download #|| $finished;
+        return $stopped || $internal_navigation || $failed || $download || $finished;
     });
 
     $events_f;
