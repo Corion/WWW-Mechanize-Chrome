@@ -1984,7 +1984,7 @@ resilience in face of bad network conditions.
 =cut
 
 sub block_urls( $self, @urls ) {
-    $self->driver->send_message( 'Network.setBlockedUrls',
+    $self->driver->send_message( 'Network.setBlockedURLs',
         urls => \@urls
     )->get;
 }
