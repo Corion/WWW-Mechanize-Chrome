@@ -11,7 +11,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 my ($program,$msg) = WWW::Mechanize::Chrome->find_executable('path/another-nonexistent');
 is $program, undef, "Nonexisting program does not get found";
-like $msg, qr/^No Chrome executable like '.*' found$/, "We signal the correct error";
+like $msg, qr/^No executable like '.*' found$/, "We signal the correct error";
 
 {
     local $ENV{CHROME_BIN} = 'bar';
@@ -30,5 +30,5 @@ like $msg, qr/^No Chrome executable like '.*' found$/, "We signal the correct er
     };
     my $err = $@;
     is $lives, undef, "We die if we can't find the executable in \$ENV{PATH}";
-    like $@, qr/No Chrome executable like '.*?' found in/, "We signal the error condition";
+    like $@, qr/No executable like '.*?' found in/, "We signal the error condition";
 };

@@ -22,6 +22,9 @@
     . "extra_headers" constructor argument works as documented
     . Added a (Mojolicious) receiver for screencasts to better observe
       what a headless Chrome is currently doing
+    . Added a very experimental start of WWW::Mechanize::Edge for
+      Microsoft Edge, which happens to use the same protocol as Chrome. This
+      is largely undocumented.
 
 0.20 2018-09-07
     . Add better diagnostics when the Chrome binary is not found
