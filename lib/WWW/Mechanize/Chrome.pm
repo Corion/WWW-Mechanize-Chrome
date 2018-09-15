@@ -3019,6 +3019,9 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
             _generation => $self->_generation,
         };
         Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
+    })->catch(sub {
+        warn "Node has gone away in the meantime, could not resolve";
+        Future->done( WWW::Mechanize::Chrome::Node->new( {} ) );
     });
 }
 
