@@ -50,6 +50,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             # On error we get an Mojolicious::Transaction::HTTP here
             if( $tx->is_websocket) {
                 $logger->('trace',"Connected to $endpoint");
+                $tx->max_websocket_size( 1024*1024*10 );
                 $res->done( $tx );
             } else {
                 my $msg = "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message};
