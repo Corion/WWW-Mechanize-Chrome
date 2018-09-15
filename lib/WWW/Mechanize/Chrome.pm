@@ -366,13 +366,34 @@ sub default_executable_names( $class, @other ) {
         $ENV{CHROME_BIN},
         @other,
     );
-    if( ! grep( { defined $_ } @other )) {
+    if( ! @program_names ) {
         push @program_names,
           $^O =~ /mswin/i ? 'chrome.exe'
         : $^O =~ /darwin/i ? 'Google Chrome'
         : ('google-chrome', 'chromium-browser')
     };
     @program_names
+}
+
+# Returns additional directories where the default executable can be found
+# on this OS
+sub additional_executable_search_directories( $class, $os_style=$^O ) {
+    my @search;
+    if( $os_style =~ /MSWin/i ) {
+        push @search,
+            map { "$_\\Google\\Chrome\\Application\\" }
+            grep {defined}
+            ($ENV{'ProgramFiles'},
+             $ENV{'ProgramFiles(x86)'},
+             $ENV{"ProgramFilesW6432"},
+            );
+    } elsif( $os_style =~ /darwin/i ) {
+        my $path = '/Applications/Google Chrome.app/Contents/MacOS';
+        push @search,
+            $path,
+            $ENV{"HOME"} . "/$path";
+    }
+    @search
 }
 
 sub find_executable( $class, $program=[$class->default_executable_names], @search) {
@@ -392,21 +413,7 @@ sub find_executable( $class, $program=[$class->default_executable_names], @searc
 
     if( @without_path) {
         push @search, File::Spec->path();
-        if( $^O =~ /MSWin/i ) {
-            push @search,
-                map { "$_\\Google\\Chrome\\Application\\" }
-                grep {defined}
-                ($ENV{'ProgramFiles'},
-                 $ENV{'ProgramFiles(x86)'},
-                 $ENV{"ProgramFilesW6432"},
-                );
-        } elsif( $^O =~ /darwin/i ) {
-            my $path = '/Applications/Google Chrome.app/Contents/MacOS';
-            push @search,
-                $path,
-                $ENV{"HOME"} . "/$path";
-        }
-
+        push @search, $class->additional_executable_search_directories();
         $looked_for = ' in searchpath ' . join " ", @search;
     };
 
@@ -425,7 +432,7 @@ sub find_executable( $class, $program=[$class->default_executable_names], @searc
     if( wantarray ) {
         my $msg;
         if( ! $found) {
-            $msg = "No Chrome executable like $program_name found$looked_for";
+            $msg = "No executable like $program_name found$looked_for";
         };
         return $found, $msg
     } else {
@@ -601,15 +608,30 @@ sub new($class, %options) {
     );
     # Synchronously connect here, just for easy API compatibility
 
-    my $err;
+    $self->_connect(%options);
+
+    $self
+};
+
+sub _setup_driver_future( $self, %options ) {
     $self->driver->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
     )->catch( sub(@args) {
-        $err = $args[0];
+        my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
             $err .= $args[1]->{Reason};
         };
+        Future->fail( $err );
+    })
+}
+
+# This (tries to) connects to the devtools in the browser
+sub _connect( $self, %options ) {
+    my $err;
+    $self->_setup_driver_future( %options )
+        ->catch( sub(@args) {
+        $err = $args[0];
         Future->done( @args );
     })->get;
 
@@ -658,9 +680,7 @@ sub new($class, %options) {
     if( ! (exists $options{ tab } )) {
         $self->get($options{ start_url }); # Reset to clean state, also initialize our frame id
     };
-
-    $self
-};
+}
 
 sub _handleConsoleAPICall( $self, $msg ) {
     if( $self->{report_js_errors}) {
