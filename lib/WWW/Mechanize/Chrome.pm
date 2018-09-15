@@ -21,7 +21,7 @@ use Time::HiRes qw(usleep);
 use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 our @CARP_NOT;
 
 =encoding utf-8

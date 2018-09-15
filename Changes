@@ -14,11 +14,14 @@
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
 
-0.21 2018-09-xx
+0.21 2018-09-15
     . Fix ->sendkeys() to actually work
     . Fix crash in ->wait_until_visible()
+    . Fix ->block_urls() to actually work
     . Make log output less verbose, log more information in onelines
     . "extra_headers" constructor argument works as documented
+    . Added a (Mojolicious) receiver for screencasts to better observe
+      what a headless Chrome is currently doing
 
 0.20 2018-09-07
     . Add better diagnostics when the Chrome binary is not found
