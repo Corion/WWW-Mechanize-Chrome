@@ -8,6 +8,8 @@ no warnings 'experimental::signatures';
 
 use Future::Mojo;
 
+our $VERSION = '0.21';
+
 #has 'clients'         => sub { {} };
 has 'remote'          => undef; # this should become a list
 has 'last_frame'      => undef; # this should become a list
@@ -59,7 +61,6 @@ sub register( $self, $app, $config ) {
             my( $c, $data ) = @_;
             #warn Dumper $data ;
             warn "Click received (and ignored)";
-            # XXX We need an async click here:
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
     
