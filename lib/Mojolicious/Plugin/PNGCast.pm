@@ -88,10 +88,11 @@ sub register( $self, $app, $config ) {
         # send this frame to the browser
         if( $self->remote ) {
         warn "Frame";
-            push @frames, Future::Mojo->new->done_next_tick( 1 )
+            Future::Mojo->new->done_next_tick( 1 )
             ->then( sub {
                 warn "sending Frame";
                 $self->remote->send({ binary => $framePNG->{data} });
+            })->retain;
             });
         } else {
             warn "caching last Frame, as we have no connection";
