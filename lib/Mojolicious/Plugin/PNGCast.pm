@@ -56,7 +56,9 @@ sub register( $self, $app, $config ) {
     
         $self->remote( $c );
         $self->remote->tx->on( json => sub {
-            my( $c, $data ) = @_; warn Dumper $data ;
+            my( $c, $data ) = @_;
+            #warn Dumper $data ;
+            warn "Click received (and ignored)";
             # XXX We need an async click here:
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
@@ -83,19 +85,14 @@ sub register( $self, $app, $config ) {
         Mojo::IOLoop->stop;
     });
     
-    my @frames;
     $app->helper( 'send_frame' => sub ( $c, $framePNG ) {
         # send this frame to the browser
         if( $self->remote ) {
-        warn "Frame";
             Future::Mojo->new->done_next_tick( 1 )
             ->then( sub {
-                warn "sending Frame";
                 $self->remote->send({ binary => $framePNG->{data} });
             })->retain;
-            });
         } else {
-            warn "caching last Frame, as we have no connection";
             $self->last_frame( $framePNG->{data} );
         };
     });
