@@ -555,16 +555,22 @@ sub new($class, %options) {
         $options{ transport } ||= $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT };
     };
 
-    my $self= bless \%options => $class;
-    my $host = $options{ host } || '127.0.0.1';
-    $self->{log} ||= $self->_build_log;
-
     $options{start_url} = 'about:blank'
         unless exists $options{start_url};
 
-    $options{ reuse } ||= defined $options{ tab };
-    unless ($options{pid} or $options{reuse}) {
+    my $host = $options{ host } || '127.0.0.1';
 
+    $options{ reuse } ||= defined $options{ tab };
+    $options{ extra_headers } ||= {};
+
+    if( $options{ tab } and $options{ tab } eq 'current' ) {
+        $options{ tab } = 0; # use tab at index 0
+    };
+
+    my $self= bless \%options => $class;
+    $self->{log} ||= $self->_build_log;
+
+    unless ($options{pid} or $options{reuse}) {
         unless ( defined $options{ port } ) {
             # Find free port for Chrome to listen on
             $options{ port } = $self->_find_free_port( 9222 );
@@ -583,12 +589,6 @@ sub new($class, %options) {
         $options{ port } //= 9222;
     };
 
-    if( $options{ tab } and $options{ tab } eq 'current' ) {
-        $options{ tab } = 0; # use tab at index 0
-    };
-
-    $options{ extra_headers } ||= {};
-
     # Connect to it
     $options{ driver } ||= Chrome::DevToolsProtocol->new(
         'port' => $options{ port },
@@ -606,8 +606,8 @@ sub new($class, %options) {
         transport => $options{ transport },
         log => $options{ log },
     );
-    # Synchronously connect here, just for easy API compatibility
 
+    # Synchronously connect here, just for easy API compatibility
     $self->_connect(%options);
 
     $self
