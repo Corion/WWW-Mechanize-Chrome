@@ -440,7 +440,7 @@ sub find_executable( $class, $program=[$class->default_executable_names], @searc
     };
 }
 
-sub _find_free_port( $self, $start ) {
+sub _find_free_port( $class, $start ) {
     my $port = $start;
     while (1) {
         $port++, next unless IO::Socket::INET->new(
@@ -454,7 +454,7 @@ sub _find_free_port( $self, $start ) {
     $port;
 }
 
-sub _wait_for_socket_connection( $self, $host, $port, $timeout ) {
+sub _wait_for_socket_connection( $class, $host, $port, $timeout ) {
     my $wait = time + ($timeout || 20);
     while ( time < $wait ) {
         my $t = time;
@@ -573,7 +573,7 @@ sub new($class, %options) {
     unless ($options{pid} or $options{reuse}) {
         unless ( defined $options{ port } ) {
             # Find free port for Chrome to listen on
-            $options{ port } = $self->_find_free_port( 9222 );
+            $options{ port } = $class->_find_free_port( 9222 );
         };
 
         my @cmd= $class->build_command_line( \%options );
