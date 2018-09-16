@@ -483,12 +483,11 @@ sub spawn_child_posix( $self, @cmd ) {
     # daemonize
     defined(my $pid = fork())   || die "can't fork: $!";
     if( $pid ) {    # non-zero now means I am the parent
-        $self->log('debug', "Spawned child as $pid");
         return $pid;
     };
-    chdir("/")                  || die "can't chdir to /: $!";
 
     # We are the child, close about everything, then exec
+    chdir("/")                  || die "can't chdir to /: $!";
     (setsid() != -1)            || die "Can't start a new session: $!";
     open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
     open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
@@ -504,9 +503,10 @@ sub spawn_child( $self, $localhost, @cmd ) {
     } else {
         $pid = $self->spawn_child_posix(@cmd)
     };
+    $self->log('debug', "Spawned child as $pid");
 
     # Just to give Chrome time to start up, make sure it accepts connections
-    $self->_wait_for_socket_connection( $localhost, $self->{port}, $self->{startup_timeout} || 20);
+    $class->_wait_for_socket_connection( $localhost, $self->{port}, $self->{startup_timeout} || 20);
     return $pid
 }
 
