@@ -1,6 +1,7 @@
 package WWW::Mechanize::Chrome;
 use strict;
 use warnings;
+use Moo 2;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
@@ -522,7 +523,7 @@ sub new_generation( $self ) {
 }
 
 sub log( $self, $level, $message, @args ) {
-    my $logger = $self->{log};
+    my $logger = $self->{_log};
     if( !@args ) {
         $logger->$level( $message )
     } else {
@@ -532,65 +533,78 @@ sub log( $self, $level, $message, @args ) {
     };
 }
 
-sub new($class, %options) {
+has '_log' => (
+    is => 'ro',
+    default => \&_build_log,
+);
 
-    if (! exists $options{ autodie }) {
-        $options{ autodie } = 1
-    };
+has 'startup_timeout' => (
+    is => 'ro',
+    default => 20,
+);
 
-    if( ! exists $options{ frames }) {
-        $options{ frames }= 1;
-    };
+has 'port' => (
+    is => 'ro',
+    default => sub( $self ) { $self->_find_free_port( 9222 ) },
+);
 
-    if( ! exists $options{ download_directory }) {
-        $options{ download_directory }= '';
-    };
+has 'autodie' => (
+    is => 'rw',
+    default => 1,
+);
 
-    $options{ js_events } ||= [];
-    if( ! exists $options{ transport }) {
-        $options{ transport } ||= $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT };
-    };
+has 'frames' => (
+    is => 'rw',
+    default => 1,
+);
 
-    $options{start_url} = 'about:blank'
-        unless exists $options{start_url};
+has 'download_directory' => (
+    is => 'ro',
+    default => '',
+);
 
-    my $host = $options{ host } || '127.0.0.1';
+has 'transport' => (
+    is => 'ro',
+    default => sub { $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT } },
+);
 
-    $options{ reuse } ||= defined $options{ tab };
-    $options{ extra_headers } ||= {};
+has 'js_events' => (
+    is => 'ro',
+    default => sub { [] },
+);
 
-    if( $options{ tab } and $options{ tab } eq 'current' ) {
-        $options{ tab } = 0; # use tab at index 0
-    };
+has 'start_url' => (
+    is => 'ro',
+    default => 'about:blank',
+);
 
-    my $self= bless \%options => $class;
-    $self->{log} ||= $self->_build_log;
+has 'host' => (
+    is => 'ro',
+    default => '127.0.0.1',
+);
 
-    unless ($options{pid} or $options{reuse}) {
-        unless ( defined $options{ port } ) {
-            # Find free port for Chrome to listen on
-            $options{ port } = $class->_find_free_port( 9222 );
-        };
+has 'extra_headers' => (
+    is => 'rw',
+    default => sub { {} },
+);
 
-        my @cmd= $class->build_command_line( \%options );
-        $self->log('debug', "Spawning", \@cmd);
-        $self->{pid} = $class->spawn_child( $host, @cmd );
-        $self->{ kill_pid } = 1;
+has 'pid' => (
+    is => 'rw',
+);
 
-        $self->log('debug', "Spawned child as $pid");
+has 'driver' => (
+    is => 'rw',
+    default => \&_build_driver,
+);
 
-        # Just to give Chrome time to start up, make sure it accepts connections
-        $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
-    } else {
+has 'kill_pid' => (
+    is => 'rw',
+);
 
-        # Assume some defaults for the already running Chrome executable
-        $options{ port } //= 9222;
-    };
-
-    # Connect to it
-    $options{ driver } ||= Chrome::DevToolsProtocol->new(
-        'port' => $options{ port },
-        host => $host,
+sub _build_driver( $self ) {
+    Chrome::DevToolsProtocol->new(
+        port => $self->port,
+        host => $self->host,
         auto_close => 0,
         error_handler => sub {
             #warn ref$_[0];
@@ -601,17 +615,44 @@ sub new($class, %options) {
             # Reraise the error
             croak $_[1]
         },
-        transport => $options{ transport },
-        log => $options{ log },
-    );
+        transport => $self->transport,
+        log       => $self->_log,
+    )
+}
+
+sub BUILD($self, $options) {
+    $options->{ reuse } ||= defined $options->{ tab };
+
+    if( $options->{ tab } and $options->{ tab } eq 'current' ) {
+        $options->{ tab } = 0; # use tab at index 0
+    };
+
+    unless ($options->{pid} or $options->{reuse}) {
+        $options->{ port } = $self->_find_free_port( 9222 );
+
+        my @cmd= $self->build_command_line( $options );
+        $self->log('debug', "Spawning", \@cmd);
+
+        my $host = $self->host;
+        $options->{ pid } = $self->spawn_child( @cmd );
+        $self->{ kill_pid } = 1;
+        $self->log('debug', "Spawned child as $options->{pid}");
+
+        # Just to give Chrome time to start up, make sure it accepts connections
+        use Data::Dumper;
+        warn Dumper $options;
+        $self->_wait_for_socket_connection( $host, $options->{port}, $options->{startup_timeout} );
+    };
+
+    use Data::Dumper;
+    warn Dumper $self;
 
     # Synchronously connect here, just for easy API compatibility
-    $self->_connect(%options);
-
-    $self
+    $self->_connect(%$options);
 };
 
 sub _setup_driver_future( $self, %options ) {
+warn "Connecting";
     $self->driver->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
@@ -756,12 +797,6 @@ sub chrome_version_info( $self ) {
 
 Access the L<Chrome::DevToolsProtocol> instance connecting to Chrome.
 
-=cut
-
-sub driver {
-    $_[0]->{driver}
-};
-
 =head2 C<< $mech->tab >>
 
     my $tab = $mech->tab
@@ -773,13 +808,6 @@ to Chrome. This represents the tab we control.
 
 sub tab( $self ) {
     $self->driver->tab
-}
-
-sub autodie {
-    my( $self, $val )= @_;
-    $self->{autodie} = $val
-        if @_ == 2;
-    $_[0]->{autodie}
 }
 
 =head2 C<< $mech->allow( %options ) >>
