@@ -22,6 +22,38 @@ our @CARP_NOT;
 
 Chrome::DevToolsProtocol - asynchronous dispatcher for the DevTools protocol
 
+=head1 SYNOPSIS
+
+    # Usually, WWW::Mechanize::Chrome automatically creates a driver for you
+    my $driver = Chrome::DevToolsProtocol->new(
+        port => 9222,
+        host => '127.0.0.1',
+        auto_close => 0,
+        error_handler => sub {
+            # Reraise the error
+            croak $_[1]
+        },
+    );
+    $driver->connect( new_tab => 1 )->get
+
+=head1 METHODS
+
+=head2 C<< ->new( %args )
+
+    my $driver = Chrome::DevToolsProtocol->new(
+        port => 9222,
+        host => '127.0.0.1',
+        auto_close => 0,
+        error_handler => sub {
+            # Reraise the error
+            croak $_[1]
+        },
+    );
+
+These members can mostly be set through the constructor arguments:
+
+=over 4
+
 =cut
 
 sub _build_log( $self ) {
@@ -29,29 +61,65 @@ sub _build_log( $self ) {
     Log::Log4perl->get_logger(__PACKAGE__);
 }
 
+=item B<host>
+
+The hostname to connect to
+
+=cut
+
 has 'host' => (
     is => 'ro',
     default => '127.0.0.1',
 );
+
+=item B<host>
+
+The port to connect to
+
+=cut
 
 has 'port' => (
     is => 'ro',
     default => 9222,
 );
 
+=item B<json>
+
+The JSON decoder used
+
+=cut
+
 has 'json' => (
     is => 'ro',
     default => sub { JSON->new },
 );
+
+=item B<ua>
+
+The L<Future::HTTP> instance to talk to the Chrome DevTools
+
+=cut
 
 has 'ua' => (
     is => 'ro',
     default => sub { Future::HTTP->new },
 );
 
+=item B<tab>
+
+Which tab to reuse (if any)
+
+=cut
+
 has 'tab' => (
     is => 'rw',
 );
+
+=item B<log>
+
+A premade L<Log::Log4perl> object to act as logger
+
+=cut
 
 has '_log' => (
     is => 'ro',
@@ -62,6 +130,12 @@ has 'receivers' => (
     is => 'ro',
     default => sub { {} },
 );
+
+=item B<on_message>
+
+A callback invoked for every message
+
+=cut
 
 has 'on_message' => (
     is => 'rw',
@@ -78,10 +152,11 @@ has 'listener' => (
     default => sub { {} },
 );
 
-sub endpoint( $self ) {
-    $self->tab
-        and $self->tab->{webSocketDebuggerUrl}
-}
+=item B<transport>
+
+The event-loop specific transport backend
+
+=cut
 
 has 'transport' => (
     is => 'ro',
@@ -92,7 +167,48 @@ around BUILDARGS => sub( $orig, $class, %args ) {
     $class->$orig( %args )
 };
 
+=back
+
+=head2 C<< ->future >>
+
+    my $f = $driver->future();
+
+Returns a backend-specific generic future
+
+=cut
+
 sub future( $self ) { $self->transport->future }
+
+=head2 C<< ->endpoint >>
+
+    my $url = $driver->endpoint();
+
+Returns the URL endpoint to talk to for the connected tab
+
+=cut
+
+sub endpoint( $self ) {
+    $self->tab
+        and $self->tab->{webSocketDebuggerUrl}
+}
+
+=head2 C<< ->add_listener >>
+
+    my $l = $driver->add_listener(
+        'Page.domContentEventFired',
+        sub {
+            warn "The DOMContent event was fired";
+        },
+    );
+
+    # ...
+
+    undef $l; # stop listening
+
+Adds a callback for the given event name. The callback will be removed once
+the return value goes out of scope.
+
+=cut
 
 sub add_listener( $self, $event, $callback ) {
     my $listener = Chrome::DevToolsProtocol::EventListener->new(
@@ -105,6 +221,14 @@ sub add_listener( $self, $event, $callback ) {
     $listener
 }
 
+=head2 C<< ->remove_listener >>
+
+    $driver->remove_listener($l);
+
+Explicitly remove a listener.
+
+=cut
+
 sub remove_listener( $self, $listener ) {
     my $event = $listener->{event};
     $self->listener->{ $event } ||= [];
@@ -112,6 +236,14 @@ sub remove_listener( $self, $listener ) {
                                      grep { defined $_ }
                                      @{$self->listener->{ $event }};
 }
+
+=head2 C<< ->log >>
+
+    $driver->log('debug', "Warbling doodads", { doodad => 'this' } );
+
+Log a message
+
+=cut
 
 sub log( $self, $level, $message, @args ) {
     my $logger = $self->_log;
@@ -123,6 +255,14 @@ sub log( $self, $level, $message, @args ) {
             if( $logger->$enabled );
     };
 }
+
+=head2 C<< ->connect >>
+
+    my $f = $driver->connect()->get;
+
+Asynchronously connect to the Chrome browser, returning a Future.
+
+=cut
 
 sub connect( $self, %args ) {
     # If we are still connected to a different tab, disconnect from it
@@ -240,6 +380,14 @@ sub connect( $self, %args ) {
     return $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } );
 };
 
+=head2 C<< ->close >>
+
+    $driver->close();
+
+Shut down the connection to Chrome
+
+=cut
+
 sub close( $self ) {
     if( my $t = $self->transport) {
         if( ref $t ) {
@@ -249,6 +397,14 @@ sub close( $self ) {
     };
 };
 
+=head2 C<< ->sleep >>
+
+    $driver->sleep(0.2)->get;
+
+Sleep for the amount of seconds in an event-loop compatible way
+
+=cut
+
 sub sleep( $self, $seconds ) {
     $self->transport->sleep($seconds);
 };
@@ -257,6 +413,14 @@ sub DESTROY( $self ) {
     delete $self->{ua};
     $self->close;
 }
+
+=head2 C<< ->one_shot >>
+
+    my $f = $driver->one_shot('Page.domContentEventFired')->get;
+
+Returns a future that resolves when the event is received
+
+=cut
 
 sub one_shot( $self, @events ) {
     my $result = $self->transport->future;
@@ -378,6 +542,10 @@ sub build_url( $self, %options ) {
 };
 
 =head2 C<< $chrome->json_get >>
+
+    my $data = $driver->json_get( 'version' )->get;
+
+Requests an URL and returns decoded JSON from the future
 
 =cut
 
@@ -547,6 +715,10 @@ sub new_tab( $self, $url=undef ) {
 
 =head2 C<< $chrome->activate_tab >>
 
+    $chrome->activate_tab( $tab )->get
+
+Brings the tab to the foreground of the application
+
 =cut
 
 sub activate_tab( $self, $tab ) {
@@ -555,6 +727,10 @@ sub activate_tab( $self, $tab ) {
 };
 
 =head2 C<< $chrome->close_tab >>
+
+    $chrome->close_tab( $tab )->get
+
+Closes the tab
 
 =cut
 
