@@ -496,7 +496,7 @@ sub spawn_child_posix( $class, @cmd ) {
     exit 1;
 }
 
-sub spawn_child( $class, $localhost, @cmd ) {
+sub spawn_child( $class, @cmd ) {
     my ($pid);
     if( $^O =~ /mswin/i ) {
         $pid = $class->spawn_child_win32(@cmd)
