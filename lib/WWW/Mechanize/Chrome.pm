@@ -496,7 +496,7 @@ sub spawn_child_posix( $self, @cmd ) {
     exit 1;
 }
 
-sub spawn_child( $self, $localhost, @cmd ) {
+sub spawn_child( $self, @cmd ) {
     my ($pid);
     if( $^O =~ /mswin/i ) {
         $pid = $self->spawn_child_win32(@cmd)
@@ -505,8 +505,6 @@ sub spawn_child( $self, $localhost, @cmd ) {
     };
     $self->log('debug', "Spawned child as $pid");
 
-    # Just to give Chrome time to start up, make sure it accepts connections
-    $class->_wait_for_socket_connection( $localhost, $self->{port}, $self->{startup_timeout} || 20);
     return $pid
 }
 
@@ -578,7 +576,7 @@ sub new($class, %options) {
 
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
-        $self->{pid} = $self->spawn_child( $host, @cmd );
+        $self->{pid} = $self->spawn_child( @cmd );
         $self->{ kill_pid } = 1;
 
         # Just to give Chrome time to start up, make sure it accepts connections
