@@ -931,6 +931,7 @@ no arguments simply clicks that one button.
 If you pass in a hash reference instead of a name,
 the following keys are recognized:
 
+- `text` - Find the element to click by its contained text
 - `selector` - Find the element to click by the CSS selector
 - `xpath` - Find the element to click by the XPath query
 - `dom` - Click on the passed DOM element

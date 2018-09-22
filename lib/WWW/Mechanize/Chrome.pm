@@ -3163,6 +3163,10 @@ the following keys are recognized:
 
 =item *
 
+C<text> - Find the element to click by its contained text
+
+=item *
+
 C<selector> - Find the element to click by the CSS selector
 
 =item *
@@ -3208,6 +3212,10 @@ sub click {
         %options = %$name;
     } else {
         $options{ name } = $name;
+    };
+
+    if( exists $options{ text }) {
+        $options{ xpath } = sprintf q{//*[text() = "%s"]}, quote_xpath( $options{ text });
     };
 
     if (exists $options{ name }) {
