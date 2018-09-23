@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 
 use Future::Mojo;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 #has 'clients'         => sub { {} };
 has 'remote'          => undef; # this should become a list
