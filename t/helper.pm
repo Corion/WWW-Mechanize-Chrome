@@ -28,9 +28,11 @@ sub browser_instances {
     }
 
     my @instances;
-    # default Chrome instance
 
-    if( $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS} ) {
+    if( $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE}) {
+        push @instances, $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS};
+
+    } elsif( $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS} ) {
         # add author tests with local versions
         my $spec = $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS};
         push @instances, grep { -x } bsd_glob $spec;
@@ -57,7 +59,6 @@ sub browser_instances {
 
     # Well, we should do a nicer natural sort here
     @instances = sort {$a cmp $b} keys %seen;
-
 };
 
 sub default_unavailable {
@@ -65,20 +66,27 @@ sub default_unavailable {
 };
 
 sub runtests {
-    my ($browser_instance,$port, $new_mech, $code, $test_count) = @_;
+    my ($browser_instance, $new_mech, $code, $test_count) = @_;
     if ($browser_instance) {
         diag sprintf "Testing with %s",
             $browser_instance;
     };
     my $tempdir = tempdir( CLEANUP => 1 );
-    my @launch = $browser_instance
-               ? ( launch_exe => $browser_instance,
-                   port => $port,
-                   data_directory => $tempdir,
-                   headless => 1,
-                   #incognito => 1,
-                 )
-               : ();
+    my @launch;
+    if( $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE} ) {
+        my( $host, $port ) = split /:/, $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE};
+        @launch = ( host => $host,
+                    port => $port,
+                    reuse => 1,
+                    new_tab => 1,
+                  );
+    } else {
+        @launch = ( launch_exe => $browser_instance,
+                    #port => $port,
+                    data_directory => $tempdir,
+                    headless => 1,
+                  );
+    };
 
     {
         my $mech = eval { $new_mech->(@launch) };
@@ -92,7 +100,7 @@ sub runtests {
                     launch_exe => $browser_instance
                 });
             };
-            diag sprintf "Failed on Chrome version '%s'", $version;
+            diag sprintf "Failed on Chrome version '%s'", $version || '(unknown)';
             return
         };
 
@@ -108,14 +116,15 @@ sub runtests {
 }
 
 sub run_across_instances {
-    my ($instances, $port, $new_mech, $test_count, $code) = @_;
+    my ($instances, $new_mech, $test_count, $code) = @_;
 
     croak "No test count given"
         unless $test_count;
 
     for my $browser_instance (@$instances) {
-        runtests( $browser_instance,$port, $new_mech, $code, $test_count );
-        sleep 1; # So the browser can shut down before we try to connect
+        runtests( $browser_instance, $new_mech, $code, $test_count );
+        sleep 1 if @$instances;
+        # So the browser can shut down before we try to connect
         # to the new instance
     };
 };

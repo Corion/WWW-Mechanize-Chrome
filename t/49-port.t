@@ -29,6 +29,7 @@ if (my $err = t::helper::default_unavailable) {
 sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
+        port    => $instance_port,
         @_,
     );
 };
@@ -37,7 +38,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 1, sub {
     my ($browser_instance, $mech) = splice @_;
 
     $mech->get($server->url);

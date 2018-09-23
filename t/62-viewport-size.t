@@ -47,7 +47,7 @@ sub get_viewport_size {
     return $res;
 }
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my ($browser_instance, $mech) = @_;
     
     my $version = $mech->chrome_version;

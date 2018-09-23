@@ -7,16 +7,17 @@ use File::Glob qw( bsd_glob );
 use Config;
 use Getopt::Long;
 use Algorithm::Loops 'NestedLoops';
+use File::Temp 'tempdir';
 
 GetOptions(
-    't|test:s' => \my $tests,
+    't|test:s' => \my @tests,
     'b|backend:s' => \my $backend,
     'c|continue' => \my $continue,
+    'separate-instances:s' => \my $separate_instances,
     'level|l:s' => \my $log_level,
 );
-my @tests;
-if( $tests ) {
-    @tests= bsd_glob( $tests );
+if( @tests ) {
+    @tests= map { bsd_glob( $_ ) } @tests;
 };
 
 =head1 NAME
@@ -26,9 +27,8 @@ runtests.pl - runs the test suite versions of Chrome and with different backends
 =cut
 
 my @instances = @ARGV
-                ? map { bsd_glob $_ } @ARGV 
+                ? map { bsd_glob $_ } @ARGV
                 : t::helper::browser_instances;
-my $port = 9222;
 
 $backend ||= qr/./;
 my @backends = grep { /$backend/i } (qw(
@@ -53,31 +53,23 @@ NestedLoops( [\@instances, \@backends], sub {
         $ENV{TEST_LOG_LEVEL} = $log_level;
     };
     warn "Testing $vis_instance with $backend";
-    #my @launch = $instance
-    #           ? (launch => [$instance,'-repl', $port, 'about:blank'])
-    #           : ()
-    #           ;
-    #
-    #if( $instance ) {
-    #    $ENV{TEST_WWW_MECHANIZE_FIREFOX_VERSIONS} = $instance;
-    #    $ENV{MOZREPL}= "localhost:$port";
-    #} else {
-    #    $ENV{TEST_WWW_MECHANIZE_FIREFOX_VERSIONS} = "don't test other instances";
-    #    delete $ENV{MOZREPL}; # my local setup ...
-    #};
-    #my $retries = 3;
-    #
-    #my $ff;
-    #while( $retries-- and !$ff) {
-    #    $ff= eval {
-    #        Firefox::Application->new(
-    #            @launch,
-    #        );
-    #    };
-    #};
-    #die "Couldn't launch Firefox instance from $instance"
-    #    unless $ff;
-    
+
+    my $launch_master = !$separate_instances;
+    my $testrun;
+    if( $launch_master ) {
+        # Launch a single process we will reuse for all these tests
+        my $tempdir = tempdir( CLEANUP => 1 );
+        $testrun = WWW::Mechanize::Chrome->new(
+            launch_exe => $instance,
+            data_directory => $tempdir,
+            headless   => 1,
+        );
+        $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE}= join ":", $testrun->driver->host, $testrun->driver->port;
+    } else {
+        delete $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE};
+    };
+    $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS} = $instance;
+
     if( @tests ) {
         for my $test (@tests) {
             system(qq{perl -Ilib -w "$test"}) == 0
@@ -89,9 +81,13 @@ NestedLoops( [\@instances, \@backends], sub {
             or ($continue and warn "Error while testing $vis_instance + $backend: $!/$?")
             or die "Error while testing $vis_instance";
     };
-    
-    #undef $ff;
+
+    if( $testrun ) {
+        undef $testrun;
+        sleep 2;
+    };
+
     ## Safe wait until shutdown
     #sleep 5;
-    system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions
 });
+system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions

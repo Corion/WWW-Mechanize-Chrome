@@ -15,7 +15,6 @@ use Test::HTTP::LocalServer;
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -48,7 +47,7 @@ sub load_file_ok {
         or diag $mech->content;
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 14, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 14, sub {
     my ($firefox_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';

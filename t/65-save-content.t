@@ -38,7 +38,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testcount, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
     my $version = $mech->chrome_version;
 

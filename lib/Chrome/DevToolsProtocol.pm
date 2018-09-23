@@ -297,7 +297,7 @@ sub connect( $self, %args ) {
                 return Future->done( $info->{webSocketDebuggerUrl} );
             });
 
-        } elsif( defined $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
+        } elsif( defined $args{ tab } and ! ref $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 $self->log('debug', "Attached to tab $args{tab}", @tabs );
                 $self->{tab} = $tabs[ $args{ tab }];

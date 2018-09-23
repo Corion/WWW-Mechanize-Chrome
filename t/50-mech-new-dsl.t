@@ -13,7 +13,6 @@ use t::helper;
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -34,7 +33,7 @@ use vars '$mech';
 
 my $imported;
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 1, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 1, sub {
     my( $file, $mymech ) = splice @_; # so we move references
     $mech = $mymech;
     undef $mymech;

@@ -49,7 +49,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 12*@files+5, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 12*@files+5, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 

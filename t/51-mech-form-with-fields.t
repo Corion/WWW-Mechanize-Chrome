@@ -11,10 +11,8 @@ use Test::HTTP::LocalServer;
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
-#Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -25,7 +23,6 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-    #use Mojolicious;
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
@@ -36,7 +33,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 5, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     

@@ -9,7 +9,6 @@ use Log::Log4perl qw(:easy);
 use lib '.';
 use t::helper;
 
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
@@ -22,12 +21,11 @@ if (my $err = t::helper::default_unavailable) {
 
 sub new_mech {
     my $chrome = WWW::Mechanize::Chrome->new(
-        transport => 'Chrome::DevToolsProtocol::Transport::AnyEvent',
         @_
     );
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my( $file, $mech ) = splice @_;
     my $chrome = $mech->driver;
 
@@ -36,17 +34,22 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub 
     my $version = $chrome->protocol_version->get;
     cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
 
-    diag "Open tabs";
+    #diag "Open tabs";
 
     my @tabs = $chrome->list_tabs()->get;
     cmp_ok 0+@tabs, '>', 0,
         "We have at least one open (empty) tab";
 
     my $target_tab = $tabs[ 0 ];
-
-    $chrome->connect(tab => $target_tab)->get();
-    my $tab = $chrome->tab;
-    isn::t $tab, undef, "Attached to tab '$target_tab->{title}'";
+    if( ! $target_tab->{webSocketDebuggerUrl}) {
+        SKIP: {
+            skip "This Chrome doesn't want more than one debugger connection", 1;
+        };
+    } else {
+        $chrome->connect(tab => $target_tab)->get();
+        my $tab = $chrome->tab;
+        isn::t $tab, undef, "Attached to tab '$target_tab->{title}'";
+    };
 
     #warn Dumper $c->request(
     #    {Tool => 'V8Debugger', Destination => $target_tab->[0], }, { command => 'attach' },

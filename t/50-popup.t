@@ -35,8 +35,9 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 3, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
     my ($browser_instance, $mech) = @_;
+    my $version = $mech->chrome_version;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     $mech->autodie(1);
@@ -57,9 +58,17 @@ t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 3, sub 
     };
 
     ok $win, "We found 'open_window'";
-    $mech->click($win, synchronize => 0);
-    ok 1, "We get here";
+    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 61) and $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE}) {
+        SKIP: {
+            skip "Chrome 61 opening windows doesn't play well with in-process tests", 1;
+            # This is mostly taking PNG screenshots afterwards that fails,
+            # t/56-*.t
+        };
+    } else {
+        $mech->click($win, synchronize => 0);
+        ok 1, "We get here";
+    };
     diag "But we don't know what window was opened";
-    sleep 10;
+    #sleep 10;
     # or how to close it
 });

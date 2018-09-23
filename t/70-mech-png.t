@@ -48,7 +48,7 @@ sub image_dimensions_are {
     };
 };
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, $testcount, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
