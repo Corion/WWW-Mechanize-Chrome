@@ -47,9 +47,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
             skip "Chrome::DevToolsProtocol::Transport::Mojo doesn't support port reuse", 6
         };
         return;
-    } elsif( $version =~ /\b(\d+)\b/ and $1 == 61 ) {
+    } elsif( $version =~ /\b(\d+)\b/ and ($1 == 61 or $1 == 59)) {
         SKIP: {
-            skip "Chrome v61 doesn't properly handle listing tabs...", 6;
+            skip "Chrome v$1 doesn't properly handle listing tabs...", 6;
         };
         return
     };
@@ -158,8 +158,11 @@ HTML
         like $err, qr/Couldn't find a tab matching/, 'We got the correct error message';
     };
 
-    local $SIG{CHLD} = 'IGNORE';
-    kill 'SIGKILL', $pid; # clean up, the hard way
+    if( $pid ) {
+        # If we spawned a child process, let's clean it up the hard way
+        local $SIG{CHLD} = 'IGNORE';
+        kill 'SIGKILL', $pid; # clean up, the hard way
+    };
     %args = ();
     };
 });
