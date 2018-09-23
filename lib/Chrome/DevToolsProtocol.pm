@@ -38,7 +38,7 @@ Chrome::DevToolsProtocol - asynchronous dispatcher for the DevTools protocol
 
 =head1 METHODS
 
-=head2 C<< ->new( %args )
+=head2 C<< ->new( %args ) >>
 
     my $driver = Chrome::DevToolsProtocol->new(
         port => 9222,
