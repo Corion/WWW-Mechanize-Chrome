@@ -58,9 +58,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
     };
 
     ok $win, "We found 'open_window'";
-    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 61) and $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE}) {
+    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 61 or $1 == 60) and $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE}) {
         SKIP: {
-            skip "Chrome 61 opening windows doesn't play well with in-process tests", 1;
+            skip "Chrome 60,61 opening windows doesn't play well with in-process tests", 1;
             # This is mostly taking PNG screenshots afterwards that fails,
             # t/56-*.t
         };

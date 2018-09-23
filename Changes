@@ -1,18 +1,24 @@
-    . Tested against Chromium 59.0.3071.115 / Win64 (some tests skipped)
-    . Tested against Chromium 60.0.3110.0 / Win64 (some tests skipped)
-    . Tested against Chromium 61.0.3141.0 / Win64 (some tests skipped)
-    . Tested against Chromium 62.0.3202.94 / Win64 (some tests skipped)
-    . Tested against Chromium 63.0.3239.132 / Win64
-    . Tested against Chromium 64.0.3282.119 / Win64 (some tests skipped)
-    . Tested against Chromium 65.0.3325.181 / Win64 (some tests skipped)
-    . Tested against Chromium 66.0.3359.139 / Win64 (some tests skipped)
-    . Tested against Chromium 67.0.3396.99 / Win64 (some tests skipped)
-    . Tested against Chromium 68.0.3435.0 / Win64 (some tests skipped)
-    . Tested against Chromium 69.0.3481.0 / Win64 (some tests skipped)
-    . Tested against Chromium 70.0.3500.0 / Win64 (some tests skipped)
-    . Tested against Chromium 65.0.3325.181 Built on Ubuntu, thanks Travis CI
     . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
+    . Tested against Chrome Chrome/59.0.3071.115
+    . Tested against Chromium HeadlessChrome/60.0.3110.0
+    . Tested against Chromium HeadlessChrome/61.0.3141.0
+    . Tested against Chromium HeadlessChrome/62.0.3202.94
+    . Tested against Chromium HeadlessChrome/63.0.3239.132
+    . Tested against Chromium HeadlessChrome/64.0.3282.119
+    . Tested against Chromium HeadlessChrome/65.0.3325.181
+    . Tested against Chromium HeadlessChrome/66.0.3359.139
+    . Tested against Chromium HeadlessChrome/67.0.3396.99
+    . Tested against Chromium HeadlessChrome/68.0.3440.84
+    . Tested against Chromium HeadlessChrome/69.0.3497.100
+    . Tested against Chromium HeadlessChrome/70.0.3533.0
+    . Tested against Chromium HeadlessChrome/71.0.3557.0
+
+0.22 2018-09-23
+    . Logging improvements
+    . Documentation of the DevToolsProtocol class
+    . Convenience parameter to ->click() to click on text
+    . Developer tests now spawn a single Chrome test, speeding up the test run
 
 0.21 2018-09-15
     . Fix ->sendkeys() to actually work
