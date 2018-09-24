@@ -10,34 +10,25 @@ use Future::Mojo;
 
 our $VERSION = '0.22';
 
-#has 'clients'         => sub { {} };
-has 'remote'          => undef; # this should become a list
+has 'clients'         => sub { {} };
 has 'last_frame'      => undef; # this should become a list
 
 =head2 C<< $plugin->notify_clients >>
 
-  $plugin->notify_clients( {
-      type => 'reload',
-  });
+  $plugin->notify_clients( $PNGframe )
 
-Notify all connected clients that they should perform actions.
+Notify all connected clients that they should display the new frame.
 
 =cut
 
-sub notify_clients( $self, @actions ) {
-    # Blow the cache away
-    my $old_cache = $self->app->renderer->cache;
-    $self->app->renderer->cache( Mojo::Cache->new(max_keys => $old_cache->max_keys));
-
+sub notify_clients( $self, @frames ) {
     my $clients = $self->clients;
     for my $client_id (sort keys %$clients ) {
         my $client = $clients->{ $client_id };
-        for my $action (@actions) {
-            # Convert path to what the client will likely have requested (duh)
-
-            # These rules should all come from a config file, I guess
-            #app->log->info("Notifying client $client_id of '$action->{name}' change to '$action->{path}'");
-            $client->send({json => $action });
+        for my $frame (@frames) {
+            eval {
+                $client->send({ binary => $action });
+            };
         };
     };
 }
@@ -48,33 +39,36 @@ sub register( $self, $app, $config ) {
         my( $c ) = @_;
         $c->res->headers->content_type('text/html');
         $c->res->headers->connection('close');
-        #$c->render('echo')
         $c->render('index')
     });
 
     $app->routes->websocket( '/ws' => sub {
         my( $c ) = @_;
         $c->inactivity_timeout(300);
-    
-        $self->remote( $c );
-        $self->remote->tx->on( json => sub {
+
+        my $client_id = join ":", $c->tx->original_remote_address, $c->tx->remote_port();
+
+        $self->clients->{ $client_id } = $c;
+        $c->tx->on( json => sub {
             my( $c, $data ) = @_;
             #warn Dumper $data ;
             warn "Click received (and ignored)";
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
-    
+
         });
         #warn("Client connected");
         if( $self->last_frame ) {
-            #warn("Sending current frame");
-            $self->remote->send({ binary => $self->last_frame });
-            $self->last_frame(undef);
+            # send current frame
+            $c->tx->send({ binary => $self->last_frame });
         } else {
-            #warn("Sending standby frame");
-            #$self->remote->send({ binary => $static_frame });
+            # send a standby frame ??
         };
-        $self->remote->on( finish => sub { my( $c,$code,$reason ) = @_; warn "Client gone ($code,$reason)" });
+        $c->tx->on( finish => sub {
+            my( $c,$code,$reason ) = @_;
+            warn "Client gone ($code,$reason)" ;
+            delete $self->clients->{ $client_id };
+        });
     });
 
     # Stop our program
@@ -85,13 +79,13 @@ sub register( $self, $app, $config ) {
         $c->render('stop');
         Mojo::IOLoop->stop;
     });
-    
+
     $app->helper( 'send_frame' => sub ( $c, $framePNG ) {
-        # send this frame to the browser
-        if( $self->remote ) {
+        # send this frame to all connected clients
+        if( scalar keys %{ $self->clients } ) {
             Future::Mojo->new->done_next_tick( 1 )
             ->then( sub {
-                $self->remote->send({ binary => $framePNG->{data} });
+                $self->notify_clients( $framePNG->{data} );
             })->retain;
         } else {
             $self->last_frame( $framePNG->{data} );
