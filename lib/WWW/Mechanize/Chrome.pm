@@ -559,6 +559,7 @@ sub new($class, %options) {
     my $host = $options{ host } || '127.0.0.1';
 
     $options{ reuse } ||= defined $options{ tab };
+
     $options{ extra_headers } ||= {};
 
     if( $options{ tab } and $options{ tab } eq 'current' ) {
