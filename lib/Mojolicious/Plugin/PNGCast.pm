@@ -19,6 +19,9 @@ Mojolicious::Plugin::PNGCast - in-process server to display a screencast
 Use this web application to display the screen of a (headless) web browser or
 other arbitrary PNG data in another browser.
 
+The synopsis shows how to use this plugin to display
+a Chrome screencast using L<WWW::Mechanize::Chrome>.
+
 =head1 SYNOPSIS
 
     use WWW::Mechanize::Chrome;
@@ -42,9 +45,8 @@ other arbitrary PNG data in another browser.
 
 =cut
 
-
 has 'clients'         => sub { {} };
-has 'last_frame'      => undef; # this should become a list
+has 'last_frame'      => undef;
 
 =head2 C<< $plugin->notify_clients >>
 
@@ -129,6 +131,66 @@ sub register( $self, $app, $config ) {
     push @{$app->renderer->classes}, __PACKAGE__;
     push @{$app->static->classes},   __PACKAGE__;
 }
+
+=head1 EXPORTED HTTP ENDPOINTS
+
+This plugin makes the following endpoints available
+
+=over 4
+
+=item *
+
+C</> - the index page
+
+This is an HTML page that opens a websocket to the webserver and listens for
+PNG images coming in over that websocket
+
+=item *
+
+C</ws> - the websocket
+
+This is a websocket
+
+=item *
+
+C</stop> - stop the application
+
+This stops the complete Mojolicious application
+
+=back
+
+=head1 REPOSITORY
+
+The public repository of this module is
+L<https://github.com/Corion/www-mechanize-chrome>.
+
+=head1 SUPPORT
+
+The public support forum of this module is L<https://perlmonks.org/>.
+
+=head1 BUG TRACKER
+
+Please report bugs in this module via the RT CPAN bug queue at
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome>
+or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org|mailto:www-mechanize-Chrome-Bugs@rt.cpan.org>.
+
+=head1 CONTRIBUTING
+
+Please see L<WWW::Mechanize::Chrome::Contributing>.
+
+=head1 AUTHOR
+
+Max Maischein C<corion@cpan.org>
+
+=head1 COPYRIGHT (c)
+
+Copyright 2010-2018 by Max Maischein C<corion@cpan.org>.
+
+=head1 LICENSE
+
+This module is released under the same terms as Perl itself.
+
+=cut
 
 1
 __DATA__
