@@ -7,6 +7,30 @@ no warnings 'experimental::signatures';
 
 extends 'WWW::Mechanize::Chrome';
 
+our $VERSION = '0.22';
+
+=head1 NAME
+
+WWW::Mechanize::Edge - control the Microsoft Edge browser
+
+=head1 SYNOPSIS
+
+    my $mech = WWW::Mechanize::Edge->new(
+    );
+    
+    $mech->get('https://example.com');
+
+=head1 DESCRIPTION
+
+This module allows to launch and control the Microsoft Edge browser through the
+Chrome Debugger Protocol. Unfortunately, most of the interesting API is not
+implemented by Edge, so only navigating to a page works. Neither retrieving the
+page content nor listening for frame events works.
+
+Consider this module as a proof of concept.
+
+=cut
+
 # c:\Users\Corion\AppData\Local\Microsoft\WindowsApps\MicrosoftEdge.exe
 # Returns additional directories where the default executable can be found
 # on this OS
