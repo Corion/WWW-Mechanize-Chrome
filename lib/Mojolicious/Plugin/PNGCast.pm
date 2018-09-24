@@ -10,6 +10,39 @@ use Future::Mojo;
 
 our $VERSION = '0.22';
 
+=head1 NAME
+
+Mojolicious::Plugin::PNGCast - in-process server to display a screencast
+
+=head1 DESCRIPTION
+
+Use this web application to display the screen of a (headless) web browser or
+other arbitrary PNG data in another browser.
+
+=head1 SYNOPSIS
+
+    use WWW::Mechanize::Chrome;
+    use Mojolicious::Lite;
+    plugin 'PNGCast';
+
+    my $daemon_url = 'http://localhost:3000';
+
+    $ws_monitor = Mojo::Server::Daemon->new(app => app());
+    $ws_monitor->listen([$daemon_url]);
+    $ws_monitor->start;
+
+    $mech->setScreenFrameCallback( sub {
+        app->send_frame( $_[1]->{data} )}
+    );
+
+    print "Watch progress at $daemon_url\n";
+    sleep 5;
+
+    $mech->get('https://example.com');
+
+=cut
+
+
 has 'clients'         => sub { {} };
 has 'last_frame'      => undef; # this should become a list
 
