@@ -17,7 +17,7 @@ WWW::Mechanize::Edge - control the Microsoft Edge browser
 
     my $mech = WWW::Mechanize::Edge->new(
     );
-    
+
     $mech->get('https://example.com');
 
 =head1 DESCRIPTION
@@ -74,7 +74,7 @@ sub build_command_line( $class, $options ) {
    $options->{ launch_arg } ||= [];
     # We will need a magic cookie so we find the tab that pops up
     $options->{ start_url } ||= "about:blank";
-    
+
     push @{ $options->{ launch_arg }}, "$options->{start_url}"
         if exists $options->{start_url};
     my @cmd=( $program, @{ $options->{launch_arg}} );
@@ -92,6 +92,112 @@ sub _setup_driver_future( $self, %options ) {
             $err .= $args[1]->{Reason};
         };
         Future->fail( $err );
+    })
+}
+
+sub _waitForNavigationEnd( $self, %options ) {
+    # Capture all events as we seem to have initiated some network transfers
+    # If we see a Page.frameScheduledNavigation then Chrome started navigating
+    # to a new page in response to our click and we should wait until we
+    # received all the navigation events.
+
+    #my $frameId = $options{ frameId } || $self->frameId;
+    #my $requestId = $options{ requestId } || $self->requestId;
+    my $msg = "Capturing events until 'Runtime.executionContextsCleared'";
+
+    $self->log('debug', $msg);
+    my $events_f = $self->_collectEvents( sub( $ev ) {
+        # Let's assume that the first frame id we see is "our" frame
+        my $internal_navigation = (undef);
+        my $stopped = (  1 # $options{ just_request }
+                       && $ev->{method} eq 'Runtime.executionContextsCleared', # this should be the only one we need (!)
+                       # but we never learn which page (!). So this does not play well with iframes :(
+        );
+        my $domcontent = (  1 # $options{ just_request }
+                       && $ev->{method} eq 'Page.domContentEventFired', # this should be the only one we need (!)
+                       # but we never learn which page (!). So this does not play well with iframes :(
+        );
+
+        my $failed  = 0;
+        my $download= 0;
+        return $stopped || $internal_navigation || $failed || $download # || $domcontent;
+    });
+
+    $events_f;
+}
+
+sub _mightNavigate( $self, $get_navigation_future, %options ) {
+    undef $self->{frameId};
+    undef $self->{requestId};
+    my $frameId = $options{ frameId };
+    my $requestId = $options{ requestId };
+
+    my $scheduled = Future->done(1);
+    my $navigated;
+    my $does_navigation;
+    my $target_url = $options{ url };
+
+    {
+    my $s = $self;
+    weaken $s;
+        warn "Set up navigation catcher 1";
+    $does_navigation = #$scheduled
+        #->then(sub( $ev ) {
+        #$self->driver->future->then(sub {
+        warn "Set up navigation catcher";
+            #my $res;
+
+                  #$s->log('trace', "Navigation started, logging ($ev->{method})");
+                  #$s->log('trace', "Navigation started, logging");
+                  $navigated++;
+
+                  #$frameId ||= $s->_fetchFrameId( $ev );
+                  #$requestId ||= $s->_fetchRequestId( $ev );
+                  #$s->{ frameId } = $frameId;
+                  #$s->{ requestId } = $requestId;
+
+                  $does_navigation = $s->_waitForNavigationEnd( %options );
+
+            #return $res
+            #$res
+        #});
+    };
+
+    # Kick off the navigation ourselves
+    my $nav;
+    $get_navigation_future->()
+    ->then( sub {
+        $nav = $_[0];
+
+        # We have a race condition to find out whether Chrome navigates or not
+        # so we wait a bit to see if it will navigate in response to our click
+        $self->sleep_future(0.1); # X XX baad fix
+    })->then( sub {
+        my $f;
+        my @events;
+        if( !$options{ intrapage } and $navigated ) {
+            $f = $does_navigation->then( sub {
+                @events = @_;
+                # Handle all the events, by turning them into a ->response again
+                my $res = $self->httpMessageFromEvents( $self->frameId, \@events, $target_url );
+                $self->update_response( $res );
+                $scheduled->cancel;
+                undef $scheduled;
+
+                # Store our frame id so we know what events to listen for in the future!
+                $self->{frameId} ||= $nav->{frameId};
+
+                Future->done( \@events )
+            })
+        } else {
+            $self->log('trace', "No navigation occurred, not collecting events");
+            $does_navigation->cancel;
+            $f = Future->done(\@events);
+            $scheduled->cancel;
+            undef $scheduled;
+        };
+
+        return $f
     })
 }
 
@@ -117,6 +223,13 @@ JS
         Future->done($content)
     })
 }
+
+sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
+    HTTP::Response->new(
+        200,
+        'OK',
+    );
+};
 
 sub decoded_content($self) {
     $self->decoded_content_future->get;
