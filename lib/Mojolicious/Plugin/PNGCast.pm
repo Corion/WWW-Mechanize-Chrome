@@ -24,13 +24,13 @@ a Chrome screencast using L<WWW::Mechanize::Chrome>.
 
 =head1 SYNOPSIS
 
-    use WWW::Mechanize::Chrome;
     use Mojolicious::Lite;
+    use WWW::Mechanize::Chrome;
     plugin 'PNGCast';
 
     my $daemon_url = 'http://localhost:3000';
 
-    $ws_monitor = Mojo::Server::Daemon->new(app => app());
+    my $ws_monitor = Mojo::Server::Daemon->new(app => app());
     $ws_monitor->listen([$daemon_url]);
     $ws_monitor->start;
 
@@ -62,7 +62,7 @@ sub notify_clients( $self, @frames ) {
         my $client = $clients->{ $client_id };
         for my $frame (@frames) {
             eval {
-                $client->send({ binary => $action });
+                $client->send({ binary => $frame });
             };
         };
     };
