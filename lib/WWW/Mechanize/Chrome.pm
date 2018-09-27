@@ -150,6 +150,14 @@ The maximum number of seconds to wait until Chrome is ready. This helps on slow
 systems where Chrome takes some time starting up. The process will try every
 second to connect to Chrome.
 
+=item B<listen_host>
+
+  listen_host => 'myhostname'
+
+Specify the interface where a launched Chrome process should listen. This is
+usually not needed but available if you want to connect to the launched Chrome
+process from other machines as well.
+
 =item B<driver>
 
 A premade L<Chrome::DevToolsProtocol> object.
@@ -258,6 +266,10 @@ sub build_command_line {
 
     if ($options->{port}) {
         push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
+    };
+
+    if ($options->{listen_host}) {
+        push @{ $options->{ launch_arg }}, "--remote-debugging-address==$options->{ listen_host }";
     };
 
     if ($options->{incognito}) {
