@@ -96,3 +96,9 @@ sub _setup_driver_future( $self, %options ) {
 }
 
 1;
+
+=head1 SEE ALSO
+
+L<https://docs.microsoft.com/en-us/microsoft-edge/devtools-protocol/|Microsoft Edge DevTools Protocol>
+
+=cut
