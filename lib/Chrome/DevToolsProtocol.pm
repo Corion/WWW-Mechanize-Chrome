@@ -152,6 +152,11 @@ has 'listener' => (
     default => sub { {} },
 );
 
+has 'sequence_number' => (
+    is => 'rw',
+    default => sub { 1 },
+);
+
 =item B<transport>
 
 The event-loop specific transport backend
@@ -526,11 +531,13 @@ sub on_response( $self, $connection, $message ) {
 }
 
 sub next_sequence( $self ) {
-    $self->{sequence_number}++
+    my( $val ) = $self->current_sequence;
+    $self->sequence_number( $val+1 );
+    $val
 };
 
 sub current_sequence( $self ) {
-    $self->{sequence_number}
+    $self->sequence_number
 };
 
 sub build_url( $self, %options ) {
