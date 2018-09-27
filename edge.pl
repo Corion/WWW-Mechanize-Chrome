@@ -10,3 +10,4 @@ my $mech = WWW::Mechanize::Edge->new(
 
 $mech->get('https://example.com');
 
+print $mech->content;

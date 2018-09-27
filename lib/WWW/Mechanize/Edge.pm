@@ -95,6 +95,33 @@ sub _setup_driver_future( $self, %options ) {
     })
 }
 
+sub decoded_content_future( $self ) {
+    # Join _all_ child nodes together to also fetch DOCTYPE nodes
+    # and the stuff that comes after them
+    $self->driver->send_message('Runtime.evaluate', silent => 1, returnByValue => 1, expression => <<'JS' )
+        (function(d){
+            var e = d.createElement("div");
+            e.appendChild(d.documentElement.cloneNode(true));
+            return [e.innerHTML,d.inputEncoding];
+        })(window.document)
+JS
+    ->then(sub($result) {
+        my( $content,$encoding) = @{$result->{result}->{value}};
+        if (! utf8::is_utf8($content)) {
+            # Switch on UTF-8 flag
+            # This should never happen, as JSON::XS (and JSON) should always
+            # already return proper UTF-8
+            # But it does happen.
+            $content = Encode::decode($encoding, $content);
+        };
+        Future->done($content)
+    })
+}
+
+sub decoded_content($self) {
+    $self->decoded_content_future->get;
+};
+
 1;
 
 =head1 SEE ALSO
