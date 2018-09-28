@@ -16,8 +16,8 @@ Mojolicious::Plugin::PNGCast - in-process server to display a screencast
 
 =head1 DESCRIPTION
 
-Use this web application to display the screen of a (headless) web browser or
-other arbitrary PNG data in another browser.
+Use this web application to display the screencast of a (headless) web browser
+or other arbitrary PNG data sent to it via websocket.
 
 The synopsis shows how to use this plugin to display
 a Chrome screencast using L<WWW::Mechanize::Chrome>.
@@ -244,6 +244,5 @@ function install() {
 </head>
 <body onload="javascript:install()">
 <canvas id="hessianHead" width="1280" height="800"></canvas>
-</img>
-<div id="status">Disconnected</div><div><a href="/stop">Stop</a></div>
+<div id="status">Javascript required</div><div><a href="/stop">Stop</a></div>
 </body></html>
