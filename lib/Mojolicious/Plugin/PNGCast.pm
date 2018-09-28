@@ -96,7 +96,7 @@ sub register( $self, $app, $config ) {
         #warn("Client connected");
         if( $self->last_frame ) {
             # send current frame
-            $c->tx->send({ binary => $self->last_frame });
+            $c->send({ binary => $self->last_frame });
         } else {
             # send a standby frame ??
         };
