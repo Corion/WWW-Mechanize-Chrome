@@ -48,6 +48,17 @@ a Chrome screencast using L<WWW::Mechanize::Chrome>.
 has 'clients'         => sub { {} };
 has 'last_frame'      => undef;
 
+=head1 HELPERS
+
+=head2 C<< send_frame >>
+
+    send_frame( $png_data );
+
+Sends a frame to all connected clients. If a fresh client connects, it will
+receive the last frame handed to C<send_frame>.
+
+=head1 INTERNAL METHODS
+
 =head2 C<< $plugin->notify_clients >>
 
   $plugin->notify_clients( $PNGframe )
@@ -121,11 +132,10 @@ sub register( $self, $app, $config ) {
         if( scalar keys %{ $self->clients } ) {
             Future::Mojo->new->done_next_tick( 1 )
             ->then( sub {
-                $self->notify_clients( $framePNG->{data} );
+                $self->notify_clients( $framePNG );
             })->retain;
-        } else {
-            $self->last_frame( $framePNG->{data} );
         };
+        $self->last_frame( $framePNG );
     });
 
     # Install our templates
