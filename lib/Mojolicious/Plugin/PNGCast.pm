@@ -81,7 +81,8 @@ sub register( $self, $app, $config ) {
         my( $c ) = @_;
         $c->inactivity_timeout(300);
 
-        my $client_id = join ":", $c->tx->original_remote_address, $c->tx->remote_port();
+        my $client_id = join ":", $c->tx->original_remote_address || $c->tx->remote_address,
+                                  $c->tx->remote_port();
 
         $self->clients->{ $client_id } = $c;
         $c->tx->on( json => sub {
