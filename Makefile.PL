@@ -217,11 +217,11 @@ sub pod_section {
 
     my @section =
         grep { /^=head1\s+$section/.../^=/ } <$fh>;
-    pop @section if $section[-1] =~ /^=/;
-    shift @section if $remove_heading;
 
     # Trim the section
     if( @section ) {
+        pop @section if $section[-1] =~ /^=/;
+        shift @section if $remove_heading;
         pop @section
             while $section[-1] =~ /^\s*$/;
         shift @section
