@@ -1048,9 +1048,9 @@ sub clear_js_errors {
     $self->driver->send_message('Runtime.discardConsoleEntries')->get;
 };
 
-=head2 C<< $mech->eval_in_page( $str ) >>
+=head2 C<< $mech->eval_in_page( $str, %options ) >>
 
-=head2 C<< $mech->eval( $str ) >>
+=head2 C<< $mech->eval( $str, %options ) >>
 
   my ($value, $type) = $mech->eval( '2+2' );
 
@@ -1065,37 +1065,36 @@ This method is special to WWW::Mechanize::Chrome.
 
 =cut
 
-sub eval_in_page {
-    my ($self,$str) = @_;
-    # Report errors from scope of caller
-    # This feels weirdly backwards here, but oh well:
-    local @Chrome::DevToolsProtocol::CARP_NOT
-        = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
-    local @CARP_NOT
-        = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->driver->evaluate("$str")->get;
+sub eval_in_page_future($self,$str,%options) {
+    my $result_f = $self->driver->evaluate($str, %options)->then( sub( $result ) {
+        # Report errors from scope of caller
+        # This feels weirdly backwards here, but oh well:
+        local @Chrome::DevToolsProtocol::CARP_NOT
+            = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
+        local @CARP_NOT
+            = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
+        if( $result->{error} ) {
+            $self->signal_condition(
+                join "\n", grep { defined $_ }
+                               $result->{error}->{message},
+                               $result->{error}->{data},
+                               $result->{error}->{code}
+            );
+        } elsif( $result->{exceptionDetails} ) {
+            $self->signal_condition(
+                join "\n", grep { defined $_ }
+                               $result->{exceptionDetails}->{text},
+                               $result->{exceptionDetails}->{exception}->{description},
+            );
+        }
+        Future->done( $result->{result}->{value}, $result->{result}->{type});
+    });
 
-    if( $result->{error} ) {
-        $self->signal_condition(
-            join "\n", grep { defined $_ }
-                           $result->{error}->{message},
-                           $result->{error}->{data},
-                           $result->{error}->{code}
-        );
-    } elsif( $result->{exceptionDetails} ) {
-        $self->signal_condition(
-            join "\n", grep { defined $_ }
-                           $result->{exceptionDetails}->{text},
-                           $result->{exceptionDetails}->{exception}->{description},
-        );
-    }
-
-    return $result->{result}->{value}, $result->{result}->{type};
+    return $result_f
 };
 
-{
-    no warnings 'once';
-    *eval = \&eval_in_page;
+sub eval_in_page( $self,$str,%options ) {
+    $self->eval_in_page_future($str,%options)->get()
 }
 
 =head2 C<< $mech->eval_in_chrome $code, @args >>
@@ -1166,11 +1165,6 @@ sub callFunctionOn {
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
     $self->callFunctionOn_future($str, %options)->get;
 };
-
-{
-    no warnings 'once';
-    *eval = \&eval_in_page;
-}
 
 sub agent_future( $self, $ua ) {
     $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )
