@@ -715,7 +715,7 @@ sub requestId( $self ) {
 
   print $mech->chrome_version;
 
-Returns the version of the Chrome executable that is used. This information
+Returns the version of the Chrome executable being used. This information
 needs launching the browser and asking for the version via the network.
 
 =cut
