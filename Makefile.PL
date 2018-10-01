@@ -195,6 +195,8 @@ INSTALL
         # Read POD from Module.pm and write to README
         $parser->parse_from_file($_[0]);
         my $readme_mkdn = <<STATUS . $parser->as_markdown;
+[//]: # "This file is generated from the documentation in $main_file."
+[//]: # "Please edit that file instead."
 
 [![Travis Build Status](https://travis-ci.org/Corion/$distbase.svg?branch=master)](https://travis-ci.org/Corion/$distbase)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/$distbase?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/$distbase)

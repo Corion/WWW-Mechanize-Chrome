@@ -1,3 +1,5 @@
+[//]: # "This file is generated from the documentation in lib/WWW/Mechanize/Chrome.pm."
+[//]: # "Please edit that file instead."
 
 [![Travis Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/WWW-Mechanize-Chrome?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/WWW-Mechanize-Chrome)
@@ -129,6 +131,14 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     The maximum number of seconds to wait until Chrome is ready. This helps on slow
     systems where Chrome takes some time starting up. The process will try every
     second to connect to Chrome.
+
+- **listen\_host**
+
+        listen_host => 'myhostname'
+
+    Specify the interface where a launched Chrome process should listen. This is
+    usually not needed but available if you want to connect to the launched Chrome
+    process from other machines as well.
 
 - **driver**
 
