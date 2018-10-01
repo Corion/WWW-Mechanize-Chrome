@@ -647,10 +647,11 @@ sub callFunctionOn( $self, $function, %options ) {
 
 =cut
 
-sub evaluate( $self, $string ) {
+sub evaluate( $self, $string, %options ) {
     $self->send_message('Runtime.evaluate',
         expression => $string,
-        returnByValue => JSON::true
+        returnByValue => JSON::true,
+        %options
     )
 };
 
