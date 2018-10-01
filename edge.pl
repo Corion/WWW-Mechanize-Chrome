@@ -9,5 +9,7 @@ my $mech = WWW::Mechanize::Edge->new(
 );
 
 $mech->get('https://example.com');
+#$mech->get('https://doesnotexist.example.com');
 
+print $mech->uri,"\n";
 print $mech->content;

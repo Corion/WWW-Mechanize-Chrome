@@ -8,6 +8,7 @@ no warnings 'experimental::signatures';
 extends 'WWW::Mechanize::Chrome';
 
 our $VERSION = '0.22';
+our @CARP_NOT;
 
 =head1 NAME
 
@@ -140,11 +141,9 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     {
     my $s = $self;
     weaken $s;
-        warn "Set up navigation catcher 1";
     $does_navigation = #$scheduled
         #->then(sub( $ev ) {
         #$self->driver->future->then(sub {
-        warn "Set up navigation catcher";
             #my $res;
 
                   #$s->log('trace', "Navigation started, logging ($ev->{method})");
@@ -204,15 +203,15 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
 sub decoded_content_future( $self ) {
     # Join _all_ child nodes together to also fetch DOCTYPE nodes
     # and the stuff that comes after them
-    $self->driver->send_message('Runtime.evaluate', silent => 1, returnByValue => 1, expression => <<'JS' )
+    $self->eval_in_page_future(<<'JS' )
         (function(d){
             var e = d.createElement("div");
             e.appendChild(d.documentElement.cloneNode(true));
             return [e.innerHTML,d.inputEncoding];
         })(window.document)
 JS
-    ->then(sub($result) {
-        my( $content,$encoding) = @{$result->{result}->{value}};
+    ->then(sub($value, $type) {
+        my( $content,$encoding) = ($value->[0],$value->[1]);
         if (! utf8::is_utf8($content)) {
             # Switch on UTF-8 flag
             # This should never happen, as JSON::XS (and JSON) should always
@@ -234,6 +233,27 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
 sub decoded_content($self) {
     $self->decoded_content_future->get;
 };
+
+=head2 C<< $mech->uri() >>
+
+    print "We are at " . $mech->uri;
+
+Returns the current document URI.
+
+=cut
+
+sub uri_future( $self ) {
+    $self->eval_in_page_future( <<'JS' )
+        window.location.href
+JS
+    ->then( sub($result, $type,@debug) {
+        Future->done( URI->new( $result ))
+    });
+}
+
+sub uri( $self ) {
+    $self->uri_future->get()
+}
 
 1;
 
