@@ -7,6 +7,7 @@ examples/html-to-pdf.pl
 examples/javascript.pl
 examples/README
 examples/resource-timing.pl
+examples/sendkeys.pl
 examples/url-to-image.pl
 INSTALL
 lib/Chrome/DevToolsProtocol.pm
