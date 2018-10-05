@@ -1514,7 +1514,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     })
 }
 
-sub get($self, $url, %options ) {
+sub get_future($self, $url, %options ) {
 
     # $frameInfo might come _after_ we have already seen messages for it?!
     # So we need to capture all events even before we send our command to the
@@ -1529,9 +1529,14 @@ sub get($self, $url, %options ) {
             url => "$url"
         )
         }, url => "$url", %options, navigates => 1 )
-    ->get;
+    ->then( sub {
+        Future->done( $self->response )
+    })
+};
 
-    return $self->response;
+sub get($self, $url, %options ) {
+
+    $self->get_future($url, %options)->get;
 };
 
 =head2 C<< $mech->get_local( $filename , %options ) >>
