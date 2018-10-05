@@ -10,34 +10,60 @@ use Future::Mojo;
 
 our $VERSION = '0.22';
 
-#has 'clients'         => sub { {} };
-has 'remote'          => undef; # this should become a list
-has 'last_frame'      => undef; # this should become a list
+=head1 NAME
 
-=head2 C<< $plugin->notify_clients >>
+Mojolicious::Plugin::PNGCast - in-process server to display a screencast
 
-  $plugin->notify_clients( {
-      type => 'reload',
-  });
+=head1 DESCRIPTION
 
-Notify all connected clients that they should perform actions.
+Use this web application to display the screen of a (headless) web browser or
+other arbitrary PNG data in another browser.
+
+The synopsis shows how to use this plugin to display
+a Chrome screencast using L<WWW::Mechanize::Chrome>.
+
+=head1 SYNOPSIS
+
+    use WWW::Mechanize::Chrome;
+    use Mojolicious::Lite;
+    plugin 'PNGCast';
+
+    my $daemon_url = 'http://localhost:3000';
+
+    $ws_monitor = Mojo::Server::Daemon->new(app => app());
+    $ws_monitor->listen([$daemon_url]);
+    $ws_monitor->start;
+
+    $mech->setScreenFrameCallback( sub {
+        app->send_frame( $_[1]->{data} )}
+    );
+
+    print "Watch progress at $daemon_url\n";
+    sleep 5;
+
+    $mech->get('https://example.com');
 
 =cut
 
-sub notify_clients( $self, @actions ) {
-    # Blow the cache away
-    my $old_cache = $self->app->renderer->cache;
-    $self->app->renderer->cache( Mojo::Cache->new(max_keys => $old_cache->max_keys));
+has 'clients'         => sub { {} };
+has 'last_frame'      => undef;
 
+=head2 C<< $plugin->notify_clients >>
+
+  $plugin->notify_clients( $PNGframe )
+
+Notify all connected clients that they should display the new frame.
+
+=cut
+
+sub notify_clients( $self, @frames ) {
     my $clients = $self->clients;
     for my $client_id (sort keys %$clients ) {
         my $client = $clients->{ $client_id };
-        for my $action (@actions) {
-            # Convert path to what the client will likely have requested (duh)
-
-            # These rules should all come from a config file, I guess
-            #app->log->info("Notifying client $client_id of '$action->{name}' change to '$action->{path}'");
-            $client->send({json => $action });
+        for my $frame (@frames) {
+            eval {
+                $client->send({ binary => $action });
+            };
         };
     };
 }
@@ -48,33 +74,36 @@ sub register( $self, $app, $config ) {
         my( $c ) = @_;
         $c->res->headers->content_type('text/html');
         $c->res->headers->connection('close');
-        #$c->render('echo')
         $c->render('index')
     });
 
     $app->routes->websocket( '/ws' => sub {
         my( $c ) = @_;
         $c->inactivity_timeout(300);
-    
-        $self->remote( $c );
-        $self->remote->tx->on( json => sub {
+
+        my $client_id = join ":", $c->tx->original_remote_address, $c->tx->remote_port();
+
+        $self->clients->{ $client_id } = $c;
+        $c->tx->on( json => sub {
             my( $c, $data ) = @_;
             #warn Dumper $data ;
             warn "Click received (and ignored)";
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
             #$mech->click( { selector => '//body', single => 1 }, $data->{x}, $data->{y} );
-    
+
         });
         #warn("Client connected");
         if( $self->last_frame ) {
-            #warn("Sending current frame");
-            $self->remote->send({ binary => $self->last_frame });
-            $self->last_frame(undef);
+            # send current frame
+            $c->tx->send({ binary => $self->last_frame });
         } else {
-            #warn("Sending standby frame");
-            #$self->remote->send({ binary => $static_frame });
+            # send a standby frame ??
         };
-        $self->remote->on( finish => sub { my( $c,$code,$reason ) = @_; warn "Client gone ($code,$reason)" });
+        $c->tx->on( finish => sub {
+            my( $c,$code,$reason ) = @_;
+            warn "Client gone ($code,$reason)" ;
+            delete $self->clients->{ $client_id };
+        });
     });
 
     # Stop our program
@@ -85,13 +114,13 @@ sub register( $self, $app, $config ) {
         $c->render('stop');
         Mojo::IOLoop->stop;
     });
-    
+
     $app->helper( 'send_frame' => sub ( $c, $framePNG ) {
-        # send this frame to the browser
-        if( $self->remote ) {
+        # send this frame to all connected clients
+        if( scalar keys %{ $self->clients } ) {
             Future::Mojo->new->done_next_tick( 1 )
             ->then( sub {
-                $self->remote->send({ binary => $framePNG->{data} });
+                $self->notify_clients( $framePNG->{data} );
             })->retain;
         } else {
             $self->last_frame( $framePNG->{data} );
@@ -102,6 +131,66 @@ sub register( $self, $app, $config ) {
     push @{$app->renderer->classes}, __PACKAGE__;
     push @{$app->static->classes},   __PACKAGE__;
 }
+
+=head1 EXPORTED HTTP ENDPOINTS
+
+This plugin makes the following endpoints available
+
+=over 4
+
+=item *
+
+C</> - the index page
+
+This is an HTML page that opens a websocket to the webserver and listens for
+PNG images coming in over that websocket
+
+=item *
+
+C</ws> - the websocket
+
+This is a websocket
+
+=item *
+
+C</stop> - stop the application
+
+This stops the complete Mojolicious application
+
+=back
+
+=head1 REPOSITORY
+
+The public repository of this module is
+L<https://github.com/Corion/www-mechanize-chrome>.
+
+=head1 SUPPORT
+
+The public support forum of this module is L<https://perlmonks.org/>.
+
+=head1 BUG TRACKER
+
+Please report bugs in this module via the RT CPAN bug queue at
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome>
+or via mail to L<www-mechanize-Chrome-Bugs@rt.cpan.org|mailto:www-mechanize-Chrome-Bugs@rt.cpan.org>.
+
+=head1 CONTRIBUTING
+
+Please see L<WWW::Mechanize::Chrome::Contributing>.
+
+=head1 AUTHOR
+
+Max Maischein C<corion@cpan.org>
+
+=head1 COPYRIGHT (c)
+
+Copyright 2010-2018 by Max Maischein C<corion@cpan.org>.
+
+=head1 LICENSE
+
+This module is released under the same terms as Perl itself.
+
+=cut
 
 1
 __DATA__
