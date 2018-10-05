@@ -659,6 +659,9 @@ sub _connect( $self, %options ) {
         die $err;
     }
 
+    # Create new world if needed
+    # connect to current world/new world
+
     my $s = $self;
     weaken $s;
     my $collect_JS_problems = sub( $msg ) {
