@@ -284,6 +284,10 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--profile-directory=$options->{ profile }";
     };
 
+    if( ! exists $options->{enable_automation} || $options->{enable_automation}) {
+        push @{ $options->{ launch_arg }}, "--enable-automation";
+    };
+
     if( ! exists $options->{enable_first_run} || ! $options->{enable_first_run}) {
         push @{ $options->{ launch_arg }}, "--no-first-run";
     };
@@ -654,6 +658,9 @@ sub _connect( $self, %options ) {
         };
         die $err;
     }
+
+    # Create new world if needed
+    # connect to current world/new world
 
     my $s = $self;
     weaken $s;
