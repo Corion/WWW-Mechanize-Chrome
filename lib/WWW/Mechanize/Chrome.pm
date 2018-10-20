@@ -4684,6 +4684,8 @@ sub render_content( $self, %options ) {
 
     my $pdf_data = $mech->content_as_pdf( format => 'A4' );
 
+    my $pdf_data = $mech->content_as_pdf( paperWidth => 8, paperHeight => 11 );
+
 Returns the current page rendered in PDF format as a bytestring. The page format
 can be specified through the C<format> option.
 
@@ -4694,7 +4696,27 @@ This method is specific to WWW::Mechanize::Chrome.
 
 =cut
 
+our %PaperFormats = (
+    letter  =>  {width =>  8.5,  height =>  11   },
+    legal   =>  {width =>  8.5,  height =>  14   },
+    tabloid =>  {width =>  11,   height =>  17   },
+    ledger  =>  {width =>  17,   height =>  11   },
+    a0      =>  {width =>  33.1, height =>  46.8 },
+    a1      =>  {width =>  23.4, height =>  33.1 },
+    a2      =>  {width =>  16.5, height =>  23.4 },
+    a3      =>  {width =>  11.7, height =>  16.5 },
+    a4      =>  {width =>  8.27, height =>  11.7 },
+    a5      =>  {width =>  5.83, height =>  8.27 },
+    a6      =>  {width =>  4.13, height =>  5.83 },
+);
+
 sub content_as_pdf($self, %options) {
+    if( my $format = delete $options{ format }) {
+        my $wh = $PaperFormats{ lc $format }
+            or croak "Unknown paper format '$format'";
+        @options{'paperWidth','paperHeight'} = @{$wh}{'width','height'};
+    };
+
     my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get->{data};
     my $payload = decode_base64( $base64 );
     if( my $filename = delete $options{ filename } ) {
