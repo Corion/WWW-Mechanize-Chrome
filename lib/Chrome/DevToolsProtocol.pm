@@ -235,11 +235,13 @@ Explicitly remove a listener.
 =cut
 
 sub remove_listener( $self, $listener ) {
-    my $event = $listener->{event};
-    $self->listener->{ $event } ||= [];
-    @{$self->listener->{ $event }} = grep { $_ != $listener }
-                                     grep { defined $_ }
-                                     @{$self->listener->{ $event }};
+    # $listener->{event} can be undef during global destruction
+    if( my $event = $listener->{event} ) {
+        $self->listener->{ $event } ||= [];
+        @{$self->listener->{ $event }} = grep { $_ != $listener }
+                                         grep { defined $_ }
+                                         @{$self->listener->{ $event }};
+    };
 }
 
 =head2 C<< ->log >>
