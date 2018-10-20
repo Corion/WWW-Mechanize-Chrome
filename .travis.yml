@@ -62,8 +62,7 @@ before_install:
   - "\"$CHROME_BIN\" --version"
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   # Install perlbrew the hard way, on OSX
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install perl; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libpng --universal; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade; brew install perl libpng --universal; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --cflags; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --libs; fi
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then \curl -L http://install.perlbrew.pl | bash; fi
