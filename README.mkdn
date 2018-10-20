@@ -1365,6 +1365,8 @@ This method is specific to WWW::Mechanize::Chrome.
 
     my $pdf_data = $mech->content_as_pdf( format => 'A4' );
 
+    my $pdf_data = $mech->content_as_pdf( paperWidth => 8, paperHeight => 11 );
+
 Returns the current page rendered in PDF format as a bytestring. The page format
 can be specified through the `format` option.
 
