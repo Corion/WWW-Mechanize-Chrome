@@ -175,73 +175,73 @@ Mutes the audio output. This setting is enabled by default.
 
 Enable "background networking".
 
-Default is disabled.
+Disabled by default.
 
 =item B<client_side_phishing_detection>
 
 Enable "client side phising detection".
 
-Default is disabled.
+Disabled by default.
 
 =item B<component_update>
 
 Enable "component update".
 
-Default is disabled.
+Disabled by default.
 
 =item B<default_apps>
 
 Enable "default apps".
 
-Default is disabled.
+Disabled by default.
 
 =item B<hang_monitor>
 
 Enable "hang monitor".
 
-Default is disabled.
+Disabled by default.
 
 =item B<hide_scrollbars>
 
 Hide scrollbars.
 
-Default is disabled.
+Disabled by default.
 
 =item B<infobars>
 
 Enable "infobars".
 
-Default is disabled.
+Disabled by default.
 
 =item B<popup_blocking>
 
 Enable "popup blocking".
 
-Default is disabled.
+Disabled by default.
 
 =item B<prompt_on_repost>
 
 Enable "prompt on repost".
 
-Default is disabled.
+Disabled by default.
 
 =item B<save_password_bubble>
 
 Enable the "save password" bubble.
 
-Default is disabled.
+Disabled by default.
 
 =item B<sync>
 
 Enable "sync".
 
-Default is disabled.
+Disabled by default.
 
 =item B<web_resources>
 
 Enable "Web resources".
 
-Default is disabled.
+Disabled by default.
 
 =back
 
