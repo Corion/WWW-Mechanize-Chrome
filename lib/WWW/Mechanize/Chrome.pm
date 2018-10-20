@@ -4682,7 +4682,10 @@ sub render_content( $self, %options ) {
 
     my $pdf_data = $mech->content_as_pdf();
 
-Returns the current page rendered in PDF format as a bytestring.
+    my $pdf_data = $mech->content_as_pdf( format => 'A4' );
+
+Returns the current page rendered in PDF format as a bytestring. The page format
+can be specified through the C<format> option.
 
 Note that this method will only be successful with headless Chrome. At least on
 Windows, when launching Chrome with a UI, printing to PDF will be unavailable.
