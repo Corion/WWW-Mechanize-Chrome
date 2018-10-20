@@ -175,7 +175,8 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     Enable "default apps".
 
-    Disabled by default
+    Disabled by default.
+
 - **hang\_monitor**
 
     Enable "hang monitor".
@@ -1362,7 +1363,10 @@ This method is specific to WWW::Mechanize::Chrome.
 
     my $pdf_data = $mech->content_as_pdf();
 
-Returns the current page rendered in PDF format as a bytestring.
+    my $pdf_data = $mech->content_as_pdf( format => 'A4' );
+
+Returns the current page rendered in PDF format as a bytestring. The page format
+can be specified through the `format` option.
 
 Note that this method will only be successful with headless Chrome. At least on
 Windows, when launching Chrome with a UI, printing to PDF will be unavailable.
@@ -1521,7 +1525,7 @@ Max Maischein `corion@cpan.org`
 
 # CONTRIBUTORS
 
-Andreas KÃ¶nig `andk@cpan.org`
+Andreas König `andk@cpan.org`
 Tobias Leich `froggs@cpan.org`
 Steven Dondley `s@dondley.org`
 
