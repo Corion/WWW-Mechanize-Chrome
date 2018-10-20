@@ -680,6 +680,7 @@ sub _connect( $self, %options ) {
         $self->driver->send_message('Page.enable'),    # capture DOMLoaded
         $self->driver->send_message('Network.enable'), # capture network
         $self->driver->send_message('Runtime.enable'), # capture console messages
+        #$self->driver->send_message('Debugger.enable'), # capture "script compiled" messages
         $self->set_download_directory_future($self->{download_directory}),
 
         keys %{$options{ extra_headers }} ? $self->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
@@ -4452,7 +4453,6 @@ sub saveResources_future( $self, %options ) {
     $self->fetchResources_future( save => sub( $resource ) {
 
         # For mime/html targets without a name, use the title?!
-
         # Rewrite all HTML, CSS links
 
         # We want to store the top HTML under the name passed in (!)
