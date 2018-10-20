@@ -60,9 +60,9 @@ NestedLoops( [\@instances, \@backends], sub {
         # Launch a single process we will reuse for all these tests
         my $tempdir = tempdir( CLEANUP => 1 );
         $testrun = WWW::Mechanize::Chrome->new(
-            launch_exe => $instance,
+            launch_exe     => $instance,
             data_directory => $tempdir,
-            headless   => 1,
+            headless       => 1,
         );
         $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE}= join ":", $testrun->driver->host, $testrun->driver->port;
     } else {
