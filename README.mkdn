@@ -157,73 +157,72 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
     Enable "background networking".
 
-    Default is disabled.
+    Disabled by default.
 
 - **client\_side\_phishing\_detection**
 
     Enable "client side phising detection".
 
-    Default is disabled.
+    Disabled by default.
 
 - **component\_update**
 
     Enable "component update".
 
-    Default is disabled.
+    Disabled by default.
 
 - **default\_apps**
 
     Enable "default apps".
 
-    Default is disabled.
-
+    Disabled by default
 - **hang\_monitor**
 
     Enable "hang monitor".
 
-    Default is disabled.
+    Disabled by default.
 
 - **hide\_scrollbars**
 
     Hide scrollbars.
 
-    Default is disabled.
+    Disabled by default.
 
 - **infobars**
 
     Enable "infobars".
 
-    Default is disabled.
+    Disabled by default.
 
 - **popup\_blocking**
 
     Enable "popup blocking".
 
-    Default is disabled.
+    Disabled by default.
 
 - **prompt\_on\_repost**
 
     Enable "prompt on repost".
 
-    Default is disabled.
+    Disabled by default.
 
 - **save\_password\_bubble**
 
     Enable the "save password" bubble.
 
-    Default is disabled.
+    Disabled by default.
 
 - **sync**
 
     Enable "sync".
 
-    Default is disabled.
+    Disabled by default.
 
 - **web\_resources**
 
     Enable "Web resources".
 
-    Default is disabled.
+    Disabled by default.
 
 You can override the class to implement the transport from the outside by
 setting `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` to the transport class.
@@ -258,7 +257,7 @@ and does not contain a directory separator.
 
     print $mech->chrome_version;
 
-Returns the version of the Chrome executable that is used. This information
+Returns the version of the Chrome executable being used. This information
 needs launching the browser and asking for the version via the network.
 
 ## `$mech->chrome_version_info`
@@ -1522,7 +1521,7 @@ Max Maischein `corion@cpan.org`
 
 # CONTRIBUTORS
 
-Andreas König `andk@cpan.org`
+Andreas KÃ¶nig `andk@cpan.org`
 Tobias Leich `froggs@cpan.org`
 Steven Dondley `s@dondley.org`
 
