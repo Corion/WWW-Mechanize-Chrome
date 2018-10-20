@@ -1,12 +1,14 @@
 #!perl -w
 use strict;
-use WWW::Mechanize::Chrome::DSL;
+use WWW::Mechanize::Chrome;
 
-get 'https://google.com';
+my $mech = WWW::Mechanize::Chrome->new();
 
-sendkeys string => "test\r";
+$mech->get( 'https://google.com' );
 
-sleep 10;
+$mech->sendkeys( string => "test\r" );
+
+$mech->sleep( 10 );
 
 =head1 NAME
 
