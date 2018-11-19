@@ -11,9 +11,10 @@
     * Tested against Chromium HeadlessChrome/67.0.3396.99
     * Tested against Chromium HeadlessChrome/68.0.3440.84
     * Tested against Chromium HeadlessChrome/69.0.3497.100
-    * Tested against Chromium HeadlessChrome/70.0.3538.67
+    * Tested against Chromium HeadlessChrome/70.0.3538.77
+    * Tested against Chromium HeadlessChrome/70.0.3538.102
     * Tested against Chromium HeadlessChrome/71.0.3576.0
-    * Tested against Chrome   HeadlessChrome/72.0.3587.0
+    * Tested against Chrome   HeadlessChrome/72.0.3602.0
 
 0.24 2018-11-19
     * Fix for ->setRequestInterception_future
