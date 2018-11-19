@@ -15,6 +15,11 @@
     * Tested against Chromium HeadlessChrome/71.0.3576.0
     * Tested against Chrome   HeadlessChrome/72.0.3587.0
 
+0.24 2018-11-19
+    * Fix for ->setRequestInterception_future
+      and ->setRequestInterception, contributed by Enrique Pessoa
+      This addresses RT #127738
+
 0.23 2018-10-20
     * Spun off screencast client into Mojolicious::Plugin::PNGCast distribution
     * Documentation fixes (thanks Hacktoberfest!)
