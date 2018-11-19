@@ -861,11 +861,11 @@ callback will be invoked.
 =cut
 
 sub setRequestInterception_future( $self, @patterns ) {
-    $self->driver->send_message('Network.setRequestInterception', @patterns)
+    $self->driver->send_message('Network.setRequestInterception', patterns => @patterns)
 }
 
 sub setRequestInterception( $self, @patterns ) {
-    $self->requestInterception_future( @patterns )->get
+    $self->setRequestInterception_future( @patterns )->get
 }
 
 =head2 C<< $mech->add_listener >>
