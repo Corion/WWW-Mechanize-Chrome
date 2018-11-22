@@ -1,3 +1,4 @@
+    * Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     * Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
     * Tested against Chrome Chrome/59.0.3071.115
     * Tested against Chromium HeadlessChrome/60.0.3110.0
