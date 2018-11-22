@@ -4,7 +4,7 @@ use Test::More;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
-use lib './inc', '../inc';
+use lib '.';
 use Test::HTTP::LocalServer;
 #use Mojolicious;
 
@@ -35,7 +35,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, $instance_port, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
