@@ -4,6 +4,7 @@ examples/dump-links.pl
 examples/gen_examples_pod.pl
 examples/html-to-pdf.pl
 examples/javascript.pl
+examples/links.html
 examples/README
 examples/resource-timing.pl
 examples/sendkeys.pl
