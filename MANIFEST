@@ -1,5 +1,4 @@
 .gitignore
-50-mech-redirect.t
 Changes
 examples/dump-links.pl
 examples/gen_examples_pod.pl
@@ -55,6 +54,7 @@ t/50-mech-get-nonexistent.t
 t/50-mech-get.t
 t/50-mech-new-dsl.t
 t/50-mech-new.t
+t/50-mech-redirect.t
 t/50-mech-start-url.t
 t/50-mech-status.t
 t/50-popup.t

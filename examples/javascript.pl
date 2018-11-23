@@ -1,5 +1,6 @@
 #!perl -w
 use strict;
+use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 
 my $mech = WWW::Mechanize::Chrome->new();
@@ -17,7 +18,7 @@ javascript.pl - execute Javascript in a page
 
 =head1 SYNOPSIS
 
-javascript.pl
+  perl javascript.pl
 
 =head1 DESCRIPTION
 

@@ -1,5 +1,6 @@
 #!perl -w
 use strict;
+use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 
 my $mech = WWW::Mechanize::Chrome->new();
@@ -16,7 +17,7 @@ sendkeys.pl - send keystrokes to a page
 
 =head1 SYNOPSIS
 
-    sendkeys.pl
+    perl sendkeys.pl
 
 =head1 DESCRIPTION
 

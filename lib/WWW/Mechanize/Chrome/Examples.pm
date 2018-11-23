@@ -37,7 +37,7 @@ program that is also included in the examples directory.
 
 =head1 Example programs
 
-The following is a list of the 4 example programs that are included in the WWW::Mechanize::Chrome distribution.
+The following is a list of the 5 example programs that are included in the WWW::Mechanize::Chrome distribution.
 
 =over
 
@@ -46,6 +46,8 @@ The following is a list of the 4 example programs that are included in the WWW::
 =item * L<Example: html-to-pdf.pl> Convert HTML to PDF
 
 =item * L<Example: dump-links.pl> Dump links on a webpage
+
+=item * L<Example: sendkeys.pl> Send keystrokes to a page
 
 =item * L<Example: javascript.pl> Execute Javascript in the webpage context
 
@@ -56,6 +58,7 @@ The following is a list of the 4 example programs that are included in the WWW::
     use strict;
     use File::Spec;
     use File::Basename 'dirname';
+    use Log::Log4perl qw(:easy);
     use WWW::Mechanize::Chrome;
     
     my $mech = WWW::Mechanize::Chrome->new();
@@ -76,6 +79,19 @@ The following is a list of the 4 example programs that are included in the WWW::
     $mech->get('http://act.yapc.eu/gpw2017');
     
     show_screen;
+    
+    =head1 NAME
+    
+    url-to-image.pl
+    
+    =head1 SYNOPSIS
+    
+      perl url-to-image.pl
+    
+    =head1 DESCRIPTION
+    
+    This example fetches a web page and creates a screenshot in PNG format
+    in the script's directory.
 
 
 Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.24/examples/url-to-image.pl>
@@ -84,28 +100,45 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
 
     #!perl -w
     use strict;
+    use Log::Log4perl qw(:easy);
     use WWW::Mechanize::Chrome;
+    
+    my $url = shift @ARGV
+        or  die "Usage: perl $0 <url>\n";
     
     my $mech = WWW::Mechanize::Chrome->new(
         headless => 1, # otherwise, PDF printing will not work
     );
     
-    for my $url (@ARGV) {
-        print "Loading $url";
-        $mech->get($url);
+    print "Loading $url";
+    $mech->get($url);
     
-        my $fn= 'screen.pdf';
-        my $page_pdf = $mech->content_as_pdf(
-            filename => $fn,
-        );
-        print "\nSaved $url as $fn\n";
-    };
+    my $fn= 'screen.pdf';
+    my $page_pdf = $mech->content_as_pdf(
+        filename => $fn,
+    );
+    print "\nSaved $url as $fn\n";
+    
+    =head1 NAME
+    
+    html-to-pdf.pl
+    
+    =head1 SYNOPSIS
+    
+       perl html-to-pdf.pl https://www.perl.org/
+    
+    =head1 DESCRIPTION
+    
+    This example takes an URL from the command line, renders it and and
+    saves it as a PDF file in the current directory.
+
 
 Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.24/examples/html-to-pdf.pl>
 
 =head2 Example: dump-links.pl
 
     use strict;
+    use Log::Log4perl qw(:easy);
     use WWW::Mechanize::Chrome;
     
     my $mech = WWW::Mechanize::Chrome->new();
@@ -123,21 +156,60 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     
     =head1 SYNOPSIS
     
-    dump-links.pl
+    From the examples directory:
+    
+      perl dump-links.pl
     
     =head1 DESCRIPTION
     
-    This program demonstrates how to read elements out of the Chrome
-    DOM and how to get at text within nodes.
+    This program demonstrates how to read elements out of the Chrome DOM
+    and how to get at text within nodes.  It prints links with the CSS
+    class "download" from a file provided with the distribution.
+    
     
     =cut
 
+
 Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.24/examples/dump-links.pl>
+
+=head2 Example: sendkeys.pl
+
+    #!perl -w
+    use strict;
+    use Log::Log4perl qw(:easy);
+    use WWW::Mechanize::Chrome;
+    
+    my $mech = WWW::Mechanize::Chrome->new();
+    
+    $mech->get( 'https://google.com' );
+    
+    $mech->sendkeys( string => "test\r" );
+    
+    $mech->sleep( 10 );
+    
+    =head1 NAME
+    
+    sendkeys.pl - send keystrokes to a page
+    
+    =head1 SYNOPSIS
+    
+        perl sendkeys.pl
+    
+    =head1 DESCRIPTION
+    
+    B<This program> demonstrates how to type some input into a text field
+    and then press the C<enter> key.
+    
+    =cut
+
+
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.24/examples/sendkeys.pl>
 
 =head2 Example: javascript.pl
 
     #!perl -w
     use strict;
+    use Log::Log4perl qw(:easy);
     use WWW::Mechanize::Chrome;
     
     my $mech = WWW::Mechanize::Chrome->new();
@@ -155,7 +227,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     
     =head1 SYNOPSIS
     
-    javascript.pl
+      perl javascript.pl
     
     =head1 DESCRIPTION
     
@@ -163,6 +235,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     Javascript in a page.
     
     =cut
+
 
 Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.24/examples/javascript.pl>
 
