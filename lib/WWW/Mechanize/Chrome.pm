@@ -42,6 +42,45 @@ WWW::Mechanize::Chrome - automate the Chrome browser
   $mech->eval_in_page('alert("Hello Chrome")');
   my $png= $mech->content_as_png();
 
+=head1 DESCRIPTION
+
+This module provides a scriptable web client in a Perl object.  In
+contrast to L<WWW::Mechanize> it delegates fetching web pages and
+rendering them to the Chrome (or Chromium) browser: It starts an
+instance of the browser and controls it using
+L<Chrome DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
+
+=head2 Use Case
+
+This module gives access to features of today's web applications which
+are not (yet) available with L<WWW::Mechanize>:
+
+=over
+
+=item *
+
+Page content created or modified by JavaScript.  You can also run your
+own JavaScript code on the page content.
+
+=item *
+
+Selection of page content using CSS selectors.
+
+=item *
+
+Render a page into a screenshot image or a PDF file.
+
+=back
+
+A collection of L<Examples|WWW::Mechanize::Chrome::Examples> should
+give you a start.
+
+It comes with a price: You need to have a Chrome compatible browser
+installed, and you need to live with the quirks and error messages
+issued by this browser when used with DevTools.
+
+=head1 METHODS
+
 =head2 C<< WWW::Mechanize::Chrome->new %options >>
 
   my $mech = WWW::Mechanize::Chrome->new();
