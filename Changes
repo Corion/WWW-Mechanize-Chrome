@@ -20,6 +20,7 @@
     * Added one stray test to the distribution
     * Rework of the documentation, thanks to Harald Joerg
       This is a result of the PRC, thank you very much!
+    * No code changes, no need to upgrade
 
 0.24 2018-11-19
     * Fix for ->setRequestInterception_future
