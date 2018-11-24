@@ -3970,8 +3970,8 @@ sub submit($self,$dom_form = $self->current_form) {
 
 This method lets you select a form from the previously fetched page,
 fill in its fields, and submit it. It combines the form_number/form_name,
-set_fields and click methods into one higher level call. Its arguments are
-a list of key/value pairs, all of which are optional.
+C<< ->set_fields >> and C<< ->click methods >> into one higher level call. Its
+arguments are a list of key/value pairs, all of which are optional.
 
 =over 4
 
@@ -4834,6 +4834,9 @@ out of them or dumps them to disk as sequential images.
   $mech->setScreenFrameCallback( \&saveFrame );
   ... do stuff ...
   $mech->setScreenFrameCallback( undef ); # stop recording
+
+If you want a premade screencast receiver for debugging headless Chrome
+sessions, see L<Mojolicious::Plugin::PNGCast>.
 
 =cut
 
