@@ -3812,8 +3812,7 @@ sub _field_by_name {
     @fields
 }
 
-sub get_set_value {
-    my ($self,%options) = @_;
+sub get_set_value($self,%options) {
     my $set_value = exists $options{ value };
     my $value = delete $options{ value };
     my $pre   = delete $options{pre}  || $self->{pre_value};
@@ -4006,8 +4005,7 @@ will be ignored.
 
 =cut
 
-sub submit_form {
-    my ($self,%options) = @_;
+sub submit_form($self,%options) {;
 
     my $form = delete $options{ form };
     my $fields;
@@ -4057,8 +4055,7 @@ has the field value and its number as the 2 elements.
 
 =cut
 
-sub set_fields {
-    my ($self, %fields) = @_;
+sub set_fields($self, %fields) {;
     my $f = $self->current_form;
     if (! $f) {
         croak "Can't set fields: No current form set.";
