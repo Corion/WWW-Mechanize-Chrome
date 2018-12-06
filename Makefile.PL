@@ -40,7 +40,7 @@ my %module = (
 
     PL_FILES            => {},
     BUILD_REQUIRES => {
-        'ExtUtils::MakeMaker' => 0,
+        'ExtUtils::MakeMaker' => '6.64',
     },
 
     PREREQ_PM => {
