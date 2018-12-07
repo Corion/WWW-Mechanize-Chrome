@@ -1188,8 +1188,8 @@ by `$mech->current_form`.
 
 This method lets you select a form from the previously fetched page,
 fill in its fields, and submit it. It combines the form\_number/form\_name,
-set\_fields and click methods into one higher level call. Its arguments are
-a list of key/value pairs, all of which are optional.
+`->set_fields` and `->click methods` into one higher level call. Its
+arguments are a list of key/value pairs, all of which are optional.
 
 - `form => $mech->current_form()`
 
@@ -1432,6 +1432,9 @@ out of them or dumps them to disk as sequential images.
     $mech->setScreenFrameCallback( \&saveFrame );
     ... do stuff ...
     $mech->setScreenFrameCallback( undef ); # stop recording
+
+If you want a premade screencast receiver for debugging headless Chrome
+sessions, see [Mojolicious::Plugin::PNGCast](https://metacpan.org/pod/Mojolicious::Plugin::PNGCast).
 
 ## `$mech->sleep`
 
