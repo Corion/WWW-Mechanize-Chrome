@@ -322,6 +322,7 @@ sub connect( $self, %args ) {
                 (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
 
                 if( ! $tab ) {
+                    $self->log('warn', "Couldn't find a tab matching /$args{ tab }/");
                     croak "Couldn't find a tab matching /$args{ tab }/";
                 } elsif( ! $tab->{webSocketDebuggerUrl} ) {
                     local @CARP_NOT = ('Future',@CARP_NOT);
