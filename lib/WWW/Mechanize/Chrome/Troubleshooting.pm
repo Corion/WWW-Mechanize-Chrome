@@ -26,6 +26,19 @@ Chrome / Chromium doesn't have an API for determining whether a download
 completed or not. Chrome versions v62 and v63 do have working downloads, but
 Chrome v64 does not send the appropriate API messages.
 
+=head2 Timeout when launching script while Chrome is running
+
+You get the error message
+
+  Timeout while connecting to localhost:9222. Do you maybe have a non-debug
+  instance of Chrome already running?
+
+Most likely you already launched the Chrome binary without supplying the
+C<--remote-debugging-port> option. Either stop all Chrome instances and
+(re)launch them using the C<--remote-debugging-port> on the command line or
+launch a separate Chrome session using a separate data directory using
+the C<data_directory> option.
+
 =head1 REPORTING AN ISSUE
 
 Ideally you ask your question on the public support forum, as then other people
