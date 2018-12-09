@@ -296,7 +296,7 @@ sub connect( $self, %args ) {
 
     } else {
         $endpoint ||= $self->endpoint;
-        $self->log('trace', "Using endpoint $endpoint");
+        $self->log('trace', "Using endpoint " . ($endpoint||'<undef>'));
     };
 
     my $got_endpoint;
