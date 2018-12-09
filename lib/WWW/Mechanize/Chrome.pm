@@ -520,11 +520,18 @@ sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
         );
         if( $socket ) {
             close $socket;
-            sleep 1;
+            sleep(1);
             last;
         };
-        sleep 1 if time - $t < 1;
+        sleep(1) if time - $t < 1;
     }
+    my $res = 1;
+    if( time >= $wait ) {
+        # No logger available yet
+        #warn "Got timeout while waiting for Chrome at $host:$port";
+        $res = 0;
+    };
+    $res
 };
 
 sub spawn_child_win32( $self, @cmd ) {
