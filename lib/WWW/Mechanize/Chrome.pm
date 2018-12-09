@@ -509,8 +509,8 @@ sub _find_free_port( $class, $start ) {
     $port;
 }
 
-sub _wait_for_socket_connection( $class, $host, $port, $timeout ) {
-    my $wait = time + ($timeout || 20);
+sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
+    my $wait = time + $timeout;
     while ( time < $wait ) {
         my $t = time;
         my $socket = IO::Socket::INET->new(
