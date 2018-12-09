@@ -281,18 +281,22 @@ sub connect( $self, %args ) {
     my $endpoint;
     if( $args{ endpoint }) {
         $endpoint = $args{ endpoint };
+        $self->log('trace', "Using endpoint $endpoint");
 
     } elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         $endpoint = $args{ tab }->{webSocketDebuggerUrl};
+        $self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
 
     } elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
         $endpoint = undef;
 
     } elsif( $args{ new_tab } ) {
         $endpoint = undef;
+        $self->log('trace', "Using new tab (and fresh endpoint)");
 
     } else {
         $endpoint ||= $self->endpoint;
+        $self->log('trace', "Using endpoint $endpoint");
     };
 
     my $got_endpoint;
@@ -560,7 +564,9 @@ Requests an URL and returns decoded JSON from the future
 
 sub json_get($self, $domain, %options) {
     my $url = $self->build_url( domain => $domain, %options );
+    $self->log('trace', "Fetching JSON from $url");
     $self->ua->http_get( $url )->then( sub( $payload, $headers ) {
+        $self->log('trace', "JSON response", $payload);
         Future->done( $self->json->decode( $payload ))
     });
 };
@@ -719,6 +725,7 @@ sub list_tabs( $self, $type = 'page' ) {
 
 sub new_tab( $self, $url=undef ) {
     my $u = $url ? '?' . $url : '';
+    $self->log('trace', "Creating new tab");
     $self->json_get('new' . $u)
 };
 
