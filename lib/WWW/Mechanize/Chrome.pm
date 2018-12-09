@@ -693,9 +693,9 @@ sub _setup_driver_future( $self, %options ) {
 sub _connect( $self, %options ) {
     my $err;
     $self->_setup_driver_future( %options )
-        ->catch( sub(@args) {
+    ->catch( sub(@args) {
         $err = $args[0];
-        Future->done( @args );
+        Future->fail( @args );
     })->get;
 
     # if Chrome started, but so slow or unresponsive that we cannot connect
@@ -705,7 +705,7 @@ sub _connect( $self, %options ) {
             local $SIG{CHLD} = 'IGNORE';
             kill 'SIGKILL' => $pid;
         };
-        return Future->fail(error => $err);
+        croak $err;
     }
 
     # Create new world if needed
