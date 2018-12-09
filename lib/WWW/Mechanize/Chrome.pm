@@ -642,7 +642,10 @@ sub new($class, %options) {
         $self->{ kill_pid } = 1;
 
         # Just to give Chrome time to start up, make sure it accepts connections
-        $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
+        my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
+        if( ! $ok) {
+            die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
+        };
     } else {
 
         # Assume some defaults for the already running Chrome executable
@@ -702,7 +705,7 @@ sub _connect( $self, %options ) {
             local $SIG{CHLD} = 'IGNORE';
             kill 'SIGKILL' => $pid;
         };
-        die $err;
+        return Future->fail(error => $err);
     }
 
     # Create new world if needed
