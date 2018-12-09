@@ -2,6 +2,7 @@
 use strict;
 use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
+Log::Log4perl->easy_init($ERROR);
 
 my $mech = WWW::Mechanize::Chrome->new();
 
