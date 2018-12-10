@@ -33,7 +33,7 @@ our $mech;
 
 my $imported;
 
-t::helper::run_across_instances(\@instances, \&new_mech, 1, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my( $file, $mymech ) = splice @_; # so we move references
     $mech = $mymech;
     undef $mymech;
