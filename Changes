@@ -33,6 +33,7 @@
     * More log output in Chrome::DevToolsProtocol
     * Now testing up to Chrome 73
     * ExtUtils::MakeMaker minimum version 5.52_01, contributed by LorenzoTa
+    * Fix the test skip counts for several tests
 
 0.25 2018-11-23
     * Added one stray test to the distribution
