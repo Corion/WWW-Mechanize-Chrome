@@ -29,7 +29,7 @@ sub new_mech {
     );
 };
 
-use vars '$mech';
+our $mech;
 
 my $imported;
 
