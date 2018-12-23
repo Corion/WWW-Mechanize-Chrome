@@ -13,6 +13,18 @@ but "does not seem to work", most likely you need to close ALL your Chrome
 windows. If you want Perl to share your browser, you will need to start Chrome
 yourself with the C<<--remote-debugging-port=9222>> command line switch.
 
+=head2 Tests fail with URLs that do not appear in the distribution files
+
+If you notice that tests ( most likely, C<t/51-mech-links.t> ) fail with
+URLs that are not on C<localhost> or C<127.0.0.1>, another not entirely unlikely
+explanation is that your machine or your browser has been infected by some
+"Search Plugin" redirector which exfiltrates your browsing history or redirects
+your search engine or banking websites to other websites.
+
+For confirmation and/or finding out how to remove the offender, maybe a
+search from a different machine for the URLs injected additionally into the
+test pages helps you identify the offender.
+
 =head1 OPERATION
 
 =head2 Chrome / Chromium best practices
