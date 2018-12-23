@@ -17,6 +17,13 @@
     * Tested against Chrome   HeadlessChrome/72.0.3623.0
     * Tested against Chrome   HeadlessChrome/73.0.3650.0
 
+0.27 2018-12-23
+    * Properly handle Page.navigatedWithinDocument instead of raising an error.
+      The synthetic response object doesn't help much, but on the other side,
+      it's much better than raising an error and stopping the script.
+      Reported by Steve Dondley, Github issue GH #34
+    * Makefile.PL now specifies a minimum EU::MM version, thanks to Lorenzo
+
 0.26 2018-12-09
     * Actually do something if we timeout when connecting to Chrome.
       The main cause of the connetcion to Chrome failing is that there already
