@@ -1814,7 +1814,7 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
             $response = $self->httpResponseFromChromeResponse( $res );
             $response->request( $request );
 
-    } elsif ( my $res = $events{ 'Page.navigatedWithinDocument' }) {
+    } elsif ( $res = $events{ 'Page.navigatedWithinDocument' }) {
         # A fake response, just in case anybody checks
         $response = HTTP::Response->new(
             200, # is 0 for files?!
