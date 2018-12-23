@@ -1814,6 +1814,15 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
             $response = $self->httpResponseFromChromeResponse( $res );
             $response->request( $request );
 
+    } elsif ( my $res = $events{ 'Page.navigatedWithinDocument' }) {
+        # A fake response, just in case anybody checks
+        $response = HTTP::Response->new(
+            200, # is 0 for files?!
+            "OK",
+            HTTP::Headers->new(),
+        );
+        $response->request( $request );
+
     } elsif( $res = $events{ 'Network.loadingFailed' }) {
     #warn "Network.loadingFailed";
         $response = $self->httpResponseFromChromeNetworkFail( $res );
@@ -1859,7 +1868,10 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
     } else {
         require Data::Dumper;
         warn Data::Dumper::Dumper( $events );
-        die "Didn't see a 'Network.responseReceived' event for frameId $frameId, requestId $requestId, cannot synthesize response";
+        die join " ", "Chrome behaviour problem: Didn't see a",
+                      "'Network.responseReceived' event for frameId $frameId,",
+                      "requestId $requestId, cannot synthesize response.",
+                      "I saw " . join ",", sort keys %events;
     };
     $response
 }
