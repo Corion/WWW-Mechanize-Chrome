@@ -17,6 +17,10 @@
     * Tested against Chrome   HeadlessChrome/72.0.3623.0
     * Tested against Chrome   HeadlessChrome/73.0.3650.0
 
+0.28 2019-01-02
+    * More test resiliency against fake domains / links injected by bad ISPs
+      (like frontier.com )
+
 0.27 2018-12-23
     * Properly handle Page.navigatedWithinDocument instead of raising an error.
       The synthetic response object doesn't help much, but on the other side,
