@@ -73,10 +73,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
                 diag $_->url for @found_links;
             };
             my $url = URI->new_abs($found_links[0]->url, $found_links[0]->base);
-            is $url, 'http://somewhere.example/relative',
+            is $url, 'https://somewhere.example/relative',
                 'BASE tags get respected';
             $url = URI->new_abs($found_links[1]->url, $found_links[1]->base);
-            is $url, 'http://somewhere.example/myiframe',
+            is $url, 'https://somewhere.example/myiframe',
                 'BASE tags get respected for iframes';
         };
     }

@@ -62,7 +62,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, 21, sub {
     is $mech->uri, $site, "Navigated to $site";
 
     my $ua = "WWW::Mechanize::Chrome $0 $$";
-    my $ref = 'http://example.com/';
+    my $version = $mech->chrome_version;
+    my $ref;
+    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" >= 63.84)) {
+        $ref = 'https://example.com/';
+    } else {
+        $ref = 'http://example.com/'; # earlier versions crash on https referrer ...
+    };
+
     $mech->add_header(
         'Referer' => $ref,
         'X-WWW-Mechanize-Chrome' => "$WWW::Mechanize::Chrome::VERSION",
@@ -70,7 +77,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 21, sub {
     );
 
     $mech->agent( $ua );
-    my $version = $mech->chrome_version;
 
     $res = $mech->get($site);
     isa_ok $res, 'HTTP::Response', "Response";
