@@ -5087,9 +5087,7 @@ Please see L<WWW::Mechanize::Chrome::Contributing>.
 
 =head1 KNOWN ISSUES
 
-When Chrome is run in headless mode, Chrome throws a C<Lost UI shared context>
-error. This error can be ignored and does not affect the operation of this
-module.
+Please see L<WWW::Mechanize::Chrome::Troubleshooting>.
 
 =head1 AUTHOR
 
