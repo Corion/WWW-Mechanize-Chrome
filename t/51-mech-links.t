@@ -43,6 +43,7 @@ sub new_mech {
 my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
+my $server_url = $server->url;
 
 t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
     my ($browser_instance, $mech) = @_;
@@ -68,8 +69,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
         if( $version =~ /\b(\d+)\b/ and $1 < 60 ) {
             skip "Chrome before v60 recognizes some weird links", 3;
         } else {
-            my $server_url = $server->url;
-
             # Weirdo ISPs like frontier.com inject more links into pages that
             # resolve to non-existent domains
             my @wanted_links = grep { $_->url_abs =~ m!^\Qhttps://somewhere.example/\E! } @found_links;
