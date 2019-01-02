@@ -20,6 +20,7 @@
 0.28 2019-01-02
     * More test resiliency against fake domains / links injected by bad ISPs
       (like frontier.com )
+    * Link to WWW::Mechanize::Chrome::Troubleshooting from main documentation
 
 0.27 2018-12-23
     * Properly handle Page.navigatedWithinDocument instead of raising an error.
