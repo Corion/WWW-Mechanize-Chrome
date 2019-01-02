@@ -96,4 +96,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
 
     @frames = $mech->selector('iframe');
     is @frames, 1, "IFRAME tag";
-})
+});
+
+undef $server;
