@@ -40,7 +40,7 @@ WWW::Mechanize::Chrome - automate the Chrome browser
   $mech->get('https://google.com');
 
   $mech->eval_in_page('alert("Hello Chrome")');
-  my $png= $mech->content_as_png();
+  my $png = $mech->content_as_png();
 
 =head1 DESCRIPTION
 
