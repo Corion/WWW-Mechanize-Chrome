@@ -44,11 +44,10 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 =head1 DESCRIPTION
 
-This module provides a scriptable web client in a Perl object.  In
-contrast to L<WWW::Mechanize> it delegates fetching web pages and
-rendering them to the Chrome (or Chromium) browser: It starts an
-instance of the browser and controls it using
-L<Chrome DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
+Like L<WWW::Mechanize>, this module automates web browsing with a Perl object.
+Fetching and rendering of web pages is delegated to the Chrome (or Chromium)
+browser by starting an instance of the browser and controlling it with L<Chrome
+DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
 
 =head2 Use Case
 
