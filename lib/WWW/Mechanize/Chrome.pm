@@ -80,7 +80,7 @@ Installation of a Chrome compatible browser is required. There are some quirks
 including sporadic, but harmless, error messages issued by the browser when
 run with with DevTools.
 
-=head1 METHODS
+=head1 OPTIONS
 
 =head2 C<< WWW::Mechanize::Chrome->new %options >>
 
@@ -289,6 +289,8 @@ You can override the class to implement the transport from the outside by
 setting C<< $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} >> to the transport class.
 This is mostly used for testing but can be useful to exclude the underlying
 websocket implementation(s) as source of bugs.
+
+=head1 METHODS
 
 =cut
 
