@@ -34,7 +34,7 @@ requires:
   File::Basename: '0'
   File::Spec: '0'
   Filter::signatures: '0.09'
-  Future: '0'
+  Future: '0.35'
   Future::HTTP: '0.06'
   HTML::Selector::XPath: '0'
   HTTP::Headers: '0'

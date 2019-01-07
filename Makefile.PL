@@ -50,7 +50,7 @@ my %module = (
 
         'Filter::signatures' => '0.09',
         'Carp'               => 0,
-        'Future'             => 0,
+        'Future'             => '0.35', # Some smokers have 0.25 which lacks many features
         'Try::Tiny'          => 0,
         # This actually is optional
         # You need one of the following event loops:
