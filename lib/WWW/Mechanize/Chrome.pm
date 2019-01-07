@@ -40,46 +40,47 @@ WWW::Mechanize::Chrome - automate the Chrome browser
   $mech->get('https://google.com');
 
   $mech->eval_in_page('alert("Hello Chrome")');
-  my $png= $mech->content_as_png();
+  my $png = $mech->content_as_png();
+
+A collection of other L<Examples|WWW::Mechanize::Chrome::Examples> is available
+to help you get started.
 
 =head1 DESCRIPTION
 
-This module provides a scriptable web client in a Perl object.  In
-contrast to L<WWW::Mechanize> it delegates fetching web pages and
-rendering them to the Chrome (or Chromium) browser: It starts an
-instance of the browser and controls it using
-L<Chrome DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
+Like L<WWW::Mechanize>, this module automates web browsing with a Perl object.
+Fetching and rendering of web pages is delegated to the Chrome (or Chromium)
+browser by starting an instance of the browser and controlling it with L<Chrome
+DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
 
-=head2 Use Case
+=head2 Advantages Over L<WWW::Mechanize>
 
-This module gives access to features of today's web applications which
-are not (yet) available with L<WWW::Mechanize>:
+The Chrome browser provides advanced abilities useful for automating modern
+web applications that are not (yet) possible with L<WWW::Mechanize> alone:
 
 =over
 
 =item *
 
-Page content created or modified by JavaScript.  You can also run your
-own JavaScript code on the page content.
+Page content can be created or modified with JavaScript. You can also execute
+custom JavaScript code on the page content.
 
 =item *
 
-Selection of page content using CSS selectors.
+Page content can be selected with CSS selectors.
 
 =item *
 
-Render a page into a screenshot image or a PDF file.
+Screenshots of the rendered page as an image or PDF file.
 
 =back
 
-A collection of L<Examples|WWW::Mechanize::Chrome::Examples> should
-give you a start.
+=head2 Disadvantages
 
-It comes with a price: You need to have a Chrome compatible browser
-installed, and you need to live with the quirks and error messages
-issued by this browser when used with DevTools.
+Installation of a Chrome compatible browser is required. There are some quirks
+including sporadic, but harmless, error messages issued by the browser when
+run with with DevTools.
 
-=head1 METHODS
+=head1 OPTIONS
 
 =head2 C<< WWW::Mechanize::Chrome->new %options >>
 
@@ -288,6 +289,8 @@ You can override the class to implement the transport from the outside by
 setting C<< $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} >> to the transport class.
 This is mostly used for testing but can be useful to exclude the underlying
 websocket implementation(s) as source of bugs.
+
+=head1 METHODS
 
 =cut
 
