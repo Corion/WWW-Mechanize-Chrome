@@ -100,7 +100,7 @@ there is an error.
 
 =item B<host>
 
-Set the host the browse listens on:
+Set the host the browser listens on:
 
   host => '192.168.1.2'
   host => 'localhost'
