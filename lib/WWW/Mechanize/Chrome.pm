@@ -338,7 +338,6 @@ sub build_command_line {
     my( $class, $options )= @_;
 
     my @program_names = $class->default_executable_names( $options->{launch_exe} );
-    print Dumper \@program_names;
 
     my( $program, $error) = $class->find_executable(\@program_names);
     croak $error if ! $program;
