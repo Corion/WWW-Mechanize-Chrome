@@ -80,6 +80,28 @@ Installation of a Chrome compatible browser is required. There are some quirks
 including sporadic, but harmless, error messages issued by the browser when
 run with with DevTools.
 
+=head2 A Brief Operational Overview
+
+C<WWW::Mechanize::Chrome> (WMC) leverages developer tools built into Chrome and
+Chrome-like browsers to control a browser instance programatically. You can use
+WMC to automate tedious tasks, test web applications, and perform web scraping
+operations.
+
+Typically, WMC is used to launch both a I<host> instance of the browser and
+provide a I<client> instance of the browser. The host instance of the browser is
+visible to you on your desktop (unless the browser is running in "headless"
+mode, in which case it will not open in a window). The client instance is the
+Perl program you write with the WMC module to issue commands to control the host
+instance. As you navigate and "click" on various nodes in the client browser,
+you watch the host browser respond to these actions as if by magic.
+
+This magic happens as a result of commands that are issued from your client to
+the host using Chrome's DevTools Protocol which implements the http protocol to
+send JSON data structures. The host also responds to the client with JSON to
+describe the web pages it has loaded. WMC conveniently hides the complexity of
+the lower level communications between the client and host browsers and wraps
+them in a Perl object to provide the easy-to-use methods documented here.
+
 =head1 OPTIONS
 
 =head2 C<< WWW::Mechanize::Chrome->new( %options ) >>
