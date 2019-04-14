@@ -149,6 +149,23 @@ existing inactive tab, you can pass a regular expression to match against the
 existing tab's title. A false value implements the default behavior and a new
 tab will be created.
 
+=item B<autoclose>
+
+  autodie => 0   # keep tab open after program end
+
+By default, C<autoclose> is set to true, closing the tab opened when running
+your code. If C<autoclose> is set to a false value, the tab will remain open
+even after the program has finished.
+
+=item B<host>
+
+Set the host the browser listens on:
+
+  host => '192.168.1.2'
+  host => 'localhost'
+
+Defaults to C<127.0.0.1>. The browser will listen for commands on the
+specified host. The host address should be inaccessible from the internet.
 =item B<log>
 
   log => $object   # specify the object used for logging
