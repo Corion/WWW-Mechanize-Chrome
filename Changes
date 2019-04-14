@@ -15,7 +15,9 @@
     * Tested against Chromium HeadlessChrome/70.0.3538.102
     * Tested against Chromium HeadlessChrome/71.0.3578.98
     * Tested against Chrome   HeadlessChrome/72.0.3623.0
-    * Tested against Chrome   HeadlessChrome/73.0.3650.0
+    * Tested against Chromium HeadlessChrome/73.0.3683.103
+    * Tested against Chromium HeadlessChrome/74.0.3700.0
+    * Tested against Chromium HeadlessChrome/75.0.3741.0
 
 0.28 2019-01-07
     * More test resiliency against fake domains / links injected by bad ISPs
