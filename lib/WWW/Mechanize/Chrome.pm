@@ -20,6 +20,7 @@ use Data::Dumper;
 use Time::HiRes qw(usleep);
 use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
+use HTTP::Cookies::Chrome;
 
 our $VERSION = '0.28';
 our @CARP_NOT;
@@ -151,7 +152,7 @@ tab will be created.
 
 =item B<autoclose>
 
-  autodie => 0   # keep tab open after program end
+  autoclose => 0   # keep tab open after program end
 
 By default, C<autoclose> is set to true, closing the tab opened when running
 your code. If C<autoclose> is set to a false value, the tab will remain open
@@ -1335,6 +1336,12 @@ sub agent( $self, $ua ) {
     $self->chrome_version_info->{"User-Agent"}
 }
 
+=head2 C<< ->autoclose_tab >>
+
+Set the C<autoclose> option
+
+=cut
+
 sub autoclose_tab( $self, $autoclose ) {
     $self->{autoclose} = $autoclose
 }
@@ -2096,6 +2103,23 @@ sub set_download_directory_future( $self, $dir="" ) {
 
 sub set_download_directory( $self, $dir="" ) {
     $self->set_download_directory_future($dir)->get
+};
+
+=head2 C<< $mech->cookie_jar >>
+
+    my $cookies = $mech->cookie_jar
+
+Returns all the Chrome cookies in a L<HTTP::Cookies::Chrome> instance.
+Setting a cookie in there will also set the cookie in Chrome.
+
+=cut
+
+sub cookie_jar( $self ) {
+    $self->{cookie_jar} ||= do {
+        my $c = HTTP::Cookies::Chrome->new( driver => $self->driver );
+        $c->load;
+        $c
+    };
 };
 
 =head2 C<< $mech->add_header( $name => $value, ... ) >>

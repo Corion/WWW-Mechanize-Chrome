@@ -121,7 +121,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
 - **autoclose**
 
-        autodie => 0   # keep tab open after program end
+        autoclose => 0   # keep tab open after program end
 
     By default, `autoclose` is set to true, closing the tab opened when running
     your code. If `autoclose` is set to a false value, the tab will remain open
@@ -550,6 +550,10 @@ Runs the given function with the specified arguments.
 
 This method is special to WWW::Mechanize::Chrome.
 
+## `->autoclose_tab`
+
+Set the `autoclose` option
+
 ## `$mech->highlight_node( @nodes )`
 
     my @links = $mech->selector('a');
@@ -657,6 +661,13 @@ will be downloaded to. Setting this to undef will disable downloads again.
 
 The directory in `$dir` must be an absolute path, since Chrome does not know
 about the current directory of your Perl script.
+
+## `$mech->cookie_jar`
+
+    my $cookies = $mech->cookie_jar
+
+Returns all the Chrome cookies in a [HTTP::Cookies::Chrome](https://metacpan.org/pod/HTTP::Cookies::Chrome) instance.
+Setting a cookie in there will also set the cookie in Chrome.
 
 ## `$mech->add_header( $name => $value, ... )`
 

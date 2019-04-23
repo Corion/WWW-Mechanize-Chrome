@@ -15,6 +15,7 @@ lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/Chrome/DevToolsProtocol/Transport/NetAsync.pm
+lib/HTTP/Cookies/Chrome.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Chrome/Contributing.pod
 lib/WWW/Mechanize/Chrome/Cookbook.pm
@@ -78,6 +79,7 @@ t/53-mech-capture-js-noerror.html
 t/56-render-content.t
 t/58-alert.html
 t/58-alert.t
+t/60-mech-cookies.t
 t/60-mech-custom-headers.t
 t/61-mech-download.t
 t/61-screencast.t

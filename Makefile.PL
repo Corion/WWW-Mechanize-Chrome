@@ -71,6 +71,7 @@ my %module = (
         'Moo'                => 2, # for some hashes-as-objects
 
         'HTTP::Response'                   => 0,
+        'HTTP::Cookies'                    => 0,
         'HTTP::Headers'                    => 0,
         'Scalar::Util'                     => 0, # we need 'weaken' and 'blessed'
 		'MIME::Base64'                     => 0,

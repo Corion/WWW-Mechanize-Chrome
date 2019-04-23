@@ -19,6 +19,9 @@
     * Tested against Chromium HeadlessChrome/74.0.3700.0
     * Tested against Chromium HeadlessChrome/75.0.3741.0
 
+0.29 2019-04-23
+    * Add ->cookie_jar support, this adresses GH #40
+
 0.28 2019-01-07
     * More test resiliency against fake domains / links injected by bad ISPs
       (like frontier.com )
