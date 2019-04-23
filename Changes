@@ -21,6 +21,7 @@
 
 0.29 2019-04-23
     * Add ->cookie_jar support, this adresses GH #40
+    * Document "autoclose" option
 
 0.28 2019-01-07
     * More test resiliency against fake domains / links injected by bad ISPs
