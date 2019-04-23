@@ -44,6 +44,7 @@
             "Future" : "0.35",
             "Future::HTTP" : "0.06",
             "HTML::Selector::XPath" : "0",
+            "HTTP::Cookies" : "0",
             "HTTP::Headers" : "0",
             "HTTP::Response" : "0",
             "IO::Socket::INET" : "0",
@@ -84,7 +85,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.28",
+   "version" : "0.29",
    "x_serialization_backend" : "JSON::PP version 2.97001",
    "x_static_install" : 1
 }
