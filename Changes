@@ -18,6 +18,10 @@
     * Tested against Chromium HeadlessChrome/73.0.3683.103
     * Tested against Chromium HeadlessChrome/74.0.3700.0
     * Tested against Chromium HeadlessChrome/75.0.3741.0
+0.30 2019-05-17
+    * Disable the Host: header test for Chromer 76+, as this raises an error
+      in those versions instead of just not working.
+      I guess this is progress.
 
 0.29 2019-04-23
     * Add ->cookie_jar support, this adresses GH #40
