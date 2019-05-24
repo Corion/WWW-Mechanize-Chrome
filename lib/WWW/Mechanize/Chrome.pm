@@ -1107,7 +1107,11 @@ sub eval_in_page($self,$str, %options) {
         );
     }
 
-    return $result->{result}->{value}, $result->{result}->{type};
+    if( exists $result->{result}->{value}) {
+        return $result->{result}->{value}, $result->{result}->{type};
+    } else {
+        return $result->{result}, $result->{result}->{type};
+    }
 };
 
 {
@@ -1168,8 +1172,11 @@ sub callFunctionOn_future( $self, $str, %options ) {
                                $result->{exceptionDetails}->{exception}->{description},
             );
         }
-
-        return Future->done( $result->{result}->{value}, $result->{result}->{type} );
+        if( exists $result->{result}->{value}) {
+            return Future->done( $result->{result}->{value}, $result->{result}->{type} );
+        } else {
+            return Future->done( $result->{result}, $result->{result}->{type} );
+        }
     })
 };
 
