@@ -8,6 +8,7 @@ Getting started
 url-to-image.pl                 Take a screenshot of a website
 html-to-pdf.pl                  Convert HTML to PDF
 dump-links.pl                   Dump links on a webpage
+sendkeys.pl                     Send keystrokes to a page
 
 Javascript
 ==========

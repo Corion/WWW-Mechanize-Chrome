@@ -22,7 +22,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : "0"
+            "ExtUtils::MakeMaker" : "5.52_01"
          }
       },
       "configure" : {
@@ -41,9 +41,10 @@
             "File::Basename" : "0",
             "File::Spec" : "0",
             "Filter::signatures" : "0.09",
-            "Future" : "0",
+            "Future" : "0.35",
             "Future::HTTP" : "0.06",
             "HTML::Selector::XPath" : "0",
+            "HTTP::Cookies" : "0",
             "HTTP::Headers" : "0",
             "HTTP::Response" : "0",
             "IO::Socket::INET" : "0",
@@ -84,7 +85,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.22",
+   "version" : "0.30",
    "x_serialization_backend" : "JSON::PP version 2.97001",
    "x_static_install" : 1
 }

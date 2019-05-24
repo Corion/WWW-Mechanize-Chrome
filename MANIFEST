@@ -1,12 +1,13 @@
 .gitignore
-50-mech-redirect.t
 Changes
 examples/dump-links.pl
 examples/gen_examples_pod.pl
 examples/html-to-pdf.pl
 examples/javascript.pl
+examples/links.html
 examples/README
 examples/resource-timing.pl
+examples/sendkeys.pl
 examples/url-to-image.pl
 INSTALL
 lib/Chrome/DevToolsProtocol.pm
@@ -14,7 +15,7 @@ lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/Chrome/DevToolsProtocol/Transport/NetAsync.pm
-lib/Mojolicious/Plugin/PNGCast.pm
+lib/HTTP/Cookies/Chrome.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Chrome/Contributing.pod
 lib/WWW/Mechanize/Chrome/Cookbook.pm
@@ -56,6 +57,7 @@ t/50-mech-get-nonexistent.t
 t/50-mech-get.t
 t/50-mech-new-dsl.t
 t/50-mech-new.t
+t/50-mech-redirect.t
 t/50-mech-start-url.t
 t/50-mech-status.t
 t/50-popup.t
@@ -78,6 +80,7 @@ t/53-mech-capture-js-noerror.html
 t/56-render-content.t
 t/58-alert.html
 t/58-alert.t
+t/60-mech-cookies.t
 t/60-mech-custom-headers.t
 t/61-mech-download.t
 t/61-screencast.t

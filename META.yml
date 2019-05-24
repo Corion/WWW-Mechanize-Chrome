@@ -4,7 +4,7 @@ author:
   - 'Max Maischein <corion@cpan.org>'
 build_requires:
   Data::Dumper: '0'
-  ExtUtils::MakeMaker: '0'
+  ExtUtils::MakeMaker: 5.52_01
   Image::Info: '0'
   Test::Deep: '0'
   Test::HTTP::LocalServer: '0.61'
@@ -34,9 +34,10 @@ requires:
   File::Basename: '0'
   File::Spec: '0'
   Filter::signatures: '0.09'
-  Future: '0'
+  Future: '0.35'
   Future::HTTP: '0.06'
   HTML::Selector::XPath: '0'
+  HTTP::Cookies: '0'
   HTTP::Headers: '0'
   HTTP::Response: '0'
   IO::Socket::INET: '0'
@@ -57,6 +58,6 @@ requires:
   perl: '5.010'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
-version: '0.22'
+version: '0.30'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
 x_static_install: 1

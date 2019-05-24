@@ -1,3 +1,5 @@
+[//]: # "This file is generated from the documentation in lib/WWW/Mechanize/Chrome.pm."
+[//]: # "Please edit that file instead."
 
 [![Travis Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/WWW-Mechanize-Chrome?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/WWW-Mechanize-Chrome)
@@ -22,75 +24,167 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     $mech->get('https://google.com');
 
     $mech->eval_in_page('alert("Hello Chrome")');
-    my $png= $mech->content_as_png();
+    my $png = $mech->content_as_png();
 
-## `WWW::Mechanize::Chrome->new %options`
+A collection of other [Examples](https://metacpan.org/pod/WWW::Mechanize::Chrome::Examples) is available
+to help you get started.
+
+# DESCRIPTION
+
+Like [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize), this module automates web browsing with a Perl object.
+Fetching and rendering of web pages is delegated to the Chrome (or Chromium)
+browser by starting an instance of the browser and controlling it with [Chrome
+DevTools](https://developers.google.com/web/tools/chrome-devtools/).
+
+## Advantages Over [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)
+
+The Chrome browser provides advanced abilities useful for automating modern
+web applications that are not (yet) possible with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) alone:
+
+- Page content can be created or modified with JavaScript. You can also execute
+custom JavaScript code on the page content.
+- Page content can be selected with CSS selectors.
+- Screenshots of the rendered page as an image or PDF file.
+
+## Disadvantages
+
+Installation of a Chrome compatible browser is required. There are some quirks
+including sporadic, but harmless, error messages issued by the browser when
+run with with DevTools.
+
+## A Brief Operational Overview
+
+`WWW::Mechanize::Chrome` (WMC) leverages developer tools built into Chrome and
+Chrome-like browsers to control a browser instance programatically. You can use
+WMC to automate tedious tasks, test web applications, and perform web scraping
+operations.
+
+Typically, WMC is used to launch both a _host_ instance of the browser and
+provide a _client_ instance of the browser. The host instance of the browser is
+visible to you on your desktop (unless the browser is running in "headless"
+mode, in which case it will not open in a window). The client instance is the
+Perl program you write with the WMC module to issue commands to control the host
+instance. As you navigate and "click" on various nodes in the client browser,
+you watch the host browser respond to these actions as if by magic.
+
+This magic happens as a result of commands that are issued from your client to
+the host using Chrome's DevTools Protocol which implements the http protocol to
+send JSON data structures. The host also responds to the client with JSON to
+describe the web pages it has loaded. WMC conveniently hides the complexity of
+the lower level communications between the client and host browsers and wraps
+them in a Perl object to provide the easy-to-use methods documented here.
+
+# OPTIONS
+
+## `WWW::Mechanize::Chrome->new( %options )`
 
     my $mech = WWW::Mechanize::Chrome->new();
 
 - **autodie**
 
-    Control whether HTTP errors are fatal.
+        autodie => 0   # make HTTP errors non-fatal
 
-        autodie => 0, # make HTTP errors non-fatal
-
-    The default is to have HTTP errors fatal,
-    as that makes debugging much easier than expecting
-    you to actually check the results of every action.
+    By default, `autodie` is set to true. If an HTTP error is encountered, the
+    program dies along with its associated browser instances. This frees you from
+    having to write error checks after every request. Setting this value to false
+    makes HTTP errors non-fatal, allowing the program to continue running if
+    there is an error.
 
 - **host**
 
-    Specify the host where Chrome listens
+    Set the host the browser listens on:
 
+        host => '192.168.1.2'
         host => 'localhost'
 
-    Most likely you don't want to have Chrome listening on an outside port
-    on a machine connected to the internet.
+    Defaults to `127.0.0.1`. The browser will listen for commands on the
+    specified host. The host address should be inaccessible from the internet.
 
 - **port**
 
-    Specify the port of Chrome to connect to
+        port => 9223   # set port the launched browser will use for remote operation
 
-        port => 9222
+    Defaults to `9222`. Commands to the browser will be issued through this port.
 
 - **tab**
 
-    Specify which tab to connect to
+    Specify the browser tab the Chrome browser will use:
 
         tab => 'current'
+        tab => qr/PerlMonks/
 
-    If you want to connect to a tab by title, you can pass in a regular expression
-    matching that title. If you want to create a new tab, pass in a false value.
+    By default, a web page is opened in a new browser tab. Setting `tab` to
+    `current` will use the current, active tab instead. Alternatively, to use an
+    existing inactive tab, you can pass a regular expression to match against the
+    existing tab's title. A false value implements the default behavior and a new
+    tab will be created.
 
-- **log**
+- **autoclose**
 
-    A premade [Log::Log4perl](https://metacpan.org/pod/Log::Log4perl) object
+        autoclose => 0   # keep tab open after program end
+
+    By default, `autoclose` is set to true, closing the tab opened when running
+    your code. If `autoclose` is set to a false value, the tab will remain open
+    even after the program has finished.
+
+- **host**
+
+    Set the host the browser listens on:
+
+        host => '192.168.1.2'
+        host => 'localhost'
+
+    Defaults to `127.0.0.1`. The browser will listen for commands on the
+    specified host. The host address should be inaccessible from the internet.
+    &#x3d;item **log**
+
+        log => $object   # specify the object used for logging
+
+    Can be used to supply a [Log::Log4perl](https://metacpan.org/pod/Log::Log4perl) object that has been manually
+    constructed.
 
 - **launch\_exe**
 
-    Specify the path to the Chrome executable.
+    Set the name and/or path to the browser's executable program:
 
-    The default is `chrome` on Windows and `google-chrome` elsewhere, as found via
-    `$ENV{PATH}`. If you want to use Chromium, you need to specify that explicitly
-    via:
+        launch_exe => 'name-of-chrome-executabe'    # for non-standard executable names
+        launch_exe => '/path/to/executable'         # for non-standard paths
+        launch_exe => '/path/to/executable/chrome'  # full path
+
+    By default, `WWW::Mechanize::Chrome` will search the appropriate paths for
+    Chrome's executable file based on the operating system. Use this option to set
+    the path to your executable if it is in a non-standard location or if the
+    executable has a non-standard name.
+
+    The default paths searched are those found in `$ENV{PATH}`. For OS X, the user
+    and system `Application` directories are also searched. The default values for
+    the executable file's name are `chrome` on Windows, `Google Chrome` on OS X,
+    and `google-chrome` elsewhere.
+
+    If you want to use Chromium, you must specify that explicitly with something
+    like:
 
         launch_exe => 'chromium-browser', # if Chromium is named chromium-browser on your OS
 
-    You can also provide this information from the outside to the class
-    by setting `$ENV{CHROME_BIN}`.
+    Results my vary for your operating system. Use the full path to the browser's
+    executable if you are having issues. You can also set the name of the executable
+    file with the `$ENV{CHROME_BIN}` environment variable.
 
 - **start\_url**
 
-    Launch Chrome with the given URL. Normally you would use
-    the `->get` method instead.
+        start_url => 'http://perlmonks.org'  # Immediately navigate to a given URL
+
+    By default, the browser will open with a blank tab. Use the `start_url` option
+    to open the browser to the specified URL. More typically, the `->get`
+    method is use to navigate to URLs.
 
 - **launch\_arg**
 
-    Specify additional parameters to the Chrome executable.
+    Pass additional switches and parameters to the browser's executable:
 
-        launch_arg => [ "--some-new-parameter=foo" ],
+        launch_arg => [ "--some-new-parameter=foo", "--another-option" ]
 
-    Interesting parameters might be
+    Examples of other useful parameters include:
 
         '--start-maximized',
         '--window-size=1280x1696'
@@ -104,17 +198,23 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 - **profile**
 
-    Profile directory for this session. If not given, Chrome will use your current
-    user profile.
+        profile => '/path/to/profile/directory'  #  set the profile directory
+
+    By default, your current user profile directory is used. Use this setting
+    to change the profile directory for the browsing session.
 
 - **incognito**
 
-    Launch Chrome in incognito mode.
+        incognito => 1   # open the browser in incognito mode
+
+    Defaults to false. Set to true to launch the browser in incognito mode.
 
 - **data\_directory**
 
-    The base data directory for this session. If not given, Chrome will use your
-    current base directory.
+        data_directory => '/path/to/data/directory'  #  set the data directory
+
+    By default, the current data directory is used. Use this setting to change the
+    base data directory for the browsing session.
 
         use File::Temp 'tempdir';
         # create a fresh Chrome every time
@@ -124,101 +224,120 @@ WWW::Mechanize::Chrome - automate the Chrome browser
 
 - **startup\_timeout**
 
-        startup_timeout => 20,
+        startup_timeout => 5  # set the startup timeout value
 
-    The maximum number of seconds to wait until Chrome is ready. This helps on slow
-    systems where Chrome takes some time starting up. The process will try every
-    second to connect to Chrome.
+    Defaults to 20, the maximum number of seconds to wait for the browser to launch.
+    Higher or lower values can be set based on the speed of the machine. The
+    process attempts to connect to the browser once each second over the duration
+    of this setting.
+
+- **listen\_host**
+
+        listen_host => '192.1.168.7'  # set an IP address for listening
+
+    Specifies an IP address the launched browser process should listen on. This
+    option is useful for controlling the browser from another machine on your
+    network.
 
 - **driver**
 
-    A premade [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) object.
+        driver => $driver_object  # specify the driver object
+
+    Use a [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) object that has been manually constructed.
 
 - **report\_js\_errors**
 
-    If set to 1, after each request tests for Javascript errors and warns. Useful
-    for testing with `use warnings qw(fatal)`.
+        report_js_errors => 1  # turn javascript error reporting on
+
+    Defaults to false. If true, tests for Javascript errors and warns after each
+    request are run. This is useful for testing with `use warnings qw(fatal)`.
 
 - **mute\_audio**
 
-    Mutes the audio output. This setting is enabled by default.
+        mute_audio => 0  # turn sounds on
+
+    Defaults to true (sound off). A false value turns the sound on.
 
 - **background\_networking**
 
-    Enable "background networking".
+        background_networking => 1  # turn background networking on
 
-    Default is disabled.
+    Defaults to false (off). A true value enables background networking.
 
 - **client\_side\_phishing\_detection**
 
-    Enable "client side phising detection".
+        client_side_phishing_detection => 1  # turn client side phishing detection on
 
-    Default is disabled.
+    Defaults to false (off). A true value enables client side phishing detection.
 
 - **component\_update**
 
-    Enable "component update".
+        component_update => 1  # turn component updates on
 
-    Default is disabled.
+    Defaults to false (off). A true value enables component updates.
 
 - **default\_apps**
 
-    Enable "default apps".
+        default_apps => 1  # turn default apps on
 
-    Default is disabled.
+    Defaults to false (off). A true value enables default apps.
 
 - **hang\_monitor**
 
-    Enable "hang monitor".
+        hang_monitor => 1  # turn the hang monitor on
 
-    Default is disabled.
+    Defaults to false (off). A true value enables the hang monitor.
 
 - **hide\_scrollbars**
 
-    Hide scrollbars.
+        hide_scrollbars => 1  # hide the scrollbars
 
-    Default is disabled.
+    Defaults to false (off). A true value will hide the scrollbars.
 
 - **infobars**
 
-    Enable "infobars".
+        infobars => 1  # turn infobars on
 
-    Default is disabled.
+    Defaults to false (off). A true value will turn infobars on.
 
 - **popup\_blocking**
 
-    Enable "popup blocking".
+        popup_bloacking => 1  # block popups
 
-    Default is disabled.
+    Defaults to false (off). A true value will block popups.
 
 - **prompt\_on\_repost**
 
-    Enable "prompt on repost".
+        prompt_on_repost => 1  # allow prompts when reposting
 
-    Default is disabled.
+    Defaults to false (off). A true value will allow prompts when reposting.
 
 - **save\_password\_bubble**
 
-    Enable the "save password" bubble.
+        save_password_bubble => 1  # allow the display of the save password bubble
 
-    Default is disabled.
+    Defaults to false (off). A true value allows the save password bubble to be
+    displayed.
 
 - **sync**
 
-    Enable "sync".
+        sync => 1   # turn syncing on
 
-    Default is disabled.
+    Defaults to false (off). A true value turns syncing on.
 
 - **web\_resources**
 
-    Enable "Web resources".
+        web_resources => 1   # turn web resources on
 
-    Default is disabled.
+    Defaults to false (off). A true value turns web resources on.
 
-You can override the class to implement the transport from the outside by
-setting `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` to the transport class.
-This is mostly used for testing but can be useful to exclude the underlying
-websocket implementation(s) as source of bugs.
+The `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` variable can be set to a
+different transport class to override the default [transport
+class](https://metacpan.org/pod/Chrome::DevToolsProtcol::Transport). This is primarily used for testing
+but can also help eliminate introducing bugs from the underlying websocket
+implementation(s).
+
+# METHODS
 
 ## `WWW::Mechanize::Chrome->find_executable`
 
@@ -248,7 +367,7 @@ and does not contain a directory separator.
 
     print $mech->chrome_version;
 
-Returns the version of the Chrome executable that is used. This information
+Returns the version of the Chrome executable being used. This information
 needs launching the browser and asking for the version via the network.
 
 ## `$mech->chrome_version_info`
@@ -431,6 +550,10 @@ Runs the given function with the specified arguments.
 
 This method is special to WWW::Mechanize::Chrome.
 
+## `->autoclose_tab`
+
+Set the `autoclose` option
+
 ## `$mech->highlight_node( @nodes )`
 
     my @links = $mech->selector('a');
@@ -538,6 +661,13 @@ will be downloaded to. Setting this to undef will disable downloads again.
 
 The directory in `$dir` must be an absolute path, since Chrome does not know
 about the current directory of your Perl script.
+
+## `$mech->cookie_jar`
+
+    my $cookies = $mech->cookie_jar
+
+Returns all the Chrome cookies in a [HTTP::Cookies::Chrome](https://metacpan.org/pod/HTTP::Cookies::Chrome) instance.
+Setting a cookie in there will also set the cookie in Chrome.
 
 ## `$mech->add_header( $name => $value, ... )`
 
@@ -1151,8 +1281,8 @@ by `$mech->current_form`.
 
 This method lets you select a form from the previously fetched page,
 fill in its fields, and submit it. It combines the form\_number/form\_name,
-set\_fields and click methods into one higher level call. Its arguments are
-a list of key/value pairs, all of which are optional.
+`->set_fields` and `->click methods` into one higher level call. Its
+arguments are a list of key/value pairs, all of which are optional.
 
 - `form => $mech->current_form()`
 
@@ -1353,7 +1483,12 @@ This method is specific to WWW::Mechanize::Chrome.
 
     my $pdf_data = $mech->content_as_pdf();
 
-Returns the current page rendered in PDF format as a bytestring.
+    my $pdf_data = $mech->content_as_pdf( format => 'A4' );
+
+    my $pdf_data = $mech->content_as_pdf( paperWidth => 8, paperHeight => 11 );
+
+Returns the current page rendered in PDF format as a bytestring. The page format
+can be specified through the `format` option.
 
 Note that this method will only be successful with headless Chrome. At least on
 Windows, when launching Chrome with a UI, printing to PDF will be unavailable.
@@ -1390,6 +1525,9 @@ out of them or dumps them to disk as sequential images.
     $mech->setScreenFrameCallback( \&saveFrame );
     ... do stuff ...
     $mech->setScreenFrameCallback( undef ); # stop recording
+
+If you want a premade screencast receiver for debugging headless Chrome
+sessions, see [Mojolicious::Plugin::PNGCast](https://metacpan.org/pod/Mojolicious::Plugin::PNGCast).
 
 ## `$mech->sleep`
 
@@ -1502,9 +1640,7 @@ Please see [WWW::Mechanize::Chrome::Contributing](https://metacpan.org/pod/WWW::
 
 # KNOWN ISSUES
 
-When Chrome is run in headless mode, Chrome throws a `Lost UI shared context`
-error. This error can be ignored and does not affect the operation of this
-module.
+Please see [WWW::Mechanize::Chrome::Troubleshooting](https://metacpan.org/pod/WWW::Mechanize::Chrome::Troubleshooting).
 
 # AUTHOR
 

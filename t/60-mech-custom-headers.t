@@ -42,7 +42,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
 
-t::helper::run_across_instances(\@instances, \&new_mech, 20, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 21, sub {
 
     # See https://bugs.chromium.org/p/chromium/issues/detail?id=795336
     #     https://bugs.chromium.org/p/chromium/issues/detail?id=767683
@@ -62,20 +62,32 @@ t::helper::run_across_instances(\@instances, \&new_mech, 20, sub {
     is $mech->uri, $site, "Navigated to $site";
 
     my $ua = "WWW::Mechanize::Chrome $0 $$";
-    my $ref = 'http://example.com/';
+    my $version = $mech->chrome_version;
+    my $ref;
+    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" >= 63.84)) {
+        $ref = 'https://example.com/';
+    } else {
+        $ref = 'http://example.com/'; # earlier versions crash on https referrer ...
+    };
+
+    my @host;
+    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" < 76.00)) {
+        @host = (Host => 'www.example.com'); # later versions won't fetch a page with a "wrong" Host: header
+    };
+
     $mech->add_header(
         'Referer' => $ref,
         'X-WWW-Mechanize-Chrome' => "$WWW::Mechanize::Chrome::VERSION",
-        'Host' => 'www.example.com',
+        @host
     );
 
     $mech->agent( $ua );
-    my $version = $mech->chrome_version;
 
     $res = $mech->get($site);
     isa_ok $res, 'HTTP::Response', "Response";
 
-    is $mech->uri, $site, "Navigated to $site";
+    is $mech->uri, $site, "Navigated to $site"
+        or diag $mech->content;
     # Now check for the changes
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
@@ -93,6 +105,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, 20, sub {
         local $TODO = "Chrome v63.0.84+ doesn't send the Host header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
         like $headers, qr!^X-My-Initial-Header: 1$!m, "We can add completely custom headers at start";
+        local $TODO = "Chrome v76+ doesn't set (or send) the Host header anymore..."
+            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 76);
         like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
     }
     $mech->submit_form; # retrieve the JS window.navigator.userAgent value

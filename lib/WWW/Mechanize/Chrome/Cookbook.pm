@@ -59,6 +59,38 @@ The setup for Twiggy is as follows:
   my $res = $mech->get("http://127.0.0.1:$port");
   ok $res->is_success, "We can request the page";
 
+=head1 Debugging Headless Sessions
+
+If you want to watch what a headless browser automation run is doing, you can
+do so by sending a screencast from WWW::Mechanize::Chrome to a different browser
+that supports websockets by using L<Mojolicious::Plugin::PNGCast> from within
+your automation session:
+
+    use Mojolicious::Lite;
+    use Mojo::Server::Daemon;
+    use WWW::Mechanize::Chrome;
+    plugin 'PNGCast';
+
+    my $daemon_url = 'http://localhost:3000';
+
+    my $ws_monitor = Mojo::Server::Daemon->new(app => app());
+    $ws_monitor->listen([$daemon_url]);
+    $ws_monitor->start;
+
+    my $mech = WWW::Mechanize::Chrome->new( headless => 1 );
+    $mech->setScreenFrameCallback( sub {
+        app->send_frame( $_[1]->{data} )}
+    );
+
+    print "Watch progress at $daemon_url\n";
+    sleep 5;
+
+    $mech->get('https://example.com');
+    # ... more automation
+
+This will send the progress of your headless session to your browser so you can
+see the differences between what you expect and what the browser displays.
+
 =head1 SEE ALSO
 
 L<Detecting Chrome Headless|http://antoinevastel.github.io/bot%20detection/2018/01/17/detect-chrome-headless-v2.html>
@@ -97,5 +129,5 @@ This module is released under the same terms as Perl itself.
 =cut
 
 package WWW::Mechanize::Chrome::Cookbook;
-our $VERSION = '0.22';
+our $VERSION = '0.30';
 1;

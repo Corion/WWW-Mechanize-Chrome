@@ -43,8 +43,9 @@ sub new_mech {
 my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1
 );
+my $server_url = $server->url;
 
-t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
@@ -58,9 +59,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
         diag sprintf "%s => %s", $_->tag, $_->url
             for @found_links;
     };
-    
+
     $mech->get_local('51-mech-links-base.html');
-    
+
     @found_links = $mech->links;
     SKIP: {
         my $version = $mech->chrome_version;
@@ -68,25 +69,32 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
         if( $version =~ /\b(\d+)\b/ and $1 < 60 ) {
             skip "Chrome before v60 recognizes some weird links", 3;
         } else {
+            # Weirdo ISPs like frontier.com inject more links into pages that
+            # resolve to non-existent domains
+            my @wanted_links = grep { $_->url_abs =~ m!^\Qhttps://somewhere.example/\E! } @found_links;
 
-            if( ! is scalar @found_links, 2, 'The two links were found') {
+            if( ! is scalar @wanted_links, 2, 'The two links were found') {
                 diag $_->url for @found_links;
+                diag $_->url_abs for @found_links;
+                diag $server_url;
             };
             my $url = URI->new_abs($found_links[0]->url, $found_links[0]->base);
-            is $url, 'http://somewhere.example/relative',
+            is $url, 'https://somewhere.example/relative',
                 'BASE tags get respected';
             $url = URI->new_abs($found_links[1]->url, $found_links[1]->base);
-            is $url, 'http://somewhere.example/myiframe',
+            is $url, 'https://somewhere.example/myiframe',
                 'BASE tags get respected for iframes';
         };
     }
-        
+
     # There is a FRAME tag, but FRAMES are exclusive elements
     # so Firefox ignores it while WWW::Mechanize picks it up
     my @frames = $mech->selector('frame');
     is @frames, 0, "FRAME tag"
         or diag $mech->content;
-    
+
     @frames = $mech->selector('iframe');
     is @frames, 1, "IFRAME tag";
-})
+});
+
+undef $server;

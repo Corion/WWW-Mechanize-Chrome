@@ -1,5 +1,11 @@
 WWW::Mechanize::Chrome - automate the Chrome browser
 
+DESCRIPTION
+
+Like L<WWW::Mechanize>, this module automates web browsing with a Perl object.
+Fetching and rendering of web pages is delegated to the Chrome (or Chromium)
+browser by starting an instance of the browser and controlling it with L<Chrome
+DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
 
 
 INSTALLATION
@@ -46,9 +52,7 @@ L<here|https://corion.net/talks/WWW-Mechanize-Chrome/www-mechanize-chrome.en.htm
 
 KNOWN ISSUES
 
-When Chrome is run in headless mode, Chrome throws a C<Lost UI shared context>
-error. This error can be ignored and does not affect the operation of this
-module.
+Please see L<WWW::Mechanize::Chrome::Troubleshooting>.
 
 BUG TRACKER
 

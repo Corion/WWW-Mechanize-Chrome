@@ -45,7 +45,7 @@ sub browser_instances {
         my ($default) = WWW::Mechanize::Chrome->find_executable();
         push @instances, $default
             if $default;
-        my $spec = 'chrome-versions/*/{*/,}chrome*'; # sorry, likely a bad default
+        my $spec = 'chrome-versions/*/{*/,}chrome'; # sorry, likely a bad default
         push @instances, grep { -x } bsd_glob $spec;
     };
 

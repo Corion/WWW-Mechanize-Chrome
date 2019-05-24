@@ -1,18 +1,83 @@
-    . Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
-    . Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
-    . Tested against Chrome Chrome/59.0.3071.115
-    . Tested against Chromium HeadlessChrome/60.0.3110.0
-    . Tested against Chromium HeadlessChrome/61.0.3141.0
-    . Tested against Chromium HeadlessChrome/62.0.3202.94
-    . Tested against Chromium HeadlessChrome/63.0.3239.132
-    . Tested against Chromium HeadlessChrome/64.0.3282.119
-    . Tested against Chromium HeadlessChrome/65.0.3325.181
-    . Tested against Chromium HeadlessChrome/66.0.3359.139
-    . Tested against Chromium HeadlessChrome/67.0.3396.99
-    . Tested against Chromium HeadlessChrome/68.0.3440.84
-    . Tested against Chromium HeadlessChrome/69.0.3497.100
-    . Tested against Chromium HeadlessChrome/70.0.3533.0
-    . Tested against Chromium HeadlessChrome/71.0.3557.0
+    * Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
+    * Tested against Chrome/67.0.3396.99 / Win64, thanks AppVeyor
+    * Tested against Chrome Chrome/59.0.3071.115
+    * Tested against Chromium HeadlessChrome/60.0.3110.0
+    * Tested against Chromium HeadlessChrome/61.0.3141.0
+    * Tested against Chromium HeadlessChrome/62.0.3202.94
+    * Tested against Chromium HeadlessChrome/63.0.3239.132
+    * Tested against Chromium HeadlessChrome/64.0.3282.119
+    * Tested against Chromium HeadlessChrome/65.0.3325.181
+    * Tested against Chromium HeadlessChrome/66.0.3359.139
+    * Tested against Chromium HeadlessChrome/67.0.3396.99
+    * Tested against Chromium HeadlessChrome/68.0.3440.84
+    * Tested against Chromium HeadlessChrome/69.0.3497.100
+    * Tested against Chromium HeadlessChrome/70.0.3538.77
+    * Tested against Chromium HeadlessChrome/70.0.3538.102
+    * Tested against Chromium HeadlessChrome/71.0.3578.98
+    * Tested against Chrome   HeadlessChrome/72.0.3623.0
+    * Tested against Chromium HeadlessChrome/73.0.3683.103
+    * Tested against Chromium HeadlessChrome/74.0.3729.131
+    * Tested against Chromium HeadlessChrome/75.0.3768.3
+    * Tested against Chromium HeadlessChrome/76.0.3798.0
+
+0.30 2019-05-17
+    * Disable the Host: header test for Chromer 76+, as this raises an error
+      in those versions instead of just not working.
+      I guess this is progress.
+
+0.29 2019-04-23
+    * Add ->cookie_jar support, this adresses GH #40
+    * Document "autoclose" option
+
+0.28 2019-01-07
+    * More test resiliency against fake domains / links injected by bad ISPs
+      (like frontier.com )
+    * Link to WWW::Mechanize::Chrome::Troubleshooting from main documentation
+    * Documentation improvements by SDONLEY
+    * Up Future prerequisite to 0.35, earlier versions lack the features
+      the module uses
+
+0.27 2018-12-23
+    * Properly handle Page.navigatedWithinDocument instead of raising an error.
+      The synthetic response object doesn't help much, but on the other side,
+      it's much better than raising an error and stopping the script.
+      Reported by Steve Dondley, Github issue GH #34
+
+0.26 2018-12-09
+    * Actually do something if we timeout when connecting to Chrome.
+      The main cause of the connetcion to Chrome failing is that there already
+      is a non-devtools instance of Chrome running and is brought to the
+      foreground instead of a new DevTools-enabled instance being launched.
+      The best workaround is to launch it as
+
+      use File::Temp 'tempdir';
+      # create a fresh Chrome every time
+      my $mech = WWW::Mechanize::Chrome->new(
+          data_directory => tempdir(CLEANUP => 1 ),
+      );
+
+    * More log output in Chrome::DevToolsProtocol
+    * Now testing up to Chrome 73
+    * ExtUtils::MakeMaker minimum version 5.52_01, contributed by LorenzoTa
+    * Fix the test skip counts for several tests
+
+0.25 2018-11-23
+    * Added one stray test to the distribution
+    * Rework of the documentation, thanks to Harald Joerg
+      This is a result of the PRC, thank you very much!
+    * No code changes, no need to upgrade
+
+0.24 2018-11-19
+    * Fix for ->setRequestInterception_future
+      and ->setRequestInterception, contributed by Enrique Pessoa
+      This addresses RT #127738
+
+0.23 2018-10-20
+    * Spun off screencast client into Mojolicious::Plugin::PNGCast distribution
+    * Documentation fixes (thanks Hacktoberfest!)
+    * --enable-automation is now on by default
+    * Document PDF paper size options (Thanks Eugen Konkov)
+    * Slight logging improvements for the Net::Async backend
 
 0.22 2018-09-23
     . Logging improvements

@@ -15,7 +15,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 
-our $VERSION = '0.22';
+our $VERSION = '0.30';
 our @CARP_NOT;
 
 =head1 NAME
@@ -152,6 +152,11 @@ has 'listener' => (
     default => sub { {} },
 );
 
+has 'sequence_number' => (
+    is => 'rw',
+    default => sub { 1 },
+);
+
 =item B<transport>
 
 The event-loop specific transport backend
@@ -230,11 +235,13 @@ Explicitly remove a listener.
 =cut
 
 sub remove_listener( $self, $listener ) {
-    my $event = $listener->{event};
-    $self->listener->{ $event } ||= [];
-    @{$self->listener->{ $event }} = grep { $_ != $listener }
-                                     grep { defined $_ }
-                                     @{$self->listener->{ $event }};
+    # $listener->{event} can be undef during global destruction
+    if( my $event = $listener->{event} ) {
+        $self->listener->{ $event } ||= [];
+        @{$self->listener->{ $event }} = grep { $_ != $listener }
+                                         grep { defined $_ }
+                                         @{$self->listener->{ $event }};
+    };
 }
 
 =head2 C<< ->log >>
@@ -274,18 +281,22 @@ sub connect( $self, %args ) {
     my $endpoint;
     if( $args{ endpoint }) {
         $endpoint = $args{ endpoint };
+        $self->log('trace', "Using endpoint $endpoint");
 
     } elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         $endpoint = $args{ tab }->{webSocketDebuggerUrl};
+        $self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
 
     } elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
         $endpoint = undef;
 
     } elsif( $args{ new_tab } ) {
         $endpoint = undef;
+        $self->log('trace', "Using new tab (and fresh endpoint)");
 
     } else {
         $endpoint ||= $self->endpoint;
+        $self->log('trace', "Using endpoint " . ($endpoint||'<undef>'));
     };
 
     my $got_endpoint;
@@ -311,6 +322,7 @@ sub connect( $self, %args ) {
                 (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
 
                 if( ! $tab ) {
+                    $self->log('warn', "Couldn't find a tab matching /$args{ tab }/");
                     croak "Couldn't find a tab matching /$args{ tab }/";
                 } elsif( ! $tab->{webSocketDebuggerUrl} ) {
                     local @CARP_NOT = ('Future',@CARP_NOT);
@@ -526,11 +538,13 @@ sub on_response( $self, $connection, $message ) {
 }
 
 sub next_sequence( $self ) {
-    $self->{sequence_number}++
+    my( $val ) = $self->current_sequence;
+    $self->sequence_number( $val+1 );
+    $val
 };
 
 sub current_sequence( $self ) {
-    $self->{sequence_number}
+    $self->sequence_number
 };
 
 sub build_url( $self, %options ) {
@@ -551,7 +565,9 @@ Requests an URL and returns decoded JSON from the future
 
 sub json_get($self, $domain, %options) {
     my $url = $self->build_url( domain => $domain, %options );
+    $self->log('trace', "Fetching JSON from $url");
     $self->ua->http_get( $url )->then( sub( $payload, $headers ) {
+        $self->log('trace', "JSON response", $payload);
         Future->done( $self->json->decode( $payload ))
     });
 };
@@ -711,6 +727,7 @@ sub list_tabs( $self, $type = 'page' ) {
 
 sub new_tab( $self, $url=undef ) {
     my $u = $url ? '?' . $url : '';
+    $self->log('trace', "Creating new tab");
     $self->json_get('new' . $u)
 };
 

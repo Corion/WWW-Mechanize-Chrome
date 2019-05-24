@@ -25,5 +25,6 @@ Makefile$
 ^frame-\d+.png
 ^demo/
 ^development/
+^experiments/
 ^[^/]*\.pl$ # ignore all test scripts
 ^[^/]*\.png$ # ignore all test images

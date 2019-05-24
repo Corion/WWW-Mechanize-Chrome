@@ -40,7 +40,7 @@ my %module = (
 
     PL_FILES            => {},
     BUILD_REQUIRES => {
-        'ExtUtils::MakeMaker' => 0,
+        'ExtUtils::MakeMaker' => '5.52_01',
     },
 
     PREREQ_PM => {
@@ -50,7 +50,7 @@ my %module = (
 
         'Filter::signatures' => '0.09',
         'Carp'               => 0,
-        'Future'             => 0,
+        'Future'             => '0.35', # Some smokers have 0.25 which lacks many features
         'Try::Tiny'          => 0,
         # This actually is optional
         # You need one of the following event loops:
@@ -71,6 +71,7 @@ my %module = (
         'Moo'                => 2, # for some hashes-as-objects
 
         'HTTP::Response'                   => 0,
+        'HTTP::Cookies'                    => 0,
         'HTTP::Headers'                    => 0,
         'Scalar::Util'                     => 0, # we need 'weaken' and 'blessed'
 		'MIME::Base64'                     => 0,
@@ -195,6 +196,8 @@ INSTALL
         # Read POD from Module.pm and write to README
         $parser->parse_from_file($_[0]);
         my $readme_mkdn = <<STATUS . $parser->as_markdown;
+[//]: # "This file is generated from the documentation in $main_file."
+[//]: # "Please edit that file instead."
 
 [![Travis Build Status](https://travis-ci.org/Corion/$distbase.svg?branch=master)](https://travis-ci.org/Corion/$distbase)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/$distbase?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/$distbase)
@@ -217,11 +220,11 @@ sub pod_section {
 
     my @section =
         grep { /^=head1\s+$section/.../^=/ } <$fh>;
-    pop @section if $section[-1] =~ /^=/;
-    shift @section if $remove_heading;
 
     # Trim the section
     if( @section ) {
+        pop @section if $section[-1] =~ /^=/;
+        shift @section if $remove_heading;
         pop @section
             while $section[-1] =~ /^\s*$/;
         shift @section

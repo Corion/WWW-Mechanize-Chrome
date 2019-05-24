@@ -33,7 +33,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    my ($site,$estatus) = ('http://'.rand(1000).'.www.doesnotexist.example/',500);
+    my ($site,$estatus) = ('https://'.rand(1000).'.www.doesnotexist.example/',500);
     my $res = $mech->get($site);
 
     #is $mech->uri, $site, "Navigating to (nonexisting) $site";

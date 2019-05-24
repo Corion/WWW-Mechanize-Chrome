@@ -9,7 +9,7 @@ use IO::Async::Loop;
 use Net::Async::WebSocket::Client;
 Net::Async::WebSocket::Client->VERSION(0.12); # fixes some errors with masked frames
 
-our $VERSION = '0.22';
+our $VERSION = '0.30';
 
 =head1 NAME
 
@@ -51,6 +51,11 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             on_frame => sub {
                 my( $connection, $message )=@_;
                 $handler->on_response( $connection, $message )
+            },
+            on_read_eof => sub {
+                my( $connection )=@_;
+                $logger->('info', "Connection closed");
+                # TODO: should we tell handler?
             },
         );
 
