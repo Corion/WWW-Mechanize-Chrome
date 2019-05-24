@@ -1083,15 +1083,14 @@ This method is special to WWW::Mechanize::Chrome.
 
 =cut
 
-sub eval_in_page {
-    my ($self,$str) = @_;
+sub eval_in_page($self,$str, %options) {
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
     local @Chrome::DevToolsProtocol::CARP_NOT
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->driver->evaluate("$str")->get;
+    my $result = $self->driver->evaluate("$str", %options)->get;
 
     if( $result->{error} ) {
         $self->signal_condition(
