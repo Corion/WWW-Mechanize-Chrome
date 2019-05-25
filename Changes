@@ -20,6 +20,15 @@
     * Tested against Chromium HeadlessChrome/75.0.3768.3
     * Tested against Chromium HeadlessChrome/76.0.3798.0
 
+0.31 2019-05-25
+    * Silence HTTP::Cookies::Chrome debug output left over
+    * ->eval() now takes options on whether object references or JSON-serialized
+      data should be returned. This allows you to reference the "window"
+      object, for example.
+      Currently, these object references are kept as hashrefs instead of
+      objects, and the handling needs to become more transparent with respect to
+      the Chrome API, but that is planned for later versions.
+
 0.30 2019-05-17
     * Disable the Host: header test for Chromer 76+, as this raises an error
       in those versions instead of just not working.
