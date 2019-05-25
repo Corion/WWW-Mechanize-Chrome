@@ -15,7 +15,7 @@ package WWW::Mechanize::Chrome::Examples;
 #
 
 use strict;
-our $VERSION = '0.30';
+our $VERSION = '0.31';
 
 1;
 
@@ -94,7 +94,7 @@ The following is a list of the 5 example programs that are included in the WWW::
     in the script's directory.
 
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.30/examples/url-to-image.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.31/examples/url-to-image.pl>
 
 =head2 Example: html-to-pdf.pl
 
@@ -133,7 +133,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     saves it as a PDF file in the current directory.
 
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.30/examples/html-to-pdf.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.31/examples/html-to-pdf.pl>
 
 =head2 Example: dump-links.pl
 
@@ -170,7 +170,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     =cut
 
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.30/examples/dump-links.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.31/examples/dump-links.pl>
 
 =head2 Example: sendkeys.pl
 
@@ -204,7 +204,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     =cut
 
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.30/examples/sendkeys.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.31/examples/sendkeys.pl>
 
 =head2 Example: javascript.pl
 
@@ -238,7 +238,7 @@ Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chr
     =cut
 
 
-Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.30/examples/javascript.pl>
+Download this example: L<http://cpansearch.perl.org/src/CORION/WWW-Mechanize-Chrome-0.31/examples/javascript.pl>
 
 =head1 AUTHOR
 

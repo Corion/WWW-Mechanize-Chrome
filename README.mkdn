@@ -515,9 +515,9 @@ Returns the list of errors in the JEC
 
 Clears all Javascript messages from the console
 
-## `$mech->eval_in_page( $str )`
+## `$mech->eval_in_page( $str, %options )`
 
-## `$mech->eval( $str )`
+## `$mech->eval( $str, %options )`
 
     my ($value, $type) = $mech->eval( '2+2' );
 
@@ -527,6 +527,20 @@ Returns a pair of value and Javascript type.
 
 This allows access to variables and functions declared
 "globally" on the web page.
+
+- returnByValue
+
+    If you want to create an object in Chrome and only want to keep a handle to that
+    remote object, use `JSON::false` for the `returnByValue` option:
+
+        my ($dummyObj,$type) = $mech->eval(
+            'new Object',
+            returnByValue => JSON::false
+        );
+
+    This is also helpful if the object in Chrome cannot be serialized as JSON.
+    For example, `window` is such an object. The return value is a hash, whose
+    `objectId` is the most interesting part.
 
 This method is special to WWW::Mechanize::Chrome.
 
