@@ -83,8 +83,6 @@ sub load($self,$driver = $self->driver) {
     $self->clear();
     local $self->{_loading} = 1;
     for my $c (@$cookies) {
-        use Data::Dumper;
-        warn Dumper $c;
         $self->set_cookie(
             1,
             $c->{name},
