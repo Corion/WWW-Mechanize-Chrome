@@ -1,4 +1,4 @@
-package HTTP::Cookies::Chrome;
+package HTTP::Cookies::ChromeDevToolsDevTools;
 use strict;
 use Carp qw[croak];
 
@@ -15,12 +15,12 @@ extends 'HTTP::Cookies';
 
 =head1 NAME
 
-HTTP::Cookies::Chrome - retrieve cookies from a live Chrome instance
+HTTP::Cookies::ChromeDevTools - retrieve cookies from a live Chrome instance
 
 =head1 SYNOPSIS
 
-  use HTTP::Cookies::Chrome;
-  my $cookie_jar = HTTP::Cookies::Chrome->new();
+  use HTTP::Cookies::ChromeDevTools;
+  my $cookie_jar = HTTP::Cookies::ChromeDevTools->new();
   # use just like HTTP::Cookies
 
 =head1 DESCRIPTION
@@ -34,7 +34,7 @@ If you already have an existing connection to Chrome
 that you want to reuse, just pass the L<Chrome::DevToolsProtocol>
 instance to the cookie jar constructor in the C<driver> parameter:
 
-  my $cookie_jar = HTTP::Cookies::Chrome->new(
+  my $cookie_jar = HTTP::Cookies::ChromeDevTools->new(
       driver => $driver
   );
 
@@ -133,6 +133,8 @@ __END__
 =head1 SEE ALSO
 
 L<HTTP::Cookies> - the interface used
+
+L<HTTP::Cookies::Chrome> - offline access to Chrome cookies
 
 =head1 REPOSITORY
 

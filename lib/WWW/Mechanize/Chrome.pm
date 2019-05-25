@@ -20,7 +20,7 @@ use Data::Dumper;
 use Time::HiRes qw(usleep);
 use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
-use HTTP::Cookies::Chrome;
+use HTTP::Cookies::ChromeDevTools;
 
 our $VERSION = '0.31';
 our @CARP_NOT;
@@ -2133,14 +2133,14 @@ sub set_download_directory( $self, $dir="" ) {
 
     my $cookies = $mech->cookie_jar
 
-Returns all the Chrome cookies in a L<HTTP::Cookies::Chrome> instance.
+Returns all the Chrome cookies in a L<HTTP::Cookies::ChromeDevTools> instance.
 Setting a cookie in there will also set the cookie in Chrome.
 
 =cut
 
 sub cookie_jar( $self ) {
     $self->{cookie_jar} ||= do {
-        my $c = HTTP::Cookies::Chrome->new( driver => $self->driver );
+        my $c = HTTP::Cookies::ChromeDevTools->new( driver => $self->driver );
         $c->load;
         $c
     };

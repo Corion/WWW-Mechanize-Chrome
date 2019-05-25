@@ -20,6 +20,10 @@
     * Tested against Chromium HeadlessChrome/75.0.3768.3
     * Tested against Chromium HeadlessChrome/76.0.3798.0
 
+
+    * Rename HTTP::Cookies::Chrome to HTTP::Cookies::ChromeDevTools to avoid
+      the name clash.
+
 0.31 2019-05-25
     * Silence HTTP::Cookies::Chrome debug output left over
     * ->eval() now takes options on whether object references or JSON-serialized
