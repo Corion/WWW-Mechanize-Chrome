@@ -21,6 +21,10 @@
     * Tested against Chromium HeadlessChrome/76.0.3798.0
 
 
+0.32 2019-05-29
+    * ->update_html now stringifies its argument. This allows to pass in objects
+      with stringification overload instead of having to do the stringification
+      yourself. Addresses GH #42.
     * Rename HTTP::Cookies::Chrome to HTTP::Cookies::ChromeDevTools to avoid
       the name clash.
 
