@@ -33,20 +33,28 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
-    
+
+    my $version = $mech->chrome_version;
+
     $mech->get( $server->url );
-    
+
     diag "Fetching cookie jar";
     my $cookies = $mech->cookie_jar;
     isa_ok $cookies, 'HTTP::Cookies';
-    
-    $cookies->set_cookie(undef, 'foo','bar','/','localhost', undef, undef, JSON::true, time+10, undef);
-    
-    # Count how many cookies we get as a test.
-    my $count = 0;
-    $cookies->scan(sub{$count++; });
-    
-    ok $count > 0, 'We found at least one cookie';
-    
+
+    if( $version =~ /\b(\d+)\b/ and ($1 >= 59 and $1 <= 61)) {
+        SKIP: {
+            skip "Chrome v$1 doesn't properly handle setting cookies...", 1;
+        };
+    } else {
+
+        $cookies->set_cookie(undef, 'foo','bar','/','localhost', undef, undef, JSON::true, time+10, undef);
+
+        # Count how many cookies we get as a test.
+        my $count = 0;
+        $cookies->scan(sub{$count++; });
+        ok $count > 0, 'We found at least one cookie';
+    }
+
     undef $mech;
 });
