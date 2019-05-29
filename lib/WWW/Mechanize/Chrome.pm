@@ -1439,7 +1439,13 @@ Retrieves the URL C<URL>.
 It returns a L<HTTP::Response> object for interface compatibility
 with L<WWW::Mechanize>.
 
-Note that Chrome does not support download of files.
+Note that the returned L<HTTP::Response> object gets the response body
+filled in lazily, so you might have to wait a moment to get the response
+body from the result. This is a premature optimization and later releases of
+WWW::Mechanize::Chrome are planned to fetch the response body immediately when
+accessing the response body.
+
+Note that Chrome does not support download of files through the API.
 
 =cut
 
