@@ -37,6 +37,17 @@ sub new_mech {
 
 package main;
 
+sub equivalent_html_ok {
+    my( $c, $content, $name ) = @_;
+    for ($c,$content) {
+        s/\s+/ /msg; # normalize whitespace
+        s/> </></g;
+        s/\s*$//;
+    };
+
+    is $c, $content, $name;
+};
+
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
 
@@ -55,33 +66,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 HTML
 
     $mech->update_html($content);
-
     my $c = $mech->content;
-    for ($c,$content) {
-        s/\s+/ /msg; # normalize whitespace
-        s/> </></g;
-        s/\s*$//;
-    };
-
-    is $c, $content, "Setting the content works";
+    equivalent_html_ok( $mech->content, $content, "Setting the browser content works");
 
     my $html = '<html><head></head><body><b>Hi</b></body></html>';
     my $html_ref = bless \$html => 'My::HTML';
     $mech->update_html( "$html_ref" ); # works
-    $c = $mech->content;
-    for ($c,$html) {
-        s/\s+/ /msg; # normalize whitespace
-        s/> </></g;
-        s/\s*$//;
-    };
-    is $c, $html, "Setting the content works from a stringified object";
+    equivalent_html_ok( $mech->content, $html, "Setting the content works from a stringified object");
 
     $mech->update_html(  $html_ref  ); # halted
-    $c = $mech->content;
-    for ($c,$html) {
-        s/\s+/ /msg; # normalize whitespace
-        s/> </></g;
-        s/\s*$//;
-    };
-    is $c, $html, "Setting the content works from an object with stringification";
+    equivalent_html_ok( $mech->content, $html, "Setting the content works from an object with stringification");
 });
