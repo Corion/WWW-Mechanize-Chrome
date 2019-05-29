@@ -680,7 +680,7 @@ about the current directory of your Perl script.
 
     my $cookies = $mech->cookie_jar
 
-Returns all the Chrome cookies in a [HTTP::Cookies::Chrome](https://metacpan.org/pod/HTTP::Cookies::Chrome) instance.
+Returns all the Chrome cookies in a [HTTP::Cookies::ChromeDevTools](https://metacpan.org/pod/HTTP::Cookies::ChromeDevTools) instance.
 Setting a cookie in there will also set the cookie in Chrome.
 
 ## `$mech->add_header( $name => $value, ... )`
@@ -838,6 +838,8 @@ to convert the content from UTF-8 back to its native encoding.
 
 Writes `$html` into the current document. This is mostly
 implemented as a convenience method for [HTML::Display::MozRepl](https://metacpan.org/pod/HTML::Display::MozRepl).
+
+The value passed in as `$html` will be stringified.
 
 ## `$mech->base()`
 
