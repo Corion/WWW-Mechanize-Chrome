@@ -1,4 +1,4 @@
-package HTTP::Cookies::ChromeDevToolsDevTools;
+package HTTP::Cookies::ChromeDevTools;
 use strict;
 use Carp qw[croak];
 
