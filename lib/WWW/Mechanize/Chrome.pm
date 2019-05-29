@@ -2548,6 +2548,8 @@ sub content_encoding {
 Writes C<$html> into the current document. This is mostly
 implemented as a convenience method for L<HTML::Display::MozRepl>.
 
+The value passed in as C<$html> will be stringified.
+
 =cut
 
 sub update_html( $self, $content ) {
@@ -2555,7 +2557,7 @@ sub update_html( $self, $content ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
         $self->log('trace', "Setting HTML for node " . $nodeId );
-        $self->driver->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => $content )
+        $self->driver->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => "$content" )
      })->get;
 };
 

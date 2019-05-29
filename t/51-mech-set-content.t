@@ -18,7 +18,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 2*@instances;
+    plan tests => 4*@instances;
 };
 
 sub new_mech {
@@ -27,6 +27,15 @@ sub new_mech {
         @_,
     );
 };
+
+{
+    package My::HTML;
+    use overload '""' => sub {
+        return ${$_[0]}
+    };
+}
+
+package main;
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
@@ -55,4 +64,24 @@ HTML
     };
 
     is $c, $content, "Setting the content works";
+
+    my $html = '<html><head></head><body><b>Hi</b></body></html>';
+    my $html_ref = bless \$html => 'My::HTML';
+    $mech->update_html( "$html_ref" ); # works
+    $c = $mech->content;
+    for ($c,$html) {
+        s/\s+/ /msg; # normalize whitespace
+        s/> </></g;
+        s/\s*$//;
+    };
+    is $c, $html, "Setting the content works from a stringified object";
+
+    $mech->update_html(  $html_ref  ); # halted
+    $c = $mech->content;
+    for ($c,$html) {
+        s/\s+/ /msg; # normalize whitespace
+        s/> </></g;
+        s/\s*$//;
+    };
+    is $c, $html, "Setting the content works from an object with stringification";
 });
