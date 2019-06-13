@@ -788,6 +788,7 @@ sub _connect( $self, %options ) {
         if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
             local $SIG{CHLD} = 'IGNORE';
             kill 'SIGKILL' => $pid;
+            waitpid $pid, 0;
         };
         croak $err;
     }
@@ -1394,6 +1395,7 @@ sub DESTROY {
     if( $pid ) {
         local $SIG{CHLD} = 'IGNORE';
         kill 'SIGKILL' => $pid;
+        waitpid $pid, 0;
     };
     %{ $_[0] }= (); # clean out all other held references
 }
