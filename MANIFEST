@@ -35,6 +35,7 @@ README.mkdn
 t/00-load.t
 t/01-chrome-devtools-protocol.t
 t/02-chrome-devtools-tab.t
+t/03-listener-leak-test.t
 t/47-mech-simplest.t
 t/49-launch.t
 t/49-mech-get-file-lc-ct.html

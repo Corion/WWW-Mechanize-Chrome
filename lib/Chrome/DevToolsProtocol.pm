@@ -223,6 +223,7 @@ sub add_listener( $self, $event, $callback ) {
     );
     $self->listener->{ $event } ||= [];
     push @{ $self->listener->{ $event }}, $listener;
+    weaken $self->listener->{ $event }->[-1];
     $listener
 }
 
@@ -237,10 +238,14 @@ Explicitly remove a listener.
 sub remove_listener( $self, $listener ) {
     # $listener->{event} can be undef during global destruction
     if( my $event = $listener->{event} ) {
-        $self->listener->{ $event } ||= [];
-        @{$self->listener->{ $event }} = grep { $_ != $listener }
-                                         grep { defined $_ }
-                                         @{$self->listener->{ $event }};
+        my $l = $self->listener->{ $event } ||= [];
+        @{$l} = grep { $_ != $listener }
+                grep { defined $_ }
+                @{$self->listener->{ $event }};
+        # re-weaken our references
+        for (0..$#$l) {
+            weaken $l->[$_];
+        };
     };
 }
 
@@ -474,15 +479,21 @@ sub on_response( $self, $connection, $message ) {
         };
 
         if( my $listeners = $self->listener->{ $response->{method} } ) {
+            @$listeners = grep { defined $_ } @$listeners;
             if( $self->_log->is_trace ) {
                 $self->log( 'trace', "Notifying listeners", $response );
             } else {
                 $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
             };
-            for my $listener (@$listeners) { eval {
-                $listener->notify( $response );
+            for my $listener (@$listeners) {
+                eval {
+                    $listener->notify( $response );
                 };
                 warn $@ if $@;
+            };
+            # re-weaken our references
+            for (0..$#$listeners) {
+                weaken $listeners->[$_];
             };
 
             $handled++;
