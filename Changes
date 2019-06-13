@@ -21,6 +21,13 @@
     * Tested against Chromium HeadlessChrome/76.0.3798.0
 
 
+0.33 2019-05-29
+    * Actually call waitpid to make sure our Chrome processes go away properly
+      and to not accumulate zombies. Sent by Felipe Sologuren. This fixes
+      RT #129805, thanks!
+    * Fix memory leak caused by non-weakening of references in ->add_listener
+        Diagnosed and reported by Felipe Sologuren. This fixes RT #129808,
+        thanks!
 0.32 2019-05-29
     * ->update_html now stringifies its argument. This allows to pass in objects
       with stringification overload instead of having to do the stringification
