@@ -21,6 +21,12 @@
     * Tested against Chromium HeadlessChrome/76.0.3798.0
 
 
+0.34 2019-xx-xx
+    * Add ->remove_listener to $mech to explicitly remove event listeners.
+      The usual way is RAII-style, letting your event listener simply go out of
+      scope. This is for times where you can't let your event listener go out
+      of scope.
+
 0.33 2019-05-29
     * Actually call waitpid to make sure our Chrome processes go away properly
       and to not accumulate zombies. Sent by Felipe Sologuren. This fixes
