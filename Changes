@@ -28,6 +28,9 @@
     * Fix memory leak caused by non-weakening of references in ->add_listener
         Diagnosed and reported by Felipe Sologuren. This fixes RT #129808,
         thanks!
+    * Add ->event accessor to Chrome::DevToolsProtocol::EventListener, suggested
+      by Felipe Sologuren, thanks!
+
 0.32 2019-05-29
     * ->update_html now stringifies its argument. This allows to pass in objects
       with stringification overload instead of having to do the stringification
