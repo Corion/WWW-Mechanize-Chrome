@@ -94,5 +94,5 @@ This module is released under the same terms as Perl itself.
 =cut
 
 package WWW::Mechanize::Chrome::Troubleshooting;
-our $VERSION = '0.32';
+our $VERSION = '0.33';
 1;

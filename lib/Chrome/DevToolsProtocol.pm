@@ -15,7 +15,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 
-our $VERSION = '0.32';
+our $VERSION = '0.33';
 our @CARP_NOT;
 
 =head1 NAME
