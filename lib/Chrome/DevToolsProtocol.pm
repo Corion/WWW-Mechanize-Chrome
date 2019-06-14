@@ -237,7 +237,7 @@ Explicitly remove a listener.
 
 sub remove_listener( $self, $listener ) {
     # $listener->{event} can be undef during global destruction
-    if( my $event = $listener->{event} ) {
+    if( my $event = $listener->event ) {
         my $l = $self->listener->{ $event } ||= [];
         @{$l} = grep { $_ != $listener }
                 grep { defined $_ }
@@ -790,7 +790,12 @@ has 'callback' => (
     is => 'ro',
 );
 
+has 'event' => (
+    is => 'ro',
+);
+
 around BUILDARGS => sub( $orig, $class, %args ) {
+    croak "Need an event" unless $args{ event };
     croak "Need a callback" unless $args{ callback };
     croak "Need a DevToolsProtocol in protocol" unless $args{ protocol };
     return $class->$orig( %args )
