@@ -808,6 +808,7 @@ sub notify( $self, @info ) {
 sub unregister( $self ) {
     $self->protocol->remove_listener( $self )
         if $self->protocol; # it's a weak ref so it might have gone away already
+    undef $self->{protocol};
 }
 
 sub DESTROY {
