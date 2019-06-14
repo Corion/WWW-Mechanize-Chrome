@@ -1026,6 +1026,18 @@ To see the browser console live from your Perl script, use the following:
         @{ $_[0]->{params}->{args} };
   });
 
+If you want to explicitly remove the listener, either set it to C<undef>:
+
+  undef $console;
+
+Alternatively, call
+
+  $console->unregister;
+
+or call
+
+  $mech->remove_listener( $console );
+
 =cut
 
 sub add_listener( $self, $event, $callback ) {
