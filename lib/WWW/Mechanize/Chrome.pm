@@ -3197,6 +3197,9 @@ sub _performSearch( $self, %args ) {
             #    );
             #}
             )->then( sub( $response ) {
+                # This should already happen through the DESTROY callback
+                # but we'll be explicit here
+                $setChildNodes->unregister;
                 undef $setChildNodes;
                 my %nodes = map {
                     $_->{nodeId} => $_
