@@ -1036,6 +1036,10 @@ sub add_listener( $self, $event, $callback ) {
     return $self->driver->add_listener( $event, $callback )
 }
 
+sub remove_listener( $self, $listener ) {
+    $listener->unregister
+}
+
 =head2 C<< $mech->on_request_intercepted( $cb ) >>
 
   $mech->on_request_intercepted( sub {
