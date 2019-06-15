@@ -4593,7 +4593,6 @@ sub fetchResources_future( $self, %options ) {
     $self->getResourceTree_future
     ->then( sub( $tree ) {
         my @requested;
-
         # Also fetch the frame itself?!
         # Or better reuse ->content?!
         # $tree->{frame}
@@ -4602,7 +4601,7 @@ sub fetchResources_future( $self, %options ) {
         # This should become a separate method
         # Also something like get_page_resources, that returns the linear
         # list of resources for all frames etc.
-        for my $res (@{ $tree->{resources}}) {
+        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
             # Also include childFrames and subresources here, recursively
 
             if( $names->{ $res->{url} } ) {
@@ -4612,7 +4611,8 @@ sub fetchResources_future( $self, %options ) {
 
             # we will only scrape HTTP resources
             next if $res->{url} !~ /^https?:/i;
-            my $target = $self->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
+            warn $res->{url};
+            my $target = $s->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
             my %filenames = reverse %$names;
 
             my $duplicates;
@@ -4625,24 +4625,24 @@ sub fetchResources_future( $self, %options ) {
         };
 
         # retrieve and save the resource content for each resource
-        for my $res (@{ $tree->{resources}}) {
+        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
             next if $seen->{ $res->{url} };
 
             # we will only scrape HTTP resources
             next if $res->{url} !~ /^https?:/i;
-            my $fetch = $self->getResourceContent_future( $res );
+            my $fetch = $s->getResourceContent_future( $res );
             if( $save ) {
-                #warn "Will save $res->{url}";
+                warn "Will save $res->{url}";
                 $fetch = $fetch->then( $save );
             };
             push @requested, $fetch;
         };
-        Future->wait_all( @requested )->catch(sub {
+        return Future->wait_all( @requested )->catch(sub {
             warn $@;
         });
     })->catch(sub {
-            warn $@;
-        });
+        warn $@;
+    });
 }
 
 =head2 C<< $mech->saveResources_future >>

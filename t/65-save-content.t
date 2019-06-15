@@ -18,7 +18,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
-my $testcount = 3;
+my $testcount = 4;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -77,6 +77,17 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is $r{ $server->url }, $page_file,
         "We save the URL under the top HTML filename"
         or diag Dumper \%r;
+    if( -f $page_file ) {
+        local $/;
+        open my $fh, '<', $page_file
+            or die "Couldn't read temp file '$page_file': $!";
+        my $html = <$fh>;
+        like $html, qr/<html\b/i, "... and it's HTML";
+    } else {
+        SKIP: {
+            skip "Didn't write the file", 1;
+        };
+    };
 });
 $server->kill;
 undef $server;
