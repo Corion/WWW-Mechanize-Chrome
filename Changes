@@ -25,6 +25,11 @@
       The usual way is RAII-style, letting your event listener simply go out of
       scope. This is for times where you can't let your event listener go out
       of scope.
+    * Be more defensive to avoid (unweak) circular references. This should clean
+      out more memory leaks whenever a callback is set or a Future is returned
+      from W:M:C.
+    * Fix (partial code for) saving a page. I don't know how this test ever
+      passed. This adresses RT #129821.
 
 0.33 2019-05-29
     * Actually call waitpid to make sure our Chrome processes go away properly
