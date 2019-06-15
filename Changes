@@ -11,15 +11,14 @@
     * Tested against Chromium HeadlessChrome/67.0.3396.99
     * Tested against Chromium HeadlessChrome/68.0.3440.84
     * Tested against Chromium HeadlessChrome/69.0.3497.100
-    * Tested against Chromium HeadlessChrome/70.0.3538.77
     * Tested against Chromium HeadlessChrome/70.0.3538.102
     * Tested against Chromium HeadlessChrome/71.0.3578.98
-    * Tested against Chrome   HeadlessChrome/72.0.3623.0
+    * Tested against Chrome   HeadlessChrome/72.0.3626.96
     * Tested against Chromium HeadlessChrome/73.0.3683.103
     * Tested against Chromium HeadlessChrome/74.0.3729.131
-    * Tested against Chromium HeadlessChrome/75.0.3768.3
+    * Tested against Chromium HeadlessChrome/75.0.3770.90
     * Tested against Chromium HeadlessChrome/76.0.3798.0
-
+    * Tested against Chromium HeadlessChrome/77.0.3826.0
 
 0.34 2019-xx-xx
     * Add ->remove_listener to $mech to explicitly remove event listeners.

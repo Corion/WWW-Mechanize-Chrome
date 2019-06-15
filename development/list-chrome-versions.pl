@@ -5,12 +5,15 @@ use warnings;
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 use File::Temp 'tempdir';
+use File::Glob 'bsd_glob';
 
 use lib '.';
 use WWW::Mechanize::Chrome;
 use t::helper;
 
-my @instances = t::helper::browser_instances();
+my @instances = @ARGV
+                ? map { bsd_glob $_ } @ARGV
+                : t::helper::browser_instances;
 my $windows = ($^O =~ /mswin/i);
 
 for my $instance (@instances) {
@@ -19,8 +22,10 @@ for my $instance (@instances) {
     my $mech = WWW::Mechanize::Chrome->new(
         launch_exe => $instance,
         headless   => 1,
-        incognito  => 1,
+        #incognito  => 1,
         data_directory => tempdir( CLEANUP => 1 ),
     );
     print $mech->chrome_version, "\n";
+    undef $mech;
+    sleep 1;
 }
