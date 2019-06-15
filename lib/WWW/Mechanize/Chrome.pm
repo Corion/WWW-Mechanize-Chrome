@@ -4587,6 +4587,9 @@ sub fetchResources_future( $self, %options ) {
     my $names = $options{ names };
     my $save = $options{ save };
 
+    my $s = $self;
+    weaken $s;
+
     $self->getResourceTree_future
     ->then( sub( $tree ) {
         my @requested;
@@ -4668,6 +4671,8 @@ sub saveResources_future( $self, %options ) {
     my %names = (
         $self->uri => $target_file,
     );
+    my $s = $self;
+    weaken $s;
     $self->fetchResources_future( save => sub( $resource ) {
 
         # For mime/html targets without a name, use the title?!
@@ -4677,7 +4682,7 @@ sub saveResources_future( $self, %options ) {
         $names{ $resource->{url} } ||= File::Spec->catfile( $target_dir, $names{ $resource->{url} });
         my $target = $names{ $resource->{url} }
             or die "Don't have a filename for URL '$resource->{url}' ?!";
-        $self->log( 'debug', "Saving '$resource->{url}' to '$target'" );
+        $s->log( 'debug', "Saving '$resource->{url}' to '$target'" );
         open my $fh, '>', $target
             or croak "Couldn't save url '$resource->{url}' to $target: $!";
         binmode $fh;
@@ -4688,7 +4693,7 @@ sub saveResources_future( $self, %options ) {
     }, names => \%names, seen => \my %seen )->then( sub( @resources ) {
         Future->done( %names );
     })->catch(sub {
-            warn $@;
+        warn $@;
     });
 }
 
