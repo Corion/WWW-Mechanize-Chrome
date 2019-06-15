@@ -1077,7 +1077,7 @@ sub on_request_intercepted( $self, $cb ) {
         $self->{ on_request_intercept_listener } =
         $self->add_listener('Network.requestIntercepted', sub( $ev ) {
             if( $s->{ on_request_intercepted }) {
-                $self->log('debug', sprintf 'Request intercepted %s: %s',
+                $s->log('debug', sprintf 'Request intercepted %s: %s',
                                     $ev->{params}->{interceptionId},
                                     $ev->{params}->{request}->{url});
                 $s->{ on_request_intercepted }->( $s, $ev->{params} );
@@ -1137,7 +1137,7 @@ sub on_dialog( $self, $cb ) {
         $self->{ on_dialog_listener } =
         $self->add_listener('Page.javascriptDialogOpening', sub( $ev ) {
             if( $s->{ on_dialog }) {
-                $self->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
+                $s->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
                 $s->{ on_dialog }->( $s, $ev->{params} );
             };
         });
@@ -3278,13 +3278,13 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
                 @{ $attributes },
             },
             nodeName => $nodeName,
-            driver => $self->driver,
+            driver => $s->driver,
             mech => $s,
-            _generation => $self->_generation,
+            _generation => $s->_generation,
         };
         Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
     })->catch(sub {
-        warn "Node has gone away in the meantime, could not resolve";
+        warn "Node $nodeId has gone away in the meantime, could not resolve";
         Future->done( WWW::Mechanize::Chrome::Node->new( {} ) );
     });
 }
@@ -5026,18 +5026,20 @@ sub _handleScreencastFrame( $self, $frame ) {
     # Meh, this one doesn't get a response I guess. So, not ->send_message, just
     # send a JSON packet to acknowledge the frame
     my $ack;
+    my $s = $self;
+    weaken $s;
     $ack = $self->driver->send_message(
         'Page.screencastFrameAck',
         sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
-            $self->log('trace', 'Screencast frame acknowledged');
+            $s->log('trace', 'Screencast frame acknowledged');
             $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
-            $self->{ screenFrameCallback }->( $self, $frame->{params} );
+            $s->{ screenFrameCallback }->( $s, $frame->{params} );
             # forget ourselves
             undef $ack;
     });
 }
 
-sub setScreenFrameCallback( $self, $callback, %options ) {
+sub setScreenFrameCallback( $self, $callback=undef, %options ) {
     $self->{ screenFrameCallback } = $callback;
 
     $options{ format } ||= 'png';
@@ -5052,7 +5054,7 @@ sub setScreenFrameCallback( $self, $callback, %options ) {
         };
         $self->{ screenCastFrameListener } =
             $self->add_listener('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
-        $action = $self->driver->send_message(
+        $action = $s->driver->send_message(
             'Page.startScreencast',
             format => $options{ format },
             everyNthFrame => 0+$options{ everyNthFrame }
@@ -5062,7 +5064,7 @@ sub setScreenFrameCallback( $self, $callback, %options ) {
             # well, actually, we should only reset this after we're sure that
             # the last frame has been processed. Maybe we should send ourselves
             # a fake event for that, or maybe Chrome tells us
-            delete $self->{ screenCastFrameListener };
+            delete $s->{ screenCastFrameListener };
             Future->done(1);
         });
     }
