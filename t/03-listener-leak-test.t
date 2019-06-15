@@ -42,7 +42,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     for( 1..10 ) {
         my @input = $mech->xpath('//input[@name="q"]');
     };
-    is scalar @{ $mech->driver->listener->{'DOM.setChildNodes'} }, 0, "We don't accumulate listeners";
+    is scalar @{ $mech->driver->listener->{'DOM.setChildNodes'} || []}, 0, "We don't accumulate listeners";
 
     my $destroyed = 0;
     my $old_destroy = \&Chrome::DevToolsProtocol::EventListener::DESTROY;
