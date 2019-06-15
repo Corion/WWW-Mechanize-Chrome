@@ -20,7 +20,7 @@
     * Tested against Chromium HeadlessChrome/76.0.3798.0
     * Tested against Chromium HeadlessChrome/77.0.3826.0
 
-0.34 2019-xx-xx
+0.34 2019-06-15
     * Add ->remove_listener to $mech to explicitly remove event listeners.
       The usual way is RAII-style, letting your event listener simply go out of
       scope. This is for times where you can't let your event listener go out

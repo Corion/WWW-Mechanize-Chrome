@@ -22,7 +22,7 @@ use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 
-our $VERSION = '0.33';
+our $VERSION = '0.34';
 our @CARP_NOT;
 
 =encoding utf-8
