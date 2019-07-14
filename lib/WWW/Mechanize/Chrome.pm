@@ -509,7 +509,7 @@ sub default_executable_names( $class, @other ) {
         push @program_names,
           $^O =~ /mswin/i ? 'chrome.exe'
         : $^O =~ /darwin/i ? 'Google Chrome'
-        : ('google-chrome', 'chromium-browser')
+        : ('google-chrome', 'chromium-browser', 'chromium')
     };
     @program_names
 }
