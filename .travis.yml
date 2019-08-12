@@ -41,7 +41,10 @@ matrix:
 
 sudo: required
 
-dist: trusty
+dist: xenial
+services:
+  - xvfb
+
 addons:
   chrome: stable
   apt:
@@ -54,9 +57,9 @@ addons:
       - libpng-dev
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then grep -v blank /etc/fonts/fonts.conf | sudo tee /etc/fonts/fonts.conf; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then grep -v blank /etc/fonts/fonts.conf | sudo tee /etc/fonts/fonts.conf; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
   - "\"$CHROME_BIN\" --version"
