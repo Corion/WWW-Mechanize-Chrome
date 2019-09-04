@@ -58,7 +58,7 @@ DevTools|https://developers.google.com/web/tools/chrome-devtools/>.
 The Chrome browser provides advanced abilities useful for automating modern
 web applications that are not (yet) possible with L<WWW::Mechanize> alone:
 
-=over
+=over 4
 
 =item *
 
@@ -1464,6 +1464,17 @@ WWW::Mechanize::Chrome are planned to fetch the response body immediately when
 accessing the response body.
 
 Note that Chrome does not support download of files through the API.
+
+=head3 Options
+
+=over 4
+
+=item *
+
+C<intrapage> - Override the detection of whether to wait for a HTTP response
+or not. Setting this will never wait for an HTTP response.
+
+=back
 
 =cut
 
@@ -3434,6 +3445,11 @@ This is useful if your document ids contain characters that
 do look like CSS selectors. It is equivalent to
 
     xpath => qq{//*[\@id="$id"]}
+
+=item *
+
+C<intrapage> - Override the detection of whether to wait for a HTTP response
+or not. Setting this will never wait for an HTTP response.
 
 =back
 
