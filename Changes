@@ -21,6 +21,11 @@
     * Tested against Chromium HeadlessChrome/77.0.3826.0
     * Tested against Chromium HeadlessChrome/73.0.3683.75 (Debian "Buster")
 
+0.35 2019-09-05
+    * Documented `intrapage` option to ->click()
+    * Added `chromium` to default list of browsers
+    *
+
 0.34 2019-06-15
     * Add ->remove_listener to $mech to explicitly remove event listeners.
       The usual way is RAII-style, letting your event listener simply go out of
