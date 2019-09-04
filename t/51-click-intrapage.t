@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 3*@instances;
+    plan tests => 4*@instances;
 };
 
 sub new_mech {
