@@ -68,7 +68,7 @@ sub default_unavailable {
 sub runtests {
     my ($browser_instance, $new_mech, $code, $test_count) = @_;
     if ($browser_instance) {
-        diag sprintf "Testing with %s",
+        note sprintf "Testing with %s",
             $browser_instance;
     };
     my $tempdir = tempdir( CLEANUP => 1 );
@@ -104,7 +104,7 @@ sub runtests {
             return
         };
 
-        diag sprintf "Using Chrome version '%s'",
+        note sprintf "Using Chrome version '%s'",
             $mech->chrome_version;
 
         # Run the user-supplied tests, making sure we don't keep a

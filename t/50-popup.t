@@ -68,7 +68,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
         $mech->click($win, synchronize => 0);
         ok 1, "We get here";
     };
-    diag "But we don't know what window was opened";
+    note "But we don't know what window was opened";
     #sleep 10;
     # or how to close it
 });
