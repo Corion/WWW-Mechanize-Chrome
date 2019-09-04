@@ -611,6 +611,11 @@ accessing the response body.
 
 Note that Chrome does not support download of files through the API.
 
+### Options
+
+- `intrapage` - Override the detection of whether to wait for a HTTP response
+or not. Setting this will never wait for an HTTP response.
+
 ## `$mech->_collectEvents`
 
     my $events = $mech->_collectEvents(
@@ -742,7 +747,7 @@ Returns the current response as a [HTTP::Response](https://metacpan.org/pod/HTTP
 
 ## `$mech->success()`
 
-    $mech->get('http://google.com');
+    $mech->get('https://google.com');
     print "Yay"
         if $mech->success();
 
@@ -753,7 +758,7 @@ This is a convenience function that wraps `$mech->res->is_success`.
 
 ## `$mech->status()`
 
-    $mech->get('http://google.com');
+    $mech->get('https://google.com');
     print $mech->status();
     # 200
 
@@ -1109,6 +1114,9 @@ the following keys are recognized:
     do look like CSS selectors. It is equivalent to
 
         xpath => qq{//*[\@id="$id"]}
+
+- `intrapage` - Override the detection of whether to wait for a HTTP response
+or not. Setting this will never wait for an HTTP response.
 
 Returns a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
 
