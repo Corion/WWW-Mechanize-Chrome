@@ -2301,7 +2301,7 @@ sub signal_http_status {
 
 =head2 C<< $mech->success() >>
 
-    $mech->get('http://google.com');
+    $mech->get('https://google.com');
     print "Yay"
         if $mech->success();
 
@@ -2319,7 +2319,7 @@ sub success {
 
 =head2 C<< $mech->status() >>
 
-    $mech->get('http://google.com');
+    $mech->get('https://google.com');
     print $mech->status();
     # 200
 
