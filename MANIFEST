@@ -62,6 +62,7 @@ t/50-mech-redirect.t
 t/50-mech-start-url.t
 t/50-mech-status.t
 t/50-popup.t
+t/51-click-intrapage.t
 t/51-mech-form-with-fields.t
 t/51-mech-links-base.html
 t/51-mech-links-nobase.html
