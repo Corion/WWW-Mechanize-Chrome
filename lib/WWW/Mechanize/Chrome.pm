@@ -753,8 +753,9 @@ sub new($class, %options) {
     };
 
     my $method = 'socket';
-    if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
-        $options{ pipe } = 1;
+    #if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
+    if( $options{ pipe }) {
+        #$options{ pipe } = 1;
         $method = 'pipe';
     };
 
