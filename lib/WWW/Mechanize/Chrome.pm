@@ -849,6 +849,7 @@ sub _build_debuggerTransport( $self ) {
             browserContextId => $_[0]->{browserContextId},
         );
     })->then(sub {
+        $targetId = $_[0]->{targetId};
         $self->driver->send_message('Target.attachToTarget',
             targetId => $_[0]->{targetId},
         );
@@ -896,8 +897,14 @@ sub _connect( $self, %options ) {
     # We need to set up a new browser target if we connect via pipe
     my $targetId;
     if( $options{ pipe }) {
-        $self->{transport} = $self->{driver};
         $targetId = $self->_build_debuggerTransport()->get;
+        require Chrome::DevToolsProtocol::Target;
+        $self->{target} = Chrome::DevToolsProtocol::Target->new(
+            transport => $self->{driver},
+            targetId  => $targetId,
+        );
+        $self->{target}->connect()->get;
+        $self->{driver} = $self->{target};
         # Now, replace driver with the driver sending to the target
         #$self->driver->send_message('Target.sendMessageToTarget',
             #targetId => $targetId, message => '{"id":0,"method":"Page.enable"}');
