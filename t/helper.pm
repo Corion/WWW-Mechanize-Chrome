@@ -96,9 +96,10 @@ sub runtests {
                 skip "Couldn't create new object: $@", $test_count;
             };
             my $version = eval {
-                WWW::Mechanize::Chrome::chrome_version({
+                my $c = bless {
                     launch_exe => $browser_instance
-                });
+                } => 'WWW::Mechanize::Chrome';
+                $c->chrome_version();
             };
             diag sprintf "Failed on Chrome version '%s'", $version || '(unknown)';
             return
