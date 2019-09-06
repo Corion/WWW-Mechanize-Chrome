@@ -284,7 +284,14 @@ sub connect( $self, %args ) {
 
     # Kick off the connect
     my $endpoint;
-    if( $args{ endpoint }) {
+    if( $args{ writer_fh } and $args{ reader_fh }) {
+        # Pipe connection
+        $args{ transport } ||= 'Chrome::DevToolsProtocol::Transport::Pipe';
+        $endpoint = {
+            reader_fh => $args{ reader_fh },
+            writer_fh => $args{ writer_fh },
+        };
+    } elsif( $args{ endpoint }) {
         $endpoint = $args{ endpoint };
         $self->log('trace', "Using endpoint $endpoint");
 
@@ -368,11 +375,13 @@ sub connect( $self, %args ) {
 
     } else {
         $got_endpoint = Future->done( $endpoint );
-        # We need to somehow find the tab id for our tab, so let's fake it:
-        $endpoint =~ m!/([^/]+)$!
-            or die "Couldn't find tab id in '$endpoint'";
-        $self->{tab} = {
-            id => $1,
+        if( ! ref $endpoint ) {
+            # We need to somehow find the tab id for our tab, so let's fake it:
+            $endpoint =~ m!/([^/]+)$!
+                or die "Couldn't find tab id in '$endpoint'";
+            $self->{tab} = {
+                id => $1,
+            };
         };
     };
     $got_endpoint = $got_endpoint->then(sub($endpoint) {
