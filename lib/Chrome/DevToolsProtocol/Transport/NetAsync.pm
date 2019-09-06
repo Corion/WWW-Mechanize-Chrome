@@ -1,5 +1,6 @@
 package Chrome::DevToolsProtocol::Transport::NetAsync;
 use strict;
+use Moo 2;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
@@ -27,18 +28,14 @@ Chrome::DevToolsProtocol::Transport::NetAsync - IO::Async backend for Chrome com
 
 =cut
 
-sub new( $class, %options ) {
-    $options{ loop } ||= IO::Async::Loop->new();
-    bless \%options => $class
-}
+has 'loop' => (
+    is => 'lazy',
+    default => sub { IO::Async::Loop->new() },
+);
 
-sub connection( $self ) {
-    $self->{connection}
-}
-
-sub loop( $self ) {
-    $self->{loop}
-}
+has 'connection' => (
+    is => 'rw',
+);
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};

@@ -1,6 +1,7 @@
 package Chrome::DevToolsProtocol::Transport::Pipe;
 use strict;
 use Filter::signatures;
+use Moo 2;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use Scalar::Util 'weaken';
@@ -31,18 +32,16 @@ of two file descriptors. At least on Debian, this backend does not implement
 
 =cut
 
-sub new( $class, %options ) {
-    $options{ loop } ||= IO::Async::Loop->new();
-    bless \%options => $class
-}
+has 'loop' => (
+    is => 'lazy',
+    default => sub {
+        IO::Async::Loop->new(),
+    },
+);
 
-sub connection( $self ) {
-    $self->{connection}
-}
-
-sub loop( $self ) {
-    $self->{loop}
-}
+has 'connection' => (
+    is => 'rw',
+);
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
@@ -67,7 +66,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
                 };;
             },
         );
-        $self->{loop}->add( $self->connection );
+        $self->loop->add( $self->connection );
         Future->done( $self );
     });
 }
@@ -99,7 +98,7 @@ Returns a Future that will be resolved in the number of seconds given.
 =cut
 
 sub sleep( $self, $seconds ) {
-    Future::Mojo->new_timer( $seconds )
+    $self->loop->delay_future( after => $seconds )
 }
 
 1;
