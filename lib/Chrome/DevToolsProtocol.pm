@@ -72,7 +72,7 @@ has 'host' => (
     default => '127.0.0.1',
 );
 
-=item B<host>
+=item B<port>
 
 The port to connect to
 
