@@ -864,15 +864,15 @@ needs launching the browser and asking for the version via the network.
 
 sub chrome_version_from_stdout( $self ) {
     # We can try to get at the version through the --version command line:
-    my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 1, port => undef });
-
-    $self->log('trace', "Retrieving version via [@cmd]" );
-    if ($^O =~ /darwin/) {
-      s/ /\\ /g for @cmd;
-    }
-    my $v = readpipe(join " ", @cmd);
+    my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 0, enable_automation => 0, port => undef });
+    #$self->log('trace', "Retrieving version via [@cmd]" );
+     if ($^O =~ /darwin/) {
+       s/ /\\ /g for @cmd;
+     }
+     my $v = readpipe(join " ", @cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
+    # Chromium 76.0.4809.100 built on Debian 10.0, running on Debian 10.0
     $v =~ /^(\S+)\s+([\d\.]+)\s/
         or return; # we didn't find anything
     return "$1/$2"
