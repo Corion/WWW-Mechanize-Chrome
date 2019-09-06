@@ -1,0 +1,44 @@
+=head1 OBJECT LAYOUT (TCP)
+
+    +----------------------------------+
+    | WWW::Mechanize::Chrome ("$mech") |
+    +----------------------------------+
+          |
+          ->driver
+          +-----------------------------+
+          | Chrome::DevToolsProtocol    |
+          +-----------------------------+
+          |
+          ->transport
+          +-----------------------------------------------+
+          | Chrome::DevToolsProtocol::Transport::NetAsync |
+          +-----------------------------------------------+
+          |
+          | (TCP connection)
+          |
+          Chrome executable
+
+=head1 OBJECT LAYOUT (Pipe)
+
+    +----------------------------------+
+    | WWW::Mechanize::Chrome ("$mech") |
+    +----------------------------------+
+          |
+          ->driver
+          +----------------------------------+
+          | Chrome::DevToolsProtocol::Target |
+          +----------------------------------+
+          |
+          ->transport
+          +-----------------------------+
+          | Chrome::DevToolsProtocol    |
+          +-----------------------------+
+          |
+          ->transport
+          +-------------------------------------------+
+          | Chrome::DevToolsProtocol::Transport::Pipe |
+          +-------------------------------------------+
+          |
+          | (FD 3 and 4)
+          |
+          Chrome executable
