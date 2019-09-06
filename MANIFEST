@@ -15,6 +15,7 @@ lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
 lib/Chrome/DevToolsProtocol/Transport/NetAsync.pm
+lib/Chrome/DevToolsProtocol/Transport/Pipe.pm
 lib/HTTP/Cookies/ChromeDevTools.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Chrome/Contributing.pod
@@ -42,6 +43,7 @@ t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
 t/49-mech-get-file.t
 t/49-mech-nav.t
+t/49-pipe.t
 t/49-port.t
 t/50-click.html
 t/50-follow-link.t
