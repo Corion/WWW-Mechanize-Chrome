@@ -841,6 +841,22 @@ sub _setup_driver_future( $self, %options ) {
     })
 }
 
+sub _build_debuggerTransport( $self ) {
+    my $targetId;
+    $self->driver->send_message('Target.createBrowserContext')->then(sub {
+        $self->driver->send_message('Target.createTarget',
+            url => 'about:blank',
+            browserContextId => $_[0]->{browserContextId},
+        );
+    })->then(sub {
+        $self->driver->send_message('Target.attachToTarget',
+            targetId => $_[0]->{targetId},
+        );
+    })->then(sub {
+        Future->done( $targetId );
+    });
+}
+
 # This (tries to) connects to the devtools in the browser
 sub _connect( $self, %options ) {
     my $err;
@@ -876,6 +892,20 @@ sub _connect( $self, %options ) {
     $self->{nodeGenerationChange} =
         $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
     $self->new_generation;
+
+    # We need to set up a new browser target if we connect via pipe
+    my $targetId;
+    if( $options{ pipe }) {
+        $self->{transport} = $self->{driver};
+        $targetId = $self->_build_debuggerTransport()->get;
+        # Now, replace driver with the driver sending to the target
+        #$self->driver->send_message('Target.sendMessageToTarget',
+            #targetId => $targetId, message => '{"id":0,"method":"Page.enable"}');
+        # $self->transport->send_message()
+        # ->transport -> { sendMessageToTarget( message ) }
+        # ->       target        ->
+        # ->       driver       ->
+    };
 
     my @setup = (
         $self->driver->send_message('DOM.enable'),
