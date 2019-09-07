@@ -896,7 +896,7 @@ sub _connect( $self, %options ) {
 
     # We need to set up a new browser target if we connect via pipe
     my $targetId;
-    if( $options{ pipe }) {
+    #if( $options{ pipe }) {
         $targetId = $self->_build_debuggerTransport()->get;
         require Chrome::DevToolsProtocol::Target;
         $self->{target} = Chrome::DevToolsProtocol::Target->new(
@@ -912,7 +912,7 @@ sub _connect( $self, %options ) {
         # ->transport -> { sendMessageToTarget( message ) }
         # ->       target        ->
         # ->       driver       ->
-    };
+    #};
 
     my @setup = (
         $self->driver->send_message('DOM.enable'),

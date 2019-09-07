@@ -310,6 +310,14 @@ sub connect( $self, %args ) {
 
     my $got_endpoint;
     if( ! $endpoint ) {
+        $got_endpoint = $self->version_info()->then(sub( $info ) {
+            $self->log('debug', "Created new tab", $info );
+            $self->{tab} = $info;
+            use Data::Dumper;
+            warn Dumper $info;
+            return Future->done( $info->{webSocketDebuggerUrl} );
+        });
+            if(0) {
         if( $args{ new_tab }) {
             $got_endpoint = $self->new_tab()->then(sub( $info ) {
                 $self->log('debug', "Created new tab", $info );
@@ -369,6 +377,7 @@ sub connect( $self, %args ) {
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
         };
+    };
 
     } else {
         $got_endpoint = Future->done( $endpoint );
@@ -743,9 +752,10 @@ sub list_tabs( $self, $type = 'page' ) {
 =cut
 
 sub new_tab( $self, $url=undef ) {
-    my $u = $url ? '?' . $url : '';
+    #my $u = $url ? '?' . $url : '';
     $self->log('trace', "Creating new tab");
-    $self->json_get('new' . $u)
+    #$self->json_get('new' . $u)
+    $self->send_message('Target.createTarget');
 };
 
 =head2 C<< $chrome->activate_tab >>
