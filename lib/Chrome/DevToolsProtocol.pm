@@ -165,6 +165,7 @@ The event-loop specific transport backend
 
 has 'transport' => (
     is => 'ro',
+    handles => ['future'],
 );
 
 around BUILDARGS => sub( $orig, $class, %args ) {
@@ -179,10 +180,6 @@ around BUILDARGS => sub( $orig, $class, %args ) {
     my $f = $driver->future();
 
 Returns a backend-specific generic future
-
-=cut
-
-sub future( $self ) { $self->transport->future }
 
 =head2 C<< ->endpoint >>
 
