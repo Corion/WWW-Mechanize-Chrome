@@ -82,11 +82,6 @@ A premade L<Log::Log4perl> object to act as logger
 
 =cut
 
-#has '_log' => (
-#    is => 'ro',
-#    default => \&_build_log,
-#);
-
 has 'receivers' => (
     is => 'ro',
     default => sub { {} },
@@ -126,7 +121,7 @@ The event-loop specific transport backend
 
 has 'transport' => (
     is => 'ro',
-    handles => [qw[future sleep endpoint close log]],
+    handles => [qw[future sleep endpoint close log _log version_info protocol_version]],
 );
 
 has 'targetId' => (
@@ -210,19 +205,6 @@ sub remove_listener( $self, $listener ) {
 
 Log a message
 
-=cut
-
-#sub log( $self, $level, $message, @args ) {
-#    my $logger = $self->_log;
-#    if( !@args ) {
-#        $logger->$level( $message )
-#    } else {
-#        my $enabled = "is_$level";
-#        $logger->$level( join " ", $message, Dumper @args )
-#            if( $logger->$enabled );
-#    };
-#}
-
 =head2 C<< ->connect >>
 
     my $f = $driver->connect()->get;
@@ -234,12 +216,12 @@ Asynchronously connect to the Chrome browser, returning a Future.
 sub connect( $self, %args ) {
     # ... do we need to do anything here?!
     $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
-        use Data::Dumper;
-        warn Dumper \@_;
+        #use Data::Dumper;
+        #warn Dumper \@_;
         my $payload = $_[0]->{params}->{message};
         $self->on_response( undef, $payload );
     });
-    warn Dumper $self->{l};
+    #warn Dumper $self->{l};
     Future->done()
 };
 
@@ -518,25 +500,9 @@ sub eval( $self, $string ) {
 
     print $chrome->version_info->get->{"Protocol-Version"};
 
-=cut
-
-sub version_info($self) {
-    $self->json_get( 'version' )->then( sub( $payload ) {
-        Future->done( $payload );
-    });
-};
-
 =head2 C<< $chrome->protocol_version >>
 
     print $chrome->protocol_version->get;
-
-=cut
-
-sub protocol_version($self) {
-    $self->version_info->then( sub( $payload ) {
-        Future->done( $payload->{"Protocol-Version"});
-    });
-};
 
 =head2 C<< $chrome->get_domains >>
 
@@ -591,6 +557,12 @@ sub close_tab( $self, $tab ) {
     my $url = $self->build_url( domain => 'close/' . $tab->{id} );
 };
 
+=head2 C<< $target->getTargetInfo >>
+
+Returns information about the current target
+
+=cut
+
 sub getTargetInfo( $self, $targetId = $self->targetId ) {
     $self->transport->send_message('Target.getTargetInfo',
         targetId => $targetId )->then(sub( $info ) {
@@ -598,9 +570,26 @@ sub getTargetInfo( $self, $targetId = $self->targetId ) {
     });
 }
 
+=head2 C<< $target->info >>
+
+Returns information about the current target
+
+=cut
+
 sub info( $self ) {
     $self->getTargetInfo( $self->targetId )->get
 }
+
+=head2 C<< $target->title >>
+
+Returns the title of the current target
+
+=cut
+
+sub title( $self ) {
+    $self->getTargetInfo( $self->targetId )->get->{title}
+}
+
 
 1;
 
