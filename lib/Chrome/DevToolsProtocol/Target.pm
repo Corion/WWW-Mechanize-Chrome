@@ -591,6 +591,17 @@ sub close_tab( $self, $tab ) {
     my $url = $self->build_url( domain => 'close/' . $tab->{id} );
 };
 
+sub getTargetInfo( $self, $targetId = $self->targetId ) {
+    $self->transport->send_message('Target.getTargetInfo',
+        targetId => $targetId )->then(sub( $info ) {
+            Future->done( $info->{targetInfo})
+    });
+}
+
+sub info( $self ) {
+    $self->getTargetInfo( $self->targetId )->get
+}
+
 1;
 
 =head1 SEE ALSO

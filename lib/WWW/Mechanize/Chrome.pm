@@ -1021,6 +1021,10 @@ sub driver {
     $_[0]->{driver}
 };
 
+sub target {
+    $_[0]->{target}
+};
+
 =head2 C<< $mech->tab >>
 
     my $tab = $mech->tab
@@ -2777,9 +2781,13 @@ Returns the current document title.
 =cut
 
 sub title( $self ) {
-    my $id = $self->tab->{id};
-    (my $tab_now) = grep { $_->{id} eq $id } $self->driver->list_tabs->get;
-    $tab_now->{title};
+    if( $self->tab ) {
+        my $id = $self->tab->{id};
+        (my $tab_now) = grep { $_->{id} eq $id } $self->driver->list_tabs->get;
+        return $tab_now->{title};
+    } else {
+        $self->target->info->{title}
+    }
 };
 
 =head1 EXTRACTION METHODS
