@@ -1513,7 +1513,10 @@ sub DESTROY {
     eval {
         # Shut down our websocket connection
         if( $_[0]->{ driver }) {
-            $_[0]->{ driver }->close
+            # XXX This ruins too much of our infrastructure
+            #     We want to keep the connection open and maybe only call
+            #     ->close() from their DESTROY?!
+            #$_[0]->{ driver }->close
         };
     };
     delete $_[0]->{ driver };
