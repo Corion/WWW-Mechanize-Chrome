@@ -692,6 +692,10 @@ sub evaluate( $self, $string, %options ) {
 
 =head2 C<< $chrome->eval >>
 
+    my $result = $chrome->eval('2+2');
+
+Evaluates a Javascript string and returns the result.
+
 =cut
 
 sub eval( $self, $string ) {
@@ -703,6 +707,8 @@ sub eval( $self, $string ) {
 =head2 C<< $chrome->version_info >>
 
     print $chrome->version_info->get->{"Protocol-Version"};
+
+Returns the implemented ChromeDevTooslProtocol protocol version.
 
 =cut
 
@@ -725,6 +731,10 @@ sub protocol_version($self) {
 };
 
 =head2 C<< $chrome->get_domains >>
+
+    my $schema = $chrome->get_domains->get;
+
+Returns the topics of this Chrome DevToolsProtocol implementation.
 
 =cut
 
