@@ -13,6 +13,7 @@ use Carp qw(croak carp);
 use WWW::Mechanize::Link;
 use IO::Socket::INET;
 use Chrome::DevToolsProtocol;
+use Chrome::DevToolsProtocol::Target;
 use WWW::Mechanize::Chrome::Node;
 use JSON;
 use MIME::Base64 'decode_base64';
@@ -896,7 +897,6 @@ sub _connect( $self, %options ) {
     my $targetId;
     #if( $options{ pipe }) {
         $targetId = $self->_build_debuggerTransport()->get;
-        require Chrome::DevToolsProtocol::Target;
         $self->{target} = Chrome::DevToolsProtocol::Target->new(
             transport => $self->{driver},
             targetId  => $targetId,
