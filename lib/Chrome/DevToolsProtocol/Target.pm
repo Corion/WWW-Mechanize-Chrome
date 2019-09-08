@@ -121,7 +121,9 @@ The event-loop specific transport backend
 
 has 'transport' => (
     is => 'ro',
-    handles => [qw[future sleep endpoint close log _log version_info protocol_version]],
+    handles => [qw[future sleep endpoint close log _log version_info protocol_version
+        getTargets
+    ]],
 );
 
 has 'targetId' => (
