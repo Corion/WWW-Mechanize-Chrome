@@ -808,7 +808,7 @@ Gets the list of available targets
 
 sub getTargets( $self ) {
     $self->send_message('Target.getTargets')->then(sub( $info ) {
-        @$info
+        Future->done( @{$info->{targetInfos}})
     });
 }
 
@@ -822,7 +822,7 @@ Returns information about the current target
 =cut
 
 sub getTargetInfo( $self, $targetId ) {
-    $self->transport->send_message('Target.getTargetInfo',
+    $self->send_message('Target.getTargetInfo',
         targetId => $targetId )->then(sub( $info ) {
             Future->done( $info->{targetInfo})
     });
