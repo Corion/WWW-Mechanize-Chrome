@@ -850,9 +850,7 @@ sub _build_debuggerTransport( $self ) {
         );
     })->then(sub( $newTargetId ) {
         $targetId = $newTargetId;
-        $self->driver->send_message('Target.attachToTarget',
-            targetId => $newTargetId,
-        );
+        $self->driver->attachToTarget( targetId => $targetId )
     })->then(sub {
         Future->done( $targetId );
     });
