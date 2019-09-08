@@ -22,6 +22,9 @@
     * Tested against Chromium HeadlessChrome/73.0.3683.75 (Debian "Buster")
     * Tested against Chromium HeadlessChrome/76.0.3809.100 (Debian "Buster")
 
+0.36 2019-xx-xx
+    * API change: Use ->getTargets->get() instead of ->list_tabs()
+
 0.35 2019-09-05
     * Documented `intrapage` option to ->click()
     * Added `chromium` to default list of browsers
