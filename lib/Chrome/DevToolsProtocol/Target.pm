@@ -224,15 +224,39 @@ Asynchronously connect to the Chrome browser, returning a Future.
 =cut
 
 sub connect( $self, %args ) {
-    # ... do we need to do anything here?!
-    $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
-        #use Data::Dumper;
-        #warn Dumper \@_;
-        my $payload = $_[0]->{params}->{message};
-        $self->on_response( undef, $payload );
+    my $done = $self->transport->connect();
+    $done = $done->then(sub {
+
+        $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
+            #use Data::Dumper;
+            #warn Dumper \@_;
+            my $payload = $_[0]->{params}->{message};
+            $self->on_response( undef, $payload );
+        });
+        Future->done;
     });
-    #warn Dumper $self->{l};
-    Future->done()
+
+    # Here w need to handle all the stuff for setting up a fresh tab
+    #if( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
+        #$endpoint = $args{ tab }->{webSocketDebuggerUrl};
+        #$self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
+        $done = $done->then( sub { $self->transport->send_message('Target.createBrowserContext')});
+        $done = $done->then(sub( $info ) {
+            $self->browserContextId( $info->{browserContextId} );
+            warn "Creating target";
+            $self->createTarget(
+                browserContextId => $info->{browserContextId},
+            );
+        })->then(sub( $targetId ) {
+            $self->targetId( $targetId );
+            warn "Attaching to (newly created) target";
+            $self->transport->attachToTarget( targetId => $targetId )
+        });
+    #};
+
+    warn $done;
+
+    $done
 };
 
 =head2 C<< ->close >>

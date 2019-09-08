@@ -805,9 +805,14 @@ sub new($class, %options) {
     };
 
     # Connect to it via TCP or local pipe
-    $options{ driver } ||= Chrome::DevToolsProtocol->new(
+    $options{ driver_transport } ||= Chrome::DevToolsProtocol->new(
         @connection,
+        transport => $options{ transport },
+        log => $options{ log },
+    );
+    $options{ driver } ||= Chrome::DevToolsProtocol::Target->new(
         auto_close => 0,
+        transport  => $options{ driver_transport },
         error_handler => sub {
             #warn ref$_[0];
             #warn "<<@CARP_NOT>>";
@@ -817,7 +822,7 @@ sub new($class, %options) {
             # Reraise the error
             croak $_[1]
         },
-        transport => $options{ transport },
+        #transport => $options{ transport },
         log => $options{ log },
     );
 
@@ -844,17 +849,20 @@ sub _setup_driver_future( $self, %options ) {
 
 sub _build_debuggerTransport( $self ) {
     my $targetId;
-    # XXX Do this only if we don't want to attach to an existing context
-    $self->driver->send_message('Target.createBrowserContext')->then(sub {
-        $self->driver->createTarget(
-            browserContextId => $_[0]->{browserContextId},
-        );
-    })->then(sub( $newTargetId ) {
-        $targetId = $newTargetId;
-        $self->driver->attachToTarget( targetId => $targetId )
-    })->then(sub {
+    # XXX Do this only if we want to create a new tab+context.
+    #     We don't want to do this when we attach to an existing context,
+    #     but that code and logic is currently distributed between here and
+    #     DevToolsProtocol.pm in a nasty mess.
+    #$self->driver->send_message('Target.createBrowserContext')->then(sub {
+    #    $self->driver->createTarget(
+    #        browserContextId => $_[0]->{browserContextId},
+    #    );
+    #})->then(sub( $newTargetId ) {
+    #    $targetId = $newTargetId;
+    #    $self->driver->attachToTarget( targetId => $targetId )
+    #})->then(sub {
         Future->done( $targetId );
-    });
+    #});
 }
 
 # This (tries to) connects to the devtools in the browser
@@ -896,13 +904,13 @@ sub _connect( $self, %options ) {
     # We need to set up a new browser target if we connect via pipe
     my $targetId;
     #if( $options{ pipe }) {
-        $targetId = $self->_build_debuggerTransport()->get;
-        $self->{target} = Chrome::DevToolsProtocol::Target->new(
-            transport => $self->{driver},
-            targetId  => $targetId,
-        );
-        $self->{target}->connect()->get;
-        $self->{driver} = $self->{target};
+        #$targetId = $self->_build_debuggerTransport()->get;
+        #$self->{target} = Chrome::DevToolsProtocol::Target->new(
+        #    transport => $self->{driver},
+        #    targetId  => $targetId,
+        #);
+        #$self->{target}->connect()->get;
+        #$self->{driver} = $self->{target};
         # Now, replace driver with the driver sending to the target
         #$self->driver->send_message('Target.sendMessageToTarget',
             #targetId => $targetId, message => '{"id":0,"method":"Page.enable"}');
