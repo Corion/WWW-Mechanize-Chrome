@@ -11,7 +11,7 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-Log::Log4perl->easy_init($ERROR);
+Log::Log4perl->easy_init($TRACE);
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
@@ -59,10 +59,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
 
     # Add one more, just to be on the safe side, so that Chrome doesn't close
     # immediately again:
-    $mech->driver->new_tab()->get;
+    #$mech->driver->new_tab()->get;
+    my $info = $mech->driver->createTarget()->get;
 
-    my @tabs = $app->list_tabs()->get;
+    #my @tabs = $app->list_tabs()->get;
+    my @tabs = $app->getTargets()->get;
     diag "Tabs open in PID $pid: ", 0+@tabs;
+    use Data::Dumper; note Dumper \@tabs;
 
     diag "Releasing mechanize $pid";
     undef $mech; # our own tab should now close automatically
@@ -74,7 +77,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
         # In some Chrome versions, Chrome goes away when we closed our websocket?!
         diag "Listing tabs";
         my @new_tabs;
-        my $ok = eval { @new_tabs = $app->list_tabs()->get; 1 };
+        my $ok = eval { @new_tabs = $app->getTargets()->get; 1 };
         if( ! $ok ) {
             skip "$@", 6;
         };
@@ -114,7 +117,7 @@ HTML
     );
     $c = $mech->content;
     like $c, qr/\Q$magic/, "We selected the existing tab"
-        or do { diag $_->{title} for $mech->driver->list_tabs() };
+        or do { diag $_->{title} for $mech->driver->getTargets()->get };
 
     # Now activate the tab and connect to the "current" tab
     # This is ugly for a user currently using that Chrome instance,
@@ -132,7 +135,7 @@ HTML
     );
     $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We connected to the current tab"
-        or do { diag $_->{title} for $mech->driver->list_tabs->get() };
+        or do { diag $_->{title} for $mech->driver->getTargets()->get() };
     $mech->autoclose_tab(1);
 
     undef $mech; # and close that tab
