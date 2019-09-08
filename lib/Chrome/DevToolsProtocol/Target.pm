@@ -26,7 +26,7 @@ Chrome::DevToolsProtocol::Target - wrapper for talking to a page in a Target
 
     # Usually, WWW::Mechanize::Chrome automatically creates a driver for you
     my $driver = Chrome::DevToolsProtocol::Target->new(
-        target => $target,
+        transport => $target,
     );
     $driver->connect( new_tab => 1 )->get
 
@@ -35,7 +35,7 @@ Chrome::DevToolsProtocol::Target - wrapper for talking to a page in a Target
 =head2 C<< ->new( %args ) >>
 
     my $driver = Chrome::DevToolsProtocol::Target->new(
-        target => $target,
+        transport => $target,
         auto_close => 0,
         error_handler => sub {
             # Reraise the error
