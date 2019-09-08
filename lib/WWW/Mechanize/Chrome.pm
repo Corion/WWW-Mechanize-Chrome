@@ -843,6 +843,7 @@ sub _setup_driver_future( $self, %options ) {
 
 sub _build_debuggerTransport( $self ) {
     my $targetId;
+    # XXX Do this only if we don't want to attach to an existing context
     $self->driver->send_message('Target.createBrowserContext')->then(sub {
         $self->driver->send_message('Target.createTarget',
             url => 'about:blank',
