@@ -127,7 +127,15 @@ has 'transport' => (
 );
 
 has 'targetId' => (
-    is => 'ro',
+    is => 'rw',
+);
+
+has 'sessionId' => (
+    is => 'rw',
+);
+
+has 'browserContextId' => (
+    is => 'rw',
 );
 
 around BUILDARGS => sub( $orig, $class, %args ) {
