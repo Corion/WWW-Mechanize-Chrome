@@ -291,25 +291,27 @@ sub connect( $self, %args ) {
     } elsif( $args{ endpoint }) {
         $endpoint = $args{ endpoint };
         $self->log('trace', "Using endpoint $endpoint");
-
-    } elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
-        $endpoint = $args{ tab }->{webSocketDebuggerUrl};
-        $self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
-
-    } elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
-        $endpoint = undef;
-
-    } elsif( $args{ new_tab } ) {
-        $endpoint = undef;
-        $self->log('trace', "Using new tab (and fresh endpoint)");
-
-    } else {
-        $endpoint ||= $self->endpoint;
-        $self->log('trace', "Using endpoint " . ($endpoint||'<undef>'));
     };
+
+    #} elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
+    #    $endpoint = $args{ tab }->{webSocketDebuggerUrl};
+    #    $self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
+    #
+    #} elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
+    #    $endpoint = undef;
+    #
+    #} elsif( $args{ new_tab } ) {
+    #    $endpoint = undef;
+    #    $self->log('trace', "Using new tab (and fresh endpoint)");
+    #
+    #} else {
+    #    $endpoint ||= $self->endpoint;
+    #    $self->log('trace', "Using endpoint " . ($endpoint||'<undef>'));
+    #};
 
     my $got_endpoint;
     if( ! $endpoint ) {
+        warn "Fetching first contact information via HTTP";
         $got_endpoint = $self->version_info()->then(sub( $info ) {
             $self->log('debug', "Created new tab", $info );
             $self->{tab} = $info;
@@ -317,6 +319,8 @@ sub connect( $self, %args ) {
             warn Dumper $info;
             return Future->done( $info->{webSocketDebuggerUrl} );
         });
+
+        # XXX This needs to go into ::Target
             if(0) {
         if( $args{ new_tab }) {
             $got_endpoint = $self->new_tab()->then(sub( $info ) {
