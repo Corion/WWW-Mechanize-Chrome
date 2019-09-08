@@ -845,14 +845,13 @@ sub _build_debuggerTransport( $self ) {
     my $targetId;
     # XXX Do this only if we don't want to attach to an existing context
     $self->driver->send_message('Target.createBrowserContext')->then(sub {
-        $self->driver->send_message('Target.createTarget',
-            url => 'about:blank',
+        $self->driver->createTarget(
             browserContextId => $_[0]->{browserContextId},
         );
-    })->then(sub {
-        $targetId = $_[0]->{targetId};
+    })->then(sub( $newTargetId ) {
+        $targetId = $newTargetId;
         $self->driver->send_message('Target.attachToTarget',
-            targetId => $_[0]->{targetId},
+            targetId => $newTargetId,
         );
     })->then(sub {
         Future->done( $targetId );
