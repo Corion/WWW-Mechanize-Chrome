@@ -798,6 +798,36 @@ sub close_tab( $self, $tab ) {
         });
 };
 
+=head2 C<< $chrome->getTargets >>
+
+    my @targets = $chrome->getTargets->get;
+
+Gets the list of available targets
+
+=cut
+
+sub getTargets( $self ) {
+    $self->send_message('Target.getTargets')->then(sub( $info ) {
+        @$info
+    });
+}
+
+=head2 C<< $target->getTargetInfo >>
+
+    my $info = $chrome->getTargetInfo( $targetId )->get;
+    print $info->{title};
+
+Returns information about the current target
+
+=cut
+
+sub getTargetInfo( $self, $targetId ) {
+    $self->transport->send_message('Target.getTargetInfo',
+        targetId => $targetId )->then(sub( $info ) {
+            Future->done( $info->{targetInfo})
+    });
+}
+
 package
     Chrome::DevToolsProtocol::EventListener;
 use strict;
