@@ -564,9 +564,8 @@ Returns information about the current target
 =cut
 
 sub getTargetInfo( $self, $targetId = $self->targetId ) {
-    $self->transport->send_message('Target.getTargetInfo',
-        targetId => $targetId )->then(sub( $info ) {
-            Future->done( $info->{targetInfo})
+    $self->transport->getTargetInfo( $targetId )->then(sub( $info ) {
+        Future->done( $info )
     });
 }
 
