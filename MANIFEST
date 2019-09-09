@@ -11,6 +11,7 @@ examples/sendkeys.pl
 examples/url-to-image.pl
 INSTALL
 lib/Chrome/DevToolsProtocol.pm
+lib/Chrome/DevToolsProtocol/Target.pm
 lib/Chrome/DevToolsProtocol/Transport.pm
 lib/Chrome/DevToolsProtocol/Transport/AnyEvent.pm
 lib/Chrome/DevToolsProtocol/Transport/Mojo.pm
