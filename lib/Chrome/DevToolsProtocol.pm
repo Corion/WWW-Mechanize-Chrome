@@ -313,12 +313,9 @@ sub connect( $self, %args ) {
 
     my $got_endpoint;
     if( ! $endpoint ) {
-        warn "Fetching first contact information via HTTP";
         $got_endpoint = $self->version_info()->then(sub( $info ) {
             $self->log('debug', "Found webSocket URL", $info );
-            $self->{tab} = $info;
-            use Data::Dumper;
-            warn Dumper $info;
+            #$self->tab( $info );
             return Future->done( $info->{webSocketDebuggerUrl} );
         });
 
