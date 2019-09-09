@@ -34,6 +34,7 @@ META.yml
 README
 README.mkdn
 t/00-load.t
+t/01-chrome-devtools-protocol-target.t
 t/01-chrome-devtools-protocol.t
 t/02-chrome-devtools-tab.t
 t/03-listener-leak-test.t
