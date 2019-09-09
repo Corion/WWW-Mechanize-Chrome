@@ -847,24 +847,6 @@ sub _setup_driver_future( $self, %options ) {
     })
 }
 
-sub _build_debuggerTransport( $self ) {
-    my $targetId;
-    # XXX Do this only if we want to create a new tab+context.
-    #     We don't want to do this when we attach to an existing context,
-    #     but that code and logic is currently distributed between here and
-    #     DevToolsProtocol.pm in a nasty mess.
-    #$self->target->send_message('Target.createBrowserContext')->then(sub {
-    #    $self->target->createTarget(
-    #        browserContextId => $_[0]->{browserContextId},
-    #    );
-    #})->then(sub( $newTargetId ) {
-    #    $targetId = $newTargetId;
-    #    $self->target->attachToTarget( targetId => $targetId )
-    #})->then(sub {
-        Future->done( $targetId );
-    #});
-}
-
 # This (tries to) connects to the devtools in the browser
 sub _connect( $self, %options ) {
     my $err;
@@ -900,25 +882,6 @@ sub _connect( $self, %options ) {
     $self->{nodeGenerationChange} =
         $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
     $self->new_generation;
-
-    # We need to set up a new browser target if we connect via pipe
-    my $targetId;
-    #if( $options{ pipe }) {
-        #$targetId = $self->_build_debuggerTransport()->get;
-        #$self->{target} = Chrome::DevToolsProtocol::Target->new(
-        #    transport => $self->{driver},
-        #    targetId  => $targetId,
-        #);
-        #$self->{target}->connect()->get;
-        #$self->{driver} = $self->{target};
-        # Now, replace driver with the driver sending to the target
-        #$self->target->send_message('Target.sendMessageToTarget',
-            #targetId => $targetId, message => '{"id":0,"method":"Page.enable"}');
-        # $self->transport->send_message()
-        # ->transport -> { sendMessageToTarget( message ) }
-        # ->       target        ->
-        # ->       driver       ->
-    #};
 
     my @setup = (
         $self->target->send_message('DOM.enable'),
