@@ -810,7 +810,7 @@ sub new($class, %options) {
         transport => $options{ transport },
         log => $options{ log },
     );
-    $options{ driver } ||= Chrome::DevToolsProtocol::Target->new(
+    $options{ target } ||= Chrome::DevToolsProtocol::Target->new(
         auto_close => 0,
         transport  => delete $options{ driver_transport },
         error_handler => sub {
@@ -833,7 +833,7 @@ sub new($class, %options) {
 };
 
 sub _setup_driver_future( $self, %options ) {
-    $self->driver->connect(
+    $self->target->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
         writer_fh => $options{ writer_fh },
@@ -853,13 +853,13 @@ sub _build_debuggerTransport( $self ) {
     #     We don't want to do this when we attach to an existing context,
     #     but that code and logic is currently distributed between here and
     #     DevToolsProtocol.pm in a nasty mess.
-    #$self->driver->send_message('Target.createBrowserContext')->then(sub {
-    #    $self->driver->createTarget(
+    #$self->target->send_message('Target.createBrowserContext')->then(sub {
+    #    $self->target->createTarget(
     #        browserContextId => $_[0]->{browserContextId},
     #    );
     #})->then(sub( $newTargetId ) {
     #    $targetId = $newTargetId;
-    #    $self->driver->attachToTarget( targetId => $targetId )
+    #    $self->target->attachToTarget( targetId => $targetId )
     #})->then(sub {
         Future->done( $targetId );
     #});
@@ -912,7 +912,7 @@ sub _connect( $self, %options ) {
         #$self->{target}->connect()->get;
         #$self->{driver} = $self->{target};
         # Now, replace driver with the driver sending to the target
-        #$self->driver->send_message('Target.sendMessageToTarget',
+        #$self->target->send_message('Target.sendMessageToTarget',
             #targetId => $targetId, message => '{"id":0,"method":"Page.enable"}');
         # $self->transport->send_message()
         # ->transport -> { sendMessageToTarget( message ) }
@@ -921,11 +921,11 @@ sub _connect( $self, %options ) {
     #};
 
     my @setup = (
-        $self->driver->send_message('DOM.enable'),
-        $self->driver->send_message('Page.enable'),    # capture DOMLoaded
-        $self->driver->send_message('Network.enable'), # capture network
-        $self->driver->send_message('Runtime.enable'), # capture console messages
-        #$self->driver->send_message('Debugger.enable'), # capture "script compiled" messages
+        $self->target->send_message('DOM.enable'),
+        $self->target->send_message('Page.enable'),    # capture DOMLoaded
+        $self->target->send_message('Network.enable'), # capture network
+        $self->target->send_message('Runtime.enable'), # capture console messages
+        #$self->target->send_message('Debugger.enable'), # capture "script compiled" messages
         $self->set_download_directory_future($self->{download_directory}),
 
         keys %{$options{ extra_headers }} ? $self->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
@@ -1011,11 +1011,13 @@ APIs of Chrome that the object is connected to.
 
 sub chrome_version_info( $self ) {
     $self->{chrome_version} ||= do {
-        $self->driver->version_info->get;
+        $self->target->version_info->get;
     };
 }
 
 =head2 C<< $mech->driver >>
+
+B<deprecated> - use C<< ->target >> instead
 
     my $driver = $mech->driver
 
@@ -1024,8 +1026,17 @@ Access the L<Chrome::DevToolsProtocol> instance connecting to Chrome.
 =cut
 
 sub driver {
-    $_[0]->{driver}
+    $_[0]->target
 };
+
+=head2 C<< $mech->target >>
+
+    my $target = $mech->target
+
+Access the L<Chrome::DevToolsProtocol::Target> instance connecting to the
+Chrome tab we use.
+
+=cut
 
 sub target {
     $_[0]->{target}
@@ -1035,13 +1046,13 @@ sub target {
 
     my $tab = $mech->tab
 
-Access the tab hash of the L<Chrome::DevToolsProtocol> instance connecting
-to Chrome. This represents the tab we control.
+Access the tab hash of the L<Chrome::DevToolsProtocol::Target> instance.
+This represents the tab we control.
 
 =cut
 
 sub tab( $self ) {
-    $self->driver->tab
+    $self->target->tab
 }
 
 sub autodie {
@@ -1066,7 +1077,7 @@ sub allow {
     if( exists $options{ javascript } ) {
         my $disabled = !$options{ javascript } ? JSON::true : JSON::false;
         push @await,
-            $self->driver->send_message('Emulation.setScriptExecutionDisabled', value => $disabled );
+            $self->target->send_message('Emulation.setScriptExecutionDisabled', value => $disabled );
     };
 
     Future->wait_all( @await )->get;
@@ -1090,7 +1101,7 @@ sub emulateNetworkConditions_future( $self, %options ) {
     $options{ latency } //= -1,
     $options{ downloadThroughput } //= -1,
     $options{ uploadThroughput } //= -1,
-    $self->driver->send_message('Network.emulateNetworkConditions', %options)
+    $self->target->send_message('Network.emulateNetworkConditions', %options)
 }
 
 sub emulateNetworkConditions( $self, %options ) {
@@ -1110,7 +1121,7 @@ callback will be invoked.
 =cut
 
 sub setRequestInterception_future( $self, @patterns ) {
-    $self->driver->send_message('Network.setRequestInterception', patterns => @patterns)
+    $self->target->send_message('Network.setRequestInterception', patterns => @patterns)
 }
 
 sub setRequestInterception( $self, @patterns ) {
@@ -1160,7 +1171,7 @@ sub add_listener( $self, $event, $callback ) {
         croak "->add_listener called in void context."
             . "Please store the result somewhere";
     };
-    return $self->driver->add_listener( $event, $callback )
+    return $self->target->add_listener( $event, $callback )
 }
 
 sub remove_listener( $self, $listener ) {
@@ -1223,7 +1234,7 @@ a response.
 =cut
 
 sub searchInResponseBody_future( $self, %options ) {
-    $self->driver->send_message('Network.searchInResponseBody', %options)
+    $self->target->send_message('Network.searchInResponseBody', %options)
     ->then(sub( $res ) {
         return Future->done( @{ $res->{result}} )
     })
@@ -1278,7 +1289,7 @@ sub handle_dialog( $self, $accept, $prompt = undef ) {
     my $v = $accept ? JSON::true : JSON::false;
     $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
     my $f;
-    $f = $self->driver->send_message(
+    $f = $self->target->send_message(
         'Page.handleJavaScriptDialog',
         accept => $v,
         promptText => (defined $prompt ? $prompt : 'generic message'),
@@ -1329,7 +1340,7 @@ Clears all Javascript messages from the console
 sub clear_js_errors {
     my ($self) = @_;
     @{$self->{js_events}} = ();
-    $self->driver->send_message('Runtime.discardConsoleEntries')->get;
+    $self->target->send_message('Runtime.discardConsoleEntries')->get;
 };
 
 =head2 C<< $mech->eval_in_page( $str, %options ) >>
@@ -1374,7 +1385,7 @@ sub eval_in_page($self,$str, %options) {
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->driver->evaluate("$str", %options)->get;
+    my $result = $self->target->evaluate("$str", %options)->get;
 
     if( $result->{error} ) {
         $self->signal_condition(
@@ -1439,7 +1450,7 @@ sub callFunctionOn_future( $self, $str, %options ) {
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    $self->driver->callFunctionOn($str, %options)
+    $self->target->callFunctionOn($str, %options)
     ->then( sub( $result ) {
 
         if( $result->{error} ) {
@@ -1481,7 +1492,7 @@ sub callFunctionOn {
 }
 
 sub agent_future( $self, $ua ) {
-    $self->driver->send_message('Network.setUserAgentOverride', userAgent => $ua )
+    $self->target->send_message('Network.setUserAgentOverride', userAgent => $ua )
 }
 
 sub agent( $self, $ua ) {
@@ -1506,15 +1517,15 @@ sub DESTROY {
     my $pid= delete $_[0]->{pid};
 
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
-    #    $_[0]->driver->close_tab({ id => $tab_id })->get();
+    #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
     if( $_[0]->{autoclose} and $_[0]->tab  ) {
-        $_[0]->driver->close->get();
+        $_[0]->target->close->get();
     };
 
     #if( $pid and $_[0]->{cached_version} > 65) {
     #    # Try a graceful shutdown
-    #    $_[0]->driver->send_message('Browser.close' )->get
+    #    $_[0]->target->send_message('Browser.close' )->get
     #};
 
     local $@;
@@ -1609,7 +1620,7 @@ sub update_response($self, $response) {
   my $events = $mech->_collectEvents(
       sub { $_[0]->{method} eq 'Page.loadEventFired' }
   );
-  my( $e,$r) = Future->wait_all( $events, $self->driver->send_message(...));
+  my( $e,$r) = Future->wait_all( $events, $self->target->send_message(...));
 
 Internal method to create a Future that waits for an event that is sent by Chrome.
 
@@ -1627,16 +1638,16 @@ sub _collectEvents( $self, @info ) {
         or die "Need a predicate as the last parameter, not '$predicate'!";
 
     my @events = ();
-    my $done = $self->driver->future;
+    my $done = $self->target->future;
     my $s = $self;
     weaken $s;
-    $self->driver->on_message( sub( $message ) {
+    $self->target->on_message( sub( $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
             my $frameId = $events[-1]->{params}->{frameId};
             $s->log( 'debug', "Received final message, unwinding", sprintf "(%s)", $frameId || '-');
             $s->log( 'trace', "Received final message, unwinding", $events[-1] );
-            $s->driver->on_message( undef );
+            $s->target->on_message( undef );
             $done->done( @info, @events );
         };
     });
@@ -1720,7 +1731,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     my $frameId = $options{ frameId };
     my $requestId = $options{ requestId };
 
-    my $scheduled = $self->driver->one_shot(
+    my $scheduled = $self->target->one_shot(
         'Page.frameScheduledNavigation',
         'Page.frameStartedLoading',
         'Network.requestWillBeSent',      # trial
@@ -1844,7 +1855,7 @@ sub get_future($self, $url, %options ) {
     weaken $s;
     my $events = $self->_mightNavigate( sub {
         $s->log('debug', "Navigating to [$url]");
-        $s->driver->send_message(
+        $s->target->send_message(
             'Page.navigate',
             url => "$url"
         )
@@ -1931,7 +1942,7 @@ sub getRequestPostData_future( $self, $requestId ) {
     $self->log('debug', "Fetching request POST body for $requestId");
     weaken( my $s = $self );
     return
-        $self->driver->send_message('Network.getRequestPostData', requestId => $requestId)
+        $self->target->send_message('Network.getRequestPostData', requestId => $requestId)
         ->then(sub {
         $s->log('trace', "Have POST body", @_);
         my ($body_obj) = @_;
@@ -1953,7 +1964,7 @@ sub getResponseBody( $self, $requestId ) {
     my $s = $self;
     weaken $s;
     return
-        $self->driver->send_message('Network.getResponseBody', requestId => $requestId)
+        $self->target->send_message('Network.getResponseBody', requestId => $requestId)
         ->then(sub {
         $s->log('debug', "Have body", @_);
         my ($body_obj) = @_;
@@ -2249,7 +2260,7 @@ current request.
 
 sub reload( $self, %options ) {
     $self->_mightNavigate( sub {
-        $self->driver->send_message('Page.reload', %options )
+        $self->target->send_message('Page.reload', %options )
     }, navigates => 1, %options)
     ->get;
 }
@@ -2270,11 +2281,11 @@ about the current directory of your Perl script.
 sub set_download_directory_future( $self, $dir="" ) {
     $self->{download_directory} = $dir;
     if( "" eq $dir ) {
-        $self->driver->send_message('Page.setDownloadBehavior',
+        $self->target->send_message('Page.setDownloadBehavior',
             behavior => 'deny',
         )
     } else {
-        $self->driver->send_message('Page.setDownloadBehavior',
+        $self->target->send_message('Page.setDownloadBehavior',
             behavior => 'allow',
             downloadPath => $dir
         )
@@ -2318,7 +2329,7 @@ Note that currently, we only support one value per header.
 
 sub _set_extra_headers_future( $self, %headers ) {
     $self->log('debug',"Setting additional headers", \%headers);
-    $self->driver->send_message('Network.setExtraHTTPHeaders',
+    $self->target->send_message('Network.setExtraHTTPHeaders',
         headers => \%headers
     );
 };
@@ -2375,7 +2386,7 @@ resilience in face of bad network conditions.
 =cut
 
 sub block_urls( $self, @urls ) {
-    $self->driver->send_message( 'Network.setBlockedURLs',
+    $self->target->send_message( 'Network.setBlockedURLs',
         urls => \@urls
     )->get;
 }
@@ -2466,9 +2477,9 @@ Returns the (new) response.
 
 sub back( $self, %options ) {
     $self->_mightNavigate( sub {
-        $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
+        $self->target->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}-1 ];
-            $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
+            $self->target->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
     }, navigates => 1, %options)
     ->get;
@@ -2486,9 +2497,9 @@ Returns the (new) response.
 
 sub forward( $self, %options ) {
     $self->_mightNavigate( sub {
-        $self->driver->send_message('Page.getNavigationHistory')->then(sub($history) {
+        $self->target->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
-            $self->driver->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
+            $self->target->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
     }, navigates => 1, %options)
     ->get;
@@ -2506,7 +2517,7 @@ event loop.
 =cut
 
 sub stop( $self ) {
-    $self->driver->send_message('Page.stopLoading')->get;
+    $self->target->send_message('Page.stopLoading')->get;
 }
 
 =head2 C<< $mech->uri() >>
@@ -2598,7 +2609,7 @@ This is WWW::Mechanize::Chrome specific.
 =cut
 
 sub document_future( $self ) {
-    $self->driver->send_message( 'DOM.getDocument' )
+    $self->target->send_message( 'DOM.getDocument' )
 }
 
 sub document( $self ) {
@@ -2612,7 +2623,7 @@ sub decoded_content($self) {
         my @content = map {
             my $nodeId = $_->{nodeId};
             $self->log('trace', "Fetching HTML for node " . $nodeId );
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+            $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         } @{ $root->{root}->{children} };
 
         Future->wait_all( @content )
@@ -2713,7 +2724,7 @@ sub update_html( $self, $content ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
         $self->log('trace', "Setting HTML for node " . $nodeId );
-        $self->driver->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => "$content" )
+        $self->target->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => "$content" )
      })->get;
 };
 
@@ -2795,7 +2806,7 @@ Returns the current document title.
 sub title( $self ) {
     #if( $self->tab ) {
     #    my $id = $self->tab->{id};
-    #    (my $tab_now) = grep { $_->{id} eq $id } $self->driver->list_tabs->get;
+    #    (my $tab_now) = grep { $_->{id} eq $id } $self->target->list_tabs->get;
     #    return $tab_now->{title};
     #} else {
         $self->target->info->{title}
@@ -3229,8 +3240,8 @@ sub activate_container {
         };
         #warn sprintf "Switched to final/main container %s %s", $tag, $src;
     };
-    #warn $self->driver->get_current_url;
-    #warn $self->driver->get_title;
+    #warn $self->target->get_current_url;
+    #warn $self->target->get_title;
     #my $body= $doc->get_attribute('contentDocument');
     my $body= $driver->find_element('/*', 'xpath');
     if( $body ) {
@@ -3325,7 +3336,7 @@ L<WWW::Mechanize>.
 sub _performSearch( $self, %args ) {
     my $backendNodeId = $args{ backendNodeId };
     my $query = $args{ query };
-    $self->driver->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
+    $self->target->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
 
         if( $results->{resultCount} ) {
             my $searchResults;
@@ -3334,7 +3345,7 @@ sub _performSearch( $self, %args ) {
             my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
-            $self->driver->send_message( 'DOM.getSearchResults',
+            $self->target->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
                 fromIndex => 0,
                 toIndex => $results->{resultCount}
@@ -3344,7 +3355,7 @@ sub _performSearch( $self, %args ) {
             # And node ids still get invalidated
             #)->followed_by( sub( $results ) {
             #    $searchResults = $results->get;
-            #    $self->driver->send_message( 'DOM.discardSearchResults',
+            #    $self->target->send_message( 'DOM.discardSearchResults',
             #        searchId => $searchId,
             #    );
             #}
@@ -3394,11 +3405,11 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
     $self->log('trace', sprintf "Resolving nodeId %s", $nodeId );
     my $s = $self;
     weaken $s;
-    my $body = $self->driver->send_message( 'DOM.resolveNode', nodeId => 0+$nodeId );
+    my $body = $self->target->send_message( 'DOM.resolveNode', nodeId => 0+$nodeId );
     if( $attributes ) {
         $attributes = Future->done( $attributes )
     } else {
-        $attributes = $self->driver->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId );
+        $attributes = $self->target->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId );
     };
     Future->wait_all( $body, $attributes )->then( sub( $body, $attributes ) {
         $body = $body->get->{object};
@@ -3627,12 +3638,12 @@ sub click {
     # Get the node as an object so we can find its position and send the clicks:
     $self->log('trace', sprintf "Resolving nodeId %d to object for clicking", $buttons[0]->nodeId );
     my $id = $buttons[0]->objectId;
-    #warn Dumper $self->driver->send_message('Runtime.getProperties', objectId => $id)->get;
-    #warn Dumper $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
+    #warn Dumper $self->target->send_message('Runtime.getProperties', objectId => $id)->get;
+    #warn Dumper $self->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
 
     my $response =
     $self->_mightNavigate( sub {
-        $self->driver->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
+        $self->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
     }, %options)
     ->get;
 }
@@ -3778,7 +3789,7 @@ sub clear_current_form {
 sub active_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
-    my $focus= $self->driver->get_active_element;
+    my $focus= $self->target->get_active_element;
 
     if( !$focus ) {
         warn "No active element, hence no active form";
@@ -4010,7 +4021,7 @@ sub sendkeys_future( $self, %options ) {
 
     for my $key (@{ $options{ keys }}) {
         $f = $f->then(sub {
-            $self->driver->send_message('Input.dispatchKeyEvent', %$key );
+            $self->target->send_message('Input.dispatchKeyEvent', %$key );
         });
         if( defined $options{ delay }) {
             $f->then(sub {
@@ -4053,7 +4064,7 @@ sub upload($self,$name,$value) {
     @$value = map { "$_" } @$value;
 
     if( @fields ) {
-        $self->driver->send_message('DOM.setFileInputFiles',
+        $self->target->send_message('DOM.setFileInputFiles',
             nodeId => 0+$fields[0]->nodeId,
             files => $value,
             )->get;
@@ -4166,13 +4177,13 @@ sub get_set_value($self,%options) {
 
             my $id = $obj->{objectId};
             if( 'value' eq $method ) {
-                $self->driver->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
+                $self->target->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
 
             } elsif( 'selected' eq $method ) {
                 # ignoring undef; but [] would reset to no option
                 if (defined $value) {
                     $value = [ $value ] unless ref $value;
-                    $self->driver->send_message(
+                    $self->target->send_message(
                         'Runtime.callFunctionOn',
                         objectId => $id,
                         functionDeclaration => <<'JS',
@@ -4196,7 +4207,7 @@ JS
                     )->get;
                 }
             } elsif( 'content' eq $method ) {
-                $self->driver->send_message('Runtime.callFunctionOn',
+                $self->target->send_message('Runtime.callFunctionOn',
                     objectId => $id,
                     functionDeclaration => 'function(newValue) { this.innerHTML = newValue }',
                     arguments => [{ value => $value }]
@@ -4215,7 +4226,7 @@ JS
         # dropdowns by not enumerating all options
         if ('SELECT' eq uc $tag) {
             my $id = $obj->{objectId};
-            my $arr = $self->driver->send_message(
+            my $arr = $self->target->send_message(
                     'Runtime.callFunctionOn',
                     objectId => $id,
                     functionDeclaration => <<'JS',
@@ -4267,7 +4278,7 @@ sub submit($self,$dom_form = $self->current_form) {
         # The __proto__ invocation is so we can have a HTML form field entry
         # named "submit"
         $self->_mightNavigate( sub {
-            $self->driver->send_message(
+            $self->target->send_message(
                 'Runtime.callFunctionOn',
                 objectId => $dom_form->objectId,
                 functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.__proto__.submit.apply(this) }}'
@@ -4662,7 +4673,7 @@ sub _as_raw_png( $self, $image ) {
 }
 
 sub _content_as_png($self, $rect={}, $target={} ) {
-    $self->driver->send_message('Page.captureScreenshot', format => 'png' )->then( sub( $res ) {
+    $self->target->send_message('Page.captureScreenshot', format => 'png' )->then( sub( $res ) {
         require Imager;
         my $img = Imager->new ( data => decode_base64( $res->{data} ), format => 'png' );
         # Cut out the wanted part
@@ -4690,7 +4701,7 @@ sub content_as_png($self, $rect={}, $target={}) {
 };
 
 sub getResourceTree_future( $self ) {
-    $self->driver->send_message( 'Page.getResourceTree' )
+    $self->target->send_message( 'Page.getResourceTree' )
     ->then( sub( $result ) {
         Future->done( $result->{frameTree} )
     })
@@ -4699,7 +4710,7 @@ sub getResourceTree_future( $self ) {
 sub getResourceContent_future( $self, $url_or_resource, $frameId=$self->frameId, %additional ) {
     my $url = ref $url_or_resource ? $url_or_resource->{url} : $url_or_resource;
     %additional = (%$url_or_resource,%additional) if ref $url_or_resource;
-    $self->driver->send_message( 'Page.getResourceContent', frameId => $frameId, url => $url )
+    $self->target->send_message( 'Page.getResourceContent', frameId => $frameId, url => $url )
     ->then( sub( $result ) {
         if( delete $result->{base64Encoded}) {
             $result->{content} = decode_base64( $result->{content} )
@@ -4899,9 +4910,9 @@ sub viewport_size_future( $self, $new={} ) {
                 $params->{$field} = $reset{ $field };
             };
         };
-        return $self->driver->send_message('Emulation.setDeviceMetricsOverride', %$params );
+        return $self->target->send_message('Emulation.setDeviceMetricsOverride', %$params );
     } else {
-        return $self->driver->send_message('Emulation.clearDeviceMetricsOverride' );
+        return $self->target->send_message('Emulation.clearDeviceMetricsOverride' );
     };
 };
 
@@ -4950,8 +4961,8 @@ sub render_element {
 
     my $cliprect = $self->element_coordinates( $element );
     my $res = Future->wait_all(
-        #$self->driver->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
-        $self->driver->send_message(
+        #$self->target->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
+        $self->target->send_message(
             'Emulation.forceViewport',
             'y' => int $cliprect->{top},
             'x' => int $cliprect->{left},
@@ -4969,8 +4980,8 @@ sub render_element {
     })->get;
 
     Future->wait_all(
-        #$self->driver->send_message('Emulation.setVisibleSize', width => $cliprect->{width}, height => $cliprect->{height} ),
-        $self->driver->send_message('Emulation.resetViewport'),
+        #$self->target->send_message('Emulation.setVisibleSize', width => $cliprect->{width}, height => $cliprect->{height} ),
+        $self->target->send_message('Emulation.resetViewport'),
     )->get;
 
     $res
@@ -4992,7 +5003,7 @@ towards rendering HTML.
 
 sub element_coordinates {
     my ($self, $element) = @_;
-    my $cliprect = $self->driver->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true)->get->{result}->{value};
+    my $cliprect = $self->target->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true)->get->{result}->{value};
     function() {
         var r = this.getBoundingClientRect();
         return {
@@ -5081,7 +5092,7 @@ sub content_as_pdf($self, %options) {
         @options{'paperWidth','paperHeight'} = @{$wh}{'width','height'};
     };
 
-    my $base64 = $self->driver->send_message('Page.printToPDF', %options)->get->{data};
+    my $base64 = $self->target->send_message('Page.printToPDF', %options)->get->{data};
     my $payload = decode_base64( $base64 );
     if( my $filename = delete $options{ filename } ) {
         open my $fh, '>:raw', $filename
@@ -5174,7 +5185,7 @@ sub _handleScreencastFrame( $self, $frame ) {
     my $ack;
     my $s = $self;
     weaken $s;
-    $ack = $self->driver->send_message(
+    $ack = $self->target->send_message(
         'Page.screencastFrameAck',
         sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
             $s->log('trace', 'Screencast frame acknowledged');
@@ -5200,13 +5211,13 @@ sub setScreenFrameCallback( $self, $callback=undef, %options ) {
         };
         $self->{ screenCastFrameListener } =
             $self->add_listener('Page.screencastFrame', $self->{ screenFrameCallbackCollector });
-        $action = $s->driver->send_message(
+        $action = $s->target->send_message(
             'Page.startScreencast',
             format => $options{ format },
             everyNthFrame => 0+$options{ everyNthFrame }
         );
     } else {
-        $action = $self->driver->send_message('Page.stopScreencast')->then( sub {
+        $action = $self->target->send_message('Page.stopScreencast')->then( sub {
             # well, actually, we should only reset this after we're sure that
             # the last frame has been processed. Maybe we should send ourselves
             # a fake event for that, or maybe Chrome tells us
@@ -5230,7 +5241,7 @@ screencast frames and to catch up before shutting down the connection.
 =cut
 
 sub sleep_future( $self, $seconds ) {
-    $self->driver->sleep( $seconds );
+    $self->target->sleep( $seconds );
 }
 
 sub sleep( $self, $seconds ) {
