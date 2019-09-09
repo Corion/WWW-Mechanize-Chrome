@@ -16,7 +16,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 6*@instances;
+    plan tests => 3*@instances;
 };
 
 sub new_mech {
@@ -25,9 +25,9 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
     my( $file, $mech ) = splice @_;
-    my $chrome = $mech->driver;
+    my $chrome = $mech->driver->transport;
 
     isa_ok $chrome, 'Chrome::DevToolsProtocol';
 
@@ -36,32 +36,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
 
     #diag "Open tabs";
 
-    my @tabs = $chrome->list_tabs()->get;
+    my @tabs = $chrome->getTargets()->get;
     cmp_ok 0+@tabs, '>', 0,
         "We have at least one open (empty) tab";
-
-    my $target_tab = $tabs[ 0 ];
-    if( ! $target_tab->{webSocketDebuggerUrl}) {
-        SKIP: {
-            skip "This Chrome doesn't want more than one debugger connection", 1;
-        };
-    } else {
-        $chrome->connect(tab => $target_tab)->get();
-        my $tab = $chrome->tab;
-        isn::t $tab, undef, "Attached to tab '$target_tab->{title}'";
-    };
-
-    #warn Dumper $c->request(
-    #    {Tool => 'V8Debugger', Destination => $target_tab->[0], }, { command => 'attach' },
-    #);
-
-    # die Dumper $chrome->get_domains->get;
-
-    my $res = $chrome->eval('1+1')->get;
-    is $res, 2, "Simple expressions work in tab"
-        or diag Dumper $res;
-
-       $res = $chrome->eval('var x = {"foo": "bar"}; x')->get;
-    is_deeply $res, {foo => 'bar'}, "Somewhat complex expressions work in tab"
-        or diag Dumper $res;
 });
