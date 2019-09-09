@@ -233,7 +233,7 @@ sub connect( $self, %args ) {
             #use Data::Dumper;
             #warn Dumper \@_;
             my $payload = $_[0]->{params}->{message};
-            $self->on_response( undef, $payload );
+            $s->on_response( undef, $payload );
         });
         Future->done;
     });
@@ -250,10 +250,10 @@ sub connect( $self, %args ) {
             $s->createTarget(
                 browserContextId => $info->{browserContextId},
             );
-        })->then(sub( $targetId ) {
-            $s->targetId( $targetId );
+        })->then(sub( $info ) {
+            $s->tab( $info );
             warn "Attaching to (newly created) target";
-            $self->attach( $targetId )
+            $s->attach( $info->{targetId} )
         });
 
     } elsif( ref $args{ tab } eq 'Regexp') {
@@ -271,9 +271,9 @@ sub connect( $self, %args ) {
                 local @CARP_NOT = ('Future',@CARP_NOT);
                 croak "Found the tab but it didn't have a targetId";
             };
-            $s->{tab} = $tab;
+            $s->tab( $tab );
             $s->log('debug', "Attached to tab $args{tab}", $tab );
-            $self->attach( $tab->{targetId} )
+            $s->attach( $tab->{targetId} )
         });
 
     } else {
@@ -282,9 +282,8 @@ sub connect( $self, %args ) {
             $s->getTargets()
         })->then(sub( @tabs ) {
             (my $tab) = grep { $_->{targetId} } @tabs;
-            my $targetId = $tab->{targetId};
-            $self->targetId( $targetId );
-            $self->attach( $targetId )
+            $s->tab($tab);
+            $s->attach( $tab->{targetId} )
         });
     };
 
@@ -295,7 +294,19 @@ sub connect( $self, %args ) {
 
     $driver->close();
 
-Shut down the connection to Chrome
+Shut down the connection to our tab and close it.
+
+=cut
+
+sub close( $self ) {
+    $self->transport->send_message('Target.closeTarget', targetId => $self->targetId );
+}
+
+sub DESTROY( $self ) {
+    warn "$_[0]: DESTROY";
+    $self->close
+        if $self->autoclose;
+};
 
 =head2 C<< ->sleep >>
 
