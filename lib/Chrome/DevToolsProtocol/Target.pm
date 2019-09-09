@@ -282,7 +282,6 @@ sub connect( $self, %args ) {
                 croak "Found the tab but it didn't have a targetId";
             };
             $s->tab( $tab );
-            $s->log('debug', "Attached to tab $args{tab}", $tab );
             $s->attach( $tab->{targetId} )
         });
 
@@ -291,7 +290,6 @@ sub connect( $self, %args ) {
         my $tab = $args{ tab };
         $self->tab($tab);
         $done = $done->then(sub {
-            $self->log('debug', "Attached to tab $args{tab}", $tab );
             $s->attach();
         });
 
@@ -710,6 +708,9 @@ sub attach( $self, $targetId=$self->targetId ) {
     weaken $s;
     $self->targetId( $targetId );
     $self->transport->attachToTarget( targetId => $targetId )
+    ->on_done(sub {
+        $s->log('debug', "Attached to tab $targetId" );
+    });
 };
 
 1;
