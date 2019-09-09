@@ -319,23 +319,6 @@ sub connect( $self, %args ) {
             return Future->done( $info->{webSocketDebuggerUrl} );
         });
 
-        # XXX This needs to go into ::Target
-            if(0) {
-                my $endpoint;
-if(0) {
-
-
-        } else {
-            # Attach to the first available tab we find
-            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
-                (my $tab) = grep { $_->{webSocketDebuggerUrl} } @tabs;
-                $self->log('debug', "Attached to some tab", $tab );
-                $self->{tab} = $tab;
-                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
-            });
-        };
-    };
-
     } else {
         $got_endpoint = Future->done( $endpoint );
         if( ! ref $endpoint ) {
