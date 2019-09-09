@@ -24,6 +24,7 @@ lib/WWW/Mechanize/Chrome/Cookbook.pm
 lib/WWW/Mechanize/Chrome/DSL.pm
 lib/WWW/Mechanize/Chrome/Examples.pm
 lib/WWW/Mechanize/Chrome/Install.pod
+lib/WWW/Mechanize/Chrome/Internals.pod
 lib/WWW/Mechanize/Chrome/Node.pm
 lib/WWW/Mechanize/Chrome/Troubleshooting.pm
 LICENSE
