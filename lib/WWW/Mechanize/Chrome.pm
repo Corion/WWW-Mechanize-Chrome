@@ -275,7 +275,7 @@ network.
 
   driver => $driver_object  # specify the driver object
 
-Use a L<Chrome::DevToolsProtocol> object that has been manually constructed.
+Use a L<Chrome::DevToolsProtocol::Target> object that has been manually constructed.
 
 =item B<report_js_errors>
 
