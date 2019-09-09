@@ -290,7 +290,24 @@ sub connect( $self, %args ) {
         my $tab = $args{ tab };
         $self->tab($tab);
         $done = $done->then(sub {
-            $s->attach();
+            $s->attach( $s->tab->{targetId} );
+        });
+
+    } elsif( defined $args{ tab } and $args{ tab } =~ /^\d{1,5}$/ ) {
+        $done = $done->then(sub {
+            $s->getTargets()
+        })->then(sub( @tabs ) {
+            $s->tab( $tabs[ $args{ tab }] );
+            $s->attach( $s->tab->{targetId} );
+        });
+
+    } elsif( $args{ tab } ) {
+        # Let's assume that the tab is the tab id:
+        $done = $done->then(sub {
+            $s->getTargetInfo( $args{tab})
+        })->then(sub( $tab ) {
+            $self->tab($tab);
+            $self->attach( $tab->{targetId});
         });
 
     } else {

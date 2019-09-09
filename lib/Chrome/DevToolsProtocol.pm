@@ -323,22 +323,7 @@ sub connect( $self, %args ) {
             if(0) {
                 my $endpoint;
 if(0) {
-        } elsif( defined $args{ tab } and ! ref $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
-            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
-                $self->log('debug', "Attached to tab $args{tab}", @tabs );
-                $self->{tab} = $tabs[ $args{ tab }];
-                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
-            });
 
-
-        } elsif( $args{ tab } ) {
-            # Let's assume that the tab is the tab id:
-            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
-                (my $tab) = grep { $_->{id} eq $args{ tab }} @tabs;
-                $self->{tab} = $tab;
-                $self->log('debug', "Attached to tab $args{tab}", $tab );
-                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
-            });
 
         } else {
             # Attach to the first available tab we find
