@@ -274,6 +274,8 @@ Asynchronously connect to the Chrome browser, returning a Future.
 =cut
 
 sub connect( $self, %args ) {
+    my $s = $self;
+    weaken $s;
     # If we are still connected to a different tab, disconnect from it
     if( $self->transport and ref $self->transport ) {
         $self->transport->close();
@@ -390,7 +392,7 @@ sub connect( $self, %args ) {
         $transport = $self->{transport};
     };
 
-    return $transport->connect( $self, $got_endpoint, sub { $self->log( @_ ) } );
+    return $transport->connect( $self, $got_endpoint, sub { $s->log( @_ ) } );
 };
 
 =head2 C<< ->close >>
