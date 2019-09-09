@@ -5,7 +5,6 @@ use Data::Dumper;
 use Chrome::DevToolsProtocol;
 use WWW::Mechanize::Chrome; # for launching Chrome
 use Log::Log4perl qw(:easy);
-#use Devel::Cycle;
 
 use lib '.';
 use t::helper;
@@ -31,8 +30,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my( $file, $mech ) = splice @_;
     my $chrome = $mech->driver;
     #undef $mech;
-
-    #find_cycle($chrome);
 
     isa_ok $chrome, 'Chrome::DevToolsProtocol::Target';
 
