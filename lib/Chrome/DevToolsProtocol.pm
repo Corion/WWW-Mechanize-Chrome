@@ -322,12 +322,6 @@ sub connect( $self, %args ) {
 
         # XXX This needs to go into ::Target
             if(0) {
-        if( $args{ new_tab }) {
-            $got_endpoint = $self->new_tab()->then(sub( $info ) {
-                $self->log('debug', "Created new tab", $info );
-                $self->{tab} = $info;
-                return Future->done( $info->{webSocketDebuggerUrl} );
-            });
 
         } elsif( defined $args{ tab } and ! ref $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
