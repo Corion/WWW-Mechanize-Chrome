@@ -765,7 +765,7 @@ sub new($class, %options) {
 
     my( $to_chrome, $from_chrome );
     unless ($options{pid} or $options{reuse}) {
-        unless ( defined $options{ port } ) {
+        unless ( defined $options{ port } or $options{pipe}) {
             # Find free port for Chrome to listen on
             $options{ port } = $class->_find_free_port( 9222 );
         };
