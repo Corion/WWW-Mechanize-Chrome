@@ -337,7 +337,6 @@ sub close( $self ) {
 }
 
 sub DESTROY( $self ) {
-    warn "$_[0]: DESTROY";
     $self->close
         if $self->autoclose;
 };
