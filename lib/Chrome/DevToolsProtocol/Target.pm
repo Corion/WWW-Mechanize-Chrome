@@ -668,14 +668,14 @@ sub title( $self ) {
 
 =head2 C<< $target->createTarget >>
 
-    my $targetId = $chrome->createTarget(
+    my $info = $chrome->createTarget(
         url => 'about:blank',
         width => 1280,
         height => 800,
         newWindow => JSON::false,
         background => JSON::false,
     )->get;
-    print $targetId;
+    print $info->{targetId};
 
 Creates a new target
 
@@ -685,7 +685,7 @@ sub createTarget( $self, %options ) {
     $options{ url } //= 'about:blank';
     $self->transport->send_message('Target.createTarget',
         %options )->then(sub( $info ) {
-            Future->done( $info->{targetId})
+            Future->done( $info )
     });
 }
 
