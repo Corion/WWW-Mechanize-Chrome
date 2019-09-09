@@ -1505,8 +1505,11 @@ sub autoclose_tab( $self, $autoclose ) {
 sub DESTROY {
     my $pid= delete $_[0]->{pid};
 
-    if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
-        $_[0]->driver->close_tab({ id => $tab_id })->get();
+    #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
+    #    $_[0]->driver->close_tab({ id => $tab_id })->get();
+    #};
+    if( $_[0]->{autoclose} and $_[0]->tab  ) {
+        $_[0]->driver->close->get();
     };
 
     #if( $pid and $_[0]->{cached_version} > 65) {
