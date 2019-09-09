@@ -812,7 +812,7 @@ sub new($class, %options) {
     );
     $options{ driver } ||= Chrome::DevToolsProtocol::Target->new(
         auto_close => 0,
-        transport  => $options{ driver_transport },
+        transport  => delete $options{ driver_transport },
         error_handler => sub {
             #warn ref$_[0];
             #warn "<<@CARP_NOT>>";
