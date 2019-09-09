@@ -179,7 +179,7 @@ constructed.
 
 Set the name and/or path to the browser's executable program:
 
-  launch_exe => 'name-of-chrome-executabe'    # for non-standard executable names
+  launch_exe => 'name-of-chrome-executable'   # for non-standard executable names
   launch_exe => '/path/to/executable'         # for non-standard paths
   launch_exe => '/path/to/executable/chrome'  # full path
 
