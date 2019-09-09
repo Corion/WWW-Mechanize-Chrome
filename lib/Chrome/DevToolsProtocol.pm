@@ -313,7 +313,7 @@ sub connect( $self, %args ) {
     if( ! $endpoint ) {
         warn "Fetching first contact information via HTTP";
         $got_endpoint = $self->version_info()->then(sub( $info ) {
-            $self->log('debug', "Created new tab", $info );
+            $self->log('debug', "Found webSocket URL", $info );
             $self->{tab} = $info;
             use Data::Dumper;
             warn Dumper $info;
