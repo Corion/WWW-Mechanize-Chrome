@@ -224,6 +224,8 @@ Asynchronously connect to the Chrome browser, returning a Future.
 =cut
 
 sub connect( $self, %args ) {
+    my $s = $self;
+    weaken $s;
     my $done = $self->transport->connect();
     $done = $done->then(sub {
 
@@ -236,25 +238,34 @@ sub connect( $self, %args ) {
         Future->done;
     });
 
-    # Here w need to handle all the stuff for setting up a fresh tab
+    # Here we need to handle all the stuff for setting up a fresh tab
     #if( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         #$endpoint = $args{ tab }->{webSocketDebuggerUrl};
         #$self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
-        $done = $done->then( sub { $self->transport->send_message('Target.createBrowserContext')});
+    if( $args{ new_tab } ) {
+        $done = $done->then( sub { $s->transport->send_message('Target.createBrowserContext')});
         $done = $done->then(sub( $info ) {
             $self->browserContextId( $info->{browserContextId} );
             warn "Creating target";
-            $self->createTarget(
+            $s->createTarget(
                 browserContextId => $info->{browserContextId},
             );
         })->then(sub( $targetId ) {
-            $self->targetId( $targetId );
+            $s->targetId( $targetId );
             warn "Attaching to (newly created) target";
             $self->transport->attachToTarget( targetId => $targetId )
         });
-    #};
-
-    warn $done;
+    } else {
+            # Attach to the first available tab we find
+        $done = $done->then(sub (@) {
+            $s->getTargets()
+        })->then(sub( @tabs ) {
+            (my $tab) = grep { $_->{targetId} } @tabs;
+            my $targetId = $tab->{targetId};
+            $self->targetId( $targetId );
+            $self->transport->attachToTarget( targetId => $targetId )
+        });
+    };
 
     $done
 };
