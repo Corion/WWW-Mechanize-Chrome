@@ -333,7 +333,7 @@ Shut down the connection to our tab and close it.
 =cut
 
 sub close( $self ) {
-    $self->transport->send_message('Target.closeTarget', targetId => $self->targetId );
+    $self->transport->closeTarget(targetId => $self->targetId );
 }
 
 sub DESTROY( $self ) {

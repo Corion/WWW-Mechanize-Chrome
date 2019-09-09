@@ -826,6 +826,21 @@ sub attachToTarget( $self, %options ) {
     });
 }
 
+=head2 C<< $target->closeTarget >>
+
+    my $targetId = $chrome->closeTarget(
+        targetId => $targetId
+    )->get;
+
+Creates a new target
+
+=cut
+
+sub closeTarget( $self, %options ) {
+    $self->send_message('Target.closeTarget',
+        %options )
+}
+
 package
     Chrome::DevToolsProtocol::EventListener;
 use strict;
