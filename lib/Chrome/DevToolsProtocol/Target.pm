@@ -514,9 +514,9 @@ sub _send_packet( $self, $response, $method, %params ) {
     $self->log( 'trace', "Sent message", $payload );
     my $result;
     try {
-        # XXX this is half right - we get an ack when the message was accepted
-        #     but we want to send the real reply when it comes back from the
-        #     real target...
+        # this is half right - we get an ack when the message was accepted
+        # but we want to send the real reply when it comes back from the
+        # real target. This is done in the listener for receivedMessageFromTarget
         $result = $self->transport->_send_packet(
             $response,
             'Target.sendMessageToTarget',
