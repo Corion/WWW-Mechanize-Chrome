@@ -16,11 +16,13 @@ Log::Log4perl->easy_init($TRACE);
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
+my $testcount = 7;
+
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 6*@instances;
+    plan tests => $testcount*@instances;
 };
 
 my %args;
@@ -35,7 +37,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
     my $version = $mech->chrome_version;
 
@@ -43,12 +45,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
         and $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} eq 'Chrome::DevToolsProtocol::Transport::Mojo'
     ) {
         SKIP: {
-            skip "Chrome::DevToolsProtocol::Transport::Mojo doesn't support port reuse", 6
+            skip "Chrome::DevToolsProtocol::Transport::Mojo doesn't support port reuse", $testcount
         };
         return;
     } elsif( $version =~ /\b(\d+)\b/ and ($1 == 61 or $1 == 59)) {
         SKIP: {
-            skip "Chrome v$1 doesn't properly handle listing tabs...", 6;
+            skip "Chrome v$1 doesn't properly handle listing tabs...", $testcount;
         };
         return
     };
@@ -61,11 +63,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     # immediately again:
     #$mech->driver->new_tab()->get;
     my $info = $mech->driver->createTarget()->get;
+    my $targetId = $mech->driver->targetId; # this one should close once we discard it
 
     #my @tabs = $app->list_tabs()->get;
     my @tabs = $app->getTargets()->get;
     diag "Tabs open in PID $pid: ", 0+@tabs;
-    use Data::Dumper; note Dumper \@tabs;
+    #use Data::Dumper; note Dumper \@tabs;
 
     diag "Releasing mechanize $pid";
     undef $mech; # our own tab should now close automatically
@@ -79,13 +82,20 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
         my @new_tabs;
         my $ok = eval { @new_tabs = $app->getTargets()->get; 1 };
         if( ! $ok ) {
-            skip "$@", 6;
+            skip "$@", $testcount;
         };
 
         if (! is scalar @new_tabs, @tabs-1, "Our tab was presumably closed") {
             for (@new_tabs) {
                 diag $_->{title};
             };
+        };
+        if( my @kept = grep { $_->{targetId} eq $targetId } @new_tabs ) {
+            pass "And it was our tab that was closed";
+            use Data::Dumper;
+            diag Dumper \@kept;
+        } else {
+            pass "And it was our tab that was closed";
         };
 
     my $magic = sprintf "%s - %s", basename($0), $$;
