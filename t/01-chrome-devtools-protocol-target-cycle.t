@@ -23,7 +23,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "$@";
     exit
 } else {
-    plan tests => 6*@instances;
+    plan tests => 8*@instances;
 };
 
 sub new_mech {
@@ -33,7 +33,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 8, sub {
     my( $file, $mech ) = splice @_;
     my $chrome = $mech->driver;
     #undef $mech;
