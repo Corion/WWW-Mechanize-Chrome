@@ -76,6 +76,16 @@ has 'tab' => (
     is => 'rw',
 );
 
+=item B<autoclose>
+
+Close the tab when the object goes out of scope
+
+=cut
+
+has 'autoclose' => (
+    is => 'rw',
+);
+
 =item B<log>
 
 A premade L<Log::Log4perl> object to act as logger
@@ -121,7 +131,7 @@ The event-loop specific transport backend
 
 has 'transport' => (
     is => 'ro',
-    handles => [qw[future sleep endpoint close log _log version_info protocol_version
+    handles => [qw[future sleep endpoint log _log version_info protocol_version
         getTargets
     ]],
 );
@@ -619,19 +629,6 @@ Brings the tab to the foreground of the application
 
 sub activate_tab( $self, $tab ) {
     croak "Won't activate tabs, even though I could";
-};
-
-=head2 C<< $chrome->close_tab >>
-
-    $chrome->close_tab( $tab )->get
-
-Closes the tab
-
-=cut
-
-sub close_tab( $self, $tab ) {
-    croak "Won't close tabs, even though I could";
-    my $url = $self->build_url( domain => 'close/' . $tab->{id} );
 };
 
 =head2 C<< $target->getTargetInfo >>
