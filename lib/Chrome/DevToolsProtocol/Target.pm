@@ -269,7 +269,7 @@ sub connect( $self, %args ) {
     } elsif( ref $args{ tab } eq 'Regexp') {
         # Let's assume that the tab is a regex:
 
-        $done = $done->then(sub (@) {
+        $done = $done->then(sub {
             $s->getTargets()
         })->then(sub( @tabs ) {
             (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
