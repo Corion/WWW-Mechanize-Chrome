@@ -4784,7 +4784,7 @@ sub fetchResources_future( $self, %options ) {
             next if $res->{url} !~ /^https?:/i;
             my $fetch = $s->getResourceContent_future( $res );
             if( $save ) {
-                warn "Will save $res->{url}";
+                #warn "Will save $res->{url}";
                 $fetch = $fetch->then( $save );
             };
             push @requested, $fetch;
