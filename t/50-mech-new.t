@@ -11,7 +11,7 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-Log::Log4perl->easy_init($TRACE);
+Log::Log4perl->easy_init($ERROR);
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();

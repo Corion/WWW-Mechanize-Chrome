@@ -256,13 +256,11 @@ sub connect( $self, %args ) {
         $done = $done->then( sub { $s->transport->send_message('Target.createBrowserContext')});
         $done = $done->then(sub( $info ) {
             $self->browserContextId( $info->{browserContextId} );
-            warn "Creating target";
             $s->createTarget(
                 browserContextId => $info->{browserContextId},
             );
         })->then(sub( $info ) {
             $s->tab( $info );
-            warn "Attaching to (newly created) target";
             $s->attach( $info->{targetId} )
         });
 
