@@ -326,7 +326,7 @@ sub connect( $self, %args ) {
             $endpoint =~ m!/([^/]+)$!
                 or die "Couldn't find tab id in '$endpoint'";
             $self->{tab} = {
-                id => $1,
+                targetId => $1,
             };
         };
     };
