@@ -286,6 +286,15 @@ sub connect( $self, %args ) {
             $s->attach( $tab->{targetId} )
         });
 
+    } elsif( ref $args{ tab } ) {
+        # Let's assume that the tab is a tab object:
+        my $tab = $args{ tab };
+        $self->tab($tab);
+        $done = $done->then(sub {
+            $self->log('debug', "Attached to tab $args{tab}", $tab );
+            $s->attach();
+        });
+
     } else {
             # Attach to the first available tab we find
         $done = $done->then(sub (@) {

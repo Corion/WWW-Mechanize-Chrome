@@ -321,7 +321,8 @@ sub connect( $self, %args ) {
 
         # XXX This needs to go into ::Target
             if(0) {
-
+                my $endpoint;
+if(0) {
         } elsif( defined $args{ tab } and ! ref $args{ tab } and $args{ tab } =~ /^\d+$/ ) {
             $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
                 $self->log('debug', "Attached to tab $args{tab}", @tabs );
@@ -329,15 +330,6 @@ sub connect( $self, %args ) {
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
-
-        } elsif( ref $args{ tab } ) {
-            # Let's assume that the tab is a tab object:
-            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
-                (my $tab) = grep { $_->{id} eq $args{ tab }->{id}} @tabs;
-                $self->{tab} = $tab;
-                $self->log('debug', "Attached to tab $args{tab}", $tab );
-                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
-            });
 
         } elsif( $args{ tab } ) {
             # Let's assume that the tab is the tab id:
