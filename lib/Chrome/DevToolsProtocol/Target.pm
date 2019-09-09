@@ -253,7 +253,7 @@ sub connect( $self, %args ) {
         })->then(sub( $targetId ) {
             $s->targetId( $targetId );
             warn "Attaching to (newly created) target";
-            $self->transport->attachToTarget( targetId => $targetId )
+            $self->attach( $targetId )
         });
     } else {
             # Attach to the first available tab we find
@@ -263,7 +263,7 @@ sub connect( $self, %args ) {
             (my $tab) = grep { $_->{targetId} } @tabs;
             my $targetId = $tab->{targetId};
             $self->targetId( $targetId );
-            $self->transport->attachToTarget( targetId => $targetId )
+            $self->attach( $targetId )
         });
     };
 
@@ -656,6 +656,23 @@ sub createTarget( $self, %options ) {
             Future->done( $info->{targetId})
     });
 }
+
+
+=head2 C<< $target->attach >>
+
+    $target->attach();
+
+Attaches to the target set up in C<targetId>. If a targetId is given,
+attaches to it and remembers the value.
+
+=cut
+
+sub attach( $self, $targetId=$self->targetId ) {
+    my $s = $self;
+    weaken $s;
+    $self->targetId( $targetId );
+    $self->transport->attachToTarget( targetId => $targetId )
+};
 
 1;
 
