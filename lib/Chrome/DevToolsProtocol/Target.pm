@@ -255,6 +255,27 @@ sub connect( $self, %args ) {
             warn "Attaching to (newly created) target";
             $self->attach( $targetId )
         });
+
+    } elsif( ref $args{ tab } eq 'Regexp') {
+        # Let's assume that the tab is a regex:
+
+        $done = $done->then(sub (@) {
+            $s->getTargets()
+        })->then(sub( @tabs ) {
+            (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
+
+            if( ! $tab ) {
+                $s->log('warn', "Couldn't find a tab matching /$args{ tab }/");
+                croak "Couldn't find a tab matching /$args{ tab }/";
+            } elsif( ! $tab->{targetId} ) {
+                local @CARP_NOT = ('Future',@CARP_NOT);
+                croak "Found the tab but it didn't have a targetId";
+            };
+            $s->{tab} = $tab;
+            $s->log('debug', "Attached to tab $args{tab}", $tab );
+            $self->attach( $tab->{targetId} )
+        });
+
     } else {
             # Attach to the first available tab we find
         $done = $done->then(sub (@) {

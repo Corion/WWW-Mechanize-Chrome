@@ -330,23 +330,6 @@ sub connect( $self, %args ) {
                 return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
             });
 
-        } elsif( ref $args{ tab } eq 'Regexp') {
-            # Let's assume that the tab is a regex:
-
-            $got_endpoint = $self->list_tabs()->then(sub( @tabs ) {
-                (my $tab) = grep { $_->{title} =~ /$args{ tab }/ } @tabs;
-
-                if( ! $tab ) {
-                    $self->log('warn', "Couldn't find a tab matching /$args{ tab }/");
-                    croak "Couldn't find a tab matching /$args{ tab }/";
-                } elsif( ! $tab->{webSocketDebuggerUrl} ) {
-                    local @CARP_NOT = ('Future',@CARP_NOT);
-                    croak "Found the tab but it didn't have a webSocketDebuggerUrl";
-                };
-                $self->{tab} = $tab;
-                $self->log('debug', "Attached to tab $args{tab}", $tab );
-                return Future->done( $self->{tab}->{webSocketDebuggerUrl} );
-            });
 
         } elsif( ref $args{ tab } ) {
             # Let's assume that the tab is a tab object:
