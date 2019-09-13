@@ -176,6 +176,10 @@ has 'transport' => (
     handles => ['future'],
 );
 
+has 'is_connected' => (
+    is => 'rw',
+);
+
 around BUILDARGS => sub( $orig, $class, %args ) {
     $args{ _log } = delete $args{ 'log' };
     $class->$orig( %args )
@@ -358,7 +362,10 @@ sub connect( $self, %args ) {
         $transport = $self->{transport};
     };
 
-    return $transport->connect( $self, $got_endpoint, sub { $s->log( @_ ) } );
+    return $transport->connect( $self, $got_endpoint, sub { $s->log( @_ ) } )
+    ->on_done(sub {
+        $s->is_connected(1);
+    });
 };
 
 =head2 C<< ->close >>
