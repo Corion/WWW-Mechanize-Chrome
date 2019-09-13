@@ -131,6 +131,14 @@ has 'receivers' => (
     default => sub { {} },
 );
 
+has 'reader_fh' => (
+    is => 'ro',
+);
+
+has 'writer_fh' => (
+    is => 'ro',
+);
+
 =item B<on_message>
 
 A callback invoked for every message
@@ -280,9 +288,10 @@ sub connect( $self, %args ) {
     if( $self->transport and ref $self->transport and not $self->transport->isa('Chrome::DevToolsProtocol::Transport::Pipe') ) {
         $self->transport->close();
     };
-
     # Kick off the connect
     my $endpoint;
+    $args{ writer_fh } //= $self->writer_fh;
+    $args{ reader_fh } //= $self->reader_fh;
     if( $args{ writer_fh } and $args{ reader_fh }) {
         # Pipe connection
         $args{ transport } ||= 'Chrome::DevToolsProtocol::Transport::Pipe';
