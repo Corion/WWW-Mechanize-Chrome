@@ -8,6 +8,7 @@ build_requires:
   Image::Info: '0'
   Test::Deep: '0'
   Test::HTTP::LocalServer: '0.61'
+  Test::Memory::Cycle: '0'
   Test::More: '0'
   URI: '0'
   URI::file: '0'
@@ -26,9 +27,6 @@ no_index:
     - inc
 requires:
   Algorithm::Loops: '0'
-  AnyEvent: '0'
-  AnyEvent::Future: '0'
-  AnyEvent::WebSocket::Client: '0'
   Carp: '0'
   Exporter: '5'
   File::Basename: '0'
@@ -40,6 +38,7 @@ requires:
   HTTP::Cookies: '0'
   HTTP::Headers: '0'
   HTTP::Response: '0'
+  IO::Async: '0'
   IO::Socket::INET: '0'
   Imager: '0'
   Imager::File::PNG: '0'
@@ -49,6 +48,7 @@ requires:
   Moo: '2'
   Object::Import: '0'
   POSIX: '0'
+  PerlX::Maybe: '0'
   Scalar::Util: '0'
   Storable: '0'
   Try::Tiny: '0'

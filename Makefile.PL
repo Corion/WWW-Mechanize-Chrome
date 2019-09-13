@@ -96,6 +96,7 @@ my %module = (
         'Test::HTTP::LocalServer' => 0.61, # we want the improved IPC
         'URI'          => 0,
         'URI::file'    => 0,
+        'Test::Memory::Cycle' => 0,
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
