@@ -31,7 +31,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
 
     isa_ok $chrome, 'Chrome::DevToolsProtocol';
 
-    my $version = $chrome->protocol_version->get;
+    my $version = $chrome->getVersion->get->{protocolVersion};
     cmp_ok $version, '>=', '0.1', "We have a protocol version ($version)";
 
     #diag "Open tabs";

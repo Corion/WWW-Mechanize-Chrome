@@ -670,6 +670,16 @@ sub protocol_version($self) {
     });
 };
 
+=head2 C<< $target->getVersion >>
+
+Returns information about the Chrome instance we are connected to.
+
+=cut
+
+sub getVersion( $self ) {
+    $self->send_message( 'Browser.getVersion' )
+}
+
 =head2 C<< $chrome->get_domains >>
 
     my $schema = $chrome->get_domains->get;

@@ -974,7 +974,8 @@ APIs of Chrome that the object is connected to.
 
 sub chrome_version_info( $self ) {
     $self->{chrome_version} ||= do {
-        $self->target->version_info->get;
+        #$self->target->version_info->get;
+        $self->target->getVersion->get;
     };
 }
 
