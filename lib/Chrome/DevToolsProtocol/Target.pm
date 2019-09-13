@@ -131,7 +131,7 @@ The event-loop specific transport backend
 
 has 'transport' => (
     is => 'ro',
-    handles => [qw[future sleep endpoint log _log version_info protocol_version
+    handles => [qw[future sleep endpoint log _log
         getTargets
     ]],
 );
@@ -488,6 +488,28 @@ sub json_get($self, $domain, %options) {
     croak "$self can't GET JSON data";
 };
 
+=head2 C<< $chrome->version_info >>
+
+    print $chrome->version_info->get->{"protocolVersion"};
+
+=cut
+
+sub version_info( $self ) {
+    $self->getVersion
+}
+
+=head2 C<< $chrome->protocol_version >>
+
+    print $chrome->protocol_version->get;
+
+=cut
+
+sub protocol_version( $self ) {
+    $self->getVersion->then(sub( $info ) {
+        Future->done($info->{"protocolVersion"})
+    })
+}
+
 sub _send_packet( $self, $response, $method, %params ) {
     my $id = $self->next_sequence;
     if( $response ) {
@@ -604,14 +626,6 @@ sub eval( $self, $string ) {
     });
 };
 
-=head2 C<< $chrome->version_info >>
-
-    print $chrome->version_info->get->{"Protocol-Version"};
-
-=head2 C<< $chrome->protocol_version >>
-
-    print $chrome->protocol_version->get;
-
 =head2 C<< $chrome->get_domains >>
 
 =cut
@@ -682,6 +696,16 @@ Returns the title of the current target
 
 sub title( $self ) {
     $self->getTargetInfo( $self->targetId )->get->{title}
+}
+
+=head2 C<< $target->getVersion >>
+
+Returns information about the Chrome instance we are connected to.
+
+=cut
+
+sub getVersion( $self ) {
+    $self->send_message( 'Browser.getVersion' )
 }
 
 =head2 C<< $target->createTarget >>
