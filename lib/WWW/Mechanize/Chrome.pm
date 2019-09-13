@@ -754,9 +754,9 @@ sub new($class, %options) {
     };
 
     my $method = 'socket';
-    #if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
-    if( $options{ pipe }) {
-        #$options{ pipe } = 1;
+    if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
+    #if( $options{ pipe }) {
+        $options{ pipe } = 1;
         $method = 'pipe';
     };
 
@@ -765,7 +765,9 @@ sub new($class, %options) {
 
     my( $to_chrome, $from_chrome );
     unless ($options{pid} or $options{reuse}) {
-        unless ( defined $options{ port } or $options{pipe}) {
+        if ( ! defined $options{ port } and ! $options{ pipe }) {
+            #warn Dumper \%options;
+            #die "Finding free port?!";
             # Find free port for Chrome to listen on
             $options{ port } = $class->_find_free_port( 9222 );
         };
@@ -773,12 +775,13 @@ sub new($class, %options) {
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
         (my( $pid ), $to_chrome, $from_chrome ) = $self->spawn_child( $method, @cmd );
-        $options{ writer_fh } = $to_chrome;
-        $options{ reader_fh } = $from_chrome;
         $self->{pid} = $pid;
         $self->{ kill_pid } = 1;
+        if( $options{ pipe }) {
+            $options{ writer_fh } = $to_chrome;
+            $options{ reader_fh } = $from_chrome;
 
-        if( ! $options{ pipe } ) {
+        } else {
             # Just to give Chrome time to start up, make sure it accepts connections
             my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
             if( ! $ok) {
