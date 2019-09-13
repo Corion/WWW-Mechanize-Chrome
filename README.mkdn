@@ -147,7 +147,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
     Set the name and/or path to the browser's executable program:
 
-        launch_exe => 'name-of-chrome-executabe'    # for non-standard executable names
+        launch_exe => 'name-of-chrome-executable'   # for non-standard executable names
         launch_exe => '/path/to/executable'         # for non-standard paths
         launch_exe => '/path/to/executable/chrome'  # full path
 
@@ -243,7 +243,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
         driver => $driver_object  # specify the driver object
 
-    Use a [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) object that has been manually constructed.
+    Use a [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) object that has been manually constructed.
 
 - **report\_js\_errors**
 
@@ -379,16 +379,25 @@ APIs of Chrome that the object is connected to.
 
 ## `$mech->driver`
 
+**deprecated** - use `->target` instead
+
     my $driver = $mech->driver
 
 Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting to Chrome.
+
+## `$mech->target`
+
+    my $target = $mech->target
+
+Access the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) instance connecting to the
+Chrome tab we use.
 
 ## `$mech->tab`
 
     my $tab = $mech->tab
 
-Access the tab hash of the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting
-to Chrome. This represents the tab we control.
+Access the tab hash of the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) instance.
+This represents the tab we control.
 
 ## `$mech->allow( %options )`
 
@@ -621,7 +630,7 @@ or not. Setting this will never wait for an HTTP response.
     my $events = $mech->_collectEvents(
         sub { $_[0]->{method} eq 'Page.loadEventFired' }
     );
-    my( $e,$r) = Future->wait_all( $events, $self->driver->send_message(...));
+    my( $e,$r) = Future->wait_all( $events, $self->target->send_message(...));
 
 Internal method to create a Future that waits for an event that is sent by Chrome.
 
