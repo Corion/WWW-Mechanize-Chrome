@@ -806,7 +806,6 @@ sub new($class, %options) {
             host => $host,
         );
     };
-
     # Connect to it via TCP or local pipe
     $options{ driver_transport } ||= Chrome::DevToolsProtocol->new(
         @connection,
@@ -839,8 +838,8 @@ sub _setup_driver_future( $self, %options ) {
     $self->target->connect(
         new_tab => !$options{ reuse },
         tab     => $options{ tab },
-        writer_fh => $options{ writer_fh },
-        reader_fh => $options{ reader_fh },
+        #writer_fh => $options{ writer_fh },
+        #reader_fh => $options{ reader_fh },
     )->catch( sub(@args) {
         my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
