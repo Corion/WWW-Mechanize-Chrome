@@ -56,9 +56,10 @@ my %module = (
         # This actually is optional
         # You need one of the following event loops:
         # AnyEvent, IO::Async, Mojolicious
-        'AnyEvent'           => 0,
-        'AnyEvent::Future'   => 0,
-        'AnyEvent::WebSocket::Client' => 0,
+        #'AnyEvent'           => 0,
+        #'AnyEvent::Future'   => 0,
+        #'AnyEvent::WebSocket::Client' => 0,
+        'IO::Async'          => 0, # the pipe handling is tied to IO::Async
 
         # This is a developer-only prerequisite, but oh well
         'Algorithm::Loops'   => 0,
