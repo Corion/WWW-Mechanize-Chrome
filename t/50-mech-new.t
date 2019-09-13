@@ -56,6 +56,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     };
 
     my $app = $mech->driver;
+    my $transport = $app->transport;
     $mech->{autoclose} = 1;
     my $pid = delete $mech->{pid}; # so that the process survives
 
@@ -106,6 +107,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         autoclose => 0,
         reuse     => 1,
         new_tab   => 1,
+        driver    => $app,
+        driver_transport => $transport,
         %args,
     );
     $mech->update_html(<<HTML);
@@ -123,6 +126,8 @@ HTML
         autoclose => 0,
         tab       => qr/^\Q$magic/,
         reuse     => 1,
+        driver    => $app,
+        driver_transport => $transport,
         %args,
     );
     $c = $mech->content;
@@ -141,6 +146,8 @@ HTML
         autodie   => 0,
         autoclose => 0,
         tab       => 'current',
+        driver    => $app,
+        driver_transport => $transport,
         %args,
     );
     $c = $mech->content;
@@ -156,6 +163,8 @@ HTML
             autodie => 1,
             tab => qr/\Q$magic/,
             reuse => 1,
+        driver    => $app,
+        driver_transport => $transport,
             %args,
         );
         1;
