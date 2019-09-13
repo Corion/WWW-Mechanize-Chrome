@@ -52,6 +52,7 @@ my %module = (
         'Carp'               => 0,
         'Future'             => '0.35', # Some smokers have 0.25 which lacks many features
         'Try::Tiny'          => 0,
+        'PerlX::Maybe'       => 0, # nicer syntax for optional parameters
         # This actually is optional
         # You need one of the following event loops:
         # AnyEvent, IO::Async, Mojolicious

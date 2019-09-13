@@ -14,6 +14,7 @@ use Data::Dumper;
 use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
+use PerlX::Maybe;
 
 our $VERSION = '0.35';
 our @CARP_NOT;
@@ -236,9 +237,11 @@ Asynchronously connect to the Chrome browser, returning a Future.
 sub connect( $self, %args ) {
     my $s = $self;
     weaken $s;
-    my $done = $self->transport->connect();
-    $done = $done->then(sub {
+    my $done = $self->transport->is_connected
+        ? Future->done
+        : $self->transport->connect();
 
+    $done = $done->then(sub {
         $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
             #use Data::Dumper;
             #warn Dumper \@_;
@@ -288,7 +291,7 @@ sub connect( $self, %args ) {
         my $tab = $args{ tab };
         $self->tab($tab);
         $done = $done->then(sub {
-            $s->attach( $s->tab->{targetId} );
+            $s->attach( $s->tab->{targetId});
         });
 
     } elsif( defined $args{ tab } and $args{ tab } =~ /^\d{1,5}$/ ) {
@@ -543,7 +546,8 @@ sub _send_packet( $self, $response, $method, %params ) {
             $response,
             'Target.sendMessageToTarget',
             message => $payload,
-            targetId => $self->targetId
+            targetId => $self->targetId,
+            maybe sessionId => $self->sessionId,
         );
     } catch {
         $self->log('error', $_ );
@@ -736,8 +740,8 @@ sub createTarget( $self, %options ) {
 
     $target->attach();
 
-Attaches to the target set up in C<targetId>. If a targetId is given,
-attaches to it and remembers the value.
+Attaches to the target set up in C<targetId> and C<sessionId>. If a targetId is
+given, attaches to it and remembers the value.
 
 =cut
 
@@ -745,9 +749,18 @@ sub attach( $self, $targetId=$self->targetId ) {
     my $s = $self;
     weaken $s;
     $self->targetId( $targetId );
+
+    $self->{have_target_info} = $self->transport->one_shot('Target.attachedToTarget', sub($r) {
+        $s->log('debug', "Attached to", $r );
+        #$s->sessionId( $target->{sessionId});
+        #$s->log('debug', "Attached to session $target->{sessionId}" );
+        #undef $s->{have_session};
+    });
+
     $self->transport->attachToTarget( targetId => $targetId )
-    ->on_done(sub {
-        $s->log('debug', "Attached to tab $targetId" );
+    ->on_done(sub( $sessionId ) {
+        $s->sessionId( $sessionId );
+        $s->log('debug', "Attached to tab $targetId, session $sessionId" );
     });
 };
 
