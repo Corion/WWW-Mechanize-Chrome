@@ -372,7 +372,7 @@ needs launching the browser and asking for the version via the network.
 
 ## `$mech->chrome_version_info`
 
-    print $mech->chrome_version_info->{Browser};
+    print $mech->chrome_version_info->{product};
 
 Returns the version information of the Chrome executable and various other
 APIs of Chrome that the object is connected to.
