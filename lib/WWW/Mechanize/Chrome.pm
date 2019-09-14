@@ -964,12 +964,12 @@ sub chrome_version( $self ) {
         };
     };
 
-    $self->chrome_version_info()->{Browser}
+    return $self->chrome_version_info()->{product};
 }
 
 =head2 C<< $mech->chrome_version_info >>
 
-  print $mech->chrome_version_info->{Browser};
+  print $mech->chrome_version_info->{product};
 
 Returns the version information of the Chrome executable and various other
 APIs of Chrome that the object is connected to.

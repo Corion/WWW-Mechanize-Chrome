@@ -12,11 +12,13 @@ use t::helper;
 my @instances = t::helper::browser_instances();
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
+my $testcount = 7;
+
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 6*@instances;
+    plan tests => $testcount*@instances;
 };
 
 sub new_mech {
@@ -26,7 +28,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_;
     my $chrome = $mech->driver;
     #undef $mech;
@@ -58,4 +60,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
        $res = $chrome->eval('var x = {"foo": "bar"}; x')->get;
     is_deeply $res, {foo => 'bar'}, "Somewhat complex expressions work in tab"
         or diag Dumper $res;
+
+	# Check that we can get sensible Chrome version information
+	my $info = $chrome->getVersion->get;
+	like $info->{product}, qr!^.*?/(\d+(?:\.\d+)+)$!, "We can retrieve a sensible browser version"
+	    or diag Dumper $info;
 });
