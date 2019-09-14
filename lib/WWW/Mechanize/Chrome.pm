@@ -436,6 +436,12 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--hide-scrollbars";
     };
 
+    # Yes, that name is horrible
+    if( $options->{safebrowsing_auto_update}) {
+	} else {
+        push @{ $options->{ launch_arg }}, "--safebrowsing-disable-auto-update";
+    };
+
     if( exists $options->{disable_prompt_on_repost}) {
         carp "Option 'disable_prompt_on_repost' is deprecated, use prompt_on_repost instead";
         $options->{prompt_on_repost} = !$options->{disable_prompt_on_repost};
@@ -443,11 +449,13 @@ sub build_command_line {
 
     for my $option (qw(
         background_networking
+		breakpad
         client_side_phishing_detection
         component_update
         hang_monitor
         prompt_on_repost
         sync
+		translate
         web_resources
         default_apps
         infobars
