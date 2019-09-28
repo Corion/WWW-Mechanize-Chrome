@@ -438,7 +438,7 @@ sub build_command_line {
 
     # Yes, that name is horrible
     if( $options->{safebrowsing_auto_update}) {
-	} else {
+    } else {
         push @{ $options->{ launch_arg }}, "--safebrowsing-disable-auto-update";
     };
 
@@ -449,13 +449,13 @@ sub build_command_line {
 
     for my $option (qw(
         background_networking
-		breakpad
+        breakpad
         client_side_phishing_detection
         component_update
         hang_monitor
         prompt_on_repost
         sync
-		translate
+        translate
         web_resources
         default_apps
         infobars
