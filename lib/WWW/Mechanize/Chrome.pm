@@ -23,7 +23,7 @@ use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 
-our $VERSION = '0.35';
+our $VERSION = '0.36';
 our @CARP_NOT;
 
 =encoding utf-8
@@ -437,6 +437,12 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--hide-scrollbars";
     };
 
+    # Yes, that name is horrible
+    if( $options->{safebrowsing_auto_update}) {
+	} else {
+        push @{ $options->{ launch_arg }}, "--safebrowsing-disable-auto-update";
+    };
+
     if( exists $options->{disable_prompt_on_repost}) {
         carp "Option 'disable_prompt_on_repost' is deprecated, use prompt_on_repost instead";
         $options->{prompt_on_repost} = !$options->{disable_prompt_on_repost};
@@ -444,11 +450,13 @@ sub build_command_line {
 
     for my $option (qw(
         background_networking
+		breakpad
         client_side_phishing_detection
         component_update
         hang_monitor
         prompt_on_repost
         sync
+		translate
         web_resources
         default_apps
         infobars
@@ -762,6 +770,8 @@ sub new($class, %options) {
         };
     };
 
+    $options{ cleanup_signal } ||= $^O =~ /mswin32/i ? 'SIGKILL' : 'SIGTERM';
+
     my $self= bless \%options => $class;
     $self->{log} ||= $self->_build_log;
 
@@ -865,7 +875,7 @@ sub _connect( $self, %options ) {
     if ( $err ) {
         if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
             local $SIG{CHLD} = 'IGNORE';
-            kill 'SIGKILL' => $pid;
+            kill $_[0]->{cleanup_signal} => $pid;
             waitpid $pid, 0;
         };
         croak $err;
@@ -1510,7 +1520,7 @@ sub DESTROY {
 
     if( $pid ) {
         local $SIG{CHLD} = 'IGNORE';
-        kill 'SIGKILL' => $pid;
+        kill $_[0]->{cleanup_signal} => $pid;
         waitpid $pid, 0;
     };
     %{ $_[0] }= (); # clean out all other held references

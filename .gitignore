@@ -7,6 +7,7 @@ pm_to_blib
 blib/
 WWW-Mechanize-Chrome-*
 WWW-Mechanize-Chrome-*/
+.prove
 .releaserc
 cover_db
 firefox-versions/
@@ -14,4 +15,3 @@ chrome-versions/
 MYMETA.*
 frame-*.png
 *.pl
-.prove

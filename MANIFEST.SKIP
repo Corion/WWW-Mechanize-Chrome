@@ -2,6 +2,7 @@
 maint
 ^tags$
 .last_cover_stats
+^\.prove$
 .travis.yml
 .appveyor.yml
 ^\.github
