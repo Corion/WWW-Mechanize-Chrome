@@ -12,7 +12,7 @@ use Test::HTTP::LocalServer;
 
 use t::helper;
 
-Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 my @instances = t::helper::browser_instances();
 if (my $err = t::helper::default_unavailable) {
