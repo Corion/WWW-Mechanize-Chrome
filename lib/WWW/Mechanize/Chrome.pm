@@ -767,6 +767,8 @@ sub new($class, %options) {
         $method = 'pipe';
     };
 
+    $options{ cleanup_signal } ||= $^O =~ /mswin32/i ? 'SIGKILL' : 'SIGTERM';
+
     my $self= bless \%options => $class;
     $self->{log} ||= $self->_build_log;
 
@@ -863,7 +865,7 @@ sub _connect( $self, %options ) {
     if ( $err ) {
         if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
             local $SIG{CHLD} = 'IGNORE';
-            kill 'SIGTERM' => $pid;
+            kill $self->{cleanup_signal} => $pid;
             waitpid $pid, 0;
         };
         croak $err;
@@ -1486,7 +1488,7 @@ sub DESTROY {
 
     if( $pid ) {
         local $SIG{CHLD} = 'IGNORE';
-        kill 'SIGTERM' => $pid;
+        kill $_[0]->{cleanup_signal} => $pid;
         waitpid $pid, 0;
     };
     %{ $_[0] }= (); # clean out all other held references
