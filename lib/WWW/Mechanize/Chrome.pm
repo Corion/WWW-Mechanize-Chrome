@@ -632,9 +632,42 @@ sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
 };
 
 sub spawn_child_win32( $self, $method, @cmd ) {
-    croak "Only socket communication is supported on $^O"
-        if $method ne 'socket';
-    system(1, @cmd)
+    my( %child, %parent );
+	if( 'pipe' eq $method ) {
+	    require Win32::InheritHandles;
+		
+        # Now, we want to have file handles with fileno=3 and fileno=4
+        # to talk to Chrome v72+
+
+        # Just open some filehandles to push the filenos above 4 for sure:
+        #open my $dummy_fh, '>', '/dev/null';
+        #open my $dummy_fh2, '>', '/dev/null';
+
+        pipe $child{read}, $parent{write};
+        pipe $parent{read}, $child{write};
+
+        #close $dummy_fh;
+        #close $dummy_fh2;
+		
+		my ($app,@cmdline) = @cmd;
+	    Win32::InheritHandles::CreateProcessWithExplicitHandles(
+		    $app,
+			@cmdline,
+			undef,
+			undef,
+			1,
+			0,
+			0,
+			undef,
+			"\0" x 2048, # fake STARTUPINFO
+			undef,
+			2,
+			fileno(),
+			fileno(),
+		);
+	} else {
+		system(1, @cmd)
+	};
 }
 
 sub spawn_child_posix( $self, $method, @cmd ) {

@@ -1,11 +1,16 @@
 package Win32::InheritHandles;
 use strict;
-use Win32::API;
 use Inline 'C';
+use Exporter 'import';
+
+our @EXPORT_OK = ('CreateProcessWithExplicitHandles');
 
 # This only works with Windows version 8+ (Vista onwards)
 
-
+sub packStartupInfo {
+    my (%info) = @_;
+	# ...
+}
 
 1;
 
@@ -59,6 +64,7 @@ BOOL CreateProcessWithExplicitHandles(
                     cHandlesToInherit * sizeof(HANDLE), NULL, NULL);
  }
  if (fSuccess) {
+ 
   STARTUPINFOEX info;
   ZeroMemory(&info, sizeof(info));
   info.StartupInfo = *lpStartupInfo;
