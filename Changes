@@ -18,13 +18,14 @@
     * Tested against Chromium HeadlessChrome/74.0.3729.131
     * Tested against Chromium HeadlessChrome/75.0.3770.90
     * Tested against Chromium HeadlessChrome/76.0.3798.0
-    * Tested against Chromium HeadlessChrome/77.0.3826.0
+    * Tested against Chromium HeadlessChrome/77.0.3865.75
+    * Tested against Chromium HeadlessChrome/78.0.3866.0
+    * Tested against Chromium HeadlessChrome/79.0.3927.0
     * Tested against Chromium HeadlessChrome/73.0.3683.75 (Debian "Buster")
 
 0.35 2019-09-05
     * Documented `intrapage` option to ->click()
     * Added `chromium` to default list of browsers
-    *
 
 0.34 2019-06-15
     * Add ->remove_listener to $mech to explicitly remove event listeners.
