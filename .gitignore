@@ -14,3 +14,4 @@ chrome-versions/
 MYMETA.*
 frame-*.png
 *.pl
+debug.log
