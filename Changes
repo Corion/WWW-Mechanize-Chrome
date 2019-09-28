@@ -21,10 +21,23 @@
     * Tested against Chromium HeadlessChrome/77.0.3826.0
     * Tested against Chromium HeadlessChrome/76.0.3809.100 (Debian "Buster")
 
+0.36 2019-09-27
+    * Added cleanup_signal option to select the signal which is used for
+      cleaning up Chrome instances. This is SIGKILL on Windows and SIGTERM
+      everywhere else by default. Proposed and prototyped by Chris Novakovic.
+    * First parts of talking to Chromium via IPC pipes instead of sockets
+      The real change will come in the next versions, but you can enable
+      using a pipe for communication already by using the
+          pipe => 1
+      option.
+    * More lenient timeouts
+    * Fix retrieving the Chrome version
+      There was a spurious call to ->log() when we didn't have a logger. This
+      resulted in empty Chrome versions.
+
 0.35 2019-09-05
     * Documented `intrapage` option to ->click()
     * Added `chromium` to default list of browsers
-    *
 
 0.34 2019-06-15
     * Add ->remove_listener to $mech to explicitly remove event listeners.
