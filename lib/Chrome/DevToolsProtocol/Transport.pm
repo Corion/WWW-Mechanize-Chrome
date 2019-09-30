@@ -13,10 +13,11 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
 =cut
 
 our @loops = (
-    ['Mojo/IOLoop.pm' => 'Chrome::DevToolsProtocol::Transport::Mojo' ],
-    ['IO/Async.pm'    => 'Chrome::DevToolsProtocol::Transport::NetAsync'],
-    ['AnyEvent.pm'    => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
-    ['AE.pm'          => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
+    ['Mojo/IOLoop.pm'   => 'Chrome::DevToolsProtocol::Transport::Mojo' ],
+    ['IO/Async.pm'      => 'Chrome::DevToolsProtocol::Transport::NetAsync'],
+    ['IO/Async/Loop.pm' => 'Chrome::DevToolsProtocol::Transport::Pipe::NetAsync'],
+    ['AnyEvent.pm'      => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
+    ['AE.pm'            => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     # native POE support would be nice
 
     # The fallback, will always catch due to loading strict (for now)
