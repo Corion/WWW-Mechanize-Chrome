@@ -385,14 +385,18 @@ sub build_command_line {
 
     $options->{ launch_arg } ||= [];
 
+    # We want to read back the URL we can use to talk to Chrome
+    #push @{ $options->{launch_arg}}, '--enable-logging';
+
     if( $options->{pipe}) {
         push @{ $options->{ launch_arg }}, "--remote-debugging-pipe";
     } else {
 
-        $options->{port} ||= 9222
+        $options->{port} //= 9222
             if ! exists $options->{port};
 
-        if ($options->{port}) {
+        if (exists $options->{port}) {
+            $options->{port} ||= 0;
             push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
         };
 
@@ -641,8 +645,11 @@ sub spawn_child_win32( $self, $method, @cmd ) {
 sub spawn_child_posix( $self, $method, @cmd ) {
     require POSIX;
     POSIX->import("setsid");
-
     my (%child, %parent);
+
+    pipe $parent{child_output}, $child{stdout};
+    $parent{child_output}->autoflush(1);
+
     if( $method eq 'pipe' ) {
         # Now, we want to have file handles with fileno=3 and fileno=4
         # to talk to Chrome v72+
@@ -661,19 +668,23 @@ sub spawn_child_posix( $self, $method, @cmd ) {
     # daemonize
     defined(my $pid = fork())   || die "can't fork: $!";
     if( $pid ) {    # non-zero now means I am the parent
-        if( $method eq 'pipe' ) {
-            close $child{read};
-            close $child{write};
-        };
-        return $pid, $parent{write}, $parent{read};
+        #for my $v (values(%child)) {
+        #    close $v;
+        #};
+        close $child{stdout};
+        #if( $method eq 'pipe' ) {
+        #    close $child{read};
+        #    close $child{write};
+        #};
+        return $pid, $parent{write}, $parent{read}, $parent{child_output};
     };
 
     # We are the child, close about everything, then exec
     chdir("/")                  || die "can't chdir to /: $!";
     (setsid() != -1)            || die "Can't start a new session: $!";
-    open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
+    open(STDERR, ">&", $child{stdout})    || die "can't dup stdout: $!";
     open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
-    open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
+    open(STDOUT, ">&", $child{stdout}) || die "can't talk to new STDOUT: $!";
 
     my ($from_chrome, $to_chrome);
     if( $method eq 'pipe' ) {
@@ -688,21 +699,41 @@ sub spawn_child_posix( $self, $method, @cmd ) {
         open($from_chrome, '<&', $child{read})|| die "can't open reader pipe: $!";
         open($to_chrome, '>&', $child{write})  || die "can't open writer pipe: $!";
     };
+    close $parent{child_output};
     exec @cmd;
+    warn "Child couldn't launch [@cmd]: $!";
     exit 1;
 }
 
 sub spawn_child( $self, $method, @cmd ) {
-    my ($pid, $to_chrome, $from_chrome);
+    my ($pid, $to_chrome, $from_chrome, $chrome_stdout);
     if( $^O =~ /mswin/i ) {
         $pid = $self->spawn_child_win32($method, @cmd)
     } else {
-        ($pid,$to_chrome,$from_chrome) = $self->spawn_child_posix($method, @cmd)
+        ($pid,$to_chrome,$from_chrome, $chrome_stdout) = $self->spawn_child_posix($method, @cmd)
     };
     $self->log('debug', "Spawned child as $pid");
 
-    return ($pid,$to_chrome,$from_chrome)
+    return ($pid,$to_chrome,$from_chrome, $chrome_stdout)
 }
+
+sub read_devtools_url( $self, $fh, $lines = 10 ) {
+    # We expect the output within the first 10 lines...
+    my $devtools_url;
+
+    while( $lines-- and ! defined $devtools_url and ! eof($fh)) {
+        my $line = <$fh>;
+        last unless defined $line;
+        $line =~ s!\s+$!!;
+        #$self->log('trace', "[[$line]]");
+        if( $line =~ m!^DevTools listening on (ws:\S+)$!) {
+            $devtools_url = $1;
+            $self->log('trace', "Found ws endpoint as '$devtools_url'");
+            last;
+        };
+    };
+    $devtools_url
+};
 
 sub _build_log( $self ) {
     require Log::Log4perl;
@@ -763,8 +794,8 @@ sub new($class, %options) {
 
     my $method = 'socket';
     if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
-    #if( $options{ pipe }) {
-        if( $^O !~ /mswin32/i ) {
+        if( $options{ pipe }) {
+        #if( $^O !~ /mswin32/i ) {
             $options{ pipe } = 1;
             $method = 'pipe';
         };
@@ -776,17 +807,25 @@ sub new($class, %options) {
     $self->{log} ||= $self->_build_log;
 
     my( $to_chrome, $from_chrome );
-    unless ($options{pid} or $options{reuse}) {
-        if ( ! defined $options{ port } and ! $options{ pipe }) {
-            #warn Dumper \%options;
-            #die "Finding free port?!";
-            # Find free port for Chrome to listen on
-            $options{ port } = $class->_find_free_port( 9222 );
-        };
+    if( $options{ pid } or $options{ reuse }) {
+        # Assume some defaults for the already running Chrome executable
+        $options{ port } //= 9222;
+
+    } else {
+        #if ( ! defined $options{ port } and ! $options{ pipe }) {
+        #unless ( defined $options{ port } ) {
+        #    # Find free port for Chrome to listen on
+        #    $options{ port } = $class->_find_free_port( 9222 );
+        #};
+        # We want Chrome to tell us the address to use
+        $options{ port } = 0;
 
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
-        (my( $pid ), $to_chrome, $from_chrome ) = $self->spawn_child( $method, @cmd );
+        (my( $pid ), $to_chrome, $from_chrome, my $chrome_stdout )
+            = $self->spawn_child( $method, @cmd );
+        $options{ writer_fh } = $to_chrome;
+        $options{ reader_fh } = $from_chrome;
         $self->{pid} = $pid;
         $self->{ kill_pid } = 1;
         if( $options{ pipe }) {
@@ -794,23 +833,33 @@ sub new($class, %options) {
             $options{ reader_fh } = $from_chrome;
 
         } else {
-            # Just to give Chrome time to start up, make sure it accepts connections
-            my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
-            if( ! $ok) {
-                die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
+            if( $chrome_stdout ) {
+                # Synchronously wait for the URL we can connect to
+                # Maybe this should become part of the transport, or a second
+                # class to asynchronously wait on a filehandle?!
+                $options{ endpoint } = $self->read_devtools_url( $chrome_stdout );
+            } else {
+
+                # Try a fresh socket connection, blindly
+                # Just to give Chrome time to start up, make sure it accepts connections
+                my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
+                if( ! $ok) {
+                    die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
+                };
             };
         };
-    } else {
-
-        # Assume some defaults for the already running Chrome executable
-        $options{ port } //= 9222;
     };
 
     my @connection;
     if( $options{ pipe }) {
+        warn "!!! using pipe";
         @connection = (
             writer_fh => $options{ writer_fh },
             reader_fh => $options{ reader_fh },
+        );
+    } elsif( $options{ endpoint }) {
+        @connection = (
+            endpoint => $options{ endpoint },
         );
     } else {
         @connection = (

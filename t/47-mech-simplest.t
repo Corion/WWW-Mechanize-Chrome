@@ -3,7 +3,7 @@ use strict;
 use Test::More;
 use WWW::Mechanize::Chrome;
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 my $mech = eval { WWW::Mechanize::Chrome->new(
     autodie => 0,
