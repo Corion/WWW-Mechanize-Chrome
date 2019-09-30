@@ -1,0 +1,5 @@
+---
+# This test suite can be run fully in parallel
+par:
+    - t/*.t
+    - xt/*.t
