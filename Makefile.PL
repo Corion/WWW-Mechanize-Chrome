@@ -46,6 +46,7 @@ my %module = (
     PREREQ_PM => {
         'Exporter'           => 5, # for 'import'
         'POSIX'              => 0, # for 'setsid' on POSIXish systems
+        'IPC::Open3'         => 0, # for IPC on Windows
         'File::Spec'         => 0,
 
         'Filter::signatures' => '0.09',
