@@ -205,11 +205,6 @@ has 'endpoint' => (
     is => 'rw', # actually, it isn't really rw, but set-once
 );
 
-#sub endpoint( $self ) {
-#    $self->tab
-#        and $self->tab->{webSocketDebuggerUrl}
-#}
-
 =head2 C<< ->add_listener >>
 
     my $l = $driver->add_listener(
