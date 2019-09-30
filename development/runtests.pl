@@ -35,10 +35,18 @@ my @backends = grep { /$backend/i } (qw(
     Chrome::DevToolsProtocol::Transport::AnyEvent
     Chrome::DevToolsProtocol::Transport::Mojo
     Chrome::DevToolsProtocol::Transport::NetAsync
+    Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent
+    Chrome::DevToolsProtocol::Transport::Pipe::Mojo
+    Chrome::DevToolsProtocol::Transport::Pipe::NetAsync
 ));
 
 my $windows = ($^O =~ /mswin/i);
 delete $ENV{CHROME_BIN};
+
+# At least until I implement proper fd passing for Windows:
+if( $windows ) {
+    @backends = grep {! /::Pipe::/ } @backends;
+};
 
 sub kill_chrome {
     if( $windows ) {
