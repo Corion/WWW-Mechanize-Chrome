@@ -780,6 +780,21 @@ sub log( $self, $level, $message, @args ) {
     };
 }
 
+# Find out what connection style (websocket, pipe) the user wants:
+sub connection_style( $class, $options ) {
+    if( $options->{pipe} ) {
+        return 'pipe'
+    } else {
+        my $t =    ref( $options->{ transport } )
+                || $options->{ transport }
+                || 'Chrome::DevToolsProtocol::Transport';
+        ;
+        eval "require $t; 1"
+            or warn $@;
+        return $t->new->type || 'websocket';
+    };
+};
+
 sub new($class, %options) {
 
     if (! exists $options{ autodie }) {
@@ -811,12 +826,18 @@ sub new($class, %options) {
         $options{ tab } = 0; # use tab at index 0
     };
 
-    my $method = 'socket';
+    # Find out what connection style we need/the user wants
+    my $connection_style =    $options{ connection_style }
+                           || $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE }
+                           || $class->connection_style( \%options );
+    if( $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE }) {
+        $options{ pipe } = $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE } eq 'pipe';
+    };
+
     if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
-        if( $options{ pipe }) {
+        if( $options{ pipe } ) {
         #if( $^O !~ /mswin32/i ) {
-            $options{ pipe } = 1;
-            $method = 'pipe';
+            $connection_style = 'pipe';
         };
     };
 
@@ -842,12 +863,12 @@ sub new($class, %options) {
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
         (my( $pid ), $to_chrome, $from_chrome, my $chrome_stdout )
-            = $self->spawn_child( $method, @cmd );
+            = $self->spawn_child( $connection_style, @cmd );
         $options{ writer_fh } = $to_chrome;
         $options{ reader_fh } = $from_chrome;
         $self->{pid} = $pid;
         $self->{ kill_pid } = 1;
-        if( $options{ pipe }) {
+        if( $connection_style eq 'pipe') {
             $options{ writer_fh } = $to_chrome;
             $options{ reader_fh } = $from_chrome;
 
@@ -870,8 +891,7 @@ sub new($class, %options) {
     };
 
     my @connection;
-    if( $options{ pipe }) {
-        warn "!!! using pipe";
+    if( 'pipe' eq $connection_style ) {
         @connection = (
             writer_fh => $options{ writer_fh },
             reader_fh => $options{ reader_fh },
