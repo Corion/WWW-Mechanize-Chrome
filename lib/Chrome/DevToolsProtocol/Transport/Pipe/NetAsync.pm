@@ -49,6 +49,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     weaken $handler;
 
     my $buffer;
+    weaken( my $s = $self );
 
     $got_endpoint->then( sub( $endpoint ) {
         die "Got an undefined endpoint" unless defined $endpoint;
@@ -63,7 +64,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
                 while($$buffref =~ s!^(.*?)\0!!) {
                     #warn "[[$1]]";
                     my $line = $1;
-                    $handler->on_response( $self, $line );
+                    $handler->on_response( $s, $line );
                 };;
             },
         );
