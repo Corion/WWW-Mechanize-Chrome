@@ -371,6 +371,13 @@ class|Chrome::DevToolsProtcol::Transport>. This is primarily used for testing
 but can also help eliminate introducing bugs from the underlying websocket
 implementation(s).
 
+The C<< $ENV{WWW_MECHANIZE_CHROME_CONNECTION_STYLE} >> variable can be set to
+either C<websocket> or C<pipe> to specify the kind of transport that you
+want to use.
+
+The C<pipe> transport is only available on unixish OSes and only with Chrome
+v72 onwards.
+
 =head1 METHODS
 
 =cut

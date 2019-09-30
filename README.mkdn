@@ -337,6 +337,13 @@ class](https://metacpan.org/pod/Chrome::DevToolsProtcol::Transport). This is pri
 but can also help eliminate introducing bugs from the underlying websocket
 implementation(s).
 
+The `$ENV{WWW_MECHANIZE_CHROME_CONNECTION_STYLE}` variable can be set to
+either `websocket` or `pipe` to specify the kind of transport that you
+want to use.
+
+The `pipe` transport is only available on unixish OSes and only with Chrome
+v72 onwards.
+
 # METHODS
 
 ## `WWW::Mechanize::Chrome->find_executable`
