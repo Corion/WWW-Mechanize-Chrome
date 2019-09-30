@@ -1,6 +1,7 @@
 package Chrome::DevToolsProtocol::Transport::AnyEvent;
 use strict;
 use Filter::signatures;
+use Moo 2;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use Scalar::Util 'weaken';
@@ -29,15 +30,14 @@ Chrome::DevToolsProtocol::Transport::AnyEvent - AnyEvent backend for Chrome comm
 
 =cut
 
-sub new( $class, %options ) {
-    my $self = \%options;
-    bless $self => $class;
-    $self
-}
 
-sub connection( $self ) {
-    $self->{connection}
-}
+has 'connection' => (
+    is => 'rw',
+);
+
+has 'ws_client' => (
+    is => 'rw',
+);
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     weaken $handler;
@@ -52,10 +52,10 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
         my $res = $self->future;
         $logger->('debug',"Connecting to $endpoint");
-        $self->{ws_client} = AnyEvent::WebSocket::Client->new(
+        $self->ws_client( AnyEvent::WebSocket::Client->new(
             max_payload_size => 0, # allow unlimited size for messages
-        );
-        $self->{ws_client}->connect( $endpoint )->cb( sub {
+        ));
+        $self->ws_client->connect( $endpoint )->cb( sub {
             $res->done( @_ )
         });
         $res
@@ -64,7 +64,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $logger->( 'trace', sprintf "Connected" );
         my $connection = $c->recv;
 
-        $self->{connection} = $connection;
+        $self->connection( $connection );
         undef $self;
 
         # Kick off the continous polling
