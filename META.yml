@@ -27,6 +27,9 @@ no_index:
     - inc
 requires:
   Algorithm::Loops: '0'
+  AnyEvent: '0'
+  AnyEvent::Future: '0'
+  AnyEvent::WebSocket::Client: '0'
   Carp: '0'
   Exporter: '5'
   File::Basename: '0'
@@ -38,7 +41,6 @@ requires:
   HTTP::Cookies: '0'
   HTTP::Headers: '0'
   HTTP::Response: '0'
-  IO::Async: '0'
   IO::Socket::INET: '0'
   IPC::Open3: '0'
   Imager: '0'

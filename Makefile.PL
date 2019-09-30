@@ -54,13 +54,14 @@ my %module = (
         'Future'             => '0.35', # Some smokers have 0.25 which lacks many features
         'Try::Tiny'          => 0,
         'PerlX::Maybe'       => 0, # nicer syntax for optional parameters
-        # This actually is optional
         # You need one of the following event loops:
         # AnyEvent, IO::Async, Mojolicious
-        #'AnyEvent'           => 0,
-        #'AnyEvent::Future'   => 0,
-        #'AnyEvent::WebSocket::Client' => 0,
-        'IO::Async'          => 0, # the pipe handling is tied to IO::Async
+        # AnyEvent is the traditional default but it is tested with all three
+        'AnyEvent'           => 0,
+        'AnyEvent::Future'   => 0,
+        'AnyEvent::WebSocket::Client' => 0,
+        #'IO::Async'          => 0, # the pipe handling is tied to IO::Async
+        #'Net::Async::WebSocket' => 0,
 
         # This is a developer-only prerequisite, but oh well
         'Algorithm::Loops'   => 0,
