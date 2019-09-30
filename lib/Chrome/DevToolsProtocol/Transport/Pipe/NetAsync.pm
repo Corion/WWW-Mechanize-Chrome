@@ -27,8 +27,9 @@ Chrome::DevToolsProtocol::Transport::Pipe - EXPERIMENTAL Local pipe backend for 
 =head1 DESCRIPTION
 
 This is an experimental backend communicating with Chrome using a pipe
-of two file descriptors. At least on Debian, this backend does not implement
+of two file descriptors.
 
+This requires Chrome v72+.
 
 =cut
 
