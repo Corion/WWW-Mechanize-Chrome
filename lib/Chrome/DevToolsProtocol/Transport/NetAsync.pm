@@ -87,7 +87,6 @@ sub close( $self ) {
     if( $c) {
         $c->close
     };
-    delete $self->{ua};
 }
 
 sub future( $self ) {
