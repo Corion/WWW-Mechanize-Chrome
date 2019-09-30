@@ -7,9 +7,9 @@ use Test::More;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
-use lib '.';
 use Test::HTTP::LocalServer;
 
+use lib '.';
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
