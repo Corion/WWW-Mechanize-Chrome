@@ -47,6 +47,7 @@ requires:
   Log::Log4perl: '0'
   MIME::Base64: '0'
   Moo: '2'
+  Net::Async::WebSocket: '0'
   Object::Import: '0'
   POSIX: '0'
   PerlX::Maybe: '0'

@@ -61,6 +61,7 @@ my %module = (
         #'AnyEvent::Future'   => 0,
         #'AnyEvent::WebSocket::Client' => 0,
         'IO::Async'          => 0, # the pipe handling is tied to IO::Async
+        'Net::Async::WebSocket' => 0,
 
         # This is a developer-only prerequisite, but oh well
         'Algorithm::Loops'   => 0,
