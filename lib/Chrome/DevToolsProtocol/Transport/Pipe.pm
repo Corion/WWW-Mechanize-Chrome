@@ -52,6 +52,7 @@ sub best_implementation( $class, @candidates ) {
 
     # Find the currently running/loaded event loop(s)
     #use Data::Dumper;
+    #$Data::Dumper::Sortkeys = 1;
     #warn Dumper \%INC;
     #warn Dumper \@candidates;
     my @applicable_implementations = map {
@@ -64,7 +65,8 @@ sub best_implementation( $class, @candidates ) {
     for my $impl (@applicable_implementations) {
         if( eval "require $impl; 1" ) {
             return $impl;
-        };
+        }
+        # else { warn $@ };
     };
 };
 
