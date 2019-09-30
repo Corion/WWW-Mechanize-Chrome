@@ -798,12 +798,13 @@ sub new($class, %options) {
         $options{ port } //= 9222;
 
     } else {
-        if ( ! defined $options{ port } and ! $options{ pipe }) {
-            #warn Dumper \%options;
-            #die "Finding free port?!";
-            # Find free port for Chrome to listen on
-            $options{ port } = $class->_find_free_port( 9222 );
-        };
+        #if ( ! defined $options{ port } and ! $options{ pipe }) {
+        #unless ( defined $options{ port } ) {
+        #    # Find free port for Chrome to listen on
+        #    $options{ port } = $class->_find_free_port( 9222 );
+        #};
+        # We want Chrome to tell us the address to use
+        $options{ port } = 0;
 
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
