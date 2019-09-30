@@ -389,10 +389,11 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--remote-debugging-pipe";
     } else {
 
-        $options->{port} ||= 9222
+        $options->{port} //= 9222
             if ! exists $options->{port};
 
-        if ($options->{port}) {
+        if (exists $options->{port}) {
+            $options->{port} ||= 0;
             push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
         };
 
