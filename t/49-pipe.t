@@ -18,6 +18,8 @@ my @instances = t::helper::browser_instances();
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
+} elsif ( $^O =~ /mswin/i ) {
+    plan skip_all => "Pipes are currently unsupported on $^O";
 } else {
     plan tests => 2*@instances;
 };
