@@ -10,11 +10,11 @@ use Algorithm::Loops 'NestedLoops';
 use File::Temp 'tempdir';
 
 GetOptions(
-    't|test:s' => \my @tests,
-    'b|backend:s' => \my $backend,
+    't|test=s' => \my @tests,
+    'b|backend=s' => \my $backend,
     'c|continue' => \my $continue,
-    'separate-instances:s' => \my $separate_instances,
-    'level|l:s' => \my $log_level,
+    's|separate-instances=s' => \my $separate_instances,
+    'level|l=s' => \my $log_level,
 );
 if( @tests ) {
     @tests= map { bsd_glob( $_ ) } @tests;
