@@ -646,8 +646,8 @@ sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
 };
 
 sub spawn_child_win32( $self, $method, @cmd ) {
-    croak "Only socket communication is supported on $^O"
-        if $method ne 'socket';
+    croak "Only websocket communication is supported on $^O, not '$method'"
+        if $method ne 'websocket';
 
     # Our store for the filehandles
     my (%child, %parent);
@@ -837,7 +837,6 @@ sub new($class, %options) {
     my $connection_style =    $options{ connection_style }
                            || $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE }
                            || $class->connection_style( \%options );
-
     if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
         if( $options{ pipe } ) {
         #if( $^O !~ /mswin32/i ) {
