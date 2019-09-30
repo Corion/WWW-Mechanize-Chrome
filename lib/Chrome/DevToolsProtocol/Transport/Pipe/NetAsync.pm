@@ -1,4 +1,4 @@
-package Chrome::DevToolsProtocol::Transport::Pipe;
+package Chrome::DevToolsProtocol::Transport::Pipe::NetAsync;
 use strict;
 use Filter::signatures;
 use Moo 2;
