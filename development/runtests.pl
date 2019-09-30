@@ -30,7 +30,8 @@ runtests.pl - runs the test suite versions of Chrome and with different backends
   HARNESS_OPTIONS=j12 perl -Ilib -w development/runtests.pl --separate-instances=1
 
   # On Windows
-  set HARNESS_OPTIONS=j12 && perl -Ilib -w development/runtests.pl --separate-instances=1
+  set HARNESS_OPTIONS=j12
+  perl -Ilib -w development/runtests.pl --separate-instances=1
 
 =cut
 
