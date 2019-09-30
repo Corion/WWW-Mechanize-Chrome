@@ -886,6 +886,7 @@ sub new($class, %options) {
                 # Maybe this should become part of the transport, or a second
                 # class to asynchronously wait on a filehandle?!
                 $options{ endpoint } = $self->read_devtools_url( $chrome_stdout );
+                close $chrome_stdout;
             } else {
 
                 # Try a fresh socket connection, blindly
