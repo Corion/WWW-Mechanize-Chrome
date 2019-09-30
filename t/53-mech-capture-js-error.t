@@ -80,7 +80,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
     is_deeply \@res, [], "No errors reported on page"
         or diag Dumper \@res;
 
-    { 
+    {
         my $errors;
         local $mech->{report_js_errors} = 1;
         local $SIG{__WARN__} = sub { $errors = shift };
@@ -90,11 +90,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
     };
 
     load_file_ok($mech,'53-mech-capture-js-error.html', javascript => 0);
-    diag "File loaded";
+    note "File loaded";
     @res= $mech->js_errors;
     is_deeply \@res, [], "Errors on page"
         or diag Dumper \@res;
-    { 
+    {
         my $errors;
         local $mech->{report_js_errors} = 1;
         # We should find out how to make Log::Log4perl call our callback so
@@ -118,5 +118,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
     is_deeply [$mech->js_errors ], [], "No errors reported on page after clearing errors";
 
     undef $mech; # global destruction ...
-    
+
 });

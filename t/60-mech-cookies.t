@@ -38,7 +38,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 
     $mech->get( $server->url );
 
-    diag "Fetching cookie jar";
+    note "Fetching cookie jar";
     my $cookies = $mech->cookie_jar;
     isa_ok $cookies, 'HTTP::Cookies';
 

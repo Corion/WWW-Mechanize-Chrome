@@ -34,20 +34,20 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     isa_ok $chrome, 'Chrome::DevToolsProtocol::Target';
 
     my $version = $chrome->version_info->get;
-    diag $version->{Browser};
+    note $version->{Browser};
 
     my @tabs = $chrome->getTargets()->get;
     cmp_ok 0+@tabs, '>', 0,
         "We have at least one open (empty) tab";
 
     my $new = $chrome->createTarget( url => 'about:blank' )->get;
-    diag "Created new tab $new->{targetId}";
+    note "Created new tab $new->{targetId}";
 
     my @tabs2 = $chrome->getTargets()->get;
     cmp_ok 0+@tabs2, '>', 1,
         "We have at least two open (empty) tabs now";
 
-    diag "Closing tab";
+    note "Closing tab";
     SKIP: {
         my $version = $mech->chrome_version;
 

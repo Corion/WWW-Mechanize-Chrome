@@ -40,7 +40,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             my ($file,$encoding,$content_re) = @$_;
             $mech->get_local($file);
             is uc $mech->content_encoding, $encoding, "$file has encoding $encoding";
-            diag "Length of content", length $mech->content;
+            note "Length of content", length $mech->content;
             like $mech->content, $content_re, "Partial expression gets found in UTF-8 content";
     };
 });

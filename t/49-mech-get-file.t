@@ -40,7 +40,7 @@ sub load_file_ok {
                  getcwd,
              );
     #$mech->allow(@options);
-    diag "Loading $fn";
+    note "Loading $fn";
     $mech->get_local($fn);
     ok $mech->success, "Loading $htmlfile is considered a success";
     is $mech->title, $htmlfile, "We loaded the right file (@options)"

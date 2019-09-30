@@ -68,18 +68,18 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     #my @tabs = $app->list_tabs()->get;
     my @tabs = $app->getTargets()->get;
-    diag "Tabs open in PID $pid: ", 0+@tabs;
+    note "Tabs open in PID $pid: ", 0+@tabs;
     #use Data::Dumper; note Dumper \@tabs;
 
-    diag "Releasing mechanize $pid";
+    note "Releasing mechanize $pid";
     undef $mech; # our own tab should now close automatically
-    diag "Released mechanize";
+    note "Released mechanize";
 
     sleep 1;
 
     SKIP: {
         # In some Chrome versions, Chrome goes away when we closed our websocket?!
-        diag "Listing tabs";
+        note "Listing tabs";
         my @new_tabs;
         my $ok = eval { @new_tabs = $app->getTargets()->get; 1 };
         if( ! $ok ) {
