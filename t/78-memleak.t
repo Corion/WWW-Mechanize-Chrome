@@ -50,7 +50,7 @@ sub load_file_ok {
 
 t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
     my ($browser_instance, $mech) = @_;
-    
+
     $mech = new_mech( headless => 1 );
     my $old_destroy = $mech->can('DESTROY');
     my $called = 0;
@@ -59,7 +59,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
         $called++;
         goto &$old_destroy;
     };
-    
+
     my @alerts;
 
     $mech->on_dialog( sub {
@@ -71,7 +71,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
     load_file_ok($mech, '58-alert.html', javascript => 1);
     undef $mech;
     is $called, 1, "We destroyed our object after ->on_dialog";
-    
+
     $called = 0;
     $mech = new_mech( headless => 1 );
     $mech->setScreenFrameCallback(sub {});
@@ -79,7 +79,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
     $mech->setScreenFrameCallback();
     undef $mech;
     is $called, 1, "We destroyed our object after a frame was grabbed";
-    
+
     $called = 0;
     $mech = new_mech( headless => 1 );
     $mech->get_local('49-mech-get-file.html');
