@@ -646,7 +646,9 @@ sub spawn_child_posix( $self, $method, @cmd ) {
     require POSIX;
     POSIX->import("setsid");
 
+    # Our store for the filehandles
     my (%child, %parent);
+
     if( $method eq 'pipe' ) {
         # Now, we want to have file handles with fileno=3 and fileno=4
         # to talk to Chrome v72+
@@ -660,37 +662,47 @@ sub spawn_child_posix( $self, $method, @cmd ) {
 
         close $dummy_fh;
         close $dummy_fh2;
+    } else {
+        # We want to read back the websocket URL from the STDOUT (well STDERR)
+        # of the child
+        pipe $parent{child_output}, $child{stdout};
+        $parent{child_output}->autoflush(1);
     };
 
     # daemonize
     defined(my $pid = fork())   || die "can't fork: $!";
     if( $pid ) {    # non-zero now means I am the parent
-        if( $method eq 'pipe' ) {
-            close $child{read};
-            close $child{write};
+
+        # Close all child filehandles
+        for my $v (values(%child)) {
+            close $v;
         };
-        return $pid, $parent{write}, $parent{read};
+        return $pid, $parent{write}, $parent{read}, $parent{child_output};
     };
 
     # We are the child, close about everything, then exec
     chdir("/")                  || die "can't chdir to /: $!";
     (setsid() != -1)            || die "Can't start a new session: $!";
-    open(STDERR, ">&STDOUT")    || die "can't dup stdout: $!";
     open(STDIN,  "< /dev/null") || die "can't read /dev/null: $!";
-    open(STDOUT, "> /dev/null") || die "can't write to /dev/null: $!";
+    if( 'pipe' eq $method ) {
+        open(STDERR, ">&", STDOUT)    || die "can't dup stdout: $!";
+        open(STDOUT, "> /dev/null") || die "can't talk to new STDOUT: $!";
+    } else {
+        open(STDERR, ">&", $child{stdout})    || die "can't dup stdout: $!";
+        open(STDOUT, ">&", $child{stdout}) || die "can't talk to new STDOUT: $!";
+    };
 
     my ($from_chrome, $to_chrome);
     if( $method eq 'pipe' ) {
-        # Those two handles belong to the parent
-        close $parent{read};
-        close $parent{write};
-
         # We want handles 0,1,2,3,4 to be inherited by Chrome
         $^F = 4;
 
         # Set up FD 3 and 4 for Chrome to read/write
         open($from_chrome, '<&', $child{read})|| die "can't open reader pipe: $!";
         open($to_chrome, '>&', $child{write})  || die "can't open writer pipe: $!";
+    }
+    for my $v (values(%parent)) {
+        close $v;
     };
     exec @cmd;
     warn "Child couldn't launch [@cmd]: $!";
