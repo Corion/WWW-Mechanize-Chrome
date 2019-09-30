@@ -830,15 +830,16 @@ sub new($class, %options) {
     my $connection_style =    $options{ connection_style }
                            || $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE }
                            || $class->connection_style( \%options );
-    if( $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE }) {
-        $options{ pipe } = $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE } eq 'pipe';
-    };
 
     if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
         if( $options{ pipe } ) {
         #if( $^O !~ /mswin32/i ) {
             $connection_style = 'pipe';
         };
+    };
+
+    if( ! exists $options{ pipe }) {
+        $options{ pipe } = 'pipe' eq $connection_style;
     };
 
     $options{ cleanup_signal } ||= $^O =~ /mswin32/i ? 'SIGKILL' : 'SIGTERM';
