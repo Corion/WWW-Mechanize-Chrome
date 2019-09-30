@@ -52,10 +52,8 @@ has 'connection' => (
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
     weaken $handler;
-
     my $buffer;
     weaken( my $s = $self );
-
     $got_endpoint->then( sub( $endpoint ) {
         die "Got an undefined endpoint" unless defined $endpoint;
         $self->{connection} = IO::Async::Stream->new(
@@ -70,7 +68,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
                     #warn "[[$1]]";
                     my $line = $1;
                     $handler->on_response( $s, $line );
-                };;
+                };
             },
         );
         $self->loop->add( $self->connection );
@@ -85,9 +83,18 @@ sub send( $self, $message ) {
 
 sub close( $self ) {
     my $c = delete $self->{connection};
-    if( $c) {
-        $c->close
+    my $l = delete $self->{loop};
+    if( $c ) {
+        #warn "*** Closing!";
+        $c->close_now;
     };
+    #if( $l ) {
+    #    $l->remove( $c );
+    #};
+}
+
+sub DESTROY {
+    $_[0]->close();
 }
 
 sub future( $self ) {
