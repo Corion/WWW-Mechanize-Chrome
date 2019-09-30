@@ -24,6 +24,14 @@ if( @tests ) {
 
 runtests.pl - runs the test suite versions of Chrome and with different backends
 
+=head1 USAGE
+
+  # On unixish OSes
+  HARNESS_OPTIONS=j12 perl -Ilib -w development/runtests.pl --separate-instances=1
+
+  # On Windows
+  set HARNESS_OPTIONS=j12 && perl -Ilib -w development/runtests.pl --separate-instances=1
+
 =cut
 
 my @instances = @ARGV
