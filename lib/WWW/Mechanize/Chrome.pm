@@ -710,15 +710,15 @@ sub spawn_child_posix( $self, $method, @cmd ) {
 }
 
 sub spawn_child( $self, $method, @cmd ) {
-    my ($pid, $to_chrome, $from_chrome);
+    my ($pid, $to_chrome, $from_chrome, $chrome_stdout);
     if( $^O =~ /mswin/i ) {
         $pid = $self->spawn_child_win32($method, @cmd)
     } else {
-        ($pid,$to_chrome,$from_chrome) = $self->spawn_child_posix($method, @cmd)
+        ($pid,$to_chrome,$from_chrome, $chrome_stdout) = $self->spawn_child_posix($method, @cmd)
     };
     $self->log('debug', "Spawned child as $pid");
 
-    return ($pid,$to_chrome,$from_chrome)
+    return ($pid,$to_chrome,$from_chrome, $chrome_stdout)
 }
 
 sub _build_log( $self ) {
@@ -807,7 +807,8 @@ sub new($class, %options) {
 
         my @cmd= $class->build_command_line( \%options );
         $self->log('debug', "Spawning", \@cmd);
-        (my( $pid ), $to_chrome, $from_chrome ) = $self->spawn_child( $method, @cmd );
+        (my( $pid ), $to_chrome, $from_chrome, my $chrome_stdout )
+            = $self->spawn_child( $method, @cmd );
         $self->{pid} = $pid;
         $self->{ kill_pid } = 1;
         if( $options{ pipe }) {
