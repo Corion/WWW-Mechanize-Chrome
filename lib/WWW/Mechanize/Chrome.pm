@@ -689,6 +689,7 @@ sub spawn_child_posix( $self, $method, @cmd ) {
         open($to_chrome, '>&', $child{write})  || die "can't open writer pipe: $!";
     };
     exec @cmd;
+    warn "Child couldn't launch [@cmd]: $!";
     exit 1;
 }
 
