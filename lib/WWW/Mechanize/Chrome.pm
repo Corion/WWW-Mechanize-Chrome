@@ -394,7 +394,8 @@ sub build_command_line {
 
     # We want to read back the URL we can use to talk to Chrome
     if( $^O =~ /mswin/i ) {
-        push @{ $options->{launch_arg}}, '--v=0'; #'--enable-logging';
+        #push @{ $options->{launch_arg}}, '--v=0', '--enable-logging'; # v79 bad, v78 bad, v77 bad, v76 bad, v75 bad, v70 bad
+        push @{ $options->{launch_arg}}, '--v=0'; # v79 OK, v62 OK, v61 bad
     };
 
     if( $options->{pipe}) {
