@@ -40,10 +40,19 @@ my @backends = grep { /$backend/i } (qw(
 my $windows = ($^O =~ /mswin/i);
 delete $ENV{CHROME_BIN};
 
+sub kill_chrome {
+    if( $windows ) {
+        system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions
+    } else {
+        system "killall chromium"; # boom, kill all leftover Chrome versions
+    };
+}
+
 # Later, we could even parallelize the test suite
 NestedLoops( [\@instances, \@backends], sub {
     my( $instance, $backend ) = @_;
-    system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions
+
+    kill_chrome();
 
     ## Launch one Chrome instance to reuse
     my $vis_instance = $instance;
@@ -90,4 +99,4 @@ NestedLoops( [\@instances, \@backends], sub {
     ## Safe wait until shutdown
     #sleep 5;
 });
-system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions
+kill_chrome();
