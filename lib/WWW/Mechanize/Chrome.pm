@@ -718,7 +718,7 @@ sub spawn_child_posix( $self, $method, @cmd ) {
     for my $v (values(%parent)) {
         close $v;
     };
-    close $parent{child_output};
+    #close $parent{child_output};
     exec @cmd;
     warn "Child couldn't launch [@cmd]: $!";
     exit 1;
