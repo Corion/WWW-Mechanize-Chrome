@@ -721,6 +721,24 @@ sub spawn_child( $self, $method, @cmd ) {
     return ($pid,$to_chrome,$from_chrome, $chrome_stdout)
 }
 
+sub read_devtools_url( $self, $fh, $lines = 10 ) {
+    # We expect the output within the first 10 lines...
+    my $devtools_url;
+
+    while( $lines-- and ! defined $devtools_url and ! eof($fh)) {
+        my $line = <$fh>;
+        last unless defined $line;
+        $line =~ s!\s+$!!;
+        #$self->log('trace', "[[$line]]");
+        if( $line =~ m!^DevTools listening on (ws:\S+)$!) {
+            $devtools_url = $1;
+            $self->log('trace', "Found ws endpoint as '$devtools_url'");
+            last;
+        };
+    };
+    $devtools_url
+};
+
 sub _build_log( $self ) {
     require Log::Log4perl;
     Log::Log4perl->get_logger(__PACKAGE__);
@@ -810,6 +828,8 @@ sub new($class, %options) {
         $self->log('debug', "Spawning", \@cmd);
         (my( $pid ), $to_chrome, $from_chrome, my $chrome_stdout )
             = $self->spawn_child( $method, @cmd );
+        $options{ writer_fh } = $to_chrome;
+        $options{ reader_fh } = $from_chrome;
         $self->{pid} = $pid;
         $self->{ kill_pid } = 1;
         if( $options{ pipe }) {
@@ -817,10 +837,19 @@ sub new($class, %options) {
             $options{ reader_fh } = $from_chrome;
 
         } else {
-            # Just to give Chrome time to start up, make sure it accepts connections
-            my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
-            if( ! $ok) {
-                die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
+            if( $chrome_stdout ) {
+                # Synchronously wait for the URL we can connect to
+                # Maybe this should become part of the transport, or a second
+                # class to asynchronously wait on a filehandle?!
+                $options{ endpoint } = $self->read_devtools_url( $chrome_stdout );
+            } else {
+
+                # Try a fresh socket connection, blindly
+                # Just to give Chrome time to start up, make sure it accepts connections
+                my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
+                if( ! $ok) {
+                    die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
+                };
             };
         };
     };
