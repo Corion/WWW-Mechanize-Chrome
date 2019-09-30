@@ -2,7 +2,7 @@ package Win32::InheritHandles;
 use strict;
 #use Win32::API;
 
-our $VERSION = '0.36';
+our $VERSION = '0.37';
 
 # This only works with Windows version 8+ (Vista onwards)
 

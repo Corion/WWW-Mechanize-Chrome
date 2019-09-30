@@ -12,7 +12,7 @@ use Carp qw(croak);
 use AnyEvent;
 use AnyEvent::Future qw(as_future_cb);
 
-our $VERSION = '0.36';
+our $VERSION = '0.37';
 our @CARP_NOT = ();
 
 =head1 NAME

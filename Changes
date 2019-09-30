@@ -24,8 +24,23 @@
     * Tested against Chromium HeadlessChrome/73.0.3683.75 (Debian "Buster")
     * Tested against Chromium HeadlessChrome/76.0.3809.100 (Debian "Buster")
 
-0.37 2019-xx-xx
+0.37 2019-09-30
+    * WWW::Mechanize::Chrome now asks Chrome for the URL. This allows the test
+      suite (and your programs) to run in parallel, each using their own
+      Chrome instance without them treading onto each others toes.
+    * WWW::Mechanize::Chrome can now talk to Chrome v72+ using pipes (fd 3 and
+      fd 4) on unixish OSes. In theory, using fd 3 and fd 4 is possible on
+      Windows as well but not yet implemented. Doing this allows you to
+      avoid sockets in the local communication.
+
+      Use
+
+          pipe => 1
+
+      in the constructor to switch to using pipes.
+
     * API change: Use ->getTargets->get() instead of ->list_tabs()
+      ->list_tabs() will be unsupported in the future.
 
 0.36 2019-09-27
     * Added cleanup_signal option to select the signal which is used for
