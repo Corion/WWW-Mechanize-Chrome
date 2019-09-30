@@ -309,22 +309,6 @@ sub connect( $self, %args ) {
         $self->log('trace', "Using endpoint $endpoint");
     };
 
-    #} elsif( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
-    #    $endpoint = $args{ tab }->{webSocketDebuggerUrl};
-    #    $self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
-    #
-    #} elsif( $args{ tab } and $args{ tab } =~ /^\d+$/) {
-    #    $endpoint = undef;
-    #
-    #} elsif( $args{ new_tab } ) {
-    #    $endpoint = undef;
-    #    $self->log('trace', "Using new tab (and fresh endpoint)");
-    #
-    #} else {
-    #    $endpoint ||= $self->endpoint;
-    #    $self->log('trace', "Using endpoint " . ($endpoint||'<undef>'));
-    #};
-
     my $got_endpoint;
     if( ! $endpoint ) {
         $got_endpoint = $self->version_info()->then(sub( $info ) {
