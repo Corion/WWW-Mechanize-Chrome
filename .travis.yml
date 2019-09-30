@@ -102,7 +102,7 @@ install:
 script:
   - cd $TRAVIS_BUILD_DIR
   - perl Makefile.PL && make
-  - prove -blv xt/ t/
+  - prove -j $(test-jobs) -blv xt/ t/
 
 branches:
   except:
