@@ -33,6 +33,8 @@ our $implementation;
 Creates a new instance of the transport using the "best" event loop
 for implementation. The default event loop is currently L<AnyEvent>.
 
+All parameters are passed on to the implementation class.
+
 =cut
 
 sub new($factoryclass, @args) {
