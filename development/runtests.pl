@@ -20,6 +20,11 @@ if( @tests ) {
     @tests= map { bsd_glob( $_ ) } @tests;
 };
 
+if( $ENV{HARNESS_OPTIONS} and $ENV{HARNESS_OPTIONS}=~ /\bj\d+/) {
+    die "Mixing parallel tests and a single browser instance spells danger"
+        if ! $separate_instances;
+};
+
 =head1 NAME
 
 runtests.pl - runs the test suite versions of Chrome and with different backends
