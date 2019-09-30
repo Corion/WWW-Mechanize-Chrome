@@ -40,6 +40,7 @@ requires:
   HTTP::Response: '0'
   IO::Async: '0'
   IO::Socket::INET: '0'
+  IPC::Open3: '0'
   Imager: '0'
   Imager::File::PNG: '0'
   JSON: '0'
