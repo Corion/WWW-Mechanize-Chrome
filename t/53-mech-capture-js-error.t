@@ -6,6 +6,7 @@ use URI::file;
 use File::Basename;
 use File::Spec;
 use Data::Dumper;
+$Data::Dumper::Sortkeys = 1;
 
 use WWW::Mechanize::Chrome;
 use lib '.';
@@ -58,6 +59,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     can_ok $mech, 'js_errors','clear_js_errors';
 
+    my $version = $mech->chrome_version;
+
+    if( $version =~ /\b(\d+)\b/ and $1 == 64 ) {
+        SKIP: { skip "Chrome v64 gets stuck if this test runs in a separate Chrome instance...", 23; };
+        return;
+    };
 
     $mech->clear_js_errors;
     is_deeply [$mech->js_errors], [], "No errors reported on page after clearing errors"
@@ -100,7 +107,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
         # We should find out how to make Log::Log4perl call our callback so
         # we can check that the error message arrives in our logger ...
         no warnings 'redefine';
-        local *WWW::Mechanize::Chrome::log = sub { $errors = $_[2] if $_[1] eq 'error' };
+        local *WWW::Mechanize::Chrome::log = sub {$errors = $_[2] if $_[1] eq 'error' };
         load_file_ok($mech, '53-mech-capture-js-error.html', javascript => 1 );
         ok( defined $errors, "Errors on page");
     };
