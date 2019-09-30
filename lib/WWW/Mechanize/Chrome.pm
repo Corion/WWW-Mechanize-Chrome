@@ -763,8 +763,8 @@ sub new($class, %options) {
 
     my $method = 'socket';
     if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
-    #if( $options{ pipe }) {
-        if( $^O !~ /mswin32/i ) {
+        if( $options{ pipe }) {
+        #if( $^O !~ /mswin32/i ) {
             $options{ pipe } = 1;
             $method = 'pipe';
         };
