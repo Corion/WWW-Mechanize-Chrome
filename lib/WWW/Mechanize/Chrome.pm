@@ -385,6 +385,9 @@ sub build_command_line {
 
     $options->{ launch_arg } ||= [];
 
+    # We want to read back the URL we can use to talk to Chrome
+    #push @{ $options->{launch_arg}}, '--enable-logging';
+
     if( $options->{pipe}) {
         push @{ $options->{ launch_arg }}, "--remote-debugging-pipe";
     } else {
