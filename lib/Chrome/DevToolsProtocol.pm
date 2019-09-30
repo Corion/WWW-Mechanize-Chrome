@@ -335,7 +335,6 @@ sub connect( $self, %args ) {
         #croak @args;
         Future->fail( @args );
     });
-
     my $transport = delete $args{ transport }
                     || $self->transport
                     || 'Chrome::DevToolsProtocol::Transport';
@@ -346,8 +345,11 @@ sub connect( $self, %args ) {
         $self->{transport} = $transport->new;
         $transport = $self->{transport};
     };
-
     return $transport->connect( $self, $got_endpoint, sub { $s->log( @_ ) } )
+    #->on_ready(sub {
+    #    use Data::Dumper;
+    #    warn Dumper \@_;
+    #})
     ->on_done(sub {
         $s->is_connected(1);
     });
