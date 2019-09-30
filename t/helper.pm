@@ -9,6 +9,7 @@ use Carp qw(croak);
 use File::Temp 'tempdir';
 use WWW::Mechanize::Chrome;
 use Config;
+use Time::HiRes 'sleep';
 
 use Log::Log4perl ':easy';
 
@@ -125,7 +126,8 @@ sub run_across_instances {
 
     for my $browser_instance (@$instances) {
         runtests( $browser_instance, $new_mech, $code, $test_count );
-        sleep 1 if @$instances;
+        undef $new_mech;
+        sleep 0.5 if @$instances;
         # So the browser can shut down before we try to connect
         # to the new instance
     };
