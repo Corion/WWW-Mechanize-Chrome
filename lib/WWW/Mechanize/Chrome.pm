@@ -781,7 +781,11 @@ sub new($class, %options) {
     $self->{log} ||= $self->_build_log;
 
     my( $to_chrome, $from_chrome );
-    unless ($options{pid} or $options{reuse}) {
+    if( $options{ pid } or $options{ reuse }) {
+        # Assume some defaults for the already running Chrome executable
+        $options{ port } //= 9222;
+
+    } else {
         if ( ! defined $options{ port } and ! $options{ pipe }) {
             #warn Dumper \%options;
             #die "Finding free port?!";
@@ -805,10 +809,6 @@ sub new($class, %options) {
                 die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
             };
         };
-    } else {
-
-        # Assume some defaults for the already running Chrome executable
-        $options{ port } //= 9222;
     };
 
     my @connection;
