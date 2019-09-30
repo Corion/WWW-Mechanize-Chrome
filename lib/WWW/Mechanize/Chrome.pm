@@ -386,7 +386,9 @@ sub build_command_line {
     $options->{ launch_arg } ||= [];
 
     # We want to read back the URL we can use to talk to Chrome
-    #push @{ $options->{launch_arg}}, '--enable-logging';
+    if( $^O =~ /mswin/i ) {
+        push @{ $options->{launch_arg}}, '--v=0'; #'--enable-logging';
+    };
 
     if( $options->{pipe}) {
         push @{ $options->{ launch_arg }}, "--remote-debugging-pipe";
@@ -639,7 +641,19 @@ sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
 sub spawn_child_win32( $self, $method, @cmd ) {
     croak "Only socket communication is supported on $^O"
         if $method ne 'socket';
-    system(1, @cmd)
+
+    # Our store for the filehandles
+    my (%child, %parent);
+
+    require IPC::Open3;
+    require Symbol;
+    $parent{child_output} = Symbol::gensym();
+    my $pid = IPC::Open3::open3(
+        undef, $parent{ child_output }, $parent{ child_output },
+        @cmd
+    );
+
+    return $pid, $parent{write}, $parent{read}, $parent{child_output};
 }
 
 sub spawn_child_posix( $self, $method, @cmd ) {
@@ -713,7 +727,7 @@ sub spawn_child_posix( $self, $method, @cmd ) {
 sub spawn_child( $self, $method, @cmd ) {
     my ($pid, $to_chrome, $from_chrome, $chrome_stdout);
     if( $^O =~ /mswin/i ) {
-        $pid = $self->spawn_child_win32($method, @cmd)
+        ($pid,$to_chrome,$from_chrome, $chrome_stdout) = $self->spawn_child_win32($method, @cmd)
     } else {
         ($pid,$to_chrome,$from_chrome, $chrome_stdout) = $self->spawn_child_posix($method, @cmd)
     };
@@ -733,7 +747,7 @@ sub read_devtools_url( $self, $fh, $lines = 10 ) {
         #$self->log('trace', "[[$line]]");
         if( $line =~ m!^DevTools listening on (ws:\S+)$!) {
             $devtools_url = $1;
-            $self->log('trace', "Found ws endpoint as '$devtools_url'");
+            $self->log('trace', "Found ws endpoint from child output as '$devtools_url'");
             last;
         };
     };
