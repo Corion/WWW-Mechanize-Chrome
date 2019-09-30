@@ -27,6 +27,10 @@ Chrome::DevToolsProtocol::Transport::Mojo - Mojolicious backend for Chrome commu
 
 =cut
 
+has 'type' => (
+    is => 'ro',
+    default => 'websocket'
+);
 
 has connection => (
     is => 'rw',

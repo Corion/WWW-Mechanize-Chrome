@@ -33,6 +33,11 @@ This requires Chrome v72+.
 
 =cut
 
+has 'type' => (
+    is => 'ro',
+    default => 'pipe'
+);
+
 has 'loop' => (
     is => 'lazy',
     default => sub {

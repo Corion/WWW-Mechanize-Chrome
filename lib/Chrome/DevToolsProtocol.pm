@@ -288,7 +288,7 @@ sub connect( $self, %args ) {
     my $s = $self;
     weaken $s;
     # If we are still connected to a different tab, disconnect from it
-    if( $self->transport and ref $self->transport and not $self->transport->isa('Chrome::DevToolsProtocol::Transport::Pipe') ) {
+    if( $self->transport and ref $self->transport and $self->transport->type ne 'pipe') {
         $self->transport->close();
     };
     # Kick off the connect

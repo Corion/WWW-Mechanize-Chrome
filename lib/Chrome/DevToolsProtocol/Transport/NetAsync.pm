@@ -28,6 +28,11 @@ Chrome::DevToolsProtocol::Transport::NetAsync - IO::Async backend for Chrome com
 
 =cut
 
+has 'type' => (
+    is => 'ro',
+    default => 'websocket'
+);
+
 has 'loop' => (
     is => 'lazy',
     default => sub { IO::Async::Loop->new() },

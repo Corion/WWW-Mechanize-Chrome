@@ -30,6 +30,10 @@ Chrome::DevToolsProtocol::Transport::AnyEvent - AnyEvent backend for Chrome comm
 
 =cut
 
+has 'type' => (
+    is => 'ro',
+    default => 'websocket'
+);
 
 has 'connection' => (
     is => 'rw',
