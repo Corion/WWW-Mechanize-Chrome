@@ -201,10 +201,9 @@ Returns the URL endpoint to talk to for the connected tab
 
 =cut
 
-sub endpoint( $self ) {
-    $self->tab
-        and $self->tab->{webSocketDebuggerUrl}
-}
+has 'endpoint' => (
+    is => 'rw', # actually, it isn't really rw, but set-once
+);
 
 =head2 C<< ->add_listener >>
 
@@ -296,6 +295,7 @@ sub connect( $self, %args ) {
     my $endpoint;
     $args{ writer_fh } //= $self->writer_fh;
     $args{ reader_fh } //= $self->reader_fh;
+    $args{ endpoint } //= $self->endpoint;
     if( $args{ writer_fh } and $args{ reader_fh }) {
         # Pipe connection
         $args{ transport } ||= 'Chrome::DevToolsProtocol::Transport::Pipe';
@@ -303,8 +303,9 @@ sub connect( $self, %args ) {
             reader_fh => $args{ reader_fh },
             writer_fh => $args{ writer_fh },
         };
+
     } elsif( $args{ endpoint }) {
-        $endpoint = $args{ endpoint };
+        $endpoint = $args{ endpoint } || $self->endpoint;
         $self->log('trace', "Using endpoint $endpoint");
     };
 

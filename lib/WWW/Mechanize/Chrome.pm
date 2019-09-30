@@ -812,6 +812,10 @@ sub new($class, %options) {
             writer_fh => $options{ writer_fh },
             reader_fh => $options{ reader_fh },
         );
+    } elsif( $options{ endpoint }) {
+        @connection = (
+            endpoint => $options{ endpoint },
+        );
     } else {
         @connection = (
             port => $options{ port },
