@@ -8,7 +8,7 @@ our $VERSION = '0.37';
 
 =head1 NAME
 
-Chrome::DevToolsProtocol::Transport::Pipe - choose the best transport backend
+Chrome::DevToolsProtocol::Transport::Pipe - choose the best pipe transport backend
 
 =cut
 

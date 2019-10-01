@@ -21,7 +21,7 @@ Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent- EXPERIMENTAL Local pipe bac
 
 =head1 SYNOPSIS
 
-    my $t = Chrome::DevToolsProtocol::Transport::Pipe->new;
+    my $t = Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent->new;
     $t->connect( $handler, $got_endpoint, $logger)
     ->then(sub {
         my( $connection ) = @_;
@@ -121,6 +121,12 @@ sub sleep( $self, $seconds ) {
 }
 
 1;
+
+=head1 SEE ALSO
+
+The factory class for transports
+
+L<Chrome::DevToolsProtocol::Transport::Pipe>
 
 =head1 REPOSITORY
 

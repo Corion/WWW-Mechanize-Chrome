@@ -12,11 +12,11 @@ our $VERSION = '0.37';
 
 =head1 NAME
 
-Chrome::DevToolsProtocol::Transport::Pipe - EXPERIMENTAL Local pipe backend for Chrome communication
+Chrome::DevToolsProtocol::Transport::Pipe::Mojo - EXPERIMENTAL Local pipe backend for Chrome communication
 
 =head1 SYNOPSIS
 
-    my $t = Chrome::DevToolsProtocol::Transport::Pipe->new;
+    my $t = Chrome::DevToolsProtocol::Transport::Pipe::Mojo->new;
     $t->connect( $handler, $got_endpoint, $logger)
     ->then(sub {
         my( $connection ) = @_;
@@ -104,6 +104,12 @@ sub sleep( $self, $seconds ) {
 }
 
 1;
+
+=head1 SEE ALSO
+
+The factory class for transports
+
+L<Chrome::DevToolsProtocol::Transport::Pipe>
 
 =head1 REPOSITORY
 
