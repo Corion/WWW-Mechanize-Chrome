@@ -15,8 +15,8 @@ use Log::Log4perl ':easy';
 
 delete $ENV{HTTP_PROXY};
 delete $ENV{HTTPS_PROXY};
-$ENV{FUTURE_DEBUG} = 1
-    if not exists $ENV{FUTURE_DEBUG};
+$ENV{PERL_FUTURE_DEBUG} = 1
+    if not exists $ENV{PERL_FUTURE_DEBUG};
 
 sub browser_instances {
     my ($filter) = @_;
