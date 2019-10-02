@@ -2090,9 +2090,9 @@ sub httpResponseFromChromeResponse( $self, $res ) {
         $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
             $s->log('debug', "Response body arrived");
             $response->content( $body );
-            undef $full_response_future;
-            Future->done
-        });
+            #undef $full_response_future;
+            Future->done($body)
+        })->retain;
         #$response->content_ref( \$body );
     };
     $response
