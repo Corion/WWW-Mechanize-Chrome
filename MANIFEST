@@ -129,4 +129,5 @@ xt/99-test-prerequisites.t
 xt/99-todo.t
 xt/99-unix-text.t
 xt/99-versions.t
+xt/copyright.t
 xt/meta-lint.t
