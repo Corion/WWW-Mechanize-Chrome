@@ -1769,9 +1769,15 @@ sub _waitForNavigationEnd( $self, %options ) {
 
     $self->log('debug', $msg);
     my $events_f = $self->_collectEvents( sub( $ev ) {
+        if( ! $ev->{method}) {
+            # We get empty responses when talking to indirect targets
+            return
+        };
+
         # Let's assume that the first frame id we see is "our" frame
         $frameId ||= $self->_fetchFrameId($ev);
         $requestId ||= $self->_fetchRequestId($ev);
+
         my $stopped = (    $ev->{method} eq 'Page.frameStoppedLoading'
                        && $ev->{params}->{frameId} eq $frameId);
         # This means basically no navigation events will follow:
@@ -2105,6 +2111,7 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
     if( $url ) {
         # Find the request id of the request
         for( @$events ) {
+            next unless $_->{method};
             if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
                 if( $url and $_->{params}->{request}->{url} eq $url ) {
                     $requestId = $_->{params}->{requestId};
