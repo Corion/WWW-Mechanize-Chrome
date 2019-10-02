@@ -99,7 +99,10 @@ sub close( $self ) {
 }
 
 sub future {
-    AnyEvent::Future->new
+    #use Carp qw(cluck);
+    my $f = AnyEvent::Future->new;
+    #cluck "Producing new future $f";
+    return $f;
 }
 
 =head2 C<< $transport->sleep( $seconds ) >>
