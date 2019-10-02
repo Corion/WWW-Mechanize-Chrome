@@ -14,7 +14,6 @@ use t::helper;
 Log::Log4perl->easy_init($ERROR);
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -49,7 +48,7 @@ sub get_viewport_size {
 
 t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my ($browser_instance, $mech) = @_;
-    
+
     my $version = $mech->chrome_version;
 
     if( $version =~ /\b(\d+)\b/ and $1 < 62 ) {
@@ -68,11 +67,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
         };
         return
     }
-    
+
     $mech->get( $server->url );
-    
+
     my $start_size = get_viewport_size( $mech );
-    
+
     my $huuge = {
             screenWidth => 4096,
             screenHeight => 1920,
@@ -86,7 +85,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     };
     ok $lives, "We don't crash"
         or diag $@;
-    
+
     # Now, ask the browser about its size:
     my $resized = get_viewport_size( $mech );
     is_deeply $resized, $huuge, "We resized the viewport"

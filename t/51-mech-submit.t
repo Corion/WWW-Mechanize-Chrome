@@ -13,7 +13,6 @@ use t::helper;
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -85,7 +84,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 19, sub {
     is $r->get_attribute('value'), 'Hello Chrome2', "We retrieve the new value via ->get_attribute";
     $mech->form_number(2);
     is $mech->value('r'), 'Hello Chrome2', "We retrieve set the new value via ->value()";
-    
+
     $mech->get_local('51-mech-submit.html');
     $mech->allow('javascript' => 1);
     $mech->submit_form(button => 's');

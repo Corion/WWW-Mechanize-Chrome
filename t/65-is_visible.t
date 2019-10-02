@@ -31,7 +31,6 @@ my @files = qw<
 >;
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -67,7 +66,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, 12*@files+5, sub {
         };
         return;
     };
-    # Check that we can trigger the timeout
+
+    # Check that we can trigger the timeout
     for my $file ($files[0]) {
         $mech->get_local($file);
         is $mech->title, $file, "We loaded the right file ($file)";

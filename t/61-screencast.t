@@ -17,7 +17,6 @@ use t::helper;
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -63,15 +62,15 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     my ($site,$estatus) = ($server->url,200);
     my $res = $mech->get($site);
     isa_ok $res, 'HTTP::Response', "Response";
-    
+
     $mech->field('query','Hello World');
 
     # Wait for things to settle down?!
     $mech->sleep( 5 );
-    
+
     $mech->setScreenFrameCallback( undef );
     cmp_ok 0+@frames, '>', 0, "We 'captured' at least one frame";
-    
+
     my @not_png = grep {! $_->{data} =~ /^.PNG/} @frames;
     if( ! is 0+@not_png, 0, "All frames are PNG frames" ) {
         diag substr($_,0,4) for @not_png;

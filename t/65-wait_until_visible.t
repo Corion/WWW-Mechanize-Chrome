@@ -26,7 +26,6 @@ my @files = qw<
 >;
 
 # What instances of Chrome will we try?
-my $instance_port = 9222;
 my @instances = t::helper::browser_instances();
 
 if (my $err = t::helper::default_unavailable) {
@@ -62,7 +61,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4*@files+5, sub {
         };
         return;
     };
-        # Check that we can trigger the timeout
+    # Check that we can trigger the timeout
     for my $file ($files[0]) {
         $mech->get_local($file);
         is $mech->title, $file, "We loaded the right file ($file)";
@@ -75,14 +74,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4*@files+5, sub {
         is $finished, undef, "We got an exception";
         like $@, qr/Timeout/, "We got a timeout error message";
     };
-    
+
     for my $file (@files) {
         $mech->get_local($file);
         is $mech->title, $file, "We loaded the right file ($file)";
         $mech->allow('javascript' => 1);
         my ($timer,$type) = $mech->eval_in_page('timer');
         ok $mech->is_visible(selector => 'body'), "We can see the body";
-        
+
         if(! ok !$mech->is_visible(selector => '#retry'), "We can't see #retry") {
             my $standby = $mech->by_id('standby', single=>1);
             my $style = $standby->{style};
