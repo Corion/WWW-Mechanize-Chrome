@@ -817,6 +817,8 @@ sub new($class, %options) {
         $options{ download_directory }= '';
     };
 
+    $options{ startup_timeout } //= 20;
+
     $options{ js_events } ||= [];
     if( ! exists $options{ transport }) {
         $options{ transport } ||= $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT };
@@ -891,9 +893,16 @@ sub new($class, %options) {
 
                 # Try a fresh socket connection, blindly
                 # Just to give Chrome time to start up, make sure it accepts connections
-                my $ok = $self->_wait_for_socket_connection( $host, $self->{port}, $self->{startup_timeout} || 20);
+                my $ok = $self->_wait_for_socket_connection(
+                    $host,
+                    $self->{port},
+                    $self->{startup_timeout}
+                );
                 if( ! $ok) {
-                    die "Timeout while connecting to $host:$self->{port}. Do you maybe have a non-debug instance of Chrome already running?";
+                    die join ' ',
+                       "Timeout while connecting to $host:$self->{port}.",
+                       "Do you maybe have a non-debug instance of Chrome",
+                       "already running?";
                 };
             };
         };
