@@ -1777,7 +1777,8 @@ sub _waitForNavigationEnd( $self, %options ) {
         # This means basically no navigation events will follow:
         my $internal_navigation = (   $ev->{method} eq 'Page.navigatedWithinDocument'
                        && $requestId
-                       && (! exists $ev->{params}->{requestId} or $ev->{params}->{requestId} eq $requestId));
+                       && (! exists $ev->{params}->{requestId}
+                           or ($ev->{params}->{requestId} eq $requestId)));
         # This is far too early, but some requests only send this?!
         # Maybe this can be salvaged by setting a timeout when we see this?!
         my $domcontent = (  1 # $options{ just_request }
