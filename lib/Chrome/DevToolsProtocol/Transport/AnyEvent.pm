@@ -98,10 +98,11 @@ sub close( $self ) {
     delete $self->{ws_client};
 }
 
+# Maybe we should keep track of the callstacks of our ->future()s
+# and when they get lost, so we can more easily pinpoint the locations?!
 sub future {
-    #use Carp qw(cluck);
     my $f = AnyEvent::Future->new;
-    #cluck "Producing new future $f";
+    #use Carp qw(cluck); cluck "Producing new future $f";
     return $f;
 }
 

@@ -521,11 +521,6 @@ sub _send_packet( $self, $response, $method, %params ) {
 
     my $s = $self;
     weaken $s;
-    my $_response = $self->future->on_done(sub {
-        if( my $cb = $s->on_message ) {
-            $cb->( @_ );
-        };
-    });
 
     my $payload = eval {
         $self->json->encode({
@@ -545,7 +540,7 @@ sub _send_packet( $self, $response, $method, %params ) {
         # but we want to send the real reply when it comes back from the
         # real target. This is done in the listener for receivedMessageFromTarget
         $result = $self->transport->_send_packet(
-            $_response,
+            undef,
             'Target.sendMessageToTarget',
             message => $payload,
             targetId => $self->targetId,
