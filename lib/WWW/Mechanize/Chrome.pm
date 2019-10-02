@@ -2355,16 +2355,18 @@ about the current directory of your Perl script.
 
 sub set_download_directory_future( $self, $dir="" ) {
     $self->{download_directory} = $dir;
+    my $res;
     if( "" eq $dir ) {
-        $self->target->send_message('Page.setDownloadBehavior',
+        $res = $self->target->send_message('Page.setDownloadBehavior',
             behavior => 'deny',
         )
     } else {
-        $self->target->send_message('Page.setDownloadBehavior',
+        $res = $self->target->send_message('Page.setDownloadBehavior',
             behavior => 'allow',
             downloadPath => $dir
         )
     };
+    $res
 };
 
 sub set_download_directory( $self, $dir="" ) {
