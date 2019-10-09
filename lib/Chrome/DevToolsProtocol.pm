@@ -846,6 +846,8 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
+our $VERSION = '0.37';
+
 has 'protocol' => (
     is => 'ro',
     weak_ref => 1,
