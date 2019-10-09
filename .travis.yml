@@ -102,8 +102,8 @@ install:
 script:
   - cd $TRAVIS_BUILD_DIR
   - perl Makefile.PL && make
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then prove -blv xt/ t/ ; fi
-  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then prove -j $(test-jobs) -blv xt/ t/ ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PERL_FUTURE_DEBUG=1 prove -blv xt/ t/ ; fi
+  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then PERL_FUTURE_DEBUG=1 prove -j $(test-jobs) -blv xt/ t/ ; fi
 
 branches:
   except:
