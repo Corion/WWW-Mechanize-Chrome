@@ -19,11 +19,9 @@ our @loops = (
     ['AnyEvent.pm'      => 'Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent'],
     ['AE.pm'            => 'Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent'],
     # native POE support would be nice
-
-    # The fallback, will always catch due to loading strict (for now)
-    ['strict.pm'      => 'Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent'],
 );
 our $implementation;
+our $default = 'Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent';
 
 =head1 METHODS
 
@@ -62,6 +60,10 @@ sub best_implementation( $class, @candidates ) {
         $INC{$_->[0]}
     } @candidates;
 
+    if( ! @applicable_implementations ) {
+        @applicable_implementations = map {$_->[1]} @candidates;
+    }
+
     # Check which one we can load:
     for my $impl (@applicable_implementations) {
         if( eval "require $impl; 1" ) {
@@ -69,6 +71,9 @@ sub best_implementation( $class, @candidates ) {
         }
         # else { warn $@ };
     };
+
+    # This will crash and burn, but that's how it is
+    return $default;
 };
 
 1;

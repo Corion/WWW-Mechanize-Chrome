@@ -43,6 +43,7 @@ t/00-load.t
 t/01-chrome-devtools-protocol-target-cycle.t
 t/01-chrome-devtools-protocol-target.t
 t/01-chrome-devtools-protocol.t
+t/01-select-backend-implementation.t
 t/02-chrome-devtools-tab.t
 t/03-listener-leak-test.t
 t/47-mech-simplest.t
