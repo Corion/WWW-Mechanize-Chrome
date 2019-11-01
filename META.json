@@ -75,6 +75,8 @@
             "Test::HTTP::LocalServer" : "0.61",
             "Test::Memory::Cycle" : "0",
             "Test::More" : "0",
+            "Test::Without::Module" : "0",
+            "Time::HiRes" : "0",
             "URI" : "0",
             "URI::file" : "0"
          }
@@ -89,6 +91,6 @@
       }
    },
    "version" : "0.37",
-   "x_serialization_backend" : "JSON::PP version 2.97001",
+   "x_serialization_backend" : "JSON::PP version 4.04",
    "x_static_install" : 1
 }

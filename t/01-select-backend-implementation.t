@@ -11,7 +11,7 @@ my $ok = eval {
     1;
 } || eval {
     require Test::Without::Module;
-    require Chrome::DevToolsProtocol::Transport::IOAsync;
+    require Chrome::DevToolsProtocol::Transport::NetAsync;
     1;
 };
 

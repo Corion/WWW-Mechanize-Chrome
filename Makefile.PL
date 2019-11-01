@@ -93,6 +93,7 @@ my %module = (
     TEST_REQUIRES => {
         'Test::More'   => 0,
         'Test::Deep'   => 0,
+        'Test::Without::Module' => 0,
         'Data::Dumper' => 0,
         'Image::Info'  => 0,
         'Test::HTTP::LocalServer' => 0.61, # we want the improved IPC
