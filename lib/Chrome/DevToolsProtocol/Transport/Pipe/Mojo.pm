@@ -7,6 +7,7 @@ use feature 'signatures';
 use Scalar::Util 'weaken';
 
 use Mojo::IOLoop::Stream;
+use Future::Mojo;
 
 our $VERSION = '0.38';
 
