@@ -254,6 +254,14 @@ base data directory for the browsing session.
       data_directory => tempdir(CLEANUP => 1 ),
   );
 
+=item B<wait_file>
+
+  wait_file => "$tempdir/CrashpadMetrics-active.pma"
+
+When shutting down, wait until this file does not exist anymore or can be
+deleted. This can help making sure that the Chrome process has really shut
+down.
+
 =item B<startup_timeout>
 
   startup_timeout => 5  # set the startup timeout value
@@ -983,6 +991,15 @@ sub _connect( $self, %options ) {
             local $SIG{CHLD} = 'IGNORE';
             kill $self->{cleanup_signal} => $pid;
             waitpid $pid, 0;
+
+            if( my $path = $self->{wait_file}) {
+                my $timeout = time + 10;
+                while( time < $timeout ) {
+                    last unless(-e $path);
+                    unlink($path) and last;
+                    $self->sleep(0.1);
+                }
+            };
         };
         croak $err;
     }
@@ -1597,7 +1614,15 @@ sub autoclose_tab( $self, $autoclose ) {
     $self->{autoclose} = $autoclose
 }
 
-sub DESTROY {
+=head2 C<< ->close >>
+
+    $mech->close()
+
+Tear down all connections and shut down Chrome.
+
+=cut
+
+sub close {
     my $pid= delete $_[0]->{pid};
 
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
@@ -1629,6 +1654,10 @@ sub DESTROY {
         kill $_[0]->{cleanup_signal} => $pid;
         waitpid $pid, 0;
     };
+}
+
+sub DESTROY {
+    $_[0]->close();
     %{ $_[0] }= (); # clean out all other held references
 }
 
@@ -4933,7 +4962,7 @@ sub saveResources_future( $self, %options ) {
             or croak "Couldn't save url '$resource->{url}' to $target: $!";
         binmode $fh;
         print $fh $resource->{content};
-        close $fh;
+        CORE::close( $fh );
 
         Future->done( $resource );
     }, names => \%names, seen => \my %seen )->then( sub( @resources ) {

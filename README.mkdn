@@ -596,6 +596,12 @@ This method is special to WWW::Mechanize::Chrome.
 
 Set the `autoclose` option
 
+## `->close`
+
+    $mech->close()
+
+Tear down all connections and shut down Chrome.
+
 ## `$mech->highlight_node( @nodes )`
 
     my @links = $mech->selector('a');
