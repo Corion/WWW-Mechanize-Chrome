@@ -128,7 +128,7 @@ sub run_across_instances {
 
     for my $browser_instance (@$instances) {
         runtests( $browser_instance, $new_mech, $code, $test_count );
-        undef $new_mech;
+        #undef $new_mech;
         sleep 0.5 if @$instances;
         # So the browser can shut down before we try to connect
         # to the new instance
