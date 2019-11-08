@@ -1076,8 +1076,8 @@ sub chrome_version_from_executable_win32( $class, $options={} ) {
     my ($program,$error) = $class->find_executable( @names );
     croak $error if $error;
 
-    my $info = Win32::File::VersionInfo::GetVersionInfo( $program );
-    return $info->{VersionInfo};
+    my $info = Win32::File::VersionInfo::GetFileVersionInfo( $program );
+    return "Chrome/$info->{ProductVersion}";
 }
 
 sub chrome_version( $self, %options ) {

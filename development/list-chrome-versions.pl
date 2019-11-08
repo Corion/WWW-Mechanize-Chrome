@@ -18,14 +18,7 @@ my $windows = ($^O =~ /mswin/i);
 
 for my $instance (@instances) {
     #system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions
-
-    my $mech = WWW::Mechanize::Chrome->new(
+    print WWW::Mechanize::Chrome->chrome_version(
         launch_exe => $instance,
-        headless   => 1,
-        #incognito  => 1,
-        data_directory => tempdir( CLEANUP => 1 ),
-    );
-    print $mech->chrome_version, "\n";
-    undef $mech;
-    sleep 1;
+    ), "\n";
 }
