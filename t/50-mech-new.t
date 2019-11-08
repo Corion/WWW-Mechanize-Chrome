@@ -31,6 +31,7 @@ sub new_mech {
     if( ! keys %args ) {
         %args = @_;
     };
+    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         %args,

@@ -31,6 +31,7 @@ my $d = tempdir( CLEANUP => 1 );
 -d $d or diag "Temp directory '$d' doesn't exist?!: $!";
 
 sub new_mech {
+    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         download_directory => $d,

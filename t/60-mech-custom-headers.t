@@ -27,7 +27,7 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-    #use Mojolicious;
+    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         extra_headers => {
