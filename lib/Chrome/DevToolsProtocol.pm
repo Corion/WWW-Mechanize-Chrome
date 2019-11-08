@@ -15,7 +15,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 
-our $VERSION = '0.38';
+our $VERSION = '0.39';
 our @CARP_NOT;
 
 =head1 NAME
@@ -846,7 +846,7 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-our $VERSION = '0.38';
+our $VERSION = '0.39';
 
 has 'protocol' => (
     is => 'ro',

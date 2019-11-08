@@ -22,6 +22,13 @@
     * Tested against Chromium HeadlessChrome/73.0.3683.75 (Debian "Buster")
     * Tested against Chromium HeadlessChrome/76.0.3809.100 (Debian "Buster")
 
+0.39 2019-11-08
+    * Skip tests on unsupported Chrome versions
+    * Switch default (prerequisite) backend to IO::Async
+    * We now have a dynamic configuration again, because on Windows we need
+      Win32::File::VersionInfo to determine the Chrome version without
+      launching it.
+
 0.38 2019-11-01
     * Added wait_file option to wait for a file to disappear so we know that
       this Chrome instance has quit.

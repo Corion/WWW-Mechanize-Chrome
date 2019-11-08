@@ -24,7 +24,7 @@ use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 
-our $VERSION = '0.38';
+our $VERSION = '0.39';
 our @CARP_NOT;
 
 =encoding utf-8

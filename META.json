@@ -53,6 +53,7 @@
             "Log::Log4perl" : "0",
             "MIME::Base64" : "0",
             "Moo" : "2",
+            "Net::Async::WebSocket::Client" : "0.12",
             "Object::Import" : "0",
             "POSIX" : "0",
             "PerlX::Maybe" : "0",
@@ -88,7 +89,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.38",
+   "version" : "0.39",
    "x_serialization_backend" : "JSON::PP version 4.04",
    "x_static_install" : 1
 }
