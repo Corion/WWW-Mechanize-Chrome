@@ -552,6 +552,7 @@ sub additional_executable_search_directories( $class, $os_style=$^O ) {
             ($ENV{'ProgramFiles'},
              $ENV{'ProgramFiles(x86)'},
              $ENV{"ProgramFilesW6432"},
+             $ENV{"LOCALAPPDATA"},
             );
     } elsif( $os_style =~ /darwin/i ) {
         my $path = '/Applications/Google Chrome.app/Contents/MacOS';
