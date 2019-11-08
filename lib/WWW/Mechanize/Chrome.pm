@@ -4,6 +4,7 @@ use warnings;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
+use PerlX::Maybe;
 use File::Spec;
 use HTTP::Response;
 use HTTP::Headers;
@@ -1081,11 +1082,12 @@ sub chrome_version_from_stdout( $class, $options={} ) {
         headless   => 0,
         enable_automation => 0,
         port => undef,
-        %$options
+        maybe launch_exe => $options->{launch_exe},
     });
     if ($^O =~ /darwin/) {
       s/ /\\ /g for @cmd;
     }
+
     my $v = readpipe(join " ", @cmd);
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
