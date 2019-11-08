@@ -16,7 +16,7 @@ build_requires:
   URI::file: '0'
 configure_requires:
   ExtUtils::MakeMaker: '0'
-dynamic_config: 0
+dynamic_config: 1
 generated_by: 'ExtUtils::MakeMaker version 7.34, CPAN::Meta::Converter version 2.150010'
 license: perl
 meta-spec:
@@ -29,9 +29,6 @@ no_index:
     - inc
 requires:
   Algorithm::Loops: '0'
-  AnyEvent: '0'
-  AnyEvent::Future: '0'
-  AnyEvent::WebSocket::Client: '0'
   Carp: '0'
   Exporter: '5'
   File::Basename: '0'
@@ -43,6 +40,7 @@ requires:
   HTTP::Cookies: '0'
   HTTP::Headers: '0'
   HTTP::Response: '0'
+  IO::Async: '0'
   IO::Socket::INET: '0'
   IPC::Open3: '0'
   Imager: '0'

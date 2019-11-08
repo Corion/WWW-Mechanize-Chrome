@@ -61,11 +61,11 @@ my %module = (
         # You need one of the following event loops:
         # AnyEvent, IO::Async, Mojolicious
         # AnyEvent is the traditional default but it is tested with all three
-        'AnyEvent'           => 0,
-        'AnyEvent::Future'   => 0,
-        'AnyEvent::WebSocket::Client' => 0,
-        #'IO::Async'          => 0, # the pipe handling is tied to IO::Async
-        #'Net::Async::WebSocket' => 0,
+        #'AnyEvent'           => 0,
+        #'AnyEvent::Future'   => 0,
+        #'AnyEvent::WebSocket::Client' => 0,
+        'IO::Async'          => 0, # the pipe handling is tied to IO::Async
+        'Net::Async::WebSocket::Client' => 0.12,
 
         # This is a developer-only prerequisite, but oh well
         'Algorithm::Loops'   => 0,
