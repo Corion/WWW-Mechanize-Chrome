@@ -8,6 +8,8 @@ use File::Spec;
 use Carp qw(croak);
 use File::Temp 'tempdir';
 use WWW::Mechanize::Chrome;
+use Config;
+use Time::HiRes 'sleep';
 
 use Log::Log4perl ':easy';
 
@@ -45,7 +47,7 @@ sub browser_instances {
         my ($default) = WWW::Mechanize::Chrome->find_executable();
         push @instances, $default
             if $default;
-        my $spec = 'chrome-versions/*/{*/,}chrome'; # sorry, likely a bad default
+        my $spec = 'chrome-versions/*/{*/,}chrome' . $Config{_exe}; # sorry, likely a bad default
         push @instances, grep { -x } bsd_glob $spec;
     };
 
@@ -124,7 +126,8 @@ sub run_across_instances {
 
     for my $browser_instance (@$instances) {
         runtests( $browser_instance, $new_mech, $code, $test_count );
-        sleep 1 if @$instances;
+        undef $new_mech;
+        sleep 0.5 if @$instances;
         # So the browser can shut down before we try to connect
         # to the new instance
     };

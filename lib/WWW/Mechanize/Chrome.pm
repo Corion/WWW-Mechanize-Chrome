@@ -394,7 +394,8 @@ sub build_command_line {
 
     # We want to read back the URL we can use to talk to Chrome
     if( $^O =~ /mswin/i ) {
-        push @{ $options->{launch_arg}}, '--v=0'; #'--enable-logging';
+        #push @{ $options->{launch_arg}}, '--v=0', '--enable-logging'; # v79 bad, v78 bad, v77 bad, v76 bad, v75 bad, v70 bad
+        push @{ $options->{launch_arg}}, '--v=0'; # v79 OK, v62 OK, v61 bad
     };
 
     if( $options->{pipe}) {
@@ -886,6 +887,7 @@ sub new($class, %options) {
                 # Maybe this should become part of the transport, or a second
                 # class to asynchronously wait on a filehandle?!
                 $options{ endpoint } = $self->read_devtools_url( $chrome_stdout );
+                close $chrome_stdout;
             } else {
 
                 # Try a fresh socket connection, blindly

@@ -12,6 +12,7 @@ WWW-Mechanize-Chrome-*/
 cover_db
 firefox-versions/
 chrome-versions/
+unsupported-chrome-versions/
 MYMETA.*
 frame-*.png
 *.pl

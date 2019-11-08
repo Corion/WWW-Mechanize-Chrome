@@ -1,8 +1,5 @@
     * Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     * Tested against Chrome/75.0.3770.90 / Win64, thanks AppVeyor
-    * Tested against Chrome Chrome/59.0.3071.115
-    * Tested against Chromium HeadlessChrome/60.0.3110.0
-    * Tested against Chromium HeadlessChrome/61.0.3141.0
     * Tested against Chromium HeadlessChrome/62.0.3202.94
     * Tested against Chromium HeadlessChrome/63.0.3239.132
     * Tested against Chromium HeadlessChrome/64.0.3282.119
@@ -41,6 +38,16 @@
 
     * API change: Use ->getTargets->get() instead of ->list_tabs()
       ->list_tabs() will be unsupported in the future.
+
+    * The following three Chrome versions are now unsupported, as they do
+      not allow reading the websocket URL from Chrome:
+
+        * Chrome/59.0.3071.115
+        * HeadlessChrome/60.0.3110.0
+        * HeadlessChrome/61.0.3141.0
+
+      If you really, really need them, please contact me so that I know that
+      I need to keep the old connection code around.
 
 0.36 2019-09-27
     * Added cleanup_signal option to select the signal which is used for

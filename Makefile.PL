@@ -99,6 +99,7 @@ my %module = (
         'URI'          => 0,
         'URI::file'    => 0,
         'Test::Memory::Cycle' => 0,
+        'Time::HiRes'  => 0,
     },
 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
