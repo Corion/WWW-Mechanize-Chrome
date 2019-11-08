@@ -1046,10 +1046,15 @@ needs launching the browser and asking for the version via the network.
 
 =cut
 
-sub chrome_version_from_stdout( $self ) {
+sub chrome_version_from_stdout( $class, $options={} ) {
     # We can try to get at the version through the --version command line:
-    my @cmd = $self->build_command_line({ launch_arg => ['--version'], headless => 0, enable_automation => 0, port => undef });
-    #$self->log('trace', "Retrieving version via [@cmd]" );
+    my @cmd = $class->build_command_line({
+        launch_arg => ['--version'],
+        headless   => 0,
+        enable_automation => 0,
+        port => undef,
+        %$options
+    });
     if ($^O =~ /darwin/) {
       s/ /\\ /g for @cmd;
     }
@@ -1062,15 +1067,30 @@ sub chrome_version_from_stdout( $self ) {
     return "$1/$2"
 }
 
-sub chrome_version( $self ) {
-    if( $^O !~ /mswin/i ) {
-        my $version = $self->chrome_version_from_stdout();
+sub chrome_version_from_executable_win32( $class, $options={} ) {
+    require Win32::File::VersionInfo;
+
+    my @names = ($options->{launch_exe} ? $options->{launch_exe}: ());
+    my ($program,$error) = $class->find_executable( @names );
+    croak $error if $error;
+
+    my $info = Win32::File::VersionInfo::GetVersionInfo( $program );
+    return $info->{VersionInfo};
+}
+
+sub chrome_version( $self, %options ) {
+    if( blessed $self and $self->target ) {
+        return $self->chrome_version_info()->{product};
+
+    } elsif( $^O !~ /mswin/i ) {
+        my $version = $self->chrome_version_from_stdout(\%options);
         if( $version ) {
             return $version;
         };
-    };
 
-    return $self->chrome_version_info()->{product};
+    } else {
+        $self->chrome_version_from_executable_win32( \%options )
+    };
 }
 
 =head2 C<< $mech->chrome_version_info >>
