@@ -5,7 +5,14 @@ use WWW::Mechanize::Chrome;
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
-my $mech = eval { WWW::Mechanize::Chrome->new(
+use lib '.';
+use t::helper;
+
+
+my $mech = eval {
+    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
+    
+    WWW::Mechanize::Chrome->new(
     autodie => 0,
     startup_timeout => 4,
     headless => 1,

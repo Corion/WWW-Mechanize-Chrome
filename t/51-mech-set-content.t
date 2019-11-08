@@ -22,6 +22,7 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
+    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
@@ -48,7 +49,7 @@ sub equivalent_html_ok {
     is $c, $content, $name;
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';

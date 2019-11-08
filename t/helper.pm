@@ -16,6 +16,26 @@ use Log::Log4perl ':easy';
 delete $ENV{HTTP_PROXY};
 delete $ENV{HTTPS_PROXY};
 
+sub need_minimum_chrome_version {
+    my( $version, @args ) = @_;
+    $version =~ m!^(\d+)\.(\d+)\.(\d+)\.(\d+)$!
+        or croak "Invalid version parameter '$version'";
+    my( $need_maj, $need_min, $need_sub, $need_patch ) = ($1,$2,$3,$4);
+
+    my $v = WWW::Mechanize::Chrome->chrome_version( @args );
+    $v =~ m!/(\d+)\.(\d+)\.(\d+)\.(\d+)$!
+        or die "Couldn't find version info from '$v'";
+    my( $maj, $min, $sub, $patch ) = ($1,$2,$3,$4);
+    if(    $maj < $need_maj
+        or $maj == $need_maj and $min < $need_min
+        or $maj == $need_maj and $min == $need_min and $sub < $need_sub
+        or $maj == $need_maj and $min == $need_min and $sub == $need_sub and $patch < $need_patch
+    ) {
+        croak "Chrome $v is unsupported. Minimum required version is $version.";
+    };
+};
+
+
 sub browser_instances {
     my ($filter) = @_;
     $filter ||= qr/^/;
@@ -94,16 +114,16 @@ sub runtests {
         my $mech = eval { $new_mech->(@launch) };
 
         if( ! $mech ) {
+            my $err = $@;
             SKIP: {
-                skip "Couldn't create new object: $@", $test_count;
+                skip "Couldn't create new object: $err", $test_count;
             };
             my $version = eval {
-                my $c = bless {
+                WWW::Mechanize::Chrome->chrome_version(
                     launch_exe => $browser_instance
-                } => 'WWW::Mechanize::Chrome';
-                $c->chrome_version();
+                );
             };
-            diag sprintf "Failed on Chrome version '%s'", $version || '(unknown)';
+            diag sprintf "Failed on Chrome version '%s': %s", ($version || '(unknown)'), $err;
             return
         };
 

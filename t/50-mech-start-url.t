@@ -27,6 +27,7 @@ my $server = Test::HTTP::LocalServer->spawn(
 my $url = $server->url;
 
 sub new_mech {
+    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         start_url => $url,
