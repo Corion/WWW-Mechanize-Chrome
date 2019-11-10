@@ -1,4 +1,5 @@
 version: ~> 1.0
+
 language: perl
 
 env:
@@ -26,23 +27,49 @@ perl:
 - "5.28"
 - "blead"
 
-os: "linux"
+# Kick off the slow builds first
+os:
+- "osx"
+- "windows"
+- "linux"
+
+# Linux config
 dist: xenial
 services:
 - xvfb
 
+# OSX config
+osx_image: "xcode11.2"
+
 jobs:
-  # Add one job for testing OSX
-  include:
-    - perl: "5.28"
-      os: "osx"
-      osx_image: "xcode11.2"
+  # Remove OSX except for one build
+  exclude:
+    - os: "osx"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
-  # Add one job for testing Windows. AppVeyor also tests this, as do I locally
-  include:
-    - perl: "5.28"
-      os: "windows"
+    - os: "osx"
+      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
+    - os: "osx"
+      perl: "5.22"
+    - os: "osx"
+      perl: "5.24"
+    - os: "osx"
+      perl: "5.26"
+    - os: "osx"
+      perl: "5.28"
+  # Remove Windows except for one build
+  exclude:
+    - os: "windows"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+    - os: "windows"
+      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
+    - os: "windows"
+      perl: "5.22"
+    - os: "windows"
+      perl: "5.24"
+    - os: "windows"
+      perl: "5.26"
+    - os: "windows"
+      perl: "5.28"
 
   allow_failures:
     - perl: blead
