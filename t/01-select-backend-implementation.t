@@ -11,19 +11,19 @@ my $ok = eval {
     1;
 } || eval {
     require Test::Without::Module;
-    require Chrome::DevToolsProtocol::Transport::NetAsync;
+    require Chrome::DevToolsProtocol::Transport::AnyEvent;
     1;
 };
 
 if( $ok ) {
     plan( tests => 2 );
 } else {
-    plan( skip_all => "No backend other than AnyEvent available" );
+    plan( skip_all => "No backend other than IO::Async available" );
 };
 
-Test::Without::Module->import( qw( AnyEvent ) );
-isn't( Chrome::DevToolsProtocol::Transport->best_implementation, 'AnyEvent',
-    "We select a different socket backend if AnyEvent is unavailable");
+Test::Without::Module->import( qw( Net::Async::HTTP ) );
+isn't( Chrome::DevToolsProtocol::Transport->best_implementation, 'Chrome::DevToolsProtocol::Transport::NetAsync',
+    "We select a different socket backend if IO::Async is unavailable");
 
-isn't( Chrome::DevToolsProtocol::Transport::Pipe->best_implementation, 'AnyEvent',
-    "We select a different pipe backend if AnyEvent is unavailable");
+isn't( Chrome::DevToolsProtocol::Transport::Pipe->best_implementation, 'Chrome::DevToolsProtocol::Transport::NetAsync',
+    "We select a different pipe backend if IO::Async is unavailable");
