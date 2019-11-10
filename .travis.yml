@@ -78,7 +78,7 @@ addons:
       - libpng-dev
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cinst StrawberryPerl $([ "$PLATFORM" = "x86" ] && echo --forcex86) --version "$TRAVIS_PERL_VERSION"; export PATH="/c/Strawberry/perl/site/bin:/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"; perl -MConfig -e 'print "#!/bin/sh\n$Config{make} \"\$@\"\n"' > /c/Strawberry/perl/site/bin/make; chmod +x /c/Strawberry/perl/site/bin/make; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cinst StrawberryPerl $([ "$PLATFORM" = "x86" ] && echo --forcex86) --version "$TRAVIS_PERL_VERSION"; export PATH="/c/Strawberry/perl/site/bin:/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"; perl -MConfig -e 'print "#!/bin/sh\n$Config{make} \"\$@\"\n"' > /c/Strawberry/perl/site/bin/make; chmod +x /c/Strawberry/perl/site/bin/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
   - if [[ "$TRAVIS_OS_NAME" != "windows" ]]; then "\"$CHROME_BIN\" --version"; fi
