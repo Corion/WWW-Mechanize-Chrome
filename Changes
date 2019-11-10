@@ -29,6 +29,12 @@
     * Tested against Chromium Chromium/75.0.3770.100
     * Tested against Chromium Chromium/77.0.3865.120
 
+0.40 to be released
+    * Keep any preset value in @Chrome::DevToolsProtocol::Transport::loops
+    * Keep any preset value in @Chrome::DevToolsProtocol::Transport::Pipe::loops
+    * Make the test suite leaner by only launching test servers if we're
+      actually going to run tests
+    * Fix a crash with the Mojo backend when Chrome crashed/was unavailable
 
 0.39 2019-11-08
     * Skip tests on unsupported Chrome versions
