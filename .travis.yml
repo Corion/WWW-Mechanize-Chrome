@@ -34,6 +34,7 @@ matrix:
   include:
     - perl: "5.28"
       os: "osx"
+      osx_image: "xcode11.2"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
 
   allow_failures:
