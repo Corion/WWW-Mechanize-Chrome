@@ -1,51 +1,70 @@
+version: ~> 1.0
+
 language: perl
-perl:
-  - "5.30"
-  #- "5.6.2"       # ancient
-  #- "5.8"
-  #- "5.8.4"
-  #- "5.8.4-thr"
-  #- "5.8.8"       # common, prebuilt version
-  #- "5.10"
-  #- "5.12"
-  #- "5.14"
-  #- "5.16"
-  #- "5.18"
-  #- "5.18.1-thr"
-  #- "5.20"
-  - "5.22"
-  - "5.24"
-  - "5.26"
-  - "5.28"
-  - "blead"
 
 env:
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
 
-os:
-  - linux
-  # Don't include OSX in the list here as we'd have to exclude it for most builds again
-  #- osx
+perl:
+- "5.30"
+#- "5.6.2"       # ancient
+#- "5.8"
+#- "5.8.4"
+#- "5.8.4-thr"
+#- "5.8.8"       # common, prebuilt version
+#- "5.10"
+#- "5.12"
+#- "5.14"
+#- "5.16"
+#- "5.18"
+#- "5.18.1-thr"
+#- "5.20"
+- "5.22"
+- "5.24"
+- "5.26"
+- "5.28"
+- "blead"
 
-matrix:
-  # Add one job for testing OSX
+# Kick off the slow builds first
+os:
+- "osx"
+- "linux"
+
+# Linux config
+dist: xenial
+services:
+- xvfb
+
+# OSX config
+osx_image: "xcode11.2"
+
+jobs:
+  # Including Windows is easy even though it'll run at the end ...
   include:
-    - perl: "5.28"
-      os: "osx"
-      osx_image: "xcode11.2"
+    - perl: "5.30.0.1"
+      os: windows
+      language: shell
+      env: PLATFORM=x86_64 TRAVIS_PERL_VERSION="5.30.0.1"
+  # Remove OSX except for one build
+  exclude:
+    - os: "osx"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+    - os: "osx"
+      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
+    - os: "osx"
+      perl: "5.22"
+    - os: "osx"
+      perl: "5.24"
+    - os: "osx"
+      perl: "5.26"
+    - os: "osx"
+      perl: "5.28"
 
   allow_failures:
     - perl: blead
     - perl: 5.6.2
-
-sudo: required
-
-dist: xenial
-services:
-  - xvfb
 
 addons:
   chrome: stable
@@ -59,12 +78,10 @@ addons:
       - libpng-dev
 
 before_install:
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then grep -v blank /etc/fonts/fonts.conf | sudo tee /etc/fonts/fonts.conf; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cinst StrawberryPerl $([ "$PLATFORM" = "x86" ] && echo --forcex86) --version "$TRAVIS_PERL_VERSION"; export PATH="/c/Strawberry/perl/site/bin:/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"; perl -MConfig -e 'print "#!/bin/sh\n$Config{make} \"\$@\"\n"' > /c/Strawberry/perl/site/bin/make; chmod +x /c/Strawberry/perl/site/bin/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
-  - "\"$CHROME_BIN\" --version"
+  - "if [[ \"$TRAVIS_OS_NAME\" != \"windows\" ]]; then \"$CHROME_BIN\" --version; fi"
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
   # Install perlbrew the hard way, on OSX
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade; brew list libpng || brew install libpng ; fi
@@ -107,7 +124,8 @@ script:
   - cd $TRAVIS_BUILD_DIR
   - perl Makefile.PL && make
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then PERL_FUTURE_DEBUG=1 prove -blv xt/ t/ ; fi
-  - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then PERL_FUTURE_DEBUG=1 prove -j $(test-jobs) -blv xt/ t/ ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then PERL_FUTURE_DEBUG=1 prove -j $(test-jobs) -blv xt/ t/ ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then PERL_FUTURE_DEBUG=1 make test ; fi
 
 branches:
   except:
