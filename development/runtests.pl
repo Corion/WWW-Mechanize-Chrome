@@ -20,6 +20,10 @@ if( @tests ) {
     @tests= map { bsd_glob( $_ ) } @tests;
 };
 
+if( ! defined $separate_instances) {
+    $separate_instances = 1;
+}
+
 if( $ENV{HARNESS_OPTIONS} and $ENV{HARNESS_OPTIONS}=~ /\bj\d+/) {
     die "Mixing parallel tests and a single browser instance spells danger"
         if ! $separate_instances;
