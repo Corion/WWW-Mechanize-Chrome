@@ -61,7 +61,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             } else {
                 my $msg = "Couldn't connect to endpoint '$endpoint': " . $tx->res->error->{message};
                 $logger->('trace', $msg);
-                $tx->finish();
+                #$tx->finish();
                 $res->fail( $msg );
             }
         });
