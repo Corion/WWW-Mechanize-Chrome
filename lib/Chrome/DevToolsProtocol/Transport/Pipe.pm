@@ -12,7 +12,8 @@ Chrome::DevToolsProtocol::Transport::Pipe - choose the best pipe transport backe
 
 =cut
 
-our @loops = (
+our @loops;
+push @loops, (
     ['Mojo/IOLoop.pm'   => 'Chrome::DevToolsProtocol::Transport::Pipe::Mojo' ],
     ['IO/Async.pm'      => 'Chrome::DevToolsProtocol::Transport::Pipe::NetAsync'],
     ['IO/Async/Loop.pm' => 'Chrome::DevToolsProtocol::Transport::Pipe::NetAsync'],

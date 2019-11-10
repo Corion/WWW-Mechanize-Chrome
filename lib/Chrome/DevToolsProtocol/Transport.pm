@@ -12,7 +12,8 @@ Chrome::DevToolsProtocol::Transport - choose the best transport backend
 
 =cut
 
-our @loops = (
+our @loops;
+push @loops, (
     ['Mojo/IOLoop.pm'   => 'Chrome::DevToolsProtocol::Transport::Mojo' ],
     ['IO/Async.pm'      => 'Chrome::DevToolsProtocol::Transport::NetAsync'],
     ['IO/Async/Loop.pm' => 'Chrome::DevToolsProtocol::Transport::Pipe::NetAsync'],
