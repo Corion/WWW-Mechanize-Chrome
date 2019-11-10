@@ -69,7 +69,7 @@ before_install:
   # Install perlbrew the hard way, on OSX
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade; brew list libpng || brew install libpng ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade; brew list perl || brew install perl ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade; brew upgrade perl libpng ; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew upgrade; brew upgrade perl libpng ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --cflags; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pkg-config libpng --libs; fi
   - if [[ "$TRAVIS_OS_NAME" == 'osx' ]]; then \curl -L http://install.perlbrew.pl | bash; fi
