@@ -33,6 +33,14 @@ my $server = Test::HTTP::LocalServer->spawn(
     debug => 1,
 );
 
+my $mech_destroy = \&WWW::Mechanize::Chrome::DESTROY;
+no warnings 'redefine';
+local *WWW::Mechanize::Chrome::DESTROY = sub {
+    diag "Destroying mech $_[0]";
+    goto &$mech_destroy;
+};
+
+
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = splice @_;
     my ($site,$estatus) = ($server->url,200);
@@ -48,6 +56,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my $old_destroy = \&Chrome::DevToolsProtocol::EventListener::DESTROY;
     no warnings 'redefine';
     local *Chrome::DevToolsProtocol::EventListener::DESTROY = sub {
+        diag "Destroying event listener";
         $destroyed++;
         goto &$old_destroy;
     };
@@ -88,3 +97,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is $called, 0, "Our handler was not called after manual removal via ->remove_listener";
     diag "Test loop done";
 });
+
+diag "Cleaning up";
+$server->kill;
+undef $server;
