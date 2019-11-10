@@ -81,6 +81,21 @@ NestedLoops( [\@instances, \@backends], sub {
 
     kill_chrome();
 
+    # Only Chrome v72+ supports the fd passing pipes:
+    if( $backend =~ /::Pipe::/ ) {
+        my $v = WWW::Mechanize::Chrome->chrome_version( launch_exe => $instance );
+        if( $v !~ m!/(\d+)\.! ) {
+            warn "Weirdo Chrome version '$v', hope that's OK";
+        } else {
+            my $maj = $1;
+            if( $1 < 72 ) {
+                # Skip this Chrome instance
+                return;
+            };
+        };
+    };
+
+
     ## Launch one Chrome instance to reuse
     my $vis_instance = $instance;
     $ENV{TEST_WWW_MECHANIZE_CHROME_VERSIONS} = $instance;

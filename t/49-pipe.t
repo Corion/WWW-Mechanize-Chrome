@@ -25,7 +25,7 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
+    t::helper::need_minimum_chrome_version( '72.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         @_,
         pipe    => 1,
