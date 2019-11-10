@@ -70,7 +70,8 @@ sub kill_chrome {
     if( $windows ) {
         system "taskkill /IM chrome.exe /F" if $windows; # boom, kill all leftover Chrome versions
     } else {
-        system "killall chromium"; # boom, kill all leftover Chrome versions
+        system "killall chromium"; # boom, kill all leftover Chromium versions
+        system "killall chrome";   # boom, kill all leftover Chrome versions
     };
 }
 
