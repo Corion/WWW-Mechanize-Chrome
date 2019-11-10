@@ -5,44 +5,44 @@ env:
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
 
-matrix:
+perl:
+- "5.30"
+#- "5.6.2"       # ancient
+#- "5.8"
+#- "5.8.4"
+#- "5.8.4-thr"
+#- "5.8.8"       # common, prebuilt version
+#- "5.10"
+#- "5.12"
+#- "5.14"
+#- "5.16"
+#- "5.18"
+#- "5.18.1-thr"
+#- "5.20"
+- "5.22"
+- "5.24"
+- "5.26"
+- "5.28"
+- "blead"
+
+os: "linux"
+dist: xenial
+services:
+- xvfb
+
+jobs:
   # Add one job for testing OSX
   include:
     - perl: "5.28"
       os: "osx"
       osx_image: "xcode11.2"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
-    - include
-      os: "linux"
-      dist: xenial
-      services:
-      - xvfb
-      perl:
-      - "5.30"
-      #- "5.6.2"       # ancient
-      #- "5.8"
-      #- "5.8.4"
-      #- "5.8.4-thr"
-      #- "5.8.8"       # common, prebuilt version
-      #- "5.10"
-      #- "5.12"
-      #- "5.14"
-      #- "5.16"
-      #- "5.18"
-      #- "5.18.1-thr"
-      #- "5.20"
-      - "5.22"
-      - "5.24"
-      - "5.26"
-      - "5.28"
-      - "blead"
-
 
   allow_failures:
     - perl: blead
     - perl: 5.6.2
 
-sudo: required
+# sudo: required
 
 addons:
   chrome: stable
@@ -56,9 +56,6 @@ addons:
       - libpng-dev
 
 before_install:
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then grep -v blank /etc/fonts/fonts.conf | sudo tee /etc/fonts/fonts.conf; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
   - "\"$CHROME_BIN\" --version"
