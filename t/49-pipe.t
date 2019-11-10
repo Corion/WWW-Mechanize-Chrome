@@ -12,7 +12,7 @@ use Test::HTTP::LocalServer;
 use lib '.';
 use t::helper;
 
-Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($TRACE);  # Set priority of root logger to ERROR
 
 my @instances = t::helper::browser_instances();
 if (my $err = t::helper::default_unavailable) {
@@ -35,6 +35,13 @@ sub new_mech {
 my $server = Test::HTTP::LocalServer->spawn(
 );
 
+my $mech_destroy = \&WWW::Mechanize::Chrome::DESTROY;
+no warnings 'redefine';
+local *WWW::Mechanize::Chrome::DESTROY = sub {
+    note "Destroying mech $_[0]";
+    goto &$mech_destroy;
+};
+
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = splice @_;
 
@@ -43,6 +50,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 
     like $mech->title, qr/^WWW::Mechanize::Firefox test page$/, "Retrieving the title works";
     undef $mech;
+    note "Test loop done";
 });
 
 $server->kill;

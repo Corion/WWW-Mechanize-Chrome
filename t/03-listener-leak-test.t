@@ -30,16 +30,15 @@ sub new_mech {
 };
 
 my $server = Test::HTTP::LocalServer->spawn(
-    debug => 1,
+    #debug => 1,
 );
 
 my $mech_destroy = \&WWW::Mechanize::Chrome::DESTROY;
 no warnings 'redefine';
 local *WWW::Mechanize::Chrome::DESTROY = sub {
-    diag "Destroying mech $_[0]";
+    note "Destroying mech $_[0]";
     goto &$mech_destroy;
 };
-
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = splice @_;
