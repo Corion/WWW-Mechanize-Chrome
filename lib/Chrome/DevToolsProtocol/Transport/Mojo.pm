@@ -43,14 +43,15 @@ has ua => (
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
     weaken $handler;
+    weaken(my $s = $self);
 
     $got_endpoint->then( sub( $endpoint ) {
         $self->{ua} ||= Mojo::UserAgent->new();
-        my $client = $self->ua;
+        my $client = $s->ua;
 
         $logger->('debug',"Connecting to $endpoint");
         die "Got an undefined endpoint" unless defined $endpoint;
-        my $res = $self->future;
+        my $res = $s->future;
         #$client->on( 'start' => sub { $logger->('trace', "Starting transaction", @_ )});
         $client->websocket( $endpoint, { 'Sec-WebSocket-Extensions' => 'permessage-deflate' }, sub( $ua, $tx ) {
             # On error we get an Mojolicious::Transaction::HTTP here
@@ -69,7 +70,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
 
     })->then( sub( $c ) {
         my $connection = $c;
-        $self->{connection} ||= $connection;
+        $s->{connection} ||= $connection;
 
         # Kick off the continous polling
         $connection->on( message => sub( $connection,$message) {
@@ -77,8 +78,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             $handler->on_response( $connection, $message )
         });
 
-        my $res = Future->done( $self );
-        undef $self;
+        my $res = Future->done( $s );
+        #undef $self;
         $res
     });
 }
