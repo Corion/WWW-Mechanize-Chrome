@@ -37,7 +37,8 @@ my $mech_destroy = \&WWW::Mechanize::Chrome::DESTROY;
 no warnings 'redefine';
 local *WWW::Mechanize::Chrome::DESTROY = sub {
     note "Destroying mech $_[0]";
-    goto &$mech_destroy;
+    $mech_destroy->(@_);
+    note "Destroyed mech $_[0]";
 };
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
@@ -97,6 +98,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     diag "Test loop done";
 });
 
-diag "Cleaning up";
+note "Cleaning up";
 $server->kill;
 undef $server;
+
+note "Global destruction";
