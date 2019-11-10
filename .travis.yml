@@ -37,6 +37,11 @@ jobs:
       os: "osx"
       osx_image: "xcode11.2"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+  # Add one job for testing Windows. AppVeyor also tests this, as do I locally
+  include:
+    - perl: "5.28"
+      os: "windows"
+      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
 
   allow_failures:
     - perl: blead
