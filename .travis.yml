@@ -30,7 +30,6 @@ perl:
 # Kick off the slow builds first
 os:
 - "osx"
-- "windows"
 - "linux"
 
 # Linux config
@@ -42,6 +41,12 @@ services:
 osx_image: "xcode11.2"
 
 jobs:
+  # Including Windows is easy even though it'll run at the end ...
+  include:
+    - perl: "5.30.0.1"
+      os: windows
+      language: shell
+      env: PLATFORM=x86_64 TRAVIS_PERL_VERSION="5.30.0.1"
   # Remove OSX except for one build
   exclude:
     - os: "osx"
@@ -56,24 +61,10 @@ jobs:
       perl: "5.26"
     - os: "osx"
       perl: "5.28"
-  # Remove Windows except for one build
-    - os: "windows"
-      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
-    - os: "windows"
-      env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
-    - os: "windows"
-      perl: "5.22"
-    - os: "windows"
-      perl: "5.24"
-    - os: "windows"
-      perl: "5.26"
-    - os: "windows"
-      perl: "5.28"
 
   allow_failures:
     - perl: blead
     - perl: 5.6.2
-    - os: "windows" # well, until Travis CI actually supports Perl there
 
 # sudo: required
 
@@ -89,6 +80,7 @@ addons:
       - libpng-dev
 
 before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cinst StrawberryPerl $([ "$PLATFORM" = "x86" ] && echo --forcex86) --version "$TRAVIS_PERL_VERSION"; export PATH="/c/Strawberry/perl/site/bin:/c/Strawberry/perl/bin:/c/Strawberry/c/bin:$PATH"; perl -MConfig -e 'print "#!/bin/sh\n$Config{make} \"\$@\"\n"' > /c/Strawberry/perl/site/bin/make; chmod +x /c/Strawberry/perl/site/bin/make; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=/usr/bin/chromium-browser; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then export CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; fi
   - "\"$CHROME_BIN\" --version"
