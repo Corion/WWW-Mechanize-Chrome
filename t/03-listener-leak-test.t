@@ -30,11 +30,11 @@ sub new_mech {
 };
 
 my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1,
+    debug => 1,
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
-    my ($browser_instance, $mech) = @_;
+    my ($browser_instance, $mech) = splice @_;
     my ($site,$estatus) = ($server->url,200);
 
     my $res = $mech->get($site);
@@ -86,4 +86,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->remove_listener( $console );
     $mech->driver->on_response(undef, '{"method":"Runtime.consoleAPICalled"}');
     is $called, 0, "Our handler was not called after manual removal via ->remove_listener";
+    diag "Test loop done";
 });
