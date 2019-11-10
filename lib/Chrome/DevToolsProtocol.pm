@@ -447,12 +447,14 @@ sub on_response( $self, $connection, $message ) {
                 eval {
                     $listener->notify( $response );
                 };
+                $self->log('error', $@) if $@;
                 warn $@ if $@;
             };
             # re-weaken our references
             for (0..$#$listeners) {
                 weaken $listeners->[$_];
             };
+            $self->log('trace', "Message handled", $response);
 
             $handled++;
         };
