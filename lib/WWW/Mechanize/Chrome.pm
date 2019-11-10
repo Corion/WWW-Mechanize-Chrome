@@ -399,6 +399,9 @@ sub build_command_line {
     my( $program, $error) = $class->find_executable(\@program_names);
     croak $error if ! $program;
 
+    # Convert the path to an absolute filename, so we can chdir() later
+    $program = File::Spec->rel2abs( $program ) || $program;
+
     $options->{ launch_arg } ||= [];
 
     # We want to read back the URL we can use to talk to Chrome
