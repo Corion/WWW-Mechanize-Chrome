@@ -1,33 +1,9 @@
 language: perl
-perl:
-  - "5.30"
-  #- "5.6.2"       # ancient
-  #- "5.8"
-  #- "5.8.4"
-  #- "5.8.4-thr"
-  #- "5.8.8"       # common, prebuilt version
-  #- "5.10"
-  #- "5.12"
-  #- "5.14"
-  #- "5.16"
-  #- "5.18"
-  #- "5.18.1-thr"
-  #- "5.20"
-  - "5.22"
-  - "5.24"
-  - "5.26"
-  - "5.28"
-  - "blead"
 
 env:
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
   - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
-
-os:
-  - linux
-  # Don't include OSX in the list here as we'd have to exclude it for most builds again
-  #- osx
 
 matrix:
   # Add one job for testing OSX
@@ -36,16 +12,37 @@ matrix:
       os: "osx"
       osx_image: "xcode11.2"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+    - include
+      os: "linux"
+      dist: xenial
+      services:
+      - xvfb
+      perl:
+      - "5.30"
+      #- "5.6.2"       # ancient
+      #- "5.8"
+      #- "5.8.4"
+      #- "5.8.4-thr"
+      #- "5.8.8"       # common, prebuilt version
+      #- "5.10"
+      #- "5.12"
+      #- "5.14"
+      #- "5.16"
+      #- "5.18"
+      #- "5.18.1-thr"
+      #- "5.20"
+      - "5.22"
+      - "5.24"
+      - "5.26"
+      - "5.28"
+      - "blead"
+
 
   allow_failures:
     - perl: blead
     - perl: 5.6.2
 
 sudo: required
-
-dist: xenial
-services:
-  - xvfb
 
 addons:
   chrome: stable
