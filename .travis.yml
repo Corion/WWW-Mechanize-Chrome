@@ -97,9 +97,7 @@ install:
   - cpanm --notest ExtUtils::MakeMaker~6.68
   - cpanm --notest --installdeps .
   # For the test matrix
-  - cpanm --notest AnyEvent
-  - cpanm --notest AnyEvent::Future
-  - cpanm --notest AnyEvent::WebSocket::Client
+  - cpanm --notest AnyEvent AnyEvent::Future AnyEvent::WebSocket::Client
   - cpanm --notest Mojolicious Future::Mojo
   - cpanm --notest IO::Async Net::Async::WebSocket::Client
   # For author testing/compile testing
