@@ -1095,7 +1095,8 @@ sub chrome_version_from_stdout( $class, $options={} ) {
 
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     # Chromium 76.0.4809.100 built on Debian 10.0, running on Debian 10.0
-    $v =~ /^(\S+)\s+([\d\.]+)\s/
+    # Google Chrome 78.0.3904.97
+    $v =~ /^(.*?)\s+([\d\.]+)\s*\z/
         or return; # we didn't find anything
     return "$1/$2"
 }
