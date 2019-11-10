@@ -12,10 +12,6 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1
-);
-
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -30,6 +26,10 @@ sub new_mech {
         @_,
     );
 };
+
+my $server = Test::HTTP::LocalServer->spawn(
+    #debug => 1
+);
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
