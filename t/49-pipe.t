@@ -53,6 +53,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     note "Test loop done";
 });
 
+note "Cleaning up test HTTP server";
 $server->kill;
 undef $server;
 #wait; # gobble up our child process status
