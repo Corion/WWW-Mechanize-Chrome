@@ -57,7 +57,6 @@ jobs:
     - os: "osx"
       perl: "5.28"
   # Remove Windows except for one build
-  exclude:
     - os: "windows"
       env: WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
     - os: "windows"
