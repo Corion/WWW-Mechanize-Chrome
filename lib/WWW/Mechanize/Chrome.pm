@@ -1799,7 +1799,7 @@ sub _fetchFrameId( $self, $ev ) {
         || $ev->{method} eq 'Network.requestWillBeSent'
     ) {
         my $frameId = $ev->{params}->{frameId};
-        $self->log('debug', sprintf "Found frame id as %s", $frameId);
+        $self->log('debug', sprintf "Found frame id as %s", $frameId || '-');
         return  ($frameId);
     }
 };
@@ -1827,7 +1827,8 @@ sub _waitForNavigationEnd( $self, %options ) {
 
     my $frameId = $options{ frameId } || $self->frameId;
     my $requestId = $options{ requestId } || $self->requestId;
-    my $msg = "Capturing events until 'Page.frameStoppedLoading' for frame $frameId";
+    my $msg = sprintf "Capturing events until 'Page.frameStoppedLoading' for frame %s",
+                      $frameId || '-';
     $msg .= " or 'Network.loadingFailed' or 'Network.loadingFinished' for request '$requestId'"
         if $requestId;
 
@@ -2176,7 +2177,9 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
         # Find the request id of the request
         for( @$events ) {
             next unless $_->{method};
-            if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
+            if(     defined $frameId
+                and $_->{method} eq 'Network.requestWillBeSent'
+                and $_->{params}->{frameId} eq $frameId ) {
                 if( $url and $_->{params}->{request}->{url} eq $url ) {
                     $requestId = $_->{params}->{requestId};
                 } else {
