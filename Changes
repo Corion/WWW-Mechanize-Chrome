@@ -1,6 +1,7 @@
     * Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
     * Tested against Google Chrome 78.0.3904.97, thanks Travis CI
     * Tested against Chrome/75.0.3770.90 / Win64, thanks AppVeyor
+    * Windows tests
     * Tested against Chromium HeadlessChrome/62.0.3202.94
     * Tested against Chromium HeadlessChrome/63.0.3239.132
     * Tested against Chromium HeadlessChrome/64.0.3282.119
@@ -20,7 +21,14 @@
     * Tested against Chromium HeadlessChrome/78.0.3904.70
     * Tested against Chromium HeadlessChrome/79.0.3927.0
     * Tested against Chromium HeadlessChrome/80.0.3952.0
-    * Tested against Chromium HeadlessChrome/76.0.3809.100 (Debian "Buster")
+    * Linux tests
+    * Tested against Chromium Chromium/76.0.3809.100 (Debian "Buster" default)
+    * Tested against Chromium Chromium/65.0.3325.181
+    * Tested against Chromium Chromium/66.0.3359.139
+    * Tested against Chromium Chromium/67.0.3396.87
+    * Tested against Chromium Chromium/75.0.3770.100
+    * Tested against Chromium Chromium/77.0.3865.120
+
 
 0.39 2019-11-08
     * Skip tests on unsupported Chrome versions
