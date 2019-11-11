@@ -203,6 +203,13 @@ Results my vary for your operating system. Use the full path to the browser's
 executable if you are having issues. You can also set the name of the executable
 file with the C<$ENV{CHROME_BIN}> environment variable.
 
+=item B<cleanup_signal>
+
+    cleanup_signal => 'SIGKILL'
+
+The signal that is sent to Chrome to shut it down. On Linuxish OSes, this
+will be C<TERM>, on OSX and Windows it will be C<KILL>.
+
 =item B<start_url>
 
   start_url => 'http://perlmonks.org'  # Immediately navigate to a given URL
