@@ -23,6 +23,7 @@ use Time::HiRes qw(usleep);
 use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
+use POSIX ':sys_wait_h';
 
 our $VERSION = '0.39';
 our @CARP_NOT;
@@ -1712,10 +1713,25 @@ sub close {
     };
     delete $_[0]->{ driver };
 
-    if( $pid ) {
+    if( $pid and kill 0 => $pid) {
         local $SIG{CHLD} = 'IGNORE';
-        kill $_[0]->{cleanup_signal} => $pid;
-        waitpid $pid, 0;
+        if( ! kill $_[0]->{cleanup_signal} => $pid ) {
+            # The child already has gone away?!
+            warn "Couldn't kill browser child process $pid with $_[0]->{cleanup_signal}: $!";
+            # Gobble up any exit status
+            waitpid -1, WNOHANG;
+        } else {
+            waitpid $pid, 0;
+        };
+
+        if( my $path = $_[0]->{wait_file}) {
+            my $timeout = time + 10;
+            while( time < $timeout ) {
+                last unless(-e $path);
+                unlink($path) and last;
+                $_[0]->sleep(0.1);
+            }
+        };
     };
 }
 
