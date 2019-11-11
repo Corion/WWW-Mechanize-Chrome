@@ -864,7 +864,9 @@ sub new($class, %options) {
         $options{ pipe } = 'pipe' eq $connection_style;
     };
 
-    $options{ cleanup_signal } ||= $^O =~ /mswin32/i ? 'SIGKILL' : 'SIGTERM';
+    $options{ cleanup_signal } ||=   $^O =~ /mswin32/i ? 'SIGKILL'
+                                   : $^O =~ /darwin/i  ? 'SIGKILL'
+                                                       : 'SIGTERM';
 
     my $self= bless \%options => $class;
     $self->{log} ||= $self->_build_log;
