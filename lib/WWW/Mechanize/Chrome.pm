@@ -1562,9 +1562,22 @@ sub eval_in_chrome {
 
 =head2 C<< $mech->callFunctionOn( $function, @arguments ) >>
 
-  my ($value, $type) = $mech->callFunctionOn( 'function(greeting) { alert(greeting)}', 'Hello World' );
+  my ($value, $type) = $mech->callFunctionOn(
+      'function(greeting) { window.alert(greeting)}',
+      objectId => $someObjectId,
+      arguments => [{ value => 'Hello World' }]
+  );
 
-Runs the given function with the specified arguments.
+Runs the given function with the specified arguments. This is the only way to
+pass arguments to a function call without doing risky string interpolation.
+The Javascript C<this> object will be set to the object referenced from the
+C<objectId>.
+
+The C<arguments> option expects an arrayref of hashrefs. Each hash describes one
+function argument.
+
+The C<objectId> parameter is optional. Leaving out the C<objectId> parameter
+will create a dummy object on which the function then is called.
 
 This method is special to WWW::Mechanize::Chrome.
 
@@ -1577,8 +1590,22 @@ sub callFunctionOn_future( $self, $str, %options ) {
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    $self->target->callFunctionOn($str, %options)
-    ->then( sub( $result ) {
+
+    my $objId;
+    if( ! $options{ objectId }) {
+        $objId = $self->target->evaluate('new Object',
+            returnByValue => JSON::false
+        )->then(sub($result) {
+            return Future->done( $result->{result}->{objectId});
+        });
+    } else {
+        $objId = Future->done( $options{ objectId });
+    };
+
+    $objId->then( sub( $objectId ) {
+        $options{ objectId } = $objectId;
+        $self->target->callFunctionOn($str, %options)
+    })->then( sub( $result ) {
 
         if( $result->{error} ) {
             $self->signal_condition(

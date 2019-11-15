@@ -16,7 +16,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 3*@instances;
+    plan tests => 4*@instances;
 };
 
 sub new_mech {
@@ -37,5 +37,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
 
     ($val, $type) = $mech->eval('window', returnByValue => JSON::false);
     is $type, "object", "We can also return (proxies for) unserializable objects";
+
+    ($val, $type) = $mech->callFunctionOn('function add(a,b){ return a+b }', arguments => [ {value => 2 }, { value => 2 }]);
+    is $val, 4, "We can call functions without manually encoding parameters";
 
 });
