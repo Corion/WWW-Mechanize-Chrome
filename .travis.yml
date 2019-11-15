@@ -3,9 +3,12 @@ version: ~> 1.0
 language: perl
 
 env:
-  - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
-  - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
-  - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
+    global:
+      - HOMEBREW_NO_ANALYTICS=1
+    jobs:
+      - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::Mojo"
+      - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::AnyEvent"
+      - WWW_MECHANIZE_CHROME_TRANSPORT="Chrome::DevToolsProtocol::Transport::NetAsync"
 
 perl:
 - "5.30"
