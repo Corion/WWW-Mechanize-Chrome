@@ -50,8 +50,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, 32, sub {
     ok $mech->current_form, "After setting form_id, We have a current form";
     $mech->sleep(1);
     is $mech->current_form->get_attribute('id'), 'snd2', "We can ask the form with get_attribute(id)";
-    my $content = $mech->current_form->get_text;
-    ok !!$content, "We got content from asking the current form with get_text";
+    my $content = $mech->current_form->get_attribute('innerHTML');
+    ok !!$content, "We got content from asking the current form with get_attribute";
     $mech->field('id', 99);
     pass "We survived setting the field 'id' to 99";
     my $current_form = $mech->current_form;
@@ -65,10 +65,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, 32, sub {
     like $objectId, qr{injectedScriptId}, "The objectId still matches /injectedScriptId/";
     my $content2;
     #eval {
-        $content2 = $current_form->get_text;
+        $content2 = $current_form->get_attribute('innerHTML');
     #};
-    is $@, '', "No error when retrieving form text";
-    ok !!$content2, "We got content from (again) asking the current form with get_text";
+    is $@, '', "No error when retrieving form HTML";
+    ok !!$content2, "We got content from (again) asking the current form with get_attribute";
     isnt $content2, $content, "we managed to change the form by setting the 'id' field";
     is $mech->xpath('.//*[@name="id"]',
         node => $mech->current_form,
@@ -94,7 +94,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 32, sub {
     pass "We survived setting the field 'comment' to some JAPH";
     like $mech->xpath('.//textarea',
         node   => $mech->current_form,
-        single => 1)->get_text, qr/Just another/,
+        single => 1)->get_attribute('value'), qr/Just another/,
         "We set textarea and verified it";
 
     $mech->get_local('50-form2.html');

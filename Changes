@@ -35,6 +35,16 @@
     * Make the test suite leaner by only launching test servers if we're
       actually going to run tests
     * Fix a crash with the Mojo backend when Chrome crashed/was unavailable
+    * ->get_text() and ->get_attribute('innerText') used to return HTML. Now
+      they return the actual text content of nodes, using the Javascript
+      attribute 'textContent' or 'innerText' respectively. This changes the
+      behaviour as now for example the content of a TEXTAREA tag cannot be
+      fetched with ->get_text() anymore. Use ->get_attribute('value') for that.
+    * Attributes set on a node now can be re-fetched from the live instance
+      of the node. Use ->get_attribute('attribute_name', 1) to force a live
+      query to Chrome.
+    * The ->links() method now also finds A tags without an href= attribute
+      and returns these.
 
 0.39 2019-11-08
     * Skip tests on unsupported Chrome versions

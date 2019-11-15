@@ -55,8 +55,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
     my @found_links = $mech->links;
     # There is a FRAME tag, but FRAMES are exclusive elements
     # so Chrome ignores it while WWW::Mechanize picks it up
-    # Also, links without a href= attribute don't get found by Chrome
-    if (! is scalar @found_links, 5, 'All 5 links were found') {
+    if (! is scalar @found_links, 6, 'All 6 links were found') {
         diag sprintf "%s => %s", $_->tag, $_->url
             for @found_links;
     };

@@ -146,26 +146,34 @@ sub nodeId($self) {
 
 Fetches the attribute of the node from Chrome
 
+  print $node->get_attribute('href', live => 1);
+
+Force a live query of the attribute to Chrome. If the attribute was declared
+on the node, this overrides the stored value and queries Chrome again for
+the current value of the attribute.
+
 =cut
 
-sub get_attribute( $self, $attribute ) {
+sub _fetch_attribute( $self, $attribute ) {
+    $self->driver->send_message('Runtime.callFunctionOn',
+        objectId => $self->objectId,
+        functionDeclaration => 'function(attr) { return this[attr] }',
+        arguments => [{value => $attribute}])
+    ->then(sub( $res ) {
+        return Future->done( $res->{result}->{value} )
+    });
+}
+
+sub get_attribute( $self, $attribute, %options ) {
     my $s = $self;
     weaken $s;
-    if( $attribute eq 'innerText' ) {
-        my $nid = $self->_nodeId();
-        my $html = $nid->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->get()->{outerHTML};
-
-        # Strip first and last tag in a not so elegant way
-        $html =~ s!\A<[^>]+>!!;
-        $html =~ s!<[^>]+>\z!!;
-        return $html
+    if( exists $self->attributes->{ $attribute } and !$options{live}) {
+        return $self->attributes->{ $attribute }
 
     } elsif( $attribute eq 'innerHTML' ) {
-        my $nid = $self->_nodeId();
+        my $nid = $s->_nodeId();
         my $html = $nid->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+            $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         })->get()->{outerHTML};
 
         # Strip first and last tag in a not so elegant way
@@ -176,12 +184,12 @@ sub get_attribute( $self, $attribute ) {
     } elsif( $attribute eq 'outerHTML' ) {
         my $nid = $self->_nodeId();
         my $html = $nid->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+            $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
         })->get()->{outerHTML};
 
         return $html
     } else {
-        return $self->attributes->{ $attribute }
+        return $self->_fetch_attribute($attribute)->get;
     }
 }
 
@@ -251,7 +259,7 @@ Returns the text of the node and the contained child nodes.
 =cut
 
 sub get_text( $self ) {
-    $self->get_attribute('innerText')
+    $self->get_attribute('textContent')
 }
 
 =head2 C<< ->set_text >>
