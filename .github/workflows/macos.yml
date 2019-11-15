@@ -1,0 +1,35 @@
+name: macos
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+jobs:
+  perl:
+
+    runs-on: macOS-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Perl
+        run: brew install perl libpng
+      - name: perl -V
+        run: perl -V
+      - name: Install build infrastructure
+        run: |
+            mkdir -p "$HOME/perl5/lib/perl5/local"
+            curl -sL https://raw.githubusercontent.com/Perl-Toolchain-Gang/local-lib/master/lib/local/lib.pm > "$HOME/perl5/lib/perl5/local/lib.pm"
+            eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"
+            curl -sL https://cpanmin.us | perl - App::cpanminus
+      - name: Install prerequisite modules
+        run: $HOME/perl5/bin/cpanm --notest --installdeps .
+      - name: Chrome version
+        run: "find /Applications -name '*Chrome*'"
+      - name: Build
+        run: perl Makefile.PL && make
+      - name: Run Tests
+        run: prove --nocount --jobs 4 -I local/ -bl xt t

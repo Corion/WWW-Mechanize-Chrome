@@ -213,6 +213,9 @@ INSTALL
 
 [![Travis Build Status](https://travis-ci.org/Corion/$distbase.svg?branch=master)](https://travis-ci.org/Corion/$distbase)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/$distbase?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/$distbase)
+[![Github Build Status Linux](https://github.com/Corion/$distbase/workflows/linux/badge.svg)](https://github.com/Corion/$distbase/actions)
+[![Github Build Status MacOS](https://github.com/Corion/$distbase/workflows/macos/badge.svg)](https://github.com/Corion/$distbase/actions)
+[![Github Build Status Windows](https://github.com/Corion/$distbase/workflows/windows/badge.svg)](https://github.com/Corion/$distbase/actions)
 
 CONTRIBUTING
 

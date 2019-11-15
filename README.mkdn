@@ -3,6 +3,9 @@
 
 [![Travis Build Status](https://travis-ci.org/Corion/WWW-Mechanize-Chrome.svg?branch=master)](https://travis-ci.org/Corion/WWW-Mechanize-Chrome)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/WWW-Mechanize-Chrome?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/WWW-Mechanize-Chrome)
+[![Github Build Status Linux](https://github.com/Corion/WWW-Mechanize-Chrome/workflows/linux/badge.svg)](https://github.com/Corion/WWW-Mechanize-Chrome/actions)
+[![Github Build Status MacOS](https://github.com/Corion/WWW-Mechanize-Chrome/workflows/macos/badge.svg)](https://github.com/Corion/WWW-Mechanize-Chrome/actions)
+[![Github Build Status Windows](https://github.com/Corion/WWW-Mechanize-Chrome/workflows/windows/badge.svg)](https://github.com/Corion/WWW-Mechanize-Chrome/actions)
 
 CONTRIBUTING
 
@@ -169,6 +172,13 @@ them in a Perl object to provide the easy-to-use methods documented here.
     Results my vary for your operating system. Use the full path to the browser's
     executable if you are having issues. You can also set the name of the executable
     file with the `$ENV{CHROME_BIN}` environment variable.
+
+- **cleanup\_signal**
+
+        cleanup_signal => 'SIGKILL'
+
+    The signal that is sent to Chrome to shut it down. On Linuxish OSes, this
+    will be `TERM`, on OSX and Windows it will be `KILL`.
 
 - **start\_url**
 
@@ -594,9 +604,22 @@ This is currently not implemented.
 
 ## `$mech->callFunctionOn( $function, @arguments )`
 
-    my ($value, $type) = $mech->callFunctionOn( 'function(greeting) { alert(greeting)}', 'Hello World' );
+    my ($value, $type) = $mech->callFunctionOn(
+        'function(greeting) { window.alert(greeting)}',
+        objectId => $someObjectId,
+        arguments => [{ value => 'Hello World' }]
+    );
 
-Runs the given function with the specified arguments.
+Runs the given function with the specified arguments. This is the only way to
+pass arguments to a function call without doing risky string interpolation.
+The Javascript `this` object will be set to the object referenced from the
+`objectId`.
+
+The `arguments` option expects an arrayref of hashrefs. Each hash describes one
+function argument.
+
+The `objectId` parameter is optional. Leaving out the `objectId` parameter
+will create a dummy object on which the function then is called.
 
 This method is special to WWW::Mechanize::Chrome.
 
