@@ -16,13 +16,13 @@ our @loops;
 push @loops, (
     ['Mojo/IOLoop.pm'   => 'Chrome::DevToolsProtocol::Transport::Mojo' ],
     ['IO/Async.pm'      => 'Chrome::DevToolsProtocol::Transport::NetAsync'],
-    ['IO/Async/Loop.pm' => 'Chrome::DevToolsProtocol::Transport::Pipe::NetAsync'],
+    ['IO/Async/Loop.pm' => 'Chrome::DevToolsProtocol::Transport::NetAsync'],
     ['AnyEvent.pm'      => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     ['AE.pm'            => 'Chrome::DevToolsProtocol::Transport::AnyEvent'],
     # native POE support would be nice
 );
 our $implementation;
-our $default = 'Chrome::DevToolsProtocol::Transport::AnyEvent';
+our $default = 'Chrome::DevToolsProtocol::Transport::NetAsync';
 
 =head1 METHODS
 
@@ -61,7 +61,7 @@ sub best_implementation( $class, @candidates ) {
     } @candidates;
 
     if( ! @applicable_implementations ) {
-        @applicable_implementations = map {$_->[1]} @candidates;
+        @applicable_implementations = ($default, map {$_->[1]} @candidates);
     }
 
     # Check which one we can load:

@@ -22,7 +22,7 @@ push @loops, (
     # native POE support would be nice
 );
 our $implementation;
-our $default = 'Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent';
+our $default = 'Chrome::DevToolsProtocol::Transport::Pipe::NetAsync';
 
 =head1 METHODS
 
@@ -62,7 +62,7 @@ sub best_implementation( $class, @candidates ) {
     } @candidates;
 
     if( ! @applicable_implementations ) {
-        @applicable_implementations = map {$_->[1]} @candidates;
+        @applicable_implementations = ($default, map {$_->[1]} @candidates);
     }
 
     # Check which one we can load:
