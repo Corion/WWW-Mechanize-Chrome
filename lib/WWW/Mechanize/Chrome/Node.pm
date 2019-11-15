@@ -155,12 +155,13 @@ the current value of the attribute.
 =cut
 
 sub _fetch_attribute( $self, $attribute ) {
-    $self->driver->send_message('Runtime.callFunctionOn',
+    $self->driver->send_message('Runtime.getProperties',
         objectId => $self->objectId,
-        functionDeclaration => 'function(attr) { return this[attr] }',
-        arguments => [{value => $attribute}])
+    )
     ->then(sub( $res ) {
-        return Future->done( $res->{result}->{value} )
+        (my $result) = grep { $_->{name} eq $attribute } @{$res->{result}};
+        $result ||= {};
+        return Future->done( $result->{value}->{value} )
     });
 }
 
