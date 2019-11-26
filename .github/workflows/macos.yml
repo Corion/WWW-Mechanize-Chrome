@@ -15,8 +15,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Perl
-        run: brew install perl libpng
+      - name: Set up Perl, Chromium
+        run: |
+            brew install perl libpng
+            brew cask install chromium
       - name: perl -V
         run: perl -V
       - name: Install build infrastructure
