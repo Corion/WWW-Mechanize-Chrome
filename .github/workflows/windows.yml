@@ -16,9 +16,9 @@ jobs:
     steps:
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@master
-      - name: Set up Perl
+      - name: Set up Perl, Chrome
         run: |
-          choco install strawberryperl
+          choco install strawberryperl chromium
           echo "##[add-path]C:\strawberry\c\bin;C:\strawberry\perl\site\bin;C:\strawberry\perl\bin"
       - name: perl -V
         run: perl -V
@@ -34,12 +34,12 @@ jobs:
         shell: cmd
         run: |
             set
-      - name: Chrome location
-        shell: cmd
-        run: |
-            dir /b /s %PROGRAMFILES%\
-            dir /b /s %ProgramFilesW6432%\
-            dir /b /s %PROGRAMFILES(x86)%\
-            dir /b /s %LOCALAPPDATA%\
+      #- name: Chrome location
+      #  shell: cmd
+      #  run: |
+      #      dir /b /s %PROGRAMFILES%\
+      #      dir /b /s %ProgramFilesW6432%\
+      #      dir /b /s %PROGRAMFILES(x86)%\
+      #      dir /b /s %LOCALAPPDATA%\
       - name: Run Tests
         run: prove -I local/ -bl xt t
