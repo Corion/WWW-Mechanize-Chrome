@@ -37,9 +37,9 @@ jobs:
       - name: Chrome location
         shell: cmd
         run: |
-            dir /b /s %PROGRAMFILES%\Google\Chrome\
-            dir /b /s %ProgramFilesW6432%\Google\Chrome\
-            dir /b /s %PROGRAMFILES(x86)%\Google\Chrome\
-            dir /b /s %LOCALAPPDATA%\Google\Chrome\Application
+            dir /b /s %PROGRAMFILES%\
+            dir /b /s %ProgramFilesW6432%\
+            dir /b /s %PROGRAMFILES(x86)%\
+            dir /b /s %LOCALAPPDATA%\
       - name: Run Tests
         run: prove -I local/ -bl xt t
