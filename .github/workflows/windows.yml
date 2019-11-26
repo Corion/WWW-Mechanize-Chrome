@@ -23,12 +23,15 @@ jobs:
       - name: perl -V
         run: perl -V
       - name: Install build infrastructure
+        shell: cmd
         run: cpanm --notest --installdeps .
       - name: Build
+        shell: cmd
         run: |
             perl Makefile.PL
             gmake
       - name: Chrome location
+        shell: cmd
         run: |
             path
             "dir /b /s %PROGRAMFILES%\Google\Chrome\"
