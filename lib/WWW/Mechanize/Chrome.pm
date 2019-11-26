@@ -556,7 +556,7 @@ sub default_executable_names( $class, @other ) {
     if( ! @program_names ) {
         push @program_names,
           $^O =~ /mswin/i ? 'chrome.exe'
-        : $^O =~ /darwin/i ? 'Google Chrome'
+        : $^O =~ /darwin/i ? ('Google Chrome', 'Chromium')
         : ('google-chrome', 'chromium-browser', 'chromium')
     };
     @program_names
@@ -576,11 +576,13 @@ sub additional_executable_search_directories( $class, $os_style=$^O ) {
              $ENV{"LOCALAPPDATA"},
             );
     } elsif( $os_style =~ /darwin/i ) {
-        my $path = '/Applications/Google Chrome.app/Contents/MacOS';
-        push @search,
-            grep { -d $_ }
-                $path,
-                $ENV{"HOME"} . "/$path";
+        for my $path ('/Applications/Google Chrome.app/Contents/MacOS',
+                      '/Applications/Chromium.app/Contents/MacOS') {
+            push @search,
+                grep { -d $_ }
+                    $path,
+                    $ENV{"HOME"} . "/$path";
+        };
     }
     @search
 }

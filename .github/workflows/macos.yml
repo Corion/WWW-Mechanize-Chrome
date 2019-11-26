@@ -34,7 +34,7 @@ jobs:
             $HOME/perl5/bin/cpanm --notest Mojolicious Future::Mojo
             $HOME/perl5/bin/cpanm --notest IO::Async Net::Async::WebSocket::Client
       - name: Chrome version
-        run: "find /Applications -name 'Google Chrome'"
+        run: "find /Applications -name 'Chromium'"
       - name: Build
         run: perl Makefile.PL && make
       - name: Run Tests
