@@ -28,7 +28,7 @@ jobs:
       - name: Install prerequisite modules
         run: $HOME/perl5/bin/cpanm --notest --installdeps .
       - name: Chrome version
-        run: "find ~ -name '*Chrome*'"
+        run: "find /Applications -name 'Google Chrome'"
       - name: Build
         run: perl Makefile.PL && make
       - name: Run Tests
