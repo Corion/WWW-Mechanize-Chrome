@@ -40,7 +40,7 @@ jobs:
       #      apt-get install chromium-browser libpng-dev
       - name: Install build infrastructure
         run: |
-          sudo apt install perlbrew
+          sudo apt-get --quiet=2 --yes install perlbrew
           perlbrew init
       - name: Install Perl ${{ matrix.perl-version }}
         run: perlbrew install perl-${{ matrix.perl-version}}
