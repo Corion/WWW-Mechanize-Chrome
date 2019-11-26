@@ -30,11 +30,15 @@ jobs:
         run: |
             perl Makefile.PL
             gmake
+      - name: Environment
+        shell: cmd
+        run: |
+            set
       - name: Chrome location
         shell: cmd
         run: |
-            path
             dir /b /s %PROGRAMFILES%\Google\Chrome\
+            dir /b /s %PROGRAMFILESx86%\Google\Chrome\
             dir /b /s %LOCALAPPDATA%\Google\Chrome\Application
       - name: Run Tests
         run: prove -I local/ -bl xt t
