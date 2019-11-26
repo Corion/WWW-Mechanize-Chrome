@@ -26,7 +26,11 @@ jobs:
             eval "$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)"
             curl -sL https://cpanmin.us | perl - App::cpanminus
       - name: Install prerequisite modules
-        run: $HOME/perl5/bin/cpanm --notest --installdeps .
+        run: |
+            $HOME/perl5/bin/cpanm --notest --installdeps .
+            $HOME/perl5/bin/cpanm --notest AnyEvent AnyEvent::Future AnyEvent::WebSocket::Client
+            $HOME/perl5/bin/cpanm --notest Mojolicious Future::Mojo
+            $HOME/perl5/bin/cpanm --notest IO::Async Net::Async::WebSocket::Client
       - name: Chrome version
         run: "find /Applications -name 'Google Chrome'"
       - name: Build

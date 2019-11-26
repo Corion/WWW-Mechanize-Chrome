@@ -55,6 +55,9 @@ jobs:
         run: |
             . ~/perl5/perlbrew/etc/bashrc
             cpanm --notest --installdeps .
+            cpanm --notest AnyEvent AnyEvent::Future AnyEvent::WebSocket::Client
+            cpanm --notest Mojolicious Future::Mojo
+            cpanm --notest IO::Async Net::Async::WebSocket::Client
       - name: Build
         run: |
             . ~/perl5/perlbrew/etc/bashrc
