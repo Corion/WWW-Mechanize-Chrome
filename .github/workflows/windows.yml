@@ -38,7 +38,8 @@ jobs:
         shell: cmd
         run: |
             dir /b /s %PROGRAMFILES%\Google\Chrome\
-            dir /b /s %PROGRAMFILESx86%\Google\Chrome\
+            dir /b /s %ProgramFilesW6432%\Google\Chrome\
+            dir /b /s %PROGRAMFILES(x86)%\Google\Chrome\
             dir /b /s %LOCALAPPDATA%\Google\Chrome\Application
       - name: Run Tests
         run: prove -I local/ -bl xt t
