@@ -578,8 +578,9 @@ sub additional_executable_search_directories( $class, $os_style=$^O ) {
     } elsif( $os_style =~ /darwin/i ) {
         my $path = '/Applications/Google Chrome.app/Contents/MacOS';
         push @search,
-            $path,
-            $ENV{"HOME"} . "/$path";
+            grep { -d $_ }
+                $path,
+                $ENV{"HOME"} . "/$path";
     }
     @search
 }
