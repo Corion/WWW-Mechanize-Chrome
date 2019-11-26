@@ -25,10 +25,10 @@ jobs:
       - name: Install build infrastructure
         shell: cmd
         run: |
-            cpanm --notest --installdeps .
-            cpanm --notest AnyEvent AnyEvent::Future AnyEvent::WebSocket::Client
-            cpanm --notest Mojolicious Future::Mojo
-            cpanm --notest IO::Async Net::Async::WebSocket::Client
+            call cpanm --notest --installdeps .
+            call cpanm --notest AnyEvent AnyEvent::Future AnyEvent::WebSocket::Client
+            call cpanm --notest Mojolicious Future::Mojo
+            call cpanm --notest IO::Async Net::Async::WebSocket::Client
       - name: Build
         shell: cmd
         run: |
