@@ -74,6 +74,7 @@ sub best_implementation( $class, @candidates ) {
     };
 
     # This will crash and burn, but that's how it is
+    eval "require $default; 1";
     return $default;
 };
 
