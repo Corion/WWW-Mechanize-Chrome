@@ -120,6 +120,18 @@ sub sleep( $self, $seconds ) {
 
 1;
 
+=head1 REQUIRED ADDITIONAL MODULES
+
+This module needs additional modules that are not installed by the default
+installation of WWW::Mechanize::Chrome:
+
+L<AnyEvent>
+
+L<AnyEvent::WebSocket::Client>
+
+L<AnyEvent::Future>
+
+
 =head1 REPOSITORY
 
 The public repository of this module is

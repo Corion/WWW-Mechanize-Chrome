@@ -114,6 +114,15 @@ sub sleep( $self, $seconds ) {
 
 1;
 
+=head1 REQUIRED ADDITIONAL MODULES
+
+This module needs additional modules that are not installed by the default
+installation of WWW::Mechanize::Chrome:
+
+L<Mojo::UserAgent>
+
+L<Future::Mojo>
+
 =head1 REPOSITORY
 
 The public repository of this module is
