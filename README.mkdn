@@ -1140,7 +1140,10 @@ CSS selectors.
 
 ## `$mech->click( $name [,$x ,$y] )`
 
+    # If the element is within a <form> element
     $mech->click( 'go' );
+
+    # If the element is anywhere on the page
     $mech->click({ xpath => '//button[@name="go"]' });
 
 Has the effect of clicking a button (or other element) on the current form. The
