@@ -4828,6 +4828,8 @@ intervals are possible.
 Note that when passing in a selector, that selector is requeried
 on every poll instance. So the following query will work as expected:
 
+  xpath => '//*[contains(text(),"click here for download")]'
+
 =cut
 
 sub wait_until_visible( $self, %options ) {
