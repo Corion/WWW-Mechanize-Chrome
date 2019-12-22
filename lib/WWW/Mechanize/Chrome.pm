@@ -3626,7 +3626,7 @@ sub _fetchNode( $self, $nodeId, $attributes = undef ) {
         my $nodeName = $body->{description};
         $nodeName =~ s!#.*!!;
         my $node = {
-            nodeId => $nodeId,
+            cachedNodeId => $nodeId,
             objectId => $body->{ objectId },
             backendNodeId => $attr->{ backendNodeId },
             attributes => {
@@ -4608,8 +4608,7 @@ sub set_fields($self, %fields) {;
     $self->do_set_fields(form => $f, fields => \%fields);
 };
 
-sub do_set_fields {
-    my ($self, %options) = @_;
+sub do_set_fields($self, %options) {
     my $form = delete $options{ form };
     my $fields = delete $options{ fields };
 
