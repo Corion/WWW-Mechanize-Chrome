@@ -345,7 +345,15 @@ sub connect( $self, %args ) {
         $self->{transport} = $transport->new;
         $transport = $self->{transport};
     };
-    return $transport->connect( $self, $got_endpoint, sub { $s->log( @_ ) } )
+    return $transport->connect( $self, $got_endpoint, sub {
+        if( $s ) {
+            $s->log( @_ )
+        }
+        #else {
+        #    # We are in cleanup somewhere?!
+        #    warn "@_";
+        #}
+    } )
     #->on_ready(sub {
     #    use Data::Dumper;
     #    warn Dumper \@_;
