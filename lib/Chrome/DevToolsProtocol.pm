@@ -460,7 +460,8 @@ sub on_response( $self, $connection, $message ) {
             };
             # re-weaken our references
             for (0..$#$listeners) {
-                weaken $listeners->[$_];
+                weaken $listeners->[$_]
+                    if not isweak $listeners->[$_];
             };
             $self->log('trace', "Message handled", $response);
 
