@@ -63,6 +63,16 @@ has 'backendNodeId' => (
     is => 'ro',
 );
 
+=head2 C<cachedNodeId>
+
+The cached id of this node for this session
+
+=cut
+
+has 'cachedNodeId' => (
+    is => 'rw',
+);
+
 =head2 C<objectId>
 
 Another id of this node within Chrome
@@ -111,6 +121,7 @@ has 'mech' => (
 
 sub _fetchNodeId($self) {
     $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
+        $self->cachedNodeId( 0+$d->{nodeId} );
         Future->done( 0+$d->{nodeId} );
     });
 }
@@ -132,7 +143,8 @@ sub _nodeId($self) {
 
   print $node->nodeId();
 
-Lazily fetches the node id of this node
+Lazily fetches the node id of this node. Use C<< ->_nodeId >> for a version
+that returns a Future.
 
 =cut
 
