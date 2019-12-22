@@ -3556,7 +3556,7 @@ sub _performSearch( $self, %args ) {
             $self->target->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
                 fromIndex => 0,
-                toIndex => $results->{resultCount}
+                toIndex => 0+$results->{resultCount}
             # We can't immediately discard our search results until we find out
             # what invalidates node ids.
             # So we currently accumulate memory until we disconnect. Oh well.
