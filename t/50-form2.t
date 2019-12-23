@@ -14,12 +14,13 @@ Log::Log4perl->easy_init($ERROR);
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
+my $testcount = 33;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 32*@instances;
+    plan tests => $testcount*@instances;
 };
 
 sub new_mech {
@@ -34,7 +35,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, \&new_mech, 32, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form2.html');
@@ -52,16 +53,18 @@ t::helper::run_across_instances(\@instances, \&new_mech, 32, sub {
     is $mech->current_form->get_attribute('id'), 'snd2', "We can ask the form with get_attribute(id)";
     my $content = $mech->current_form->get_attribute('innerHTML');
     ok !!$content, "We got content from asking the current form with get_attribute";
+    my $backendNodeId = $mech->current_form->backendNodeId;
+    ok !!$backendNodeId, "The form has a backendNodeId '$backendNodeId'";
     $mech->field('id', 99);
     pass "We survived setting the field 'id' to 99";
     my $current_form = $mech->current_form;
     ok !!$current_form, "We got a current form";
     my $objectId = $current_form->objectId;
-    ok !!$objectId, "The form has an objectId '$objectId'";
+    ok !!$objectId, "The form has an objectId ('$objectId')";
     like $objectId, qr{injectedScriptId}, "The objectId matches /injectedScriptId/";
     $objectId = $current_form->objectId;
     is $@, '', "No error when retrieving objectId twice";
-    ok !!$objectId, "The form still has an objectId '$objectId'";
+    ok !!$objectId, "The form still has an objectId ('$objectId')";
     like $objectId, qr{injectedScriptId}, "The objectId still matches /injectedScriptId/";
     my $content2;
     #eval {
