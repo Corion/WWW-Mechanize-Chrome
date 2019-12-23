@@ -3286,7 +3286,6 @@ sub find_link_dom {
     if (keys %opts) {
         # post-filter the remaining links through WWW::Mechanize
         # for all the options we don't support with XPath
-
         my $base = $self->base;
         require WWW::Mechanize;
         @res = grep {
@@ -3505,6 +3504,10 @@ instead of
 
   //foo
 
+Querying relative to a node only works for restricting to children of the node,
+not for anything else. This is because we need to do the ancestor filtering
+ourselves instead of having a Chrome API for it.
+
 =item *
 
 C<< single >> - If true, ensure that only one element is found. Otherwise croak
@@ -3545,10 +3548,23 @@ L<WWW::Mechanize>.
 
 =cut
 
+# This unwraps a tree of child nodes into a flat hash indexed by nodeId
+sub _unwrapChildNodeTree( $self, $nodes, $tree={} ) {
+    for my $node (@$nodes) {
+        $tree->{ $node->{nodeId} } = $node;
+        if( $node->{children}) {
+            $self->_unwrapChildNodeTree( $node->{children}, $tree );
+        };
+    }
+    return $tree
+}
+
 sub _performSearch( $self, %args ) {
-    my $backendNodeId = $args{ backendNodeId };
+    my $subTreeId = $args{ subTreeId };
+    #my $parentNode = WWW::Mechanize::Chrome::Node->fetchNode( nodeId => $backendNodeId, driver => $self->driver );
     my $query = $args{ query };
     $self->target->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
+        $self->log('debug', "XPath query '$query' (". $results->{resultCount} . " node(s))");
 
         if( $results->{resultCount} ) {
             my $searchResults;
@@ -3557,10 +3573,22 @@ sub _performSearch( $self, %args ) {
             my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
-            $self->target->send_message( 'DOM.getSearchResults',
+
+            my $childNodes;
+            if( $subTreeId ) {
+                $childNodes =
+                    $self->target->send_message( 'DOM.requestChildNodes',
+                        nodeId => 0+$subTreeId,
+                        depth  => -1, # we want/need the whole subtree
+                    )
+            } else {
+                $childNodes = Future->done;
+            };
+            my $search = $self->target->send_message( 'DOM.getSearchResults',
                 searchId => $results->{searchId},
                 fromIndex => 0,
-                toIndex => 0+$results->{resultCount}
+                toIndex => 0+$results->{resultCount},
+            );
             # We can't immediately discard our search results until we find out
             # what invalidates node ids.
             # So we currently accumulate memory until we disconnect. Oh well.
@@ -3571,80 +3599,93 @@ sub _performSearch( $self, %args ) {
             #        searchId => $searchId,
             #    );
             #}
-            )->then( sub( $response ) {
-                # This should already happen through the DESTROY callback
-                # but we'll be explicit here
-                $setChildNodes->unregister;
-                undef $setChildNodes;
-                my %nodes = map {
-                    $_->{nodeId} => $_
-                } @childNodes;
 
-                # Filter @found for those nodes that have $nodeId as
-                # ancestor because we can't restrict the search in Chrome
-                # directly...
-                my @foundNodes = @{ $response->{nodeIds} };
-                if( $backendNodeId ) {
-                    $self->log('trace', "Filtering query results for ancestor backendNodeId $backendNodeId");
-                    @foundNodes = grep {
-                        my $p = $nodes{ $_ };
-                        while( $p and $p->{backendNodeId} != $backendNodeId ) {
-                            $p = $nodes{ $p->{parentId} };
-                        };
-                        $p and $p->{backendNodeId} == $backendNodeId
-                    } @foundNodes;
-                };
+            Future->wait_all( $childNodes, $search )->then(sub {
+                # The result of $childNodes is indirect here, by pushing
+                # the setChildNodes messages onto @childNodes
+                my @discard = $childNodes->get();
+
+                $search
+            })->then( sub( $response ) {
 
                 # Resolve the found nodes directly with the
                 # found node ids instead of returning the numbers and fetching
                 # them later
+                # We could also prefill some data with the results from
+                # $childNodes here, if we have that?!
                 my @nodes = map {
-                    # Upgrade the attributes to a hash, ruining their order:
-                    my $n = $nodes{ $_ };
-                    $self->_fetchNode( 0+$_, $n );
-                } @foundNodes;
+                    WWW::Mechanize::Chrome::Node->fetchNode(
+                        nodeId => 0+$_,
+                        driver => $self->target,
+                    );
+                } @{ $response->{nodeIds}};
 
-                Future->wait_all( @nodes );
+                Future->wait_all( @nodes )
+            })->then( sub( @fetched_nodes ) {
+                # This should already happen through the DESTROY callback
+                # but we'll be explicit here
+                $setChildNodes->unregister;
+                undef $setChildNodes;
+
+                # Resolve the found nodes directly with the
+                # found node ids instead of returning the numbers and fetching
+                # them later
+                my @foundNodes = map { $_->get() } @fetched_nodes;
+                my $nodes = $self->_unwrapChildNodeTree( \@childNodes );
+
+                for (@foundNodes) {
+                    my $id = $_->nodeId;
+                    #warn "Found " . $_->nodeId;
+                    # Backfill here instead of overwriting!
+                    if( my $n = $nodes->{$id} ) {
+                        for my $key (qw( backendNodeId parentId )) {
+                            $_->{ $key } = $n->{ $key };
+                        };
+                        if( ! $_->{backendNodeId} ) {
+                            die "No backend node id found via " . Dumper $n;
+                        };
+                    };
+                    $nodes->{ $id } = $_;
+                };
+
+                # Filter @found for those nodes that have $nodeId as
+                # ancestor because we can't restrict the search in Chrome
+                # directly...
+                if( $subTreeId ) {
+
+                    $self->log('trace', "Filtering query results for ancestor backendNodeId $subTreeId");
+                    @foundNodes = grep {
+                        my $id = $_->nodeId();
+                        my $searchId = $id;
+                        #warn "Looking if node $id has ancestor backendNodeId $subTreeId";
+                        my $p = $nodes->{ $id };
+                        #use Data::Dumper;
+                        #warn Dumper $p;
+                        #warn "$id => parent $p->{parentId} / backendNodeId $p->{backendNodeId}";
+                        while( $p and $p->{backendNodeId} != $subTreeId ) {
+                            $p = $nodes->{ $p->{parentId} };
+                        };
+                        my $res = ($p && $p->{backendNodeId} == $subTreeId);
+                        if( $res ) {
+                            my $id = $p->{nodeId};
+                            $self->log('trace', "Node $searchId has ancestor $id (backendNodeId $subTreeId)");
+                        } else {
+                            $self->log('trace', "Node $searchId does not have ancestor backendNodeId $subTreeId, discarding from results");
+                        };
+                        $res
+                    } @foundNodes;
+                    $self->log('debug', "filtered XPath query '$query' for ancestor $subTreeId (". (0+@foundNodes) . " node(s))");
+                } else {
+                    #warn "*** Not filtering for any parent node";
+                };
+
+                # Downstream wants a double-nested Future, so do it here
+                # until we fix downstream
+                Future->wait_all( Future->done( @foundNodes ));
             });
         } else {
             return Future->done()
         };
-    });
-}
-
-# If we have the attributes, don't fetch them separately
-sub _fetchNode( $self, $nodeId, $attributes = undef ) {
-    $self->log('trace', sprintf "Resolving nodeId %s", $nodeId );
-    my $s = $self;
-    weaken $s;
-    my $body = $self->target->send_message( 'DOM.resolveNode', nodeId => 0+$nodeId );
-    if( $attributes ) {
-        $attributes = Future->done( $attributes )
-    } else {
-        $attributes = $self->target->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId );
-    };
-    Future->wait_all( $body, $attributes )->then( sub( $body, $attributes ) {
-        $body = $body->get->{object};
-        my $attr = $attributes->get;
-        $attributes = $attr->{attributes};
-        my $nodeName = $body->{description};
-        $nodeName =~ s!#.*!!;
-        my $node = {
-            cachedNodeId => $nodeId,
-            objectId => $body->{ objectId },
-            backendNodeId => $attr->{ backendNodeId },
-            attributes => {
-                @{ $attributes },
-            },
-            nodeName => $nodeName,
-            driver => $s->driver,
-            mech => $s,
-            _generation => $s->_generation,
-        };
-        Future->done( WWW::Mechanize::Chrome::Node->new( $node ));
-    })->catch(sub {
-        warn "Node $nodeId has gone away in the meantime, could not resolve";
-        Future->done( WWW::Mechanize::Chrome::Node->new( {} ) );
     });
 }
 
@@ -3696,7 +3737,7 @@ sub xpath( $self, $query, %options) {
         };
         Future->wait_all(
             map {
-                $self->_performSearch( query => $_, backendNodeId => $id )
+                $self->_performSearch( query => $_, subTreeId => $id )
             } @$query
         );
     })->then( sub {
@@ -4109,7 +4150,6 @@ sub form_number {
         user_info => "form number $number",
         %options
     );
-
     $self->{current_form};
 };
 
@@ -4135,7 +4175,6 @@ sub form_with_fields {
         $options = shift @fields;
     };
     my @clauses  = map { $self->element_query([qw[input select textarea]], { 'name' => $_ })} @fields;
-
 
     my $q = "//form[" . join( " and ", @clauses)."]";
     #warn $q;
@@ -4576,6 +4615,8 @@ sub submit_form($self,%options) {;
         $self->signal_condition("No form found to submit.");
         return
     };
+    #warn Dumper $fields;
+    #$self->log('debug', sprintf 'Submitting form %s with fields %s', $form->{id}, Dumper $fields);
     $self->do_set_fields( form => $form, fields => $fields );
 
     my $response;

@@ -4,6 +4,7 @@ use Moo 2;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
+use Carp qw( croak );
 
 use Scalar::Util 'weaken';
 
@@ -43,6 +44,15 @@ has 'nodeName' => (
     is => 'ro',
 );
 
+=head2 C<nodeId>
+
+The nodeId of this node
+
+=cut
+
+has 'nodeId' => (
+    is => 'ro',
+);
 =head2 C<localName>
 
 The local (tag) name of this node
@@ -115,42 +125,131 @@ has 'mech' => (
     weak_ref => 1,
 );
 
-=head1 METHODS
+=head1 CONSTRUCTORS
+
+
+=head2 C<< fetchNode >>
+
+  WWW::Mechanize::Chrome->fetchNode(
+      nodeId => $nodeId,
+      driver => $mech->driver,
+  )->get()
+
+Returns a L<Future> that returns a populated node.
 
 =cut
 
+sub fetchNode( $class, %options ) {
+    my $driver = delete $options{ driver }
+        or croak "Need a valid driver for communication";
+    weaken $driver;
+    my $nodeId = delete $options{ nodeId }
+        or croak "Need a valid nodeId for requesting";
+    my $body = delete $options{ body };
+    my $attributes = delete $options{ attributes };
+
+    if( $body ) {
+        $body = Future->done( $body );
+    } else {
+        my %info;
+        $body = $driver->send_message( 'DOM.resolveNode', nodeId => 0+$nodeId )
+        ->then( sub( $info ) {
+            %info = %{$info->{object}};
+            $driver->send_message( 'DOM.requestNode', objectId => $info{objectId} )
+        })->then(sub( $info ) {
+            %info = (%info, %$info);
+            Future->done( \%info );
+        });
+    };
+    if( $attributes ) {
+        $attributes = Future->done( $attributes )
+    } else {
+        $attributes = $driver->send_message( 'DOM.getAttributes', nodeId => 0+$nodeId );
+    };
+
+    return Future->wait_all( $body, $attributes )->then( sub( $body, $attributes ) {
+        $body = $body->get;
+        my $attr = $attributes->get;
+        $attributes = $attr->{attributes};
+        my $nodeName = $body->{description};
+        $nodeName =~ s!#.*!!;
+        #warn "Backend for $nodeId is $attr->{ backendNodeId }";
+        #use Data::Dumper;
+        #warn Dumper $attr;
+        #warn Dumper $body;
+        #die unless $attr->{backendNodeId};
+        my $node = {
+            cachedNodeId => $nodeId,
+            objectId => $body->{ objectId },
+            backendNodeId => $attr->{ backendNodeId },
+            attributes => {
+                @{ $attributes },
+            },
+            nodeName => $nodeName,
+            driver => $driver,
+            nodeId => $nodeId,
+            #mech => $s,
+            #_generation => $s->_generation,
+        };
+        my $n = $class->new( $node );
+
+        # Fetch additional data into the object
+        #return $n->_nodeId()->then(sub {
+        #    unless( $n->backendNodeId ) {
+        #        warn Dumper [ $body, $attributes ];
+        #        die;
+        #    };
+        #});
+        Future->done( $n );
+    })->catch(sub {
+        warn "@_";
+        warn "Node $nodeId has gone away in the meantime, could not resolve";
+        Future->done( $class->new( {} ) );
+    });
+}
+
+
 sub _fetchNodeId($self) {
     $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
+        #$self->backendNodeId( $d->{backendNodeId} );
+        $self->{nodeId} = 0+$d->{nodeId};
         $self->cachedNodeId( 0+$d->{nodeId} );
         Future->done( 0+$d->{nodeId} );
     });
 }
 
 sub _nodeId($self) {
-    my $nid = $self->{nodeId};
-    my $generation = $self->mech->_generation;
-    if( !$nid or ( $self->_generation and $self->_generation != $generation )) {
-        # Re-resolve, and hopefully we still have our objectId
-        $nid = $self->_fetchNodeId();
-        $self->_generation( $generation );
-    } else {
-        $nid = Future->done( 0+$nid );
+    my $nid;
+    if( my $mech = $self->mech ) {
+        my $generation = $mech->_generation;
+        if( !$self->_generation or $self->_generation != $generation ) {
+            # Re-resolve, and hopefully we still have our objectId
+            $nid = $self->_fetchNodeId();
+            $self->_generation( $generation );
+        }
+    }
+    else {
+        $nid = Future->done( 0+$self->cachedNodeId );
     }
     $nid;
 }
+#
+#=head2 C<< ->nodeId >>
+#
+#  print $node->nodeId();
+#
+#Lazily fetches the node id of this node. Use C<< ->_nodeId >> for a version
+#that returns a Future.
+#
+#=cut
+#
+#sub nodeId($self) {
+#    $self->_nodeId()->get;
+#}
 
-=head2 C<< ->nodeId >>
-
-  print $node->nodeId();
-
-Lazily fetches the node id of this node. Use C<< ->_nodeId >> for a version
-that returns a Future.
+=head1 METHODS
 
 =cut
-
-sub nodeId($self) {
-    $self->_nodeId()->get;
-}
 
 =head2 C<< ->get_attribute >>
 
@@ -177,33 +276,41 @@ sub _fetch_attribute( $self, $attribute ) {
     });
 }
 
-sub get_attribute( $self, $attribute, %options ) {
+sub get_attribute_future( $self, $attribute, %options ) {
     my $s = $self;
     weaken $s;
     if( exists $self->attributes->{ $attribute } and !$options{live}) {
-        return $self->attributes->{ $attribute }
+        return Future->done( $self->attributes->{ $attribute })
 
     } elsif( $attribute eq 'innerHTML' ) {
-        my $nid = $s->_nodeId();
+        my $nid = $s->_fetchNodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->get()->{outerHTML};
-
-        # Strip first and last tag in a not so elegant way
-        $html =~ s!\A<[^>]+>!!;
-        $html =~ s!<[^>]+>\z!!;
+        })->on_done(sub( $res ) {
+            my $html = $res->{outerHTML};
+            # Strip first and last tag in a not so elegant way
+            $html =~ s!\A<[^>]+>!!;
+            $html =~ s!<[^>]+>\z!!;
+            Future->done( $html )
+        });
         return $html
 
     } elsif( $attribute eq 'outerHTML' ) {
-        my $nid = $self->_nodeId();
+        my $nid = $s->_fetchNodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->get()->{outerHTML};
-
+        })->on_done(sub( $res ) {
+            Future->done( $res->{outerHTML} )
+        });
         return $html
+
     } else {
-        return $self->_fetch_attribute($attribute)->get;
+        return $self->_fetch_attribute($attribute);
     }
+}
+
+sub get_attribute( $self, $attribute, %options ) {
+    $self->get_attribute_future( $attribute, %options )->get()
 }
 
 =head2 C<< ->set_attribute >>
@@ -223,7 +330,7 @@ sub set_attribute_future( $self, $attribute, $value ) {
     weaken $s;
     my $r;
     if( defined $value ) {
-        $r = $self->_nodeId()
+        $r = $self->_fetchNodeId()
            ->then(sub( $nodeId ) {
             $self->driver->send_message(
                 'DOM.setAttributeValue',
@@ -234,7 +341,7 @@ sub set_attribute_future( $self, $attribute, $value ) {
         })
 
     } else {
-        $r = $self->_nodeId()
+        $r = $self->_fetchNodeId()
            ->then(sub( $nodeId ) {
             $self->driver->send_message('DOM.removeAttribute',
                 name => $attribute,
