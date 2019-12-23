@@ -1,10 +1,9 @@
-#!perl -w
+#!perl
 use strict;
+use warnings;
 use Test::More;
 use WWW::Mechanize::Chrome;
 
-use strict;
-use Test::More;
 use Cwd;
 use URI;
 use URI::file;
@@ -21,14 +20,16 @@ use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
-my @files = qw<
-     65-is_visible_class.html
-     65-is_visible_text.html
-     65-is_visible_hidden.html
-     65-is_visible_none.html
-     65-is_visible_remove.html
-     65-is_visible_reload.html
->;
+# A parallelization hack can prefill @files already with other files
+# see t/65-is_visible-2.t
+our @files;
+if( !@files) {
+    @files = qw<
+        65-is_visible_class.html
+        65-is_visible_text.html
+        65-is_visible_hidden.html
+    >;
+};
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();

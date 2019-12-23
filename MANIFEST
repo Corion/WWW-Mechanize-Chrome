@@ -100,6 +100,7 @@ t/61-mech-download.t
 t/61-screencast.t
 t/62-networkstatus.t
 t/62-viewport-size.t
+t/65-is_visible-2.t
 t/65-is_visible.t
 t/65-is_visible_class.html
 t/65-is_visible_hidden.html
