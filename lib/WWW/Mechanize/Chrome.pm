@@ -3077,7 +3077,8 @@ sub make_link {
             name  => $node->get_attribute('name'),
             base  => $base,
             url   => $url,
-            text  => $node->get_attribute('innerHTML'),
+            #text  => $node->get_attribute('innerHTML'),
+            text  => $node->get_attribute('text'),
             attrs => {},
         });
 

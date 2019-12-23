@@ -29,6 +29,10 @@
     * Tested against Chromium Chromium/75.0.3770.100
     * Tested against Chromium Chromium/77.0.3865.120
 
+0.42 2019-12-23
+    * ->find_link() now uses the text() attribute, not the innerHTML. This means
+      that for example text_regex searches can't match HTML in link texts anymore.
+
 0.41 2019-12-22
     * Actually respect the default backend class. This should mean we can
       actually use a backend class. This closes GH issue #45
