@@ -447,7 +447,9 @@ sub on_response( $self, $connection, $message ) {
         if( my $listeners = $self->listener->{ $response->{method} } ) {
             @$listeners = grep { defined $_ } @$listeners;
             if( $self->_log->is_trace ) {
-                $self->log( 'trace', "Notifying listeners", $response );
+                if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
+                    $self->log( 'trace', "Notifying listeners", $response );
+                };
             } else {
                 if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
                     $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
@@ -465,7 +467,9 @@ sub on_response( $self, $connection, $message ) {
                 weaken $listeners->[$_]
                     if not isweak $listeners->[$_];
             };
-            $self->log('trace', "Message handled", $response);
+            if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
+                $self->log('trace', "Message handled", $response);
+            };
 
             $handled++;
         };
