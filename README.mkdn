@@ -1101,6 +1101,10 @@ that you will have to use a relative XPath expression as well. Use
 
         //foo
 
+    Querying relative to a node only works for restricting to children of the node,
+    not for anything else. This is because we need to do the ancestor filtering
+    ourselves instead of having a Chrome API for it.
+
 - `single` - If true, ensure that only one element is found. Otherwise croak
 or carp, depending on the `autodie` parameter.
 - `one` - If true, ensure that at least one element is found. Otherwise croak

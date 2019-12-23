@@ -32,6 +32,15 @@
 0.42 2019-12-23
     * ->find_link() now uses the text() attribute, not the innerHTML. This means
       that for example text_regex searches can't match HTML in link texts anymore.
+    * ->xpath (and all other querying functions) now properly filter on the
+      relevant subtree. This might change the results you get from the queries
+      as now elements are properly filtered. Fixes GH issue #48.
+    * Split longest wallclock time test into two tests, now running the
+      parallel test suite in 15s per browser per backend, from 20s.
+    * Silence the log output even in TRACE level. sendMessageToTarget and the
+      immediate Target.receivedMessageFromTarget replies to it will not show
+      up in the output anymore. If you need it, please speak up so I can make
+      the list of (un)suppressed messages configurable.
 
 0.41 2019-12-22
     * Actually respect the default backend class. This should mean we can
