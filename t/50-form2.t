@@ -49,7 +49,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->get_local('50-form2.html');
     $mech->form_id('snd2');
     ok $mech->current_form, "After setting form_id, We have a current form";
-    $mech->sleep(1);
+    $mech->sleep(0.1); # why is this here?!
     is $mech->current_form->get_attribute('id'), 'snd2', "We can ask the form with get_attribute(id)";
     my $content = $mech->current_form->get_attribute('innerHTML');
     ok !!$content, "We got content from asking the current form with get_attribute";
