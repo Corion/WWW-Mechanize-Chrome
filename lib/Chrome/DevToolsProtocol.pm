@@ -449,7 +449,9 @@ sub on_response( $self, $connection, $message ) {
             if( $self->_log->is_trace ) {
                 $self->log( 'trace', "Notifying listeners", $response );
             } else {
-                $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
+                if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
+                    $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
+                };
             };
             for my $listener (@$listeners) {
                 eval {
