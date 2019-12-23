@@ -3214,7 +3214,10 @@ sub find_link_dom {
     my ($self,%opts) = @_;
     my %xpath_options;
 
-    for (qw(node document frames)) {
+    # Clean up some legacy stuff
+    delete @opts{ qw(synchronize) };
+
+    for (qw(node document frames xpath selector)) {
         # Copy over XPath options that were passed in
         if (exists $opts{ $_ }) {
             $xpath_options{ $_ } = delete $opts{ $_ };
