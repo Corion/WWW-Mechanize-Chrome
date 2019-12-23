@@ -539,13 +539,14 @@ sub _send_packet( $self, $response, $method, %params ) {
         # this is half right - we get an ack when the message was accepted
         # but we want to send the real reply when it comes back from the
         # real target. This is done in the listener for receivedMessageFromTarget
-        my $ignore = $self->future->retain;
-        $result = $self->transport->_send_packet(
-            $ignore,
+        #my $ignore = $s->future->retain;
+        $result = $s->transport->_send_packet(
+            #$ignore, # this one leads to a circular reference somewher?!
+            undef,
             'Target.sendMessageToTarget',
             message => $payload,
-            targetId => $self->targetId,
-            maybe sessionId => $self->sessionId,
+            targetId => $s->targetId,
+            maybe sessionId => $s->sessionId,
         );
     } catch {
         $self->log('error', $_ );
