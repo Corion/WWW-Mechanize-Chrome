@@ -2892,7 +2892,7 @@ sub text {
 
     # Waugh - this is highly inefficient but conveniently short to write
     # Maybe this should skip SCRIPT nodes...
-    join '', map { $_->get_text() } $self->xpath('//*/text()');
+    join '', map { $_->get_attribute('textContent') } $self->xpath('//body', single => 1 );
 }
 
 =head2 C<< $mech->content_encoding() >>
