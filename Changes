@@ -19,15 +19,16 @@
     * Tested against Chromium HeadlessChrome/76.0.3798.0
     * Tested against Chromium HeadlessChrome/77.0.3865.75
     * Tested against Chromium HeadlessChrome/78.0.3904.70
-    * Tested against Chromium HeadlessChrome/79.0.3927.0
-    * Tested against Chromium HeadlessChrome/80.0.3952.0
+    * Tested against Chromium HeadlessChrome/79.0.3945.88
+    * Tested against Chromium HeadlessChrome/80.0.3969.0
+    * Tested against Chromium HeadlessChrome/81.0.4007.0
     * Linux tests
-    * Tested against Chromium Chromium/76.0.3809.100 (Debian "Buster" default)
     * Tested against Chromium Chromium/65.0.3325.181
     * Tested against Chromium Chromium/66.0.3359.139
     * Tested against Chromium Chromium/67.0.3396.87
     * Tested against Chromium Chromium/75.0.3770.100
     * Tested against Chromium Chromium/77.0.3865.120
+    * Tested against Chromium Chromium/78.0.3904.108
 
 0.43 2019-12-26
     * Fix number of tests skipped on test skipping
