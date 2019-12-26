@@ -1122,7 +1122,22 @@ sub chrome_version_from_executable_win32( $class, $options={} ) {
     croak $error if $error;
 
     my $info = Win32::File::VersionInfo::GetFileVersionInfo( $program );
-    return "Chrome/$info->{ProductVersion}";
+
+    # Find whether we are Chrome* or MS Edge:
+    (my $l) = sort (keys %{$info->{Lang}});
+    my $name = $info->{Lang}->{ $l }->{"ProductName"};
+    if( $name eq 'Microsoft Edge' ) {
+        # Fudge the version to the equivalent Chrome API version
+        my $v = $info->{ProductVersion};
+        if( $v =~ /^11\./ ) {
+            $v = "72.0.0.0"; # random guess
+        } else {
+            $v = "78.0.0.0"; # even more random guess
+        };
+        return "Chrome/$v";
+    } else {
+        return "Chrome/$info->{ProductVersion}";
+    };
 }
 
 sub chrome_version( $self, %options ) {
