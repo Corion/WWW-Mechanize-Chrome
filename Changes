@@ -29,6 +29,11 @@
     * Tested against Chromium Chromium/75.0.3770.100
     * Tested against Chromium Chromium/77.0.3865.120
 
+0.43 2019-12-26
+    * Fix number of tests skipped on test skipping
+    * No code changes, no need to upgrade if the previous version already
+      works for you
+
 0.42 2019-12-23
     * ->find_link() now uses the text() attribute, not the innerHTML. This means
       that for example text_regex searches can't match HTML in link texts anymore.
