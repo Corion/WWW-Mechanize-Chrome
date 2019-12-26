@@ -32,8 +32,8 @@
 
 0.43 2019-12-26
     * Fix number of tests skipped on test skipping
-    * No code changes, no need to upgrade if the previous version already
-      works for you
+    * Fix (and add a test for) ->text() method. This addresses RT #130999,
+      test provided by Chris Denley.
 
 0.42 2019-12-23
     * ->find_link() now uses the text() attribute, not the innerHTML. This means
