@@ -18,7 +18,7 @@ my @tests= (
     #{ format => 'jpg', like => qr/^......JFIF/, },
 );
 
-my $testcount = (1+@tests*2);
+my $testcount = (1+@tests*2+2);
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -79,5 +79,34 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             ok $res, "->render_content to file"
                 or diag $reason;
         };
+    };
+
+    my $content= eval { $mech->content_as_pdf( format => 'A4' ); };
+    SKIP: {
+        if( $@ ) {
+            skip "$@", 1;
+        };
+
+        my $shortcontent = substr( $content, 0, 30 );
+        like $shortcontent, qr/^%PDF-/, "looks like PDF"
+            or diag $shortcontent;
+        my @delete;
+        my( $tempfh,$outfile )= tempfile;
+        close $tempfh;
+        push @delete, $outfile;
+        $mech->content_as_pdf( format => 'A4', filename => $outfile );
+        my($res, $reason)= (undef, "Outfile '$outfile' was not created");
+        if(-f $outfile) {
+            if( open my $fh, '<:raw', $outfile ) {
+                local $/;
+                my $content= <$fh>;
+                $res= $content =~ qr/^%PDF-/,
+                    or $reason= "Content did not match /^%PDF-/: " . substr($content,0,10);
+            } else {
+                $reason= "Couldn't open '$outfile': $!";
+            };
+        };
+        ok $res, "->content_as_pdf to file"
+            or diag $reason;
     };
 });
