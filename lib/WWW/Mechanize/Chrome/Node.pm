@@ -283,11 +283,8 @@ sub get_attribute_future( $self, $attribute, %options ) {
         return Future->done( $self->attributes->{ $attribute })
 
     } elsif( $attribute eq 'innerHTML' ) {
-        my $nid = $s->_fetchNodeId();
-        my $html = $nid->then(sub( $nodeId ) {
-            $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->on_done(sub( $res ) {
-            my $html = $res->{outerHTML};
+        my $html = $s->get_attribute_future('outerHTML')
+        ->then(sub( $html ) {
             # Strip first and last tag in a not so elegant way
             $html =~ s!\A<[^>]+>!!;
             $html =~ s!<[^>]+>\z!!;
@@ -299,7 +296,7 @@ sub get_attribute_future( $self, $attribute, %options ) {
         my $nid = $s->_fetchNodeId();
         my $html = $nid->then(sub( $nodeId ) {
             $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        })->on_done(sub( $res ) {
+        })->then(sub( $res ) {
             Future->done( $res->{outerHTML} )
         });
         return $html

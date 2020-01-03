@@ -12,7 +12,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
-my $testcount = 3;
+my $testcount = 6;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -34,13 +34,28 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     $mech->get_local('50-form-with-fields-gh48.html');
 #$mech->dump_forms;
-
-    ## Works:
+    my $f;
     my $ok = eval {
-        $mech->form_name('signIn');
+        $f = $mech->current_form();
         1;
     };
     my $err = $@;
+    is $err, '', "No error when retrieving ->current_form() again";
+    if( isn't $f, undef, "We have a form" ) {
+        my $html = $mech->current_form()->get_attribute('outerHTML');
+        like $html, qr/^<form/i, "The form outer HTML looks like we expect";
+    } else {
+        SKIP: {
+            skip "No form, no HTML to check", 1;
+        };
+    };
+
+    ## Works:
+    $ok = eval {
+        $mech->form_name('signIn');
+        1;
+    };
+    $err = $@;
     is $err, '', "We got no error on selecting the form by form name";
 
     # Just checking.. yup its there:
