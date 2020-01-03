@@ -30,6 +30,11 @@
     * Tested against Chromium Chromium/77.0.3865.120
     * Tested against Chromium Chromium/78.0.3904.108
 
+0.44 2020-01-03
+    * Fix ->get_attribute('innerHTML') and ->get_attribute('outerHTML')
+      being broken in 0.42. Also add a test for that functionality. GH #48.
+    * Test suite stability
+
 0.43 2019-12-26
     * Fix number of tests skipped on test skipping
     * Fix (and add a test for) ->text() method. This addresses RT #130999,
