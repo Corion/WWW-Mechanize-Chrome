@@ -12,12 +12,12 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
-my $testcount = (@instances*11);
+my $testcount = 11;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => $testcount;
+    plan tests => @instances*$testcount;
 };
 
 sub new_mech {
