@@ -5,8 +5,6 @@ use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
 
-use Test::HTTP::LocalServer;
-
 use lib '.';
 use t::helper;
 
@@ -30,10 +28,6 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1
-);
-
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
 
@@ -42,13 +36,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     $mech->get_local('76-infinite-scroll.html');
 
     is ($mech->infinite_scroll, 1, 'Can scroll down and retrieve new content');
-    is (scroll_to_bottom($mech), 0, 'Can scroll to end of infinite scroll'); 
+    is (scroll_to_bottom($mech), 0, 'Can scroll to end of infinite scroll');
 
 });
 
 sub scroll_to_bottom {
   my $self = shift;
-  while ($self->infinite_scroll(2)) { 
+  while ($self->infinite_scroll(2)) {
   }
 }
 

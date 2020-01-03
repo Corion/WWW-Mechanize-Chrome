@@ -4,7 +4,6 @@ use Test::More;
 use WWW::Mechanize::Chrome;
 use lib '.';
 use File::Temp qw(tempfile);
-use Test::HTTP::LocalServer;
 
 use t::helper;
 use Log::Log4perl qw(:easy);

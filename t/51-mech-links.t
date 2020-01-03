@@ -16,7 +16,6 @@ use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 
 use lib '.';
-use Test::HTTP::LocalServer;
 
 use t::helper;
 
@@ -40,11 +39,6 @@ sub new_mech {
         #headless => 0,
     );
 };
-
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1
-);
-my $server_url = $server->url;
 
 t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
     my ($browser_instance, $mech) = @_;
@@ -76,7 +70,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
             if( ! is scalar @wanted_links, 2, 'The two links were found') {
                 diag $_->url for @found_links;
                 diag $_->url_abs for @found_links;
-                diag $server_url;
             };
             my $url = URI->new_abs($found_links[0]->url, $found_links[0]->base);
             is $url, 'https://somewhere.example/relative',
@@ -96,5 +89,3 @@ t::helper::run_across_instances(\@instances, \&new_mech, 7, sub {
     @frames = $mech->selector('iframe');
     is @frames, 1, "IFRAME tag";
 });
-
-undef $server;

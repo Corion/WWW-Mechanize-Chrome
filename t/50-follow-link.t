@@ -5,8 +5,6 @@ use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
 
-use Test::HTTP::LocalServer;
-
 use lib '.';
 use t::helper;
 
@@ -29,10 +27,6 @@ sub new_mech {
         @_,
     );
 };
-
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1
-);
 
 t::helper::run_across_instances(\@instances, \&new_mech, 9, sub {
     my ($browser_instance, $mech) = @_;

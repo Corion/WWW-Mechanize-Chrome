@@ -7,7 +7,6 @@ use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 
 use lib '.';
-use Test::HTTP::LocalServer;
 
 use t::helper;
 
@@ -40,6 +39,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 1, sub {
 		$mech->field('username', 'foobar');
 		1
 	};
-	ok $lives 
+	ok $lives
 	    or diag $@;
 })

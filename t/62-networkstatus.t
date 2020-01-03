@@ -7,8 +7,6 @@ use WWW::Mechanize::Chrome;
 use JSON;
 use lib '.';
 
-use Test::HTTP::LocalServer;
-
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);
@@ -32,10 +30,6 @@ sub new_mech {
     );
 };
 
-#my $server = Test::HTTP::LocalServer->spawn(
-#    #debug => 1,
-#);
-
 t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
 
@@ -48,7 +42,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
             # https://bugs.chromium.org/p/chromium/issues/detail?id=728451
             skip "Chrome before v63.0.3239 doesn't know about online/offline mode or can do throttling", 4;
         } else {
-            #$mech->get($server->url);
             $mech->get_local('50-click.html');
 
             my ($value,$type);

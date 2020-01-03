@@ -4,7 +4,6 @@ use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
 use lib '.';
-use Test::HTTP::LocalServer;
 
 use t::helper;
 
