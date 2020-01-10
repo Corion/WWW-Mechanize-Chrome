@@ -3,10 +3,10 @@ use strict;
 use Test::More;
 use Log::Log4perl qw(:easy);
 
-use WWW::Mechanize::Chrome;
-use lib '.';
-
 use Test::HTTP::LocalServer;
+use WWW::Mechanize::Chrome;
+
+use lib '.';
 
 use t::helper;
 
@@ -37,28 +37,28 @@ my $server = Test::HTTP::LocalServer->spawn(
 t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
-    
+
     $mech->get_local('51-mech-submit.html');
     my $f = $mech->form_with_fields(
        'r',
     );
     ok $f, "We found the form";
-    
+
     $mech->get_local('51-mech-submit.html');
     $f = $mech->form_with_fields(
        'q','r',
     );
     ok $f, "We found the form";
-    
+
     SKIP: {
         #skip "Chrome frame support is wonky.", 2;
- 
+
         $mech->get_local('52-frameset.html');
         $f = $mech->form_with_fields(
            'baz','bar',
         );
         ok $f, "We found the form in a frame";
- 
+
         $mech->get($server->local('52-iframeset.html'));
         $mech->sleep(1); # debug for AppVeyor failures?!
         my $ok = eval {
@@ -72,5 +72,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
         ok $f, "We found the form in an iframe";
     };
 });
-$server->kill;
-undef $server;
+$server->stop;

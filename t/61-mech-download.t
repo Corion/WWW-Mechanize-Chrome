@@ -78,5 +78,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
         };
     }
 });
+$server->stop;
 
 done_testing;

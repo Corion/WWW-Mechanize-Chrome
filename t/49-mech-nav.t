@@ -61,5 +61,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
         #}
     };
 });
-$server->kill;
-undef $server;
+$server->stop;
+

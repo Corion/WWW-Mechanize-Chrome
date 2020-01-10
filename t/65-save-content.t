@@ -88,5 +88,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         };
     };
 });
-$server->kill;
-undef $server;
+$server->stop;
+

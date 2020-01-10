@@ -45,6 +45,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     undef $mech;
 });
 
-$server->kill;
-undef $server;
-#wait; # gobble up our child process status
+$server->stop;

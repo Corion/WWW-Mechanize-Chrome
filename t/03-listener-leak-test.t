@@ -87,3 +87,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->driver->on_response(undef, '{"method":"Runtime.consoleAPICalled"}');
     is $called, 0, "Our handler was not called after manual removal via ->remove_listener";
 });
+$server->stop;

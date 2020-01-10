@@ -2,10 +2,9 @@
 use strict;
 use Test::More;
 use WWW::Mechanize::Chrome;
-use lib '.';
-use Test::HTTP::LocalServer;
 use Log::Log4perl qw(:easy);
 
+use lib '.';
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR

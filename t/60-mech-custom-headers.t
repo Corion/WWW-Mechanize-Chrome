@@ -159,5 +159,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 21, sub {
     # diag $mech->content;
 });
 
-$server->kill;
-undef $server;
+$server->stop;
+

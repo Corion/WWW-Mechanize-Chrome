@@ -41,3 +41,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     is $mech->uri, $url, "We moved to the start URL instead of about:blank";
 });
+
+$server->stop;

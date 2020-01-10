@@ -48,3 +48,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is $err, '', "No error";
     like $text, qr/Request headers/, "We fetch some text";
 });
+$server->stop;

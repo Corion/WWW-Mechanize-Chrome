@@ -58,3 +58,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 
     undef $mech;
 });
+
+$server->stop;
+

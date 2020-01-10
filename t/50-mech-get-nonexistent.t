@@ -49,5 +49,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     ok !$mech->success, "We don't consider this response successful";
 });
 
-undef $server;
-wait; # gobble up our child process status
+$server->stop;
