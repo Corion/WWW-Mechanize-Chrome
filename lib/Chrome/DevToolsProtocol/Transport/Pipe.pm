@@ -40,6 +40,9 @@ All parameters are passed on to the implementation class.
 sub new($factoryclass, @args) {
     $implementation ||= $factoryclass->best_implementation();
 
+    # Just in case a user has set this from the outside
+    eval "require $implementation; 1";
+
     # return a new instance
     $implementation->new(@args);
 }

@@ -40,6 +40,9 @@ All parameters are passed on to the implementation class.
 sub new($factoryclass, @args) {
     $implementation ||= $factoryclass->best_implementation();
 
+    # Just in case a user has set this from the outside
+    eval "require $implementation; 1";
+
     # return a new instance
     $implementation->new(@args);
 }
@@ -89,13 +92,25 @@ backends are
 
 L<IO::Async>
 
+This is the default backend
+
 =item *
 
 L<AnyEvent>
 
+This needs the following additional modules installed:
+
+L<AnyEvent::WebSocket::Client>
+
+L<AnyEvent::Future>
+
 =item *
 
 L<Mojolicious>
+
+This needs the following additional modules installed:
+
+L<Future::Mojo>
 
 =back
 
