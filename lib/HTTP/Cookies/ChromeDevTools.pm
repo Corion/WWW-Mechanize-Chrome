@@ -87,9 +87,6 @@ cookies from is currently unsupported.
 
 sub load($self, $file=undef, %options) {
     my $driver = $options{ driver } || $self->driver;
-    if( $file ) {
-        croak 'Loading from a file is not implemented yet';
-    };
     my $cookies = $driver->send_message('Network.getAllCookies')->get();
     $cookies = $cookies->{cookies};
     $self->clear();
@@ -108,6 +105,10 @@ sub load($self, $file=undef, %options) {
             $c->{expires},
             #$c->{session},
         );
+    };
+    if( $file ) {
+        my $jar = HTTP::Cookies->new( file => $file );
+        $self->load_jar( $jar );
     };
 }
 

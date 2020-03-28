@@ -6,17 +6,19 @@ use Log::Log4perl ':easy';
 use lib '.';
 use t::helper;
 use HTTP::Cookies;
+use File::Basename 'dirname';
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
+my $testcount = 11;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 10*@instances;
+    plan tests => $testcount*@instances;
 };
 
 sub new_mech {
@@ -27,7 +29,7 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
     my $version = $mech->chrome_version;
@@ -38,7 +40,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 
     if( $version =~ /\b(\d+)\b/ and ($1 >= 59 and $1 <= 61)) {
         SKIP: {
-            skip "Chrome v$1 doesn't properly handle setting cookies...", 1;
+            skip "Chrome v$1 doesn't properly handle setting cookies...", $testcount-1;
         };
     } else {
 
@@ -77,6 +79,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
         $count = 0;
         $cookies->scan(sub{$count++; });
         is $count, 1, 'We replaced all the cookies with our single cookie from the jar';
+
+        $lived = eval {
+            $cookies->load(dirname($0).'/CookiesOld');
+            1;
+        };
+        ok $lived, "We can load cookies from file"
+            or diag $@;
     }
 
     undef $mech;
