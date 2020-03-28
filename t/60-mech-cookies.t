@@ -5,7 +5,6 @@ use WWW::Mechanize::Chrome;
 use Log::Log4perl ':easy';
 use lib '.';
 use t::helper;
-use Test::HTTP::LocalServer;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
@@ -27,16 +26,10 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1
-);
-
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
 
     my $version = $mech->chrome_version;
-
-    $mech->get( $server->url );
 
     note "Fetching cookie jar";
     my $cookies = $mech->cookie_jar;
@@ -65,6 +58,3 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 
     undef $mech;
 });
-
-$server->stop;
-
