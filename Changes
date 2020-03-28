@@ -31,7 +31,7 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
-0.45 to be released
+0.45 2020-03-28
     * The "secure" cookie attribute now gets forced into a JSON boolean
       in ->set_cookie. Thanks to Rub3nCT for reporting this in GH issue #53.
     * Added ->load_jar method to import a complete HTTP::Cookies cookie jar
