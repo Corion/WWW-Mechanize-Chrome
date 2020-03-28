@@ -33,6 +33,8 @@
 0.45 to be released
     * The "secure" cookie attribute now gets forced into a JSON boolean
       in ->set_cookie. Thanks to Rub3nCT for reporting this in GH issue #53.
+    * Added ->load_jar method to import a complete HTTP::Cookies cookie jar
+      into Chrome, suggested by Rub3nCT in GH issue #53.
 
 0.44 2020-01-03
     * Fix ->get_attribute('innerHTML') and ->get_attribute('outerHTML')

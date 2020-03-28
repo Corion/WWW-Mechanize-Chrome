@@ -51,7 +51,7 @@ has 'driver' => (
     is => 'lazy',
     default => sub {
         my( $self ) = @_;
-       
+
         # Connect to it
         Chrome::DevToolsProtocol->new(
             'port' => $self->{ port },
@@ -111,6 +111,43 @@ sub load($self, $file=undef, %options) {
     };
 }
 
+=head2 C<< ->load_jar( $jar, %options ) >>
+
+    $jar->load( $jar, replace => 1;
+
+Imports the cookies from another cookie jar into Chrome.
+
+B<replace> will clear out the cookie jar before loading the fresh cookies.
+
+=cut
+
+sub load_jar($self, $jar, %options) {
+    my $driver = $options{ driver } || $self->driver;
+
+    if( $options{ replace }) {
+        $self->clear();
+    };
+
+    local $self->{_loading} = 1;
+    $jar->scan( sub(@c) {
+        my $c = {};
+        @{$c}{qw(version name value path domain port path_spec secure expires discard hash)} = @c;
+        $self->set_cookie(
+            1,
+            $c->{name},
+            $c->{value},
+            $c->{path},
+            $c->{domain},
+            undef, # Chrome doesn't support port numbers?!
+            undef,
+            $c->{httpOnly},
+            $c->{secure},
+            $c->{expires},
+            #$c->{session},
+        );
+    });
+}
+
 sub set_cookie($self, $version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard) {
 
     # We've just read from Chrome, so just update our local variables
@@ -150,7 +187,7 @@ L<HTTP::Cookies::Chrome> - offline access to Chrome cookies
 
 =head1 REPOSITORY
 
-The public repository of this module is 
+The public repository of this module is
 L<http://github.com/Corion/www-mechanize-chrome>.
 
 =head1 AUTHOR
