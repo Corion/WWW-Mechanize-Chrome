@@ -77,7 +77,19 @@ has '_loading' => (
     default => 0,
 );
 
-sub load($self,$driver = $self->driver) {
+=head2 C<< ->load( $file, %options ) >>
+
+    $jar->load( undef, driver => $driver );
+
+Loads the cookies from the Chrome instance. Passing in a filename to load
+cookies from is currently unsupported.
+=cut
+
+sub load($self, $file=undef, %options) {
+    my $driver = $options{ driver } || $self->driver;
+    if( $file ) {
+        croak 'Loading from a file is not implemented yet';
+    };
     my $cookies = $driver->send_message('Network.getAllCookies')->get();
     $cookies = $cookies->{cookies};
     $self->clear();
@@ -103,21 +115,21 @@ sub set_cookie($self, $version, $key, $val, $path, $domain, $port, $path_spec, $
 
     # We've just read from Chrome, so just update our local variables
     $self->SUPER::set_cookie( $version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard );
-    
+
     if( ! $self->_loading ) {
         # Update Chrome
         my $driver = $self->driver;
-        
+
         $maxage += time();
-        
-        $driver->send_message('Network.setCookie', 
+
+        $driver->send_message('Network.setCookie',
             name     => $key,
             value    => $val,
             path     => $path,
             domain   => $domain,
             httpOnly => JSON::false,
             expires  => $maxage,
-            secure   => $secure,
+            secure   => ($secure ? JSON::true : JSON::false),
         )->get;
     };
 };

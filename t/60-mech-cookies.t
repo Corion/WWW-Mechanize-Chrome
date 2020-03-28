@@ -16,7 +16,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 2*@instances;
+    plan tests => 8*@instances;
 };
 
 sub new_mech {
@@ -48,7 +48,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
         };
     } else {
 
-        $cookies->set_cookie(undef, 'foo','bar','/','localhost', undef, undef, JSON::true, time+10, undef);
+        for my $cookie_val (1, JSON::true, JSON::false, 0, '', undef) {
+            my $lived = eval {
+                $cookies->set_cookie(undef, 'foo','bar','/','localhost', undef, undef, $cookie_val, time+10, undef);
+                1;
+            };
+            is $lived, 1, sprintf "We can use %s as a value for 'secure'", defined $cookie_val ? "'$cookie_val'" : "undef"
+                or diag $@;
+        };
 
         # Count how many cookies we get as a test.
         my $count = 0;

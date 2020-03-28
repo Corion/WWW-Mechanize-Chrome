@@ -30,6 +30,10 @@
     * Tested against Chromium Chromium/77.0.3865.120
     * Tested against Chromium Chromium/78.0.3904.108
 
+0.45 to be released
+    * The "secure" cookie attribute now gets forced into a JSON boolean
+      in ->set_cookie. Thanks to Rub3nCT for reporting this in GH issue #53.
+
 0.44 2020-01-03
     * Fix ->get_attribute('innerHTML') and ->get_attribute('outerHTML')
       being broken in 0.42. Also add a test for that functionality. GH #48.
