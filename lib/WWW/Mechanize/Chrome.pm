@@ -110,7 +110,9 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
 =head2 C<< WWW::Mechanize::Chrome->new( %options ) >>
 
-  my $mech = WWW::Mechanize::Chrome->new();
+  my $mech = WWW::Mechanize::Chrome->new(
+      headless => 0,
+  );
 
 =over 4
 
@@ -123,6 +125,11 @@ program dies along with its associated browser instances. This frees you from
 having to write error checks after every request. Setting this value to false
 makes HTTP errors non-fatal, allowing the program to continue running if
 there is an error.
+
+=item B<headless>
+
+Don't display a browser window. Default is to display a browser
+window.
 
 =item B<host>
 
