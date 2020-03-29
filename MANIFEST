@@ -31,6 +31,7 @@ lib/WWW/Mechanize/Chrome/Install.pod
 lib/WWW/Mechanize/Chrome/Internals.pod
 lib/WWW/Mechanize/Chrome/Node.pm
 lib/WWW/Mechanize/Chrome/Troubleshooting.pm
+lib/WWW/Mechanize/Chrome/URLBlacklist.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
