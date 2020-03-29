@@ -126,10 +126,11 @@ sub load_jar($self, $jar, %options) {
     my $driver = $options{ driver } || $self->driver;
 
     if( $options{ replace }) {
+        $driver->send_message('Network.clearBrowserCookies')->get();
         $self->clear();
     };
 
-    local $self->{_loading} = 1;
+    local $self->{_loading} = 0;
     $jar->scan( sub(@c) {
         my $c = {};
         @{$c}{qw(version name value path domain port path_spec secure expires discard hash)} = @c;
@@ -156,20 +157,28 @@ sub set_cookie($self, $version, $key, $val, $path, $domain, $port, $path_spec, $
 
     if( ! $self->_loading ) {
         # Update Chrome
-        my $driver = $self->driver;
-
         $maxage += time();
-
-        $driver->send_message('Network.setCookie',
-            name     => $key,
-            value    => $val,
-            path     => $path,
-            domain   => $domain,
-            httpOnly => JSON::false,
-            expires  => $maxage,
-            secure   => ($secure ? JSON::true : JSON::false),
-        )->get;
+        $self
+          ->set_cookie_in_chrome($version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard)
+          ->get();
     };
+};
+
+sub set_cookie_in_chrome($self, $version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard) {
+    # Update Chrome
+    my $driver = $self->driver;
+
+    $maxage += time();
+
+    $driver->send_message('Network.setCookie',
+        name     => $key,
+        value    => $val,
+        path     => $path,
+        domain   => $domain,
+        httpOnly => JSON::false,
+        expires  => $maxage,
+        secure   => ($secure ? JSON::true : JSON::false),
+    );
 };
 
 sub save {

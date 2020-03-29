@@ -3,16 +3,19 @@ use strict;
 use Test::More;
 use WWW::Mechanize::Chrome;
 use Log::Log4perl ':easy';
-use lib '.';
-use t::helper;
 use HTTP::Cookies;
 use File::Basename 'dirname';
+use Test::HTTP::LocalServer;
+use Data::Dumper;
+
+use lib '.';
+use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
-my $testcount = 11;
+my $testcount = 14;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -28,6 +31,8 @@ sub new_mech {
         @_,
     );
 };
+
+my $server = Test::HTTP::LocalServer->spawn;
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
@@ -77,8 +82,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         ok $lived, "We can load another cookie jar"
             or diag $@;
         $count = 0;
-        $cookies->scan(sub{$count++; });
-        is $count, 1, 'We replaced all the cookies with our single cookie from the jar';
+        my @c;
+        $cookies->scan(sub{$count++; push @c, [@_];});
+        is $count, 1, 'We replaced all the cookies with our single cookie from the jar'
+            or diag Dumper \@c;
 
         $lived = eval {
             $cookies->load(dirname($0).'/CookiesOld');
@@ -86,7 +93,36 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         };
         ok $lived, "We can load cookies from file"
             or diag $@;
+
+        $other_jar = HTTP::Cookies->new();
+        $other_jar->set_cookie(
+            42,
+            'mycookie' => 'tasty',
+            '/',
+            $server->url->host_port,
+            0,
+            '',
+            1,
+            time+600,
+            0
+        );
+        my $lived = eval {
+            $cookies->load_jar( $other_jar, replace => 1 );
+            1;
+        };
+        ok $lived, "We can load another cookie jar"
+            or diag $@;
+        $count = 0;
+        @c = ();
+        $cookies->scan(sub{$count++; push @c,[@_]});
+        is $count, 1, 'We replaced all the cookies with our single cookie from the (manual) jar'
+            or diag Dumper \@c;
+        $mech->get($server->url);
+        like $mech->content, qr/\btasty\b/, "Our cookie gets sent";
+
     }
 
     undef $mech;
 });
+
+undef $server;
