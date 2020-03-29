@@ -81,7 +81,9 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
 ## `WWW::Mechanize::Chrome->new( %options )`
 
-    my $mech = WWW::Mechanize::Chrome->new();
+    my $mech = WWW::Mechanize::Chrome->new(
+        headless => 0,
+    );
 
 - **autodie**
 
@@ -92,6 +94,11 @@ them in a Perl object to provide the easy-to-use methods documented here.
     having to write error checks after every request. Setting this value to false
     makes HTTP errors non-fatal, allowing the program to continue running if
     there is an error.
+
+- **headless**
+
+    Don't display a browser window. Default is to display a browser
+    window.
 
 - **host**
 
