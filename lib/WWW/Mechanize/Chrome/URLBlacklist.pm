@@ -21,7 +21,7 @@ WWW::Mechanize::Chrome::URLBlacklist - blacklist URLs from fetching
             qr!\bgoogleadservices\b!,
         ],
         whitelist => [
-            qr!\bgoogleadservices\b!,
+            qr!\bcorion\.net\b!,
         ],
 
         # fail all unknown URLs
@@ -40,34 +40,101 @@ WWW::Mechanize::Chrome::URLBlacklist - blacklist URLs from fetching
 This module allows an easy approach to whitelisting/blacklisting URLs
 so that Chrome does not make requests to the blacklisted URLs.
 
-=cut
+=head1 ATTRIBUTES
 
-has 'request_listener' => (
-    is => 'rw',
-);
+=head2 C<<whitelist>>
+
+Arrayref containing regular expressions of URLs to always allow fetching.
+
+=cut
 
 has 'whitelist' => (
     is => 'lazy',
     default => sub { [] },
 );
 
+=head2 C<<blacklist>>
+
+Arrayref containing regular expressions of URLs to always deny fetching unless
+they are matched by something in the C<whitelist>.
+
+=cut
+
 has 'blacklist' => (
     is => 'lazy',
     default => sub { [] },
 );
+
+=head2 C<<default>>
+
+  default => 'continueRequest'
+
+The action to take if an URL appears neither in the C<whitelist> nor
+in the C<blacklist>. The default is C<continueRequest>. If you want to block
+all unknown URLs, use C<failRequest>
+
+=cut
 
 has 'default' => (
     is => 'rw',
     default => 'continueRequest',
 );
 
+=head2 C<<on_default>>
+
+  on_default => sub {
+      my( $url, $action ) = @_;
+      warn "Unknown URL <$url>";
+  };
+
+This callback is invoked for every URL that is neither in the whitelist nor
+in the blacklist. This is useful to see what URLs are still missing a category.
+
+=cut
+
+
 has 'on_default' => (
     is => 'rw',
 );
 
-has 'mech' => (
+=head2 C<<_mech>>
+
+(internal) The WWW::Mechanize::Chrome instance we are connected to
+
+=cut
+
+has '_mech' => (
     is => 'rw',
 );
+
+=head2 C<<_request_listener>>
+
+(internal) The request listener created by WWW::Mechanize::Chrome while listening
+for URL messages
+
+=cut
+
+has '_request_listener' => (
+    is => 'rw',
+);
+
+=head1 METHODS
+
+=head2 C<< ->new >>
+
+  my $bl = WWW::Mechanize::Chrome::URLBlacklist->new(
+      blacklist => [
+          qr!\bgoogleadservices\b!,
+          qr!\ioam\.de\b!,
+          qr!\burchin\.js$!,
+          qr!.*\.(?:woff|ttf)$!,
+          qr!.*\.css(\?\w+)?$!,
+          qr!.*\.png$!,
+          qr!.*\bfavicon.ico$!,
+      ],
+  );
+
+=cut
 
 sub on_requestPaused( $self, $info ) {
     my $id = $info->{params}->{requestId};
@@ -103,6 +170,14 @@ sub on_requestPaused( $self, $info ) {
     };
 };
 
+=head2 C<< ->enable >>
+
+  $bl->enable( $mech );
+
+Attaches the blacklist to a WWW::Mechanize::Chrome object.
+
+=cut
+
 sub enable( $self, $mech ) {
     $self->mech( $mech );
     $self->mech->target->send_message('Fetch.enable');
@@ -111,6 +186,14 @@ sub enable( $self, $mech ) {
     });
     $self->request_listener( $request_listener );
 };
+
+=head2 C<< ->enable >>
+
+  $bl->disable( $mech );
+
+Removes the blacklist to a WWW::Mechanize::Chrome object.
+
+=cut
 
 sub disable( $self ) {
     $self->request_listener(undef);
