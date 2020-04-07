@@ -4465,9 +4465,27 @@ sub get_set_value($self,%options) {
             );
             my $method = $method{ lc $tag };
 
-            # Send pre-change events:
-
             my $id = $obj->{objectId};
+
+            # Send pre-change events:
+            for my $ev (@$pre) {
+                $self->target->send_message(
+                        'Runtime.callFunctionOn',
+                        objectId => $id,
+                        functionDeclaration => <<'JS',
+function(ev) {
+    var event = new Event(ev, {
+        view : window,
+        bubbles: true,
+        cancelable: true
+    });
+    this.dispatchEvent(event);
+}
+JS
+                        arguments => [{ value => $ev }],
+                    );
+            };
+
             if( 'value' eq $method ) {
                 $self->target->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
 
@@ -4509,6 +4527,24 @@ JS
             };
 
             # Send post-change events
+            # Send pre-change events:
+            for my $ev (@$post) {
+                $self->target->send_message(
+                        'Runtime.callFunctionOn',
+                        objectId => $id,
+                        functionDeclaration => <<'JS',
+function(ev) {
+    var event = new Event(ev, {
+        view : window,
+        bubbles: true,
+        cancelable: true
+    });
+    this.dispatchEvent(event);
+}
+JS
+                        arguments => [{ value => $ev }],
+                    );
+            };
         };
 
         # Don't bother to fetch the field's value if it's not wanted
