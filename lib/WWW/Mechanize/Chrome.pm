@@ -1186,6 +1186,9 @@ B<deprecated> - use C<< ->target >> instead
 
 Access the L<Chrome::DevToolsProtocol> instance connecting to Chrome.
 
+Deprecated, don't use this anymore. Most likely you want to use C<< ->target >>
+to talk to the Chrome tab or C<< ->transport >> to talk to the Chrome instance.
+
 =cut
 
 sub driver {
@@ -1203,6 +1206,19 @@ Chrome tab we use.
 
 sub target {
     $_[0]->{target}
+};
+
+=head2 C<< $mech->transport >>
+
+    my $transport = $mech->transport
+
+Access the L<Chrome::DevToolsProtocol::Transport> instance connecting to the
+Chrome instance.
+
+=cut
+
+sub transport {
+    $_[0]->driver->transport
 };
 
 =head2 C<< $mech->tab >>
