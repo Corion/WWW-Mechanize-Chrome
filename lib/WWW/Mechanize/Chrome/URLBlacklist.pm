@@ -139,7 +139,7 @@ has '_request_listener' => (
 sub on_requestPaused( $self, $info ) {
     my $id = $info->{params}->{requestId};
     my $request = $info->{params}->{request};
-    my $mech = $self->mech;
+    my $mech = $self->_mech;
 
     if( grep { $request->{url} =~ /$_/ } @{ $self->whitelist } ) {
         #warn "Whitelisted URL $request->{url}";
@@ -179,12 +179,12 @@ Attaches the blacklist to a WWW::Mechanize::Chrome object.
 =cut
 
 sub enable( $self, $mech ) {
-    $self->mech( $mech );
-    $self->mech->target->send_message('Fetch.enable');
+    $self->_mech( $mech );
+    $self->_mech->target->send_message('Fetch.enable');
     my $request_listener = $mech->add_listener('Fetch.requestPaused', sub {
         $self->on_requestPaused( @_ );
     });
-    $self->request_listener( $request_listener );
+    $self->_request_listener( $request_listener );
 };
 
 =head2 C<< ->enable >>
@@ -197,8 +197,8 @@ Removes the blacklist to a WWW::Mechanize::Chrome object.
 
 sub disable( $self ) {
     $self->request_listener(undef);
-    $self->mech->target->send_message('Fetch.disable');
-    $self->mech(undef);
+    $self->_mech->target->send_message('Fetch.disable');
+    $self->_mech(undef);
 };
 
 1;
