@@ -31,6 +31,13 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.47 2020-04-xx
+    * Add ->transport() accessor to WWW::Mechanize::Chrome
+      This currently just is ->driver->transport
+    * Deprecate ->driver()
+      You should use ->transport or ->target, depending on who you really
+      want to talk to
+
 0.46 2020-03-29
     * Actually make transferring the cookies from/to Chrome work
     * Add W:M:C:URLBlacklist to ease restricting what Chrome loads

@@ -417,12 +417,22 @@ APIs of Chrome that the object is connected to.
 
 Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting to Chrome.
 
+Deprecated, don't use this anymore. Most likely you want to use `->target`
+to talk to the Chrome tab or `->transport` to talk to the Chrome instance.
+
 ## `$mech->target`
 
     my $target = $mech->target
 
 Access the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) instance connecting to the
 Chrome tab we use.
+
+## `$mech->transport`
+
+    my $transport = $mech->transport
+
+Access the [Chrome::DevToolsProtocol::Transport](https://metacpan.org/pod/Chrome::DevToolsProtocol::Transport) instance connecting to the
+Chrome instance.
 
 ## `$mech->tab`
 
