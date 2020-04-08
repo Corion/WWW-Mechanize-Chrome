@@ -19,7 +19,7 @@ WWW::Mechanize::Chrome::Node - represent a Chrome HTML node in Perl
 
 =cut
 
-our $VERSION = '0.46';
+our $VERSION = '0.47';
 
 =head1 MEMBERS
 

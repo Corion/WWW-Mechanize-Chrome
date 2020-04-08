@@ -31,12 +31,15 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
-0.47 2020-04-xx
+0.47 2020-04-08
     * Add ->transport() accessor to WWW::Mechanize::Chrome
       This currently just is ->driver->transport
     * Deprecate ->driver()
       You should use ->transport or ->target, depending on who you really
-      want to talk to
+      want to talk to (GH issue #52)
+    * Properly pass on events that get send before a click is generated and
+      after that event. This allows automatically generating focus events
+      when setting the value of an input field (GH issue #53).
 
 0.46 2020-03-29
     * Actually make transferring the cookies from/to Chrome work
