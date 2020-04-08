@@ -4441,12 +4441,14 @@ sub _field_by_name {
 sub get_set_value($self,%options) {
     my $set_value = exists $options{ value };
     my $value = delete $options{ value };
-    my $pre   = delete $options{pre}  || $self->{pre_value};
+    my $pre   = delete $options{pre};
     $pre = [$pre]
-        if (! ref $pre);
-    my $post  = delete $options{post} || $self->{post_value};
+        if (defined $pre and ! ref $pre);
+    my $post  = delete $options{post};
     $post = [$post]
-        if (! ref $post);
+        if (defined $pre and ! ref $post);
+    $pre  ||= []; # just to eliminate some checks downwards
+    $post ||= []; # just to eliminate some checks downwards
     my $name  = delete $options{ name };
 
     my @fields = $self->_field_by_name(
@@ -4579,7 +4581,6 @@ JS
                 return $values[0];
             }
         } else {
-            # Need to handle SELECT fields here
             return $obj->get_attribute('value');
         };
     } else {
