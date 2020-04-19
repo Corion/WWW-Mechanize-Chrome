@@ -4775,13 +4775,15 @@ sub do_set_fields($self, %options) {
     my $fields = delete $options{ fields };
 
     while (my($n,$v) = each %$fields) {
+        my $index = undef;
         if (ref $v) {
             ($v,my $num) = @$v;
-            warn "Index larger than 1 not supported, ignoring"
-                unless $num == 1;
+            $index = $num;
+            #warn "Index larger than 1 not supported, ignoring"
+            #    unless $num == 1;
         };
 
-        $self->get_set_value( node => $form, name => $n, value => $v, %options );
+        $self->get_set_value( node => $form, name => $n, value => $v, index => $index, %options );
     }
 };
 
