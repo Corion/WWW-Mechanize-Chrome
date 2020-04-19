@@ -1460,23 +1460,18 @@ sub on_dialog( $self, $cb ) {
       $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
   });
 
-Closes the current Javascript dialog. Depending on
+Closes the current Javascript dialog.
 
 =cut
 
 sub handle_dialog( $self, $accept, $prompt = undef ) {
     my $v = $accept ? JSON::true : JSON::false;
     $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
-    my $f;
-    $f = $self->target->send_message(
+    $self->target->send_message(
         'Page.handleJavaScriptDialog',
         accept => $v,
         promptText => (defined $prompt ? $prompt : 'generic message'),
-    )->then( sub {
-        # We deliberately ignore the result here
-        # to avoid deadlock of Futures
-        undef $f;
-    });
+    )->retain;
 };
 
 =head2 C<< $mech->js_console_entries() >>
@@ -5558,18 +5553,16 @@ sessions, see L<Mojolicious::Plugin::PNGCast>.
 sub _handleScreencastFrame( $self, $frame ) {
     # Meh, this one doesn't get a response I guess. So, not ->send_message, just
     # send a JSON packet to acknowledge the frame
-    my $ack;
     my $s = $self;
     weaken $s;
-    $ack = $self->target->send_message(
+    $self->target->send_message(
         'Page.screencastFrameAck',
         sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
             $s->log('trace', 'Screencast frame acknowledged');
             $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
             $s->{ screenFrameCallback }->( $s, $frame->{params} );
-            # forget ourselves
-            undef $ack;
-    });
+            Future->done();
+    })->retain;
 }
 
 sub setScreenFrameCallback( $self, $callback=undef, %options ) {

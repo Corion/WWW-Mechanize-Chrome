@@ -53,6 +53,11 @@
     * ->set_fields() now can set the value of fields with the same name
       ->set_fields( foo => ['new_value', 2] ) now works.
 
+    * Stability fixes/warning elimination in ->handle_dialog() and
+      ->_handle_screencast_frame()
+      The methods used their hand-rolled handling of "fire-and-forget" Futures
+      instead of using Future->retain()
+
 0.47 2020-04-08
     * Add ->transport() accessor to WWW::Mechanize::Chrome
       This currently just is ->driver->transport
