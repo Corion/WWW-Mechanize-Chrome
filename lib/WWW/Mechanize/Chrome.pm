@@ -1460,23 +1460,18 @@ sub on_dialog( $self, $cb ) {
       $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
   });
 
-Closes the current Javascript dialog. Depending on
+Closes the current Javascript dialog.
 
 =cut
 
 sub handle_dialog( $self, $accept, $prompt = undef ) {
     my $v = $accept ? JSON::true : JSON::false;
     $self->log('debug', sprintf 'Dismissing Javascript dialog with %d', $accept);
-    my $f;
-    $f = $self->target->send_message(
+    $self->target->send_message(
         'Page.handleJavaScriptDialog',
         accept => $v,
         promptText => (defined $prompt ? $prompt : 'generic message'),
-    )->then( sub {
-        # We deliberately ignore the result here
-        # to avoid deadlock of Futures
-        undef $f;
-    });
+    )->retain;
 };
 
 =head2 C<< $mech->js_console_entries() >>
