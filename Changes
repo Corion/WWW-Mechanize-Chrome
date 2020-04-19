@@ -45,6 +45,10 @@
       without setting it. This change to your scripts is mandatory because
       ->field() now uses a parameter declaration.
 
+    * ->value() now takes the index as its second parameter, instead of
+      taking a new value as its second parameter. The old form was deprecated
+      a long time ago.
+
 0.47 2020-04-08
     * Add ->transport() accessor to WWW::Mechanize::Chrome
       This currently just is ->driver->transport

@@ -4376,19 +4376,23 @@ sub upload($self,$name,$value) {
 }
 
 
-=head2 C<< $mech->value( $selector_or_element, [%options] ) >>
+=head2 C<< $mech->value( $selector_or_element, [ $index | %options] ) >>
 
     print $mech->value( 'user' );
 
 Returns the value of the field given by C<$selector_or_name> or of the
 DOM element passed in.
 
+If you have multiple fields with the same name, you can use the index
+to specify the index directly:
+
+    print $mech->value( 'date', 2 ); # get the second field named "date"
+
 The legacy form of
 
     $mech->value( name => value );
 
-is also still supported but will likely be deprecated
-in favour of the C<< ->field >> method.
+is not supported anymore.
 
 For fields that can have multiple values, like a C<select> field,
 the method is context sensitive and returns the first selected
@@ -4401,8 +4405,18 @@ method for that.
 
 sub value {
     if (@_ == 3) {
-        my ($self,$name,$value) = @_;
-        return $self->field($name => $value);
+        my ($self,$name,$index) = @_;
+
+        if( defined $index and $index !~ /^\d+$/ ) {
+            $self->signal_condition("Non-numeric index passed to ->value(). Did you mean to call ->field('$name' => '$index') ?");
+        };
+
+        return $self->get_set_value(
+            node => $self->current_form,
+            index => $index,
+            name => $name,
+        );
+
     } else {
         my ($self,$name,%options) = @_;
         return $self->get_set_value(
