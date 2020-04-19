@@ -106,7 +106,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             time+600,
             0
         );
-        my $lived = eval {
+        $lived = eval {
             $cookies->load_jar( $other_jar, replace => 1 );
             1;
         };
