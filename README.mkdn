@@ -1299,10 +1299,11 @@ are identical to those accepted by the ["$mech->selector"](#mech-selector) metho
 
 The returned elements are the DOM `<form>` elements.
 
-## `$mech->field( $selector, $value, [,\@pre_events [,\@post_events]] )`
+## `$mech->field( $selector, $value, [, $index, \@pre_events [,\@post_events]] )`
 
     $mech->field( user => 'joe' );
-    $mech->field( not_empty => '', [], [] ); # bypass JS validation
+    $mech->field( not_empty => '', 0, [], [] ); # bypass JS validation
+    $mech->field( date => '2020-04-01', 2 );    # set second field named "date"
 
 Sets the field with the name given in `$selector` to the given value.
 Returns the value.
@@ -1345,19 +1346,23 @@ filesystem.
 The method understands very basic CSS selectors in the value for `$selector`,
 like the `->field` method.
 
-## `$mech->value( $selector_or_element, [%options] )`
+## `$mech->value( $selector_or_element, [ $index | %options] )`
 
     print $mech->value( 'user' );
 
 Returns the value of the field given by `$selector_or_name` or of the
 DOM element passed in.
 
+If you have multiple fields with the same name, you can use the index
+to specify the index directly:
+
+    print $mech->value( 'date', 2 ); # get the second field named "date"
+
 The legacy form of
 
     $mech->value( name => value );
 
-is also still supported but will likely be deprecated
-in favour of the `->field` method.
+is not supported anymore.
 
 For fields that can have multiple values, like a `select` field,
 the method is context sensitive and returns the first selected

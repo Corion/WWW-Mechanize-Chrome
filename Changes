@@ -23,6 +23,7 @@
     * Tested against Chromium HeadlessChrome/80.0.3969.0
     * Tested against Chromium HeadlessChrome/81.0.4007.0
     * Linux tests
+    * Tested against Chromium Chromium/80.0.3987.162
     * Tested against Chromium Chromium/65.0.3325.181
     * Tested against Chromium Chromium/66.0.3359.139
     * Tested against Chromium Chromium/67.0.3396.87
@@ -31,7 +32,7 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
-0.48 2020-04-xx
+0.48 2020-04-19
     * API CHANGES:
     * ->field() now takes the form field index as third parameter, like
       WWW::Mechanize does. It warns about the old usage and corrects it for
