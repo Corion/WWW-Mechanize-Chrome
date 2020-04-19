@@ -19,7 +19,6 @@ use WWW::Mechanize::Chrome::Node;
 use JSON;
 use MIME::Base64 'decode_base64';
 use Data::Dumper;
-use Time::HiRes qw(usleep);
 use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
@@ -2816,7 +2815,7 @@ sub infinite_scroll {
         }
 
         # wait 1/10th sec for new elements to load
-        usleep 100000;
+        $self->sleep(0.1);
         $new_height = $self->_get_body_height;
     }
     return 1;
@@ -2834,7 +2833,7 @@ sub _scroll_to_bottom {
 
     # scroll to bottom and wait for some content to load
     $self->eval( 'window.scroll(0,document.body.scrollHeight + 200)' );
-    usleep 100000;
+    $self->sleep(0.1);
 }
 
 =head1 CONTENT METHODS
