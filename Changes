@@ -31,6 +31,20 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.48 2020-04-xx
+    * API CHANGES:
+    * ->field() now takes the form field index as third parameter, like
+      WWW::Mechanize does. It warns about the old usage and corrects it for
+      the time being.
+      Change ->field( name => 'John Bull', [], [] ) to
+             ->field( name => 'John Bull', undef, [], [] )
+      for operating as it did before and silencing the warning.
+
+    * ->field() now checks its parameter count and wants a field name and a
+      value to set the field to. Use ->value() to query the value of a field
+      without setting it. This change to your scripts is mandatory because
+      ->field() now uses a parameter declaration.
+
 0.47 2020-04-08
     * Add ->transport() accessor to WWW::Mechanize::Chrome
       This currently just is ->driver->transport

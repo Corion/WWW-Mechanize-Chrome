@@ -3740,12 +3740,16 @@ sub xpath( $self, $query, %options) {
     my $first  = $options{ one };
     my $maybe  = $options{ maybe };
     my $any    = $options{ any };
+    my $index  = $options{ index } || 0;
+    if( $index >= 1 ) {
+        $index--;
+    };
     my $return_first_element = ($single or $first or $maybe or $any );
     $options{ user_info }||= join "|", @$query;
 
     # Construct some helper variables
     my $zero_allowed = not ($single or $first);
-    my $two_allowed  = not( $single or $maybe);
+    my $two_allowed  = (not( $single or $maybe)) || defined $options{ index };
 
     # Sanity check for the common error of
     # my $item = $mech->xpath("//foo");
@@ -3796,7 +3800,7 @@ sub xpath( $self, $query, %options) {
         $self->signal_condition( sprintf "%d elements found for %s", (scalar @res), $options{ user_info } );
     };
 
-    $return_first_element ? $res[0] : @res
+    $return_first_element ? $res[$index] : @res
 }
 
 =head2 C<< $mech->by_id( $id, %options ) >>
@@ -4248,10 +4252,11 @@ sub forms {
                      : \@res
 };
 
-=head2 C<< $mech->field( $selector, $value, [,\@pre_events [,\@post_events]] ) >>
+=head2 C<< $mech->field( $selector, $value, [, $index, \@pre_events [,\@post_events]] ) >>
 
   $mech->field( user => 'joe' );
-  $mech->field( not_empty => '', [], [] ); # bypass JS validation
+  $mech->field( not_empty => '', 0, [], [] ); # bypass JS validation
+  $mech->field( date => '2020-04-01', 2 );    # set second field named "date"
 
 Sets the field with the name given in C<$selector> to the given value.
 Returns the value.
@@ -4274,13 +4279,19 @@ are triggered.
 
 =cut
 
-sub field {
-    my ($self,$name,$value,$pre,$post) = @_;
+sub field($self,$name,$value,$index=undef,$pre=undef,$post=undef) {
+    if( ref $index ) { # old API
+        carp "Old API style for ->field() is deprecated. Please fix the call to pass undef for the third parameter if using pre_events/post_events!";
+        $post  = $pre;
+        $pre   = $index;
+        $index = undef;
+    };
     $self->get_set_value(
         name => $name,
         value => $value,
         pre => $pre,
         post => $post,
+        index => $index,
         node => $self->current_form,
     );
 }
@@ -4450,10 +4461,27 @@ sub get_set_value($self,%options) {
     $pre  ||= []; # just to eliminate some checks downwards
     $post ||= []; # just to eliminate some checks downwards
     my $name  = delete $options{ name };
+    my $index = delete $options{ index };
 
+    my $index_name = '';
+    if( defined $index ) {
+        if( $index == 1 or $index =~ /[^1]1$/ ) {
+            $index_name = "${index}st ";
+
+        } elsif( $index == 2 or $index =~ /[^1]2$/ ) {
+            $index_name = "${index}nd ";
+
+        } elsif( $index == 3 or $index =~ /[^1]3$/ ) {
+            $index_name = "${index}rd ";
+
+        } else {
+            $index_name = "${index}th ";
+        }
+    };
     my @fields = $self->_field_by_name(
                      name => $name,
-                     user_info => "input with name '$name'",
+                     user_info => "${index_name}input with name '$name'",
+                     index     => $index,
                      %options );
 
     if (my $obj = $fields[0]) {

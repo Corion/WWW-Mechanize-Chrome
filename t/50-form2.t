@@ -100,20 +100,20 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     ok $mech->current_form, "We can find a form by its contained select fields";
     $mech->field('quickcomment', 2);
     pass "We survived setting the field 'quickcomment' to 2";
-    my @result = $mech->field('quickcomment');
+    my @result = $mech->value('quickcomment');
     cmp_bag \@result, [2], "->field returned bag 2";
     # diag explain \@result;
 
     $mech->get_local('50-form2.html');
     $mech->form_with_fields('multic');
     ok $mech->current_form, "We can find a form by its contained multi-select fields";
-    @result = $mech->field('multic');
+    @result = $mech->value('multic');
     cmp_bag \@result, [2,2,3], "->field returned bag 2,2,3";
     # diag explain \@result;
 
     $mech->field('multic', [1,2]);
     pass "We survived setting the field 'multic' to 1,2";
-    @result = $mech->field('multic');
+    @result = $mech->value('multic');
     cmp_bag \@result, [1,1,2,2], "->field returned bag 1,1,2,2";
     # diag explain \@result;
 });
