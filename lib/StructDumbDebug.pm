@@ -1,10 +1,8 @@
 package StructDumbDebug;
 use strict;
 use IO::Async::Loop;
+use IO::Async::Stream;
 
-#use Net::Async::WebSocket::Client;
-#Net::Async::WebSocket::Client->VERSION(0.12); # fixes some errors with masked frames
-
-#our $VERSION = '0.48';
+our $VERSION = '0.48';
 
 1;
