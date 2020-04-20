@@ -58,6 +58,10 @@
       The methods used their hand-rolled handling of "fire-and-forget" Futures
       instead of using Future->retain()
 
+    * Temporarily add Data::Dump as test prerequisite. This seems to be an
+      action that will prevent test failures on Travis:
+      https://rt.cpan.org/Public/Bug/Display.html?id=132378
+
 0.47 2020-04-08
     * Add ->transport() accessor to WWW::Mechanize::Chrome
       This currently just is ->driver->transport

@@ -3,6 +3,7 @@ abstract: 'automate the Chrome browser'
 author:
   - 'Max Maischein <corion@cpan.org>'
 build_requires:
+  Data::Dump: '0'
   Data::Dumper: '0'
   ExtUtils::MakeMaker: 5.52_01
   Image::Info: '0'
