@@ -554,7 +554,7 @@ A callback for Javascript dialogs (`alert()`, `prompt()`, ... )
         $mech->handle_dialog( 1 ); # click "OK" / "yes" instead of "cancel"
     });
 
-Closes the current Javascript dialog. Depending on
+Closes the current Javascript dialog.
 
 ## `$mech->js_console_entries()`
 
