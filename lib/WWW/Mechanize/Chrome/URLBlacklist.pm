@@ -42,7 +42,7 @@ so that Chrome does not make requests to the blacklisted URLs.
 
 =head1 ATTRIBUTES
 
-=head2 C<<whitelist>>
+=head2 C<< whitelist >>
 
 Arrayref containing regular expressions of URLs to always allow fetching.
 
@@ -53,7 +53,7 @@ has 'whitelist' => (
     default => sub { [] },
 );
 
-=head2 C<<blacklist>>
+=head2 C<< blacklist >>
 
 Arrayref containing regular expressions of URLs to always deny fetching unless
 they are matched by something in the C<whitelist>.
@@ -65,7 +65,7 @@ has 'blacklist' => (
     default => sub { [] },
 );
 
-=head2 C<<default>>
+=head2 C<< default >>
 
   default => 'continueRequest'
 
@@ -80,7 +80,7 @@ has 'default' => (
     default => 'continueRequest',
 );
 
-=head2 C<<on_default>>
+=head2 C<< on_default >>
 
   on_default => sub {
       my( $url, $action ) = @_;
@@ -97,7 +97,7 @@ has 'on_default' => (
     is => 'rw',
 );
 
-=head2 C<<_mech>>
+=head2 C<< _mech >>
 
 (internal) The WWW::Mechanize::Chrome instance we are connected to
 
@@ -107,7 +107,7 @@ has '_mech' => (
     is => 'rw',
 );
 
-=head2 C<<_request_listener>>
+=head2 C<< _request_listener >>
 
 (internal) The request listener created by WWW::Mechanize::Chrome while listening
 for URL messages
@@ -133,6 +133,10 @@ has '_request_listener' => (
           qr!.*\bfavicon.ico$!,
       ],
   );
+  $bl->enable( $mech );
+
+Creates a new instance of a blacklist, but does B<not> activate it yet.
+See C<< ->enable >> for that.
 
 =cut
 
