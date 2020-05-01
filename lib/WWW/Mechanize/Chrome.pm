@@ -2497,6 +2497,9 @@ current request.
 =cut
 
 sub reload( $self, %options ) {
+    if( exists $options{ ignoreCache } ) {
+        $options{ ignoreCache } = $options{ ignoreCache } ? JSON::true : JSON::false;
+    };
     $self->_mightNavigate( sub {
         $self->target->send_message('Page.reload', %options )
     }, navigates => 1, %options)

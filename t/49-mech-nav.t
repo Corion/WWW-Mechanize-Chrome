@@ -14,12 +14,13 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
+my $testcount = 5;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 4*@instances;
+    plan tests => 5*@instances;
 };
 
 sub new_mech {
@@ -35,7 +36,7 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
     $mech->get($server->url);
@@ -56,6 +57,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
         #if( $version =~ /\b(\d+)\b/ and $1 < 66 ) {
             $mech->reload;
             is $mech->uri, $last, 'We reloaded';
+            $mech->reload( ignoreCache => 1 );
+            is $mech->uri, $last, 'We reloaded, ignoring the cache';
         #} else {
         #    skip "Chrome v66+ doesn't know how to reload without hanging in a dialog box", 1;
         #}
