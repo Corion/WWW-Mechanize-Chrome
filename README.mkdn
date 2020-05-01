@@ -1383,6 +1383,30 @@ with a different API. Supported keys are:
 
 in addition to all keys that `$mech->xpath` supports.
 
+## `$mech->tick( $name, $value [, $set ] )`
+
+    $mech->tick("confirmation_box", 'yes');
+
+"Ticks" the first checkbox that has both the name and value associated with it
+on the current form. Dies if there is no named check box for that value.
+Passing in a false value as the third optional argument will cause the
+checkbox to be unticked.
+
+(Un)ticking the checkbox is done by sending a click event to it if needed.
+If `$value` is `undef`, the first checkbox matching `$name` will
+be (un)ticked.
+
+If `$name` is a reference to a hash, that hash will be used
+as the options to `->find_link_dom` to find the element.
+
+## `$mech->untick( $name, $value )`
+
+    $mech->untick('spam_confirm','yes',undef)
+
+Causes the checkbox to be unticked. Shorthand for
+
+    $mech->tick($name,$value,undef)
+
 ## `$mech->submit( $form )`
 
     $mech->submit;

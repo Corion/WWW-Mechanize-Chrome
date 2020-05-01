@@ -32,6 +32,10 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.50 2020-05-01
+    * Add ->tick() and ->untick() methods
+    * Fix crash in ->reload( ignoreCache => 1 ), GH issue #54
+
 0.49 2020-04-30
     * Fix sending events after changing an element value
       This makes

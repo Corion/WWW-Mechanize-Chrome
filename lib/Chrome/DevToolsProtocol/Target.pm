@@ -16,7 +16,7 @@ use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 use PerlX::Maybe;
 
-our $VERSION = '0.49';
+our $VERSION = '0.50';
 our @CARP_NOT;
 
 =head1 NAME
