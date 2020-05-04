@@ -332,7 +332,7 @@ sub set_attribute_future( $self, $attribute, $value ) {
             $self->driver->send_message(
                 'DOM.setAttributeValue',
                 name => $attribute,
-                value => $value,
+                value => ''.$value,
                 nodeId => 0+$nodeId
             )
         })
