@@ -129,6 +129,8 @@ t/helper.pm
 t/mixi_jp_index.html
 t/rt127588.t
 t/rt130999.t
+t/select.html
+t/select.t
 t/sophos_co_jp_index.html
 t/test-input-with-class.html
 testrules.yml

@@ -4632,6 +4632,91 @@ JS
     }
 }
 
+=head2 C<< $mech->select( $name, $value ) >>
+
+=head2 C<< $mech->select( $name, \@values ) >>
+
+    $mech->select( 'items', 'banana' );
+
+Given the name of a C<select> field, set its value to the value
+specified.  If the field is not C<< <select multiple> >> and the
+C<$value> is an array, only the B<first> value will be set.
+Passing C<$value> as a hash with
+an C<n> key selects an item by number (e.g.
+C<< {n => 3} >> or C<< {n => [2,4]} >>).
+The numbering starts at 1.  This applies to the current form.
+
+If you have a field with C<< <select multiple> >> and you pass a single
+C<$value>, then C<$value> will be added to the list of fields selected,
+without clearing the others.  However, if you pass an array reference,
+then all previously selected values will be cleared.
+
+Returns true on successfully setting the value. On failure, returns
+false and calls C<< $self>warn() >> with an error message.
+
+=cut
+
+sub select($self, $name, $value) {
+    my $field;
+    if( ! eval {
+        ($field) = $self->_field_by_name(
+            node => $self->current_form,
+            name => $name,
+            #%options,
+        );
+        1;
+    }) {
+        # the field was not found
+        return;
+    };
+
+    my @options = $self->xpath( './/option', node => $field);
+    my @by_index;
+    my @by_value;
+    my $single = $field->get_attribute('type') eq "select-one";
+    my $deselect;
+
+    if ('HASH' eq ref $value||'') {
+        for (keys %$value) {
+            $self->warn(qq{Unknown select value parameter "$_"})
+              unless $_ eq 'n';
+        }
+
+        $deselect = ref $value->{n};
+        @by_index = ref $value->{n} ? @{ $value->{n} } : $value->{n};
+    } elsif ('ARRAY' eq ref $value||'') {
+        # clear all preselected values
+        $deselect = 1;
+        @by_value = @{ $value };
+    } else {
+        @by_value = $value;
+    };
+
+    if ($deselect) {
+        for my $o (@options) {
+            $o->{selected} = 0;
+        }
+    };
+
+    if ($single) {
+        # Only use the first element for single-element boxes
+        $#by_index = 0+@by_index ? 0 : -1;
+        $#by_value = 0+@by_value ? 0 : -1;
+    };
+
+    # Select the items, either by index or by value
+    for my $idx (@by_index) {
+        $options[$idx-1]->set_attribute('selected' => 1 );
+    };
+
+    for my $v (@by_value) {
+        my $option = $self->xpath( sprintf( './/option[@value="%s"]', quote_xpath $v) , node => $field, single => 1 );
+        $option->set_attribute( 'selected' => '1' );
+    };
+
+    return @by_index + @by_value > 0;
+}
+
 =head2 C<< $mech->tick( $name, $value [, $set ] ) >>
 
     $mech->tick("confirmation_box", 'yes');

@@ -788,6 +788,10 @@ request that Chrome makes.
 
 Note that currently, we only support one value per header.
 
+Chrome since version 63+ does not allow setting and sending the `Referer`
+header anymore. The bug report is
+at [https://bugs.chromium.org/p/chromium/issues/detail?id=849972](https://bugs.chromium.org/p/chromium/issues/detail?id=849972).
+
 ## `$mech->delete_header( $name , $name2... )`
 
     $mech->delete_header( 'User-Agent' );
@@ -1382,6 +1386,28 @@ with a different API. Supported keys are:
     post
 
 in addition to all keys that `$mech->xpath` supports.
+
+## `$mech->select( $name, $value )`
+
+## `$mech->select( $name, \@values )`
+
+    $mech->select( 'items', 'banana' );
+
+Given the name of a `select` field, set its value to the value
+specified.  If the field is not `<select multiple>` and the
+`$value` is an array, only the **first** value will be set.
+Passing `$value` as a hash with
+an `n` key selects an item by number (e.g.
+`{n => 3}` or `{n => [2,4]}`).
+The numbering starts at 1.  This applies to the current form.
+
+If you have a field with `<select multiple>` and you pass a single
+`$value`, then `$value` will be added to the list of fields selected,
+without clearing the others.  However, if you pass an array reference,
+then all previously selected values will be cleared.
+
+Returns true on successfully setting the value. On failure, returns
+false and calls `$self>warn()` with an error message.
 
 ## `$mech->tick( $name, $value [, $set ] )`
 
