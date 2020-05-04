@@ -22,7 +22,6 @@ lib/Chrome/DevToolsProtocol/Transport/Pipe/Mojo.pm
 lib/Chrome/DevToolsProtocol/Transport/Pipe/NetAsync.pm
 lib/Chrome/DevToolsProtocol/Transport/Win32PipeOpener.pm
 lib/HTTP/Cookies/ChromeDevTools.pm
-lib/StructDumbDebug.pm
 lib/WWW/Mechanize/Chrome.pm
 lib/WWW/Mechanize/Chrome/Contributing.pod
 lib/WWW/Mechanize/Chrome/Cookbook.pm

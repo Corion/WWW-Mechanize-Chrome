@@ -24,7 +24,7 @@ use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 
-our $VERSION = '0.50';
+our $VERSION = '0.51';
 our @CARP_NOT;
 
 =encoding utf-8
@@ -1839,6 +1839,7 @@ or not. Setting this will never wait for an HTTP response.
 
 sub update_response($self, $response) {
     $self->log('trace', 'Updated response object');
+    $self->clear_current_form();
     $self->{response} = $response
 }
 

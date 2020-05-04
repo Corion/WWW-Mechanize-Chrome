@@ -32,6 +32,11 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.51 2020-05-01
+    * Add ->select() method
+    * ->current_form() is now cleared between page changes
+    * $node->set_attribute() now always stringifies its argument
+
 0.50 2020-05-01
     * Add ->tick() and ->untick() methods
     * Fix crash in ->reload( ignoreCache => 1 ), GH issue #54
