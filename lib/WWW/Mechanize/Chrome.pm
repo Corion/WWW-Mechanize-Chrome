@@ -2568,6 +2568,10 @@ request that Chrome makes.
 
 Note that currently, we only support one value per header.
 
+Chrome since version 63+ does not allow setting and sending the C<Referer>
+header anymore. The bug report is
+at L<https://bugs.chromium.org/p/chromium/issues/detail?id=849972>.
+
 =cut
 
 sub _set_extra_headers_future( $self, %headers ) {
