@@ -2096,6 +2096,7 @@ sub get_future($self, $url, %options ) {
         )
         }, url => "$url", %options, navigates => 1 )
     ->then( sub {
+        $self->clear_current_form();
         Future->done( $self->response )
     })
 };
