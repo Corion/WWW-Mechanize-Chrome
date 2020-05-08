@@ -3113,16 +3113,18 @@ sub make_link {
     };
 
     if (defined $url) {
+        #my $text  => $node->get_attribute('text'),
+        my $text = $node->get_text;
+        $text =~ s!\A\s+!!s;
+        $text =~ s!\s+\z!!s;
         my $res = WWW::Mechanize::Link->new({
             tag   => $tag,
             name  => $node->get_attribute('name'),
             base  => $base,
             url   => $url,
-            #text  => $node->get_attribute('innerHTML'),
-            text  => $node->get_attribute('text'),
+            text  => $text,
             attrs => {},
         });
-
         return $res
     } else {
         ()
@@ -3734,7 +3736,6 @@ sub xpath( $self, $query, %options) {
     if ('ARRAY' ne (ref $query||'')) {
         $query = [$query];
     };
-
     if( not exists $options{ frames }) {
         $options{ frames }= $self->{frames};
     };
