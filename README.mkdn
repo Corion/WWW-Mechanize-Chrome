@@ -137,22 +137,6 @@ them in a Perl object to provide the easy-to-use methods documented here.
     your code. If `autoclose` is set to a false value, the tab will remain open
     even after the program has finished.
 
-- **host**
-
-    Set the host the browser listens on:
-
-        host => '192.168.1.2'
-        host => 'localhost'
-
-    Defaults to `127.0.0.1`. The browser will listen for commands on the
-    specified host. The host address should be inaccessible from the internet.
-    &#x3d;item **log**
-
-        log => $object   # specify the object used for logging
-
-    Can be used to supply a [Log::Log4perl](https://metacpan.org/pod/Log::Log4perl) object that has been manually
-    constructed.
-
 - **launch\_exe**
 
     Set the name and/or path to the browser's executable program:
@@ -896,6 +880,8 @@ scrolling page like so:
 ## `$mech->document()`
 
     print $self->document->{nodeId};
+
+Returns the `document` node.
 
 This is WWW::Mechanize::Chrome specific.
 

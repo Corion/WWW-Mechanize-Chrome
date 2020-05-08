@@ -24,7 +24,7 @@ use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 
-our $VERSION = '0.51';
+our $VERSION = '0.52';
 our @CARP_NOT;
 
 =encoding utf-8

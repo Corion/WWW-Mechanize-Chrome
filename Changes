@@ -32,7 +32,7 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
-0.52 to be released
+0.52 2020-05-08
     * Strip leading and trailing whitespace, normalize whitespace
       in link texts as returned by ->links()
 
