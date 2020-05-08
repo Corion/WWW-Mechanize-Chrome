@@ -167,22 +167,6 @@ By default, C<autoclose> is set to true, closing the tab opened when running
 your code. If C<autoclose> is set to a false value, the tab will remain open
 even after the program has finished.
 
-=item B<host>
-
-Set the host the browser listens on:
-
-  host => '192.168.1.2'
-  host => 'localhost'
-
-Defaults to C<127.0.0.1>. The browser will listen for commands on the
-specified host. The host address should be inaccessible from the internet.
-=item B<log>
-
-  log => $object   # specify the object used for logging
-
-Can be used to supply a L<Log::Log4perl> object that has been manually
-constructed.
-
 =item B<launch_exe>
 
 Set the name and/or path to the browser's executable program:
@@ -2852,6 +2836,8 @@ sub _scroll_to_bottom {
 =head2 C<< $mech->document() >>
 
     print $self->document->{nodeId};
+
+Returns the C<document> node.
 
 This is WWW::Mechanize::Chrome specific.
 
