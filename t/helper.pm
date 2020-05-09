@@ -141,15 +141,15 @@ sub runtests {
 }
 
 sub run_across_instances {
-    my ($instances, $new_mech, $test_count, $code) = @_;
+    #my ($instances, $new_mech, $test_count, $code) = @_;
 
     croak "No test count given"
-        unless $test_count;
+        unless $_[2]; #$test_count;
 
-    for my $browser_instance (@$instances) {
-        runtests( $browser_instance, $new_mech, $code, $test_count );
+    for my $browser_instance (@{$_[0]}) {
+        runtests( $browser_instance, @_[1,3,2] );
         #undef $new_mech;
-        sleep 0.5 if @$instances;
+        sleep 0.5 if @{$_[0]};
         # So the browser can shut down before we try to connect
         # to the new instance
     };
