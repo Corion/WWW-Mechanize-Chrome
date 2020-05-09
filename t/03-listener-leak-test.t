@@ -10,6 +10,8 @@ use lib '.';
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
+Log::Log4perl->easy_init($TRACE)
+    if $^O =~ /darwin/i;
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
@@ -73,6 +75,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is $called, 1, "Our handler was called";
     $console->unregister;
     $called = 0;
+    $destroyed = 0;
     $mech->driver->on_response(undef, '{"method":"Runtime.consoleAPICalled"}');
     is $called, 0, "Our handler was not called after manual removal";
     is scalar @{ $mech->driver->listener->{'Runtime.consoleAPICalled'} }, 1, "We remove it";
@@ -86,6 +89,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->remove_listener( $console );
     $mech->driver->on_response(undef, '{"method":"Runtime.consoleAPICalled"}');
     is $called, 0, "Our handler was not called after manual removal via ->remove_listener";
+    note "Test with one browser instance finished";
 });
 note "Stopping local HTTP server";
 $server->stop;
