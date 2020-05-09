@@ -1736,54 +1736,38 @@ sub close {
             #$_[0]->{ driver }->close
         };
     };
-    if( $^O =~ /darwin/i ) {
-        print "Disposing driver\n";
-    };
     delete $_[0]->{ driver };
 
     if( $pid and kill 0 => $pid) {
-    if( $^O =~ /darwin/i ) {
-        print "Chrome child is still alive, killing with '$_[0]->{cleanup_signal}'\n";
-    };
         local $SIG{CHLD} = 'IGNORE';
         undef $!;
         if( ! kill $_[0]->{cleanup_signal} => $pid ) {
-    if( $^O =~ /darwin/i ) {
-        print "Killing $pid didn't work?! $! / $?\n";
-        print "Waiting with waitpid\n";
-    };
             # The child already has gone away?!
             warn "Couldn't kill browser child process $pid with $_[0]->{cleanup_signal}: $!";
             # Gobble up any exit status
             warn waitpid -1, WNOHANG;
         } else {
-    if( $^O =~ /darwin/i ) {
-        print "Waiting for child to exit\n";
-    };
-        my $timeout = time+2;
-        while( time < $timeout ) {
-            my $res = waitpid $pid, WNOHANG;
-            if( $res != -1 and $res != $pid ) {
-                warn "Couldn't wait for child '$pid' ($res)?"
-                    if $res != 0;
-                sleep 0.1;
+
+            if( $^O =~ /darwin/i ) {
+                # Busy-wait until the kid has gone away since on OSX this caused
+                # infinite hangs at least on Travis CI !?
+                my $timeout = time+2;
+                while( time < $timeout ) {
+                    my $res = waitpid $pid, WNOHANG;
+                    if( $res != -1 and $res != $pid ) {
+                        warn "Couldn't wait for child '$pid' ($res)?"
+                            if $res != 0;
+                        sleep 0.1;
+                    } else {
+                        last;
+                    };
+                };
             } else {
-                last;
+                # on Linux and Windows, plain waitpid Just Works
+                waitpid $pid, WNOHANG;
             };
         };
-    if( $^O =~ /darwin/i ) {
-        print "Child wait done\n";
-    };
-    my $res = waitpid $pid, WNOHANG;
-    if( 0 == $res ) {
-        warn "Child process $pid still alive?!\n";
-        # well, or PIDs are recycled _really_ fast...
-    };
-        };
 
-    if( $^O =~ /darwin/i ) {
-        print "Waiting for file cleanup\n";
-    };
         if( my $path = $_[0]->{wait_file}) {
             my $timeout = time + 10;
             while( time < $timeout ) {
@@ -1792,9 +1776,6 @@ sub close {
                 $_[0]->sleep(0.1);
             }
         };
-    };
-    if( $^O =~ /darwin/i ) {
-        print "->close() done\n";
     };
 }
 
