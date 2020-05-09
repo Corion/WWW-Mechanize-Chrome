@@ -10,8 +10,8 @@ use lib '.';
 use t::helper;
 
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
-Log::Log4perl->easy_init($TRACE)
-    if $^O =~ /darwin/i;
+#Log::Log4perl->easy_init($TRACE)
+#    if $^O =~ /darwin/i;
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();

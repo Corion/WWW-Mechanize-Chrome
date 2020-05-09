@@ -1706,12 +1706,18 @@ Tear down all connections and shut down Chrome.
 =cut
 
 sub close {
+    if( $^O =~ /darwin/i ) {
+        print "Closing mechanize\n";
+    };
     my $pid= delete $_[0]->{pid};
 
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
     #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
     if( $_[0]->{autoclose} and $_[0]->tab  ) {
+    if( $^O =~ /darwin/i ) {
+        print "Closing target\n";
+    };
         $_[0]->target->close->get();
     };
 
@@ -1730,9 +1736,15 @@ sub close {
             #$_[0]->{ driver }->close
         };
     };
+    if( $^O =~ /darwin/i ) {
+        print "Disposing driver\n";
+    };
     delete $_[0]->{ driver };
 
     if( $pid and kill 0 => $pid) {
+    if( $^O =~ /darwin/i ) {
+        print "Chrome child is still alive, killing with '$_[0]->{cleanup_signal}'\n";
+    };
         local $SIG{CHLD} = 'IGNORE';
         if( ! kill $_[0]->{cleanup_signal} => $pid ) {
             # The child already has gone away?!
@@ -1740,9 +1752,15 @@ sub close {
             # Gobble up any exit status
             waitpid -1, WNOHANG;
         } else {
+    if( $^O =~ /darwin/i ) {
+        print "Waiting for child to exit";
+    };
             waitpid $pid, 0;
         };
 
+    if( $^O =~ /darwin/i ) {
+        print "Waiting for file cleanup\n";
+    };
         if( my $path = $_[0]->{wait_file}) {
             my $timeout = time + 10;
             while( time < $timeout ) {
@@ -1752,11 +1770,17 @@ sub close {
             }
         };
     };
+    if( $^O =~ /darwin/i ) {
+        print "->close() done\n";
+    };
 }
 
 sub DESTROY {
     $_[0]->close();
     %{ $_[0] }= (); # clean out all other held references
+    if( $^O =~ /darwin/i ) {
+        print "DESTROY finished\n";
+    };
 }
 
 =head2 C<< $mech->highlight_node( @nodes ) >>
