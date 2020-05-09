@@ -64,6 +64,8 @@ jobs:
       perl: "5.26"
     - os: "osx"
       perl: "5.28"
+    - os: "osx"
+      perl: "blead"
 
   allow_failures:
     - perl: blead
