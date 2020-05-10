@@ -1706,18 +1706,12 @@ Tear down all connections and shut down Chrome.
 =cut
 
 sub close {
-    if( $^O =~ /darwin/i ) {
-        print "Closing mechanize\n";
-    };
     my $pid= delete $_[0]->{pid};
 
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
     #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
     if( $_[0]->{autoclose} and $_[0]->tab  ) {
-    if( $^O =~ /darwin/i ) {
-        print "Closing target\n";
-    };
         $_[0]->target->close->get();
     };
 
@@ -1782,9 +1776,6 @@ sub close {
 sub DESTROY {
     $_[0]->close();
     %{ $_[0] }= (); # clean out all other held references
-    if( $^O =~ /darwin/i ) {
-        print "DESTROY finished\n";
-    };
 }
 
 =head2 C<< $mech->highlight_node( @nodes ) >>
