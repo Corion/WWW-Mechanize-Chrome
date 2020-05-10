@@ -32,6 +32,13 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.53 2020-05-10
+    * Add a timeout on Chrome shutdown for OSX.
+      This seems to be needed at least for Travis CI, where
+          kill SIGKILL, $pid; waitpid($pid,0)
+      hangs indefinitely. Now we give Chrome up to 2 seconds to shut down on
+      OSX and then continue.
+
 0.52 2020-05-08
     * Strip leading and trailing whitespace, normalize whitespace
       in link texts as returned by ->links()
