@@ -5394,6 +5394,7 @@ sub fetchResources_future( $self, %options ) {
     my $file_map = $mech->saveResources_future(
         target_file => 'this_page.html',
         target_dir  => 'this_page_files/',
+        wanted      => sub { $_[0]->{url} =~ m!^https?:!i },
     )->get();
 
 Rough prototype of "Save Complete Page" feature
