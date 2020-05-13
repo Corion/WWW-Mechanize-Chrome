@@ -5313,7 +5313,7 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $save, $base_dir ) {
             # Also include childFrames and subresources here, recursively
 
             if( $seen->{ $res->{url} } ) {
-                warn "Skipping $res->{url} (already saved)";
+                #warn "Skipping $res->{url} (already saved)";
                 next;
             };
 
