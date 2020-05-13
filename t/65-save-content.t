@@ -72,17 +72,17 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     #my $base_url = $server->url;
     my $base_url = $mech->_local_url( '52-iframeset.html' );
     $mech->get($base_url);
-    my $page_file = "$topdir/test page.html";
-    my %r = $mech->saveResources_future(
+    my $page_file = File::Spec->catfile($topdir, "test page.html");
+    my $r = $mech->saveResources_future(
         target_file => $page_file,
         wanted      => sub { $_[0]->{url} =~ /^(https?|file):/i },
     )->get();
 
     ok -f $page_file, "Top HTML file exists ($page_file)";
 
-    is $r{ $base_url }, $page_file,
+    is $r->{ $base_url }, $page_file,
         "We save the URL under the top HTML filename"
-        or diag Dumper \%r;
+        or diag Dumper $r;
     if( -f $page_file ) {
         local $/;
         open my $fh, '<', $page_file
@@ -97,11 +97,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     # Check that we save all the additional resources below $topdir
     # even though none was specified
-    my @files_not_in_base_dir = map  { $_ => $r{$_} }
-                                grep { dirname($r{$_}) ne "$topdir/test page files" } keys %r;
+    my @files_not_in_base_dir = map  { $_ => $r->{$_} }
+                                grep { dirname($r->{$_}) ne File::Spec->catdir($topdir, "test page files" } keys %$r;
     is_deeply \@files_not_in_base_dir, [$base_url, File::Spec->catfile($topdir, "test page.html")],
         "All additional files get saved below our directory '$topdir/test page files'"
-        or diag Dumper \%r, \@files_not_in_base_dir;
+        or diag Dumper $r, \@files_not_in_base_dir;
 
 });
 $server->stop;
