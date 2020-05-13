@@ -5329,7 +5329,6 @@ sub fetchResources_future( $self, %options ) {
 
             # we will only scrape HTTP resources
             next if $res->{url} !~ /^https?:/i;
-            warn $res->{url};
             my $target = $s->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
             my %filenames = reverse %$names;
 
