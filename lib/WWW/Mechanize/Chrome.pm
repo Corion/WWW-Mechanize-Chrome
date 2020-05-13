@@ -2129,8 +2129,7 @@ subframes do not get loaded properly.
 
 =cut
 
-sub get_local {
-    my ($self, $htmlfile, %options) = @_;
+sub _local_url( $self, $htmlfile, %options ) {
     my $basedir;
     if( exists $options{ basedir }) {
         $basedir = $options{ basedir };
@@ -2148,6 +2147,11 @@ sub get_local {
     } else {
         $url= "file://$fn";
     };
+    return $url
+}
+
+sub get_local( $self, $htmlfile, %options ) {
+    my $url = $self->_local_url( $htmlfile, %options );
     my $res = $self->get($url, %options);
     ## Chrome is not helpful with its error messages for local URLs
     #if( 0+$res->headers->header_field_names and ([$res->headers->header_field_names]->[0] ne 'x-www-mechanize-Chrome-fake-success' or $self->uri ne 'about:blank')) {
