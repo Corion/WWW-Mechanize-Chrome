@@ -5299,6 +5299,67 @@ our %extensions = (
     'text/stylesheet'  => '.css',
 );
 
+sub _saveResourceTree( $self, $tree, $names, $seen, $save, $base_dir ) {
+        my @requested;
+        # Also fetch the frame itself?!
+        # Or better reuse ->content?!
+        # $tree->{frame}
+
+        # build the map from URLs to file names
+        # This should become a separate method
+        # Also something like get_page_resources, that returns the linear
+        # list of resources for all frames etc.
+        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
+            # Also include childFrames and subresources here, recursively
+
+            if( $seen->{ $res->{url} } ) {
+                warn "Skipping $res->{url} (already saved)";
+                next;
+            };
+
+            # we will only scrape HTTP and file resources
+            next if $res->{url} !~ /^(https?|file):/i;
+            my $target = $self->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
+            my %filenames = reverse %$names;
+
+            my $duplicates;
+            my $old_target = $target;
+            while( $filenames{ $target }) {
+                $duplicates++;
+                ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
+            };
+            $names->{ $res->{url} } = File::Spec->catfile( $base_dir, $target );
+        };
+
+        # retrieve and save the resource content for each resource
+        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
+            warn "Skipping $res->{url} (seen)" if $seen->{ $res->{url} };
+            next if $seen->{ $res->{url} };
+
+            # we will only scrape HTTP resources
+            next if $res->{url} !~ /^(https?)|file:/i;
+            my $fetch = $self->getResourceContent_future( $res );
+            if( $save ) {
+                #warn "Will save $res->{url}";
+                $fetch = $fetch->then( $save )->else(sub {
+                    warn "Fetch failed:";
+                    warn "@_";
+                });
+            };
+            push @requested, $fetch;
+        };
+
+        if( my $t = $tree->{childFrames}) {
+            for my $child (@$t) {
+                push @requested, $self->_saveResourceTree( $child, $names, $seen, $save, $base_dir );
+            };
+        };
+
+        return Future->wait_all( @requested )->catch(sub {
+            warn $@;
+        });
+}
+
 # Allow the options to specify whether to filter duplicates here
 sub fetchResources_future( $self, %options ) {
     $options{ save } ||= undef;
@@ -5315,53 +5376,8 @@ sub fetchResources_future( $self, %options ) {
 
     $self->getResourceTree_future
     ->then( sub( $tree ) {
-        my @requested;
-        # Also fetch the frame itself?!
-        # Or better reuse ->content?!
-        # $tree->{frame}
-
-        # build the map from URLs to file names
-        # This should become a separate method
-        # Also something like get_page_resources, that returns the linear
-        # list of resources for all frames etc.
-        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
-            # Also include childFrames and subresources here, recursively
-
-            if( $names->{ $res->{url} } ) {
-                #warn "Skipping $res->{url} (already saved)";
-                next;
-            };
-
-            # we will only scrape HTTP resources
-            next if $res->{url} !~ /^https?:/i;
-            my $target = $s->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
-            my %filenames = reverse %$names;
-
-            my $duplicates;
-            my $old_target = $target;
-            while( $filenames{ $target }) {
-                $duplicates++;
-                ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
-            };
-            $names->{ $res->{url} } = File::Spec->catfile( $base_dir, $target );
-        };
-
-        # retrieve and save the resource content for each resource
-        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
-            next if $seen->{ $res->{url} };
-
-            # we will only scrape HTTP resources
-            next if $res->{url} !~ /^https?:/i;
-            my $fetch = $s->getResourceContent_future( $res );
-            if( $save ) {
-                #warn "Will save $res->{url}";
-                $fetch = $fetch->then( $save );
-            };
-            push @requested, $fetch;
-        };
-        return Future->wait_all( @requested )->catch(sub {
-            warn $@;
-        });
+        warn "*** Saving resources";
+        $s->_saveResourceTree($tree, $names, $seen, $save, $base_dir);
     })->catch(sub {
         warn $@;
     });
