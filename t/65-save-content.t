@@ -98,7 +98,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     # Check that we save all the additional resources below $topdir
     # even though none was specified
     my @files_not_in_base_dir = map  { $_ => $r->{$_} }
-                                grep { dirname($r->{$_}) ne File::Spec->catdir($topdir, "test page files" } keys %$r;
+                                grep { dirname($r->{$_}) ne File::Spec->catdir($topdir, "test page files") } keys %$r;
     is_deeply \@files_not_in_base_dir, [$base_url, File::Spec->catfile($topdir, "test page.html")],
         "All additional files get saved below our directory '$topdir/test page files'"
         or diag Dumper $r, \@files_not_in_base_dir;

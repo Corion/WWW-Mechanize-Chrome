@@ -32,6 +32,15 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.54 2020-05-13
+    * Make ->saveResources_future() respect the target_dir directory for
+      saved resources
+    * Make the saved resources in ->saveResources_future configurable
+      through a callback
+    * ->saveResources_future() now returns a reference, like its documentation
+      states
+    * Add more tests for ->saveResources_future()
+
 0.53 2020-05-10
     * Add a timeout on Chrome shutdown for OSX.
       This seems to be needed at least for Travis CI, where
