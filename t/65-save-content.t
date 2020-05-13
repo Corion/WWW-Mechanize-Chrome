@@ -18,7 +18,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
-my $testcount = 4;
+my $testcount = 5;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -67,15 +67,18 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     #    or diag Dumper \%r;
 
     #my $base_url = $server->url;
-    my $base_url = 'https://corion.net/econsole/';
+    #my $base_url = 'https://corion.net/econsole/';
     #my $base_url = 'https://corion.net/';
+    #my $base_url = $server->url;
+    my $base_url = $mech->_local_url( '52-iframeset.html' );
     $mech->get($base_url);
     my $page_file = "$topdir/test page.html";
     my %r = $mech->saveResources_future(
         target_file => $page_file,
     )->get();
 
-    ok -f $page_file, "Top HTML file exists ($page_file)";
+    ok -f $page_file, "Top HTML file exists ($page_file)" or diag $mech->content;
+
     is $r{ $base_url }, $page_file,
         "We save the URL under the top HTML filename"
         or diag Dumper \%r;
