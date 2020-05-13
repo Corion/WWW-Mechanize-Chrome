@@ -5319,21 +5319,30 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $save, $base_dir ) {
 
             # we will only scrape HTTP and file resources
             next if $res->{url} !~ /^(https?|file):/i;
-            my $target = $self->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
-            my %filenames = reverse %$names;
+            my $target;
+            if( exists $names->{ $res->{url}}) {
+                # User-specified names always take precedence
+                $target = $names->{ $res->{url}};
+                $names->{ $res->{url} } = $target;
 
-            my $duplicates;
-            my $old_target = $target;
-            while( $filenames{ $target }) {
-                $duplicates++;
-                ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
+            } else {
+                # find a non-duplicate name
+                $target = $self->filenameFromUrl( $res->{url}, $extensions{ $res->{mimeType} });
+                my %filenames = reverse %$names;
+
+                my $duplicates;
+                my $old_target = $target;
+                while( $filenames{ $target }) {
+                    $duplicates++;
+                    ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
+                };
+                $names->{ $res->{url} } = File::Spec->catfile( $base_dir, $target );
             };
-            $names->{ $res->{url} } = File::Spec->catfile( $base_dir, $target );
+
         };
 
         # retrieve and save the resource content for each resource
         for my $res ($tree->{frame}, @{ $tree->{resources}}) {
-            warn "Skipping $res->{url} (seen)" if $seen->{ $res->{url} };
             next if $seen->{ $res->{url} };
 
             # we will only scrape HTTP resources
@@ -5376,7 +5385,6 @@ sub fetchResources_future( $self, %options ) {
 
     $self->getResourceTree_future
     ->then( sub( $tree ) {
-        warn "*** Saving resources";
         $s->_saveResourceTree($tree, $names, $seen, $save, $base_dir);
     })->catch(sub {
         warn $@;
@@ -5412,7 +5420,6 @@ sub saveResources_future( $self, %options ) {
     my $s = $self;
     weaken $s;
     $self->fetchResources_future( save => sub( $resource ) {
-
         # For mime/html targets without a name, use the title?!
         # Rewrite all HTML, CSS links
 
