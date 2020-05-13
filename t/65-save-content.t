@@ -4,6 +4,7 @@ use Test::More;
 use Data::Dumper;
 use Log::Log4perl qw(:easy);
 use File::Temp 'tempdir';
+use File::Basename 'dirname';
 
 use WWW::Mechanize::Chrome;
 use lib '.';
@@ -65,15 +66,17 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     #}, "We return a map of the saved files"
     #    or diag Dumper \%r;
 
-    #$mech->get('http://corion.net/econsole/');
-    #$mech->get('http://corion.net/');
+    #my $base_url = $server->url;
+    my $base_url = 'https://corion.net/econsole/';
+    #my $base_url = 'https://corion.net/';
+    $mech->get($base_url);
     my $page_file = "$topdir/test page.html";
     my %r = $mech->saveResources_future(
         target_file => $page_file,
     )->get();
 
     ok -f $page_file, "Top HTML file exists ($page_file)";
-    is $r{ $server->url }, $page_file,
+    is $r{ $base_url }, $page_file,
         "We save the URL under the top HTML filename"
         or diag Dumper \%r;
     if( -f $page_file ) {
@@ -87,6 +90,15 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             skip "Didn't write the file", 1;
         };
     };
+
+    # Check that we save all the additional resources below $topdir
+    # even though none was specified
+    my @files_not_in_base_dir = map  { $_ => $r{$_} }
+                                grep { dirname($r{$_}) ne "$topdir/test page files" } keys %r;
+    is_deeply \@files_not_in_base_dir, [$base_url, File::Spec->catfile($topdir, "test page.html")],
+        "All additional files get saved below our directory '$topdir/test page files'"
+        or diag Dumper \%r, \@files_not_in_base_dir;
+
 });
 $server->stop;
 
