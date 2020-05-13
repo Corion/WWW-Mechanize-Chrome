@@ -5301,9 +5301,11 @@ sub fetchResources_future( $self, %options ) {
     $options{ save } ||= undef;
     $options{ seen } ||= {};
     $options{ names } ||= {};
+    $options{ target_dir } ||= '.';
     my $seen = $options{ seen };
     my $names = $options{ names };
     my $save = $options{ save };
+    my $base_dir = $options{ target_dir };
 
     my $s = $self;
     weaken $s;
@@ -5338,7 +5340,7 @@ sub fetchResources_future( $self, %options ) {
                 $duplicates++;
                 ( $target = $old_target )=~ s!\.(\w+)$!_$duplicates.$1!;
             };
-            $names->{ $res->{url} } = $target;
+            $names->{ $res->{url} } = File::Spec->catfile( $base_dir, $target );
         };
 
         # retrieve and save the resource content for each resource
@@ -5407,7 +5409,7 @@ sub saveResources_future( $self, %options ) {
         CORE::close( $fh );
 
         Future->done( $resource );
-    }, names => \%names, seen => \my %seen )->then( sub( @resources ) {
+    }, names => \%names, seen => \my %seen, target_dir => $target_dir )->then( sub( @resources ) {
         Future->done( %names );
     })->catch(sub {
         warn $@;
