@@ -5299,7 +5299,7 @@ our %extensions = (
     'text/stylesheet'  => '.css',
 );
 
-sub _saveResourceTree( $self, $tree, $names, $seen, $save, $base_dir ) {
+sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) {
         my @requested;
         # Also fetch the frame itself?!
         # Or better reuse ->content?!
@@ -5310,15 +5310,13 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $save, $base_dir ) {
         # Also something like get_page_resources, that returns the linear
         # list of resources for all frames etc.
         for my $res ($tree->{frame}, @{ $tree->{resources}}) {
-            # Also include childFrames and subresources here, recursively
 
             if( $seen->{ $res->{url} } ) {
                 #warn "Skipping $res->{url} (already saved)";
                 next;
             };
+            next if $wanted->($res);
 
-            # we will only scrape HTTP and file resources
-            next if $res->{url} !~ /^(https?|file):/i;
             my $target;
             if( exists $names->{ $res->{url}}) {
                 # User-specified names always take precedence
@@ -5358,9 +5356,10 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $save, $base_dir ) {
             push @requested, $fetch;
         };
 
+        # recurse through the subframes
         if( my $t = $tree->{childFrames}) {
             for my $child (@$t) {
-                push @requested, $self->_saveResourceTree( $child, $names, $seen, $save, $base_dir );
+                push @requested, $self->_saveResourceTree( $child, $names, $seen, $wanted, $save, $base_dir );
             };
         };
 
@@ -5375,8 +5374,10 @@ sub fetchResources_future( $self, %options ) {
     $options{ seen } ||= {};
     $options{ names } ||= {};
     $options{ target_dir } ||= '.';
+    $options{ wanted } ||= sub( $res ) { $res->{url} =~ /^(https?):/i };
     my $seen = $options{ seen };
     my $names = $options{ names };
+    my $wanted = $options{ wanted };
     my $save = $options{ save };
     my $base_dir = $options{ target_dir };
 
@@ -5385,7 +5386,7 @@ sub fetchResources_future( $self, %options ) {
 
     $self->getResourceTree_future
     ->then( sub( $tree ) {
-        $s->_saveResourceTree($tree, $names, $seen, $save, $base_dir);
+        $s->_saveResourceTree($tree, $names, $seen, $wanted, $save, $base_dir);
     })->catch(sub {
         warn $@;
     });

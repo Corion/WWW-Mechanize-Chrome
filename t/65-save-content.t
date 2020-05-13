@@ -75,9 +75,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my $page_file = "$topdir/test page.html";
     my %r = $mech->saveResources_future(
         target_file => $page_file,
+        wanted      => sub { $_[0]->{url} =~ /^(https?|file):/i },
     )->get();
 
-    ok -f $page_file, "Top HTML file exists ($page_file)" or diag $mech->content;
+    ok -f $page_file, "Top HTML file exists ($page_file)";
 
     is $r{ $base_url }, $page_file,
         "We save the URL under the top HTML filename"
