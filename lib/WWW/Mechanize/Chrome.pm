@@ -4044,7 +4044,7 @@ sub click_button {
     } elsif (exists $options{ id }) {
         my $v = delete $options{ id };
         $xpath = sprintf '//*[@id="%s"]', $v;
-        $user_message = "Button name '$v' unknown";
+        $user_message = "Button id '$v' unknown";
     } elsif (exists $options{ number }) {
         my $v = delete $options{ number };
         $xpath = sprintf '//*[translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "button" or (translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "input" and @type="submit")][%s]', $v;
