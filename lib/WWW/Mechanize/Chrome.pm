@@ -5309,8 +5309,8 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
         # This should become a separate method
         # Also something like get_page_resources, that returns the linear
         # list of resources for all frames etc.
+        my @wanted;
         for my $res ($tree->{frame}, @{ $tree->{resources}}) {
-
             if( $seen->{ $res->{url} } ) {
                 #warn "Skipping $res->{url} (already saved)";
                 next;
@@ -5337,14 +5337,11 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
                 $names->{ $res->{url} } = File::Spec->catfile( $base_dir, $target );
             };
 
+            push @wanted, $res;
         };
 
         # retrieve and save the resource content for each resource
-        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
-            next if $seen->{ $res->{url} };
-
-            # we will only scrape HTTP resources
-            next if $res->{url} !~ /^(https?)|file:/i;
+        for my $res (@wanted) {
             my $fetch = $self->getResourceContent_future( $res );
             if( $save ) {
                 #warn "Will save $res->{url}";
