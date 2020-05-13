@@ -4026,8 +4026,7 @@ C<selector> or C<xpath>, consider using C<< ->click >> instead.
 
 =cut
 
-sub click_button {
-    my ($self,%options) = @_;
+sub click_button($self,%options) {
     my $node;
     my $xpath;
     my $user_message;
