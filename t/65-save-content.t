@@ -18,7 +18,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
-my $testcount = 5;
+my $testcount = 1+ 4*2;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -42,6 +42,8 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
+my @test_urls = ($server->url, WWW::Mechanize::Chrome->_local_url( '52-iframeset.html' ));
+
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
     my $version = $mech->chrome_version;
@@ -55,8 +57,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
+    for my $base_url (@test_urls) {
+
     my $topdir = tempdir( CLEANUP => 1 );
-    $mech->get($server->url);
 
     #my %r = $mech->saveResources_future(
     #    target_file => "test page.html"
@@ -66,11 +69,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     #}, "We return a map of the saved files"
     #    or diag Dumper \%r;
 
-    #my $base_url = $server->url;
     #my $base_url = 'https://corion.net/econsole/';
     #my $base_url = 'https://corion.net/';
-    #my $base_url = $server->url;
-    my $base_url = $mech->_local_url( '52-iframeset.html' );
     $mech->get($base_url);
     my $page_file = File::Spec->catfile($topdir, "test page.html");
     my $r = $mech->saveResources_future(
@@ -102,6 +102,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is_deeply \@files_not_in_base_dir, [$base_url, File::Spec->catfile($topdir, "test page.html")],
         "All additional files get saved below our directory '$topdir/test page files'"
         or diag Dumper $r, \@files_not_in_base_dir;
+
+    };
 
 });
 $server->stop;
