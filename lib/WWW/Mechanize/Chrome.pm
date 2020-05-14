@@ -5312,7 +5312,9 @@ sub getResourceContent_future( $self, $url_or_resource, $frameId=$self->frameId,
     ->then( sub( $result ) {
         if( delete $result->{base64Encoded}) {
             $result->{content} = decode_base64( $result->{content} )
-        }
+        } else {
+            $result->{_utf8} = 1;
+        };
         %$result = (%additional, %$result);
         Future->done( $result )
     })
@@ -5466,7 +5468,12 @@ sub saveResources_future( $self, %options ) {
         $s->log( 'debug', "Saving '$resource->{url}' to '$target'" );
         open my $fh, '>', $target
             or croak "Couldn't save url '$resource->{url}' to $target: $!";
-        binmode $fh;
+        if( $resource->{_utf8}) {
+            binmode $fh, ':encoding(UTF-8)';
+        } else {
+            binmode $fh;
+        };
+
         print $fh $resource->{content};
         CORE::close( $fh );
 
