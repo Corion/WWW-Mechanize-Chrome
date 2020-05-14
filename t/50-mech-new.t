@@ -39,7 +39,6 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
-    my $version = $mech->chrome_version;
 
     if( $ENV{WWW_MECHANIZE_CHROME_TRANSPORT}
         and $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} eq 'Chrome::DevToolsProtocol::Transport::Mojo'
@@ -48,11 +47,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             skip "Chrome::DevToolsProtocol::Transport::Mojo doesn't support port reuse", $testcount
         };
         return;
-    } elsif( $version =~ /\b(\d+)\b/ and ($1 == 61 or $1 == 59)) {
-        SKIP: {
-            skip "Chrome v$1 doesn't properly handle listing tabs...", $testcount;
-        };
-        return
     };
 
     my $app = $mech->driver;
