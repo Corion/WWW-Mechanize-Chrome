@@ -40,6 +40,8 @@
     * Pass link filtering logic for ->saveResources_future() around properly.
       This could maybe fix the top page of a tree not being saved.
       Also, parts of the filtering logic were the wrong way around.
+    * The filenames in ->saveResources_future() are now generated only from the
+      path of the URL, not the query parameters
 
 0.54 2020-05-13
     * Make ->saveResources_future() respect the target_dir directory for
