@@ -2311,7 +2311,9 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
 
     } map {
         # Extract the loaderId and requestId, if we haven't found it yet
-        if( $_->{method} eq 'Network.requestWillBeSent' and $_->{params}->{frameId} eq $frameId ) {
+        my $fi = $frameId || '';
+        my $rfi = $_->{params}->{frameId} || '';
+        if( $_->{method} eq 'Network.requestWillBeSent' and  $rfi eq $fi ) {
             $requestId ||= $_->{params}->{requestId};
             $loaderId ||= $_->{params}->{loaderId};
             $requestId ||= $_->{params}->{requestId};
