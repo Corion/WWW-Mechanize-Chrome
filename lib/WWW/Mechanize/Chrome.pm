@@ -5487,7 +5487,8 @@ sub saveResources_future( $self, %options ) {
 }
 
 sub filenameFromUrl( $self, $url, $extension ) {
-    my $target = $url;
+    my $target = URI->new( $url )->path;
+
     $target =~ s![\&\?\<\>\{\}\|\:\*]!_!g;
     $target =~ s!.*[/\\]!!;
 
