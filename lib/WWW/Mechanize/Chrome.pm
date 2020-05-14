@@ -5304,7 +5304,6 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
         # Also fetch the frame itself?!
         # Or better reuse ->content?!
         # $tree->{frame}
-
         # build the map from URLs to file names
         # This should become a separate method
         # Also something like get_page_resources, that returns the linear
@@ -5315,7 +5314,11 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
                 #warn "Skipping $res->{url} (already saved)";
                 next;
             };
-            next if $wanted->($res);
+            if( !$wanted->($res) ) {
+                #warn "Don't want $res->{url}";
+                next;
+            };
+            #warn "Do want $res->{url}";
 
             my $target;
             if( exists $names->{ $res->{url}}) {
@@ -5418,7 +5421,12 @@ sub saveResources_future( $self, %options ) {
     );
     my $s = $self;
     weaken $s;
-    $self->fetchResources_future( save => sub( $resource ) {
+    $self->fetchResources_future(
+              names => \%names,
+              seen => \my %seen,
+              target_dir => $target_dir,
+        maybe wanted => $options{ wanted },
+              save => sub( $resource ) {
         # For mime/html targets without a name, use the title?!
         # Rewrite all HTML, CSS links
 
@@ -5434,7 +5442,8 @@ sub saveResources_future( $self, %options ) {
         CORE::close( $fh );
 
         Future->done( $resource );
-    }, names => \%names, seen => \my %seen, target_dir => $target_dir )->then( sub( @resources ) {
+    },
+     )->then( sub( @resources ) {
         Future->done( \%names );
     })->catch(sub {
         warn $@;
