@@ -56,14 +56,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     # Add one more, just to be on the safe side, so that Chrome doesn't close
     # immediately again:
-    #$mech->driver->new_tab()->get;
     my $info = $mech->driver->createTarget()->get;
     my $targetId = $mech->driver->targetId; # this one should close once we discard it
 
-    #my @tabs = $app->list_tabs()->get;
     my @tabs = $app->getTargets()->get;
     note "Tabs open in PID $pid: ", 0+@tabs;
-    #use Data::Dumper; note Dumper \@tabs;
 
     note "Releasing mechanize $pid";
     undef $mech; # our own tab should now close automatically
@@ -154,11 +151,11 @@ HTML
     # Now try to connect to "our" now closed tab
     my $lived = eval {
         $mech = WWW::Mechanize::Chrome->new(
-            autodie => 1,
-            tab => qr/\Q$magic/,
-            reuse => 1,
-        driver    => $app,
-        driver_transport => $transport,
+            autodie          => 1,
+            tab              => qr/\Q$magic/,
+            reuse            => 1,
+            driver           => $app,
+            driver_transport => $transport,
             %args,
         );
         1;
