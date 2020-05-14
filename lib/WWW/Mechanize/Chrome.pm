@@ -996,18 +996,7 @@ sub _connect( $self, %options ) {
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $err ) {
         if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
-            local $SIG{CHLD} = 'IGNORE';
-            kill $self->{cleanup_signal} => $pid;
-            waitpid $pid, 0;
-
-            if( my $path = $self->{wait_file}) {
-                my $timeout = time + 10;
-                while( time < $timeout ) {
-                    last unless(-e $path);
-                    unlink($path) and last;
-                    $self->sleep(0.1);
-                }
-            };
+            $self->kill_child( 'SIGKILL', $pid, $self->{wait_file} );
         };
         croak $err;
     }
@@ -1732,10 +1721,14 @@ sub close {
     };
     delete $_[0]->{ driver };
 
+    $_[0]->kill_child( $_[0]->{cleanup_signal}, $pid, $_[0]->{wait_file} );
+}
+
+sub kill_child( $self, $signal, $pid, $wait_file ) {
     if( $pid and kill 0 => $pid) {
         local $SIG{CHLD} = 'IGNORE';
         undef $!;
-        if( ! kill $_[0]->{cleanup_signal} => $pid ) {
+        if( ! kill $signal => $pid ) {
             # The child already has gone away?!
             warn "Couldn't kill browser child process $pid with $_[0]->{cleanup_signal}: $!";
             # Gobble up any exit status
@@ -1762,12 +1755,12 @@ sub close {
             };
         };
 
-        if( my $path = $_[0]->{wait_file}) {
+        if( my $path = $wait_file) {
             my $timeout = time + 10;
             while( time < $timeout ) {
                 last unless(-e $path);
                 unlink($path) and last;
-                $_[0]->sleep(0.1);
+                $self->sleep(0.1);
             }
         };
     };

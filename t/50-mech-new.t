@@ -174,9 +174,7 @@ HTML
     };
 
     if( $pid ) {
-        # If we spawned a child process, let's clean it up the hard way
-        local $SIG{CHLD} = 'IGNORE';
-        kill 'SIGKILL', $pid; # clean up, the hard way
+        WWW::Mechanize::Chrome->kill_child('SIGKILL', $pid, undef);
     };
     %args = ();
     };
