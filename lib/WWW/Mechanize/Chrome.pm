@@ -5328,6 +5328,8 @@ our %extensions = (
     'text/html'  => '.html',
     'text/plain'  => '.txt',
     'text/stylesheet'  => '.css',
+    'text/javascript'         => '.js',
+    'application/javascript'  => '.js',
 );
 
 sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) {
