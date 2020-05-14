@@ -27,9 +27,7 @@ if (my $err = t::helper::default_unavailable) {
 my %args;
 sub new_mech {
     # Just keep these to pass the parameters to new instances
-    if( ! keys %args ) {
-        %args = @_;
-    };
+    %args = @_;
     t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
@@ -39,7 +37,6 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
-
     if( $ENV{WWW_MECHANIZE_CHROME_TRANSPORT}
         and $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} eq 'Chrome::DevToolsProtocol::Transport::Mojo'
     ) {
@@ -173,6 +170,5 @@ HTML
     if( $pid ) {
         WWW::Mechanize::Chrome->kill_child('SIGKILL', $pid, undef);
     };
-    %args = ();
     };
 });
