@@ -3262,6 +3262,33 @@ sub quote_xpath($) {
     $_
 };
 
+# Copied from WWW::Mechanize 1.97
+# Used by find_links to check for matches
+# The logic is such that ALL param criteria that are given must match
+sub _match_any_link_params( $self, $link, $p ) {
+    # No conditions, anything matches
+    return 1 unless keys %$p;
+
+    return if defined $p->{url}           && !($link->url eq $p->{url} );
+    return if defined $p->{url_regex}     && !($link->url =~ $p->{url_regex} );
+    return if defined $p->{url_abs}       && !($link->url_abs eq $p->{url_abs} );
+    return if defined $p->{url_abs_regex} && !($link->url_abs =~ $p->{url_abs_regex} );
+    return if defined $p->{text}          && !(defined($link->text) && $link->text eq $p->{text} );
+    return if defined $p->{text_regex}    && !(defined($link->text) && $link->text =~ $p->{text_regex} );
+    return if defined $p->{name}          && !(defined($link->name) && $link->name eq $p->{name} );
+    return if defined $p->{name_regex}    && !(defined($link->name) && $link->name =~ $p->{name_regex} );
+    return if defined $p->{tag}           && !($link->tag && $link->tag eq $p->{tag} );
+    return if defined $p->{tag_regex}     && !($link->tag && $link->tag =~ $p->{tag_regex} );
+
+    return if defined $p->{id}            && !($link->attrs->{id} && $link->attrs->{id} eq $p->{id} );
+    return if defined $p->{id_regex}      && !($link->attrs->{id} && $link->attrs->{id} =~ $p->{id_regex} );
+    return if defined $p->{class}         && !($link->attrs->{class} && $link->attrs->{class} eq $p->{class} );
+    return if defined $p->{class_regex}   && !($link->attrs->{class} && $link->attrs->{class} =~ $p->{class_regex} );
+
+    # Success: everything that was defined passed.
+    return 1;
+}
+
 sub find_link_dom {
     my ($self,%opts) = @_;
     my %xpath_options;
@@ -3336,12 +3363,12 @@ sub find_link_dom {
     my @res = $self->xpath($q, %xpath_options );
 
     if (keys %opts) {
-        # post-filter the remaining links through WWW::Mechanize
+        # post-filter the remaining links
         # for all the options we don't support with XPath
         my $base = $self->base;
-        require WWW::Mechanize;
+
         @res = grep {
-            WWW::Mechanize::_match_any_link_parms($self->make_link($_,$base),\%opts)
+            $self->_match_any_link_params($self->make_link($_,$base),\%opts);
         } @res;
     };
 
