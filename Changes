@@ -32,6 +32,15 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.55 2020-05-14
+    * Don't reuse internal functions of WWW::Mechanize
+      In this case, _match_any_link_parm() had been renamed to
+      _match_any_link_param(). The code has been copied now instead of being
+      reused.
+    * Pass link filtering logic for ->saveResources_future() around properly.
+      This could maybe fix the top page of a tree not being saved.
+      Also, parts of the filtering logic were the wrong way around.
+
 0.54 2020-05-13
     * Make ->saveResources_future() respect the target_dir directory for
       saved resources
