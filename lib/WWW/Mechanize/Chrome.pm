@@ -5421,7 +5421,7 @@ sub fetchResources_future( $self, %options ) {
     ->then( sub( $tree ) {
         $s->_saveResourceTree($tree, $names, $seen, $wanted, $save, $base_dir);
     })->catch(sub {
-        warn $@;
+        warn @_;
     });
 }
 
