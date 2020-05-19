@@ -17,20 +17,20 @@ jobs:
       matrix:
         perl-version:
           #- '5.8'
-          #- '5.10'
-          #- '5.14'
+          - '5.10'
+          - '5.14'
           #- '5.16'
           #- '5.22'
-          - '5.24'
+          #- '5.24'
           - '5.26'
           - '5.30'
           #- 'blead'
 
-    #container:
-    #  image: perl:${{ matrix.perl-version }}
+    container:
+      image: perl:${{ matrix.perl-version }}
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: perl -V
         run: perl -V
       #- name: "Install Chrome"
@@ -40,29 +40,13 @@ jobs:
       #      apt-get install chromium-browser libpng-dev
       - name: Install build infrastructure
         run: |
-          sudo apt-get --quiet=2 --yes install perlbrew
-          perlbrew init
-          echo 1
-      - name: Install Perl ${{ matrix.perl-version }}
-        run: |
-            . ~/perl5/perlbrew/etc/bashrc
-            perlbrew install perl-${{ matrix.perl-version}}
-      - name: Activate Perl ${{ matrix.perl-version }}
-        run: |
-            . ~/perl5/perlbrew/etc/bashrc
-            perlbrew switch perl-${{ matrix.perl-version}}
-      - name: Install build infrastructure
-        run: |
-            . ~/perl5/perlbrew/etc/bashrc
             cpanm --notest --installdeps .
             cpanm --notest AnyEvent AnyEvent::Future AnyEvent::WebSocket::Client
             cpanm --notest Mojolicious Future::Mojo
             cpanm --notest IO::Async Net::Async::WebSocket::Client
       - name: Build
         run: |
-            . ~/perl5/perlbrew/etc/bashrc
             perl Makefile.PL && make
       - name: Run Tests
         run: |
-            . ~/perl5/perlbrew/etc/bashrc
             prove --nocount --jobs 3 -I local/ -bl xt t
