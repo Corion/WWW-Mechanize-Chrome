@@ -1704,7 +1704,7 @@ sub close {
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
     #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
-    if( $_[0]->{autoclose} and $_[0]->tab  ) {
+    if( $_[0]->{autoclose} and $_[0]->target and $_[0]->tab  ) {
         $_[0]->target->close->get();
     };
 
