@@ -1725,7 +1725,9 @@ sub close {
     };
     delete $_[0]->{ driver };
 
-    $_[0]->kill_child( $_[0]->{cleanup_signal}, $pid, $_[0]->{wait_file} );
+    if( $_[0]->{autoclose} and $_[0]->{kill_pid} ) {
+        $_[0]->kill_child( $_[0]->{cleanup_signal}, $pid, $_[0]->{wait_file} );
+    }
 }
 
 sub kill_child( $self, $signal, $pid, $wait_file ) {
