@@ -63,6 +63,7 @@ t/50-form-with-fields.t
 t/50-form2.html
 t/50-form2.t
 t/50-form3.html
+t/50-mech-autoclose.t
 t/50-mech-content.t
 t/50-mech-ct.t
 t/50-mech-encoding.t
