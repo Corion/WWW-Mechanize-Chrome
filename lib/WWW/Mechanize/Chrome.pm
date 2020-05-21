@@ -823,6 +823,10 @@ sub new($class, %options) {
         $options{ autodie } = 1
     };
 
+    if (! exists $options{ autoclose }) {
+        $options{ autoclose } = 1
+    };
+
     if( ! exists $options{ frames }) {
         $options{ frames }= 1;
     };
