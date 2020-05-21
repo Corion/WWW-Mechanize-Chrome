@@ -24,7 +24,7 @@ use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 our @CARP_NOT;
 
 =encoding utf-8
@@ -981,6 +981,7 @@ sub _setup_driver_future( $self, %options ) {
     )->catch( sub(@args) {
         my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
+            use Data::Dumper; warn Dumper $args[1];
             $err .= $args[1]->{Reason};
         };
         Future->fail( $err );
@@ -1784,6 +1785,7 @@ sub kill_child( $self, $signal, $pid, $wait_file ) {
 }
 
 sub DESTROY {
+    #warn "Closing mechanize";
     $_[0]->close();
     %{ $_[0] }= (); # clean out all other held references
 }

@@ -15,7 +15,7 @@ use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 our @CARP_NOT;
 
 =head1 NAME
@@ -311,6 +311,9 @@ sub connect( $self, %args ) {
 
     my $got_endpoint;
     if( ! $endpoint ) {
+        if( ! $self->port ) {
+            die "Can't connect without knowing the port?! " . $self->port;
+        };
         $got_endpoint = $self->version_info()->then(sub( $info ) {
             $self->log('debug', "Found webSocket URL", $info );
             #$self->tab( $info );
@@ -534,8 +537,8 @@ sub current_sequence( $self ) {
 };
 
 sub build_url( $self, %options ) {
-    $options{ host } ||= $self->{host};
-    $options{ port } ||= $self->{port};
+    $options{ host } ||= $self->host;
+    $options{ port } ||= $self->port;
     my $url = sprintf "http://%s:%s/json", $options{ host }, $options{ port };
     $url .= '/' . $options{domain} if $options{ domain };
     $url
@@ -776,6 +779,7 @@ Gets the list of available targets
 
 sub getTargets( $self ) {
     $self->send_message('Target.getTargets')->then(sub( $info ) {
+        #use Data::Dumper; warn Dumper $info;
         Future->done( @{$info->{targetInfos}})
     });
 }
@@ -861,7 +865,7 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 
 has 'protocol' => (
     is => 'ro',

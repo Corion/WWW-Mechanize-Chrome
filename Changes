@@ -32,6 +32,11 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.56 2020-05-21
+    * Fix ->autoclose_tab / autoclose option so that they actually leave
+      Chrome open when the Perl program stops
+    * Wait a little bit longer so the Chrome child actually goes away
+
 0.55 2020-05-14
     * Don't reuse internal functions of WWW::Mechanize
       In this case, _match_any_link_parm() had been renamed to
