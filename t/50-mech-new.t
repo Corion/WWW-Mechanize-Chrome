@@ -15,7 +15,7 @@ Log::Log4perl->easy_init($ERROR);
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
-my $testcount = 7;
+my $testcount = 11;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -99,6 +99,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         driver_transport => $transport,
         %args,
     );
+    is $mech->{pid}, undef, "We didn't start a new process when reusing Chrome";
     $mech->update_html(<<HTML);
     <html><head><title>$magic</title></head><body>Test</body></html>
 HTML
@@ -118,6 +119,7 @@ HTML
         driver_transport => $transport,
         %args,
     );
+    is $mech->{pid}, undef, "We didn't start a new process when reusing Chrome";
     $c = $mech->content;
     like $c, qr/\Q$magic/, "We selected the existing tab"
         or do { diag $_->{title} for $mech->driver->getTargets()->get };
@@ -138,6 +140,7 @@ HTML
         driver_transport => $transport,
         %args,
     );
+    is $mech->{pid}, undef, "We didn't start a new process when connecting to the current tab";
     $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We connected to the current tab"
         or do { diag $_->{title} for $mech->driver->getTargets()->get() };
@@ -159,6 +162,7 @@ HTML
     };
     my $err = $@;
     is $lived, undef, 'We died trying to connect to a non-existing tab';
+    is $mech->{pid}, undef, "We didn't start a new process when searching for a tab";
     if( $] < 5.014 ) {
         SKIP: {
             skip "Perl pre 5.14 destructor eval clears \$\@ sometimes", 1;
