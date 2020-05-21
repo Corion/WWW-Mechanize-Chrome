@@ -114,7 +114,7 @@ sub runtests {
 
     {
         my $mech = eval { $new_mech->(@launch) };
-
+#warn sprintf "Launched pid %d", $mech->{pid};
         if( ! $mech ) {
             my $err = $@;
             SKIP: {
@@ -137,7 +137,12 @@ sub runtests {
         @_ = ($browser_instance, $mech);
     };
 
+    # At least this process should've gone away
+    #my $pid = $_[1]->{pid};
     goto &$code;
+    #@_ = ();
+    #kill 0 => $pid
+    #    and die "Leftover process $pid!";
 }
 
 sub run_across_instances {

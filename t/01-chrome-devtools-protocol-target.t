@@ -25,7 +25,6 @@ sub new_mech {
     t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     my $chrome = WWW::Mechanize::Chrome->new(
         @_,
-        autoclose_tab => 0,
     );
 };
 

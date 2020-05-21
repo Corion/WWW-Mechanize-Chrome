@@ -31,7 +31,6 @@ sub new_mech {
 
     my $chrome = WWW::Mechanize::Chrome->new(
         @_,
-        autoclose => 0,
     );
 };
 
