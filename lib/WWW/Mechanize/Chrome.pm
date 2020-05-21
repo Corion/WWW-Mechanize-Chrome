@@ -1755,7 +1755,7 @@ sub kill_child( $self, $signal, $pid, $wait_file ) {
                 };
             } else {
                 # on Linux and Windows, plain waitpid Just Works
-                waitpid $pid, WNOHANG;
+                waitpid $pid,0;
             };
         };
 

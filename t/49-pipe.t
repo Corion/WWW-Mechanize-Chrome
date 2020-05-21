@@ -15,13 +15,15 @@ use t::helper;
 Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 my @instances = t::helper::browser_instances();
+my $testcount = 3;
+
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } elsif ( $^O =~ /mswin/i ) {
     plan skip_all => "Pipes are currently unsupported on $^O";
 } else {
-    plan tests => 2*@instances;
+    plan tests => $testcount*@instances;
 };
 
 sub new_mech {
@@ -35,14 +37,19 @@ sub new_mech {
 my $server = Test::HTTP::LocalServer->spawn(
 );
 
-t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = splice @_;
 
     $mech->get($server->url);
     pass "We launch Chrome and control it via two filehandles";
 
+    my $pid = $mech->{pid};
+
     like $mech->title, qr/^WWW::Mechanize::Firefox test page$/, "Retrieving the title works";
     undef $mech;
+
+    my $alive = kill( 0 => $pid);
+    is $alive, 0, "The chrome process $pid was removed";
 });
 
 $server->stop;
