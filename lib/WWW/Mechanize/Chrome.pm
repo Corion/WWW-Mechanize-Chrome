@@ -4525,8 +4525,8 @@ sub get_set_value($self,%options) {
     my $post  = delete $options{post};
     $post = [$post]
         if (defined $post and ! ref $post);
-    $pre  ||= []; # just to eliminate some checks downwards
-    $post ||= []; # just to eliminate some checks downwards
+    $pre  ||= ['focus']; # just to eliminate some checks downwards
+    $post ||= ['change']; # just to eliminate some checks downwards
     my $name  = delete $options{ name };
     my $index = delete $options{ index };
 
