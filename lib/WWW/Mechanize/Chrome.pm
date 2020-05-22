@@ -5021,8 +5021,6 @@ sub do_set_fields($self, %options) {
         if (ref $v) {
             ($v,my $num) = @$v;
             $index = $num;
-            #warn "Index larger than 1 not supported, ignoring"
-            #    unless $num == 1;
         };
 
         $self->get_set_value( node => $form, name => $n, value => $v, index => $index, %options );
