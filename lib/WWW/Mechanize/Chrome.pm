@@ -4561,6 +4561,9 @@ sub get_set_value($self,%options) {
                 select   => 'selected',
             );
             my $method = $method{ lc $tag };
+            if( lc $tag eq 'input' and $obj->get_attribute('type') eq 'radio' ) {
+                $method = 'checked';
+            };
 
             my $id = $obj->{objectId};
 
@@ -4612,6 +4615,11 @@ function(newValue) {
 JS
                         arguments => [{ value => $value }],
                     )->get;
+                }
+            } elsif( 'checked' eq $method ) {
+                if (defined $value) {
+                    $value = [ $value ] unless ref $value;
+                    $obj->set_attribute('checked' => JSON::true);
                 }
             } elsif( 'content' eq $method ) {
                 $self->target->send_message('Runtime.callFunctionOn',
