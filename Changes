@@ -32,6 +32,16 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.57 2020-05-23
+    * ->set_fields() now does work for setting radio buttons when using the
+      index notation. Checking a radio button by its name and value alone
+      is currently not possible.
+      (Reported by a user, with test script)
+    * Setting a field value now defaults to sending the "focus" event before
+      and the "change" event after the value has been set. If you need to
+      restore the old behaviour, use
+          ->field('foo', $value, 0, [], [] )
+
 0.56 2020-05-21
     * Fix ->autoclose_tab / autoclose option so that they actually leave
       Chrome open when the Perl program stops

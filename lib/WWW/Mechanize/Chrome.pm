@@ -24,7 +24,7 @@ use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 
-our $VERSION = '0.56';
+our $VERSION = '0.57';
 our @CARP_NOT;
 
 =encoding utf-8
@@ -1024,6 +1024,7 @@ sub _connect( $self, %options ) {
 
     my @setup = (
         $self->target->send_message('DOM.enable'),
+        $self->target->send_message('Overlay.enable'),
         $self->target->send_message('Page.enable'),    # capture DOMLoaded
         $self->target->send_message('Network.enable'), # capture network
         $self->target->send_message('Runtime.enable'), # capture console messages
