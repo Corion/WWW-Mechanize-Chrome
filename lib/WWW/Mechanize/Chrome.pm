@@ -227,12 +227,8 @@ Examples of other useful parameters include:
     '--load-extension'
     '--no-sandbox'
 
-=item B<profile>
 
-  profile => '/path/to/profile/directory'  #  set the profile directory
 
-By default, your current user profile directory is used. Use this setting
-to change the profile directory for the browsing session.
 
 =item B<incognito>
 
@@ -252,6 +248,16 @@ base data directory for the browsing session.
   my $mech = WWW::Mechanize::Chrome->new(
       data_directory => tempdir(CLEANUP => 1 ),
   );
+
+=item B<profile>
+
+  profile => '/path/to/profile/directory'  #  set the profile directory
+
+By default, your current user profile directory is used. Use this setting
+to change the profile directory for the browsing session.
+
+You will need to set the B<data_directory> as well, so that Chrome finds the
+profile within the data directory.
 
 =item B<wait_file>
 
