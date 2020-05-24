@@ -18,13 +18,6 @@ plan tests => $testcount * 2 * 2;
 my $interactive_tests = $ENV{LOGNAME} eq 'corion';
 #my $interactive_tests;
 
-#my $mech = WWW::Mechanize::Chrome->new(
-#    headless => 1,
-#    separate_session => 0,
-#    tab => 0,
-#    data_directory => '/home/corion/.config/chromium',
-#);
-
 SKIP: for my $interactive (1,0) {
 
     if( $interactive and !$interactive_tests ) {
@@ -42,7 +35,6 @@ SKIP: for my $interactive (1,0) {
         my $mech = WWW::Mechanize::Chrome->new(
             headless => !$interactive,
             separate_session => $separate_session,
-            #tab => ($separate_session ? undef : 0 ),
             data_directory => '/home/corion/.config/chromium',
         );
 
@@ -66,7 +58,11 @@ SKIP: for my $interactive (1,0) {
         } else {
             $name = "We create no additional window for reusing the session ($description)";
         };
-        is( scalar keys %window, 1+$separate_session,  $name );
+        {
+            local $TODO = "Headless reused sessions spawn an additional tab?"
+                if( not $interactive and not $separate_session );
+            is( scalar keys %window, 1+$separate_session,  $name );
+        };
 
         # Check that we have the expected fixed cookie:
         # This requires a good setup on part of the test author
