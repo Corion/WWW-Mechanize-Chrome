@@ -847,8 +847,14 @@ sub new($class, %options) {
 
     my $host = $options{ host } || '127.0.0.1';
 
-    $options{ existing_tab } ||= defined $options{ tab };
     $options{ extra_headers } ||= {};
+
+    if( $options{ separate_session }) {
+        $options{ tab } ||= undef;
+    } else {
+        $options{ tab } ||= 0;
+    }
+    $options{ existing_tab } ||= defined $options{ tab };
 
     if( $options{ tab } and $options{ tab } eq 'current' ) {
         $options{ tab } = 0; # use tab at index 0
