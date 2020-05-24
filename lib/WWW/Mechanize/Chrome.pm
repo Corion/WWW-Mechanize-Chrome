@@ -1004,6 +1004,7 @@ sub _setup_driver_future( $self, %options ) {
         new_tab          => !$options{ existing_tab },
         tab              => $options{ tab },
         separate_session => $options{ separate_session },
+        start_url        => $options{ start_url } ? "".$options{ start_url } : undef,
     )->catch( sub(@args) {
         my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
