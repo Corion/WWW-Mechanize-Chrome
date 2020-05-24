@@ -32,6 +32,19 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.58 2020-05-25
+    * Fixed handling of https "secure" cookies - these can now actually be
+      stored and sent
+    * Add ->getWindowForTarget()
+    * Add ->getBrowserContexts()
+    * We don't spawn a Chrome process if a premade transport is passed in
+    * The distinction between using the users cookies etc. or creating a
+      separate browsing session is made by using the new "separate_session"
+      constructor option
+    * When connecting to an existing Chrome session, we don't spawn a new
+      window anymore
+    * ->createTarget() now accepts additional options
+
 0.57 2020-05-23
     * ->set_fields() now does work for setting radio buttons when using the
       index notation. Checking a radio button by its name and value alone

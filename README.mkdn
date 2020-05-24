@@ -197,12 +197,12 @@ them in a Perl object to provide the easy-to-use methods documented here.
         '--load-extension'
         '--no-sandbox'
 
-- **profile**
+- **separate\_session**
 
-        profile => '/path/to/profile/directory'  #  set the profile directory
+        separate_session => 1   # create a new, empty session
 
-    By default, your current user profile directory is used. Use this setting
-    to change the profile directory for the browsing session.
+    This creates an empty, fresh Chrome session without any cookies. Setting this
+    will disregard any **data\_directory** setting.
 
 - **incognito**
 
@@ -210,11 +210,13 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
     Defaults to false. Set to true to launch the browser in incognito mode.
 
+    Most likely, you want to use **separate\_session** instead.
+
 - **data\_directory**
 
         data_directory => '/path/to/data/directory'  #  set the data directory
 
-    By default, the current data directory is used. Use this setting to change the
+    By default, an empty data directory is used. Use this setting to change the
     base data directory for the browsing session.
 
         use File::Temp 'tempdir';
@@ -222,6 +224,22 @@ them in a Perl object to provide the easy-to-use methods documented here.
         my $mech = WWW::Mechanize::Chrome->new(
             data_directory => tempdir(CLEANUP => 1 ),
         );
+
+    Using the "main" Chrome cookies:
+
+        my $mech = WWW::Mechanize::Chrome->new(
+            data_directory => '/home/corion/.config/chromium',
+        );
+
+- **profile**
+
+        profile => '/path/to/profile/directory'  #  set the profile directory
+
+    By default, your current user profile directory is used. Use this setting
+    to change the profile directory for the browsing session.
+
+    You will need to set the **data\_directory** as well, so that Chrome finds the
+    profile within the data directory.
 
 - **wait\_file**
 
