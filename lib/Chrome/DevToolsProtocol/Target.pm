@@ -298,8 +298,18 @@ sub connect( $self, %args ) {
         $done = $done->then(sub {
             $s->getTargets()
         })->then(sub( @tabs ) {
-            $s->tab( $tabs[ $args{ tab }] );
-            $s->attach( $s->tab->{targetId} );
+            my $res;
+            if( ! @tabs ) {
+                $res = $s->createTarget(
+                    url => $args{ start_url } || 'about:blank',
+                );
+            } else {
+                $res = Future->done( $tabs[$args{ tab }] );
+             };
+            $res = $res->then(sub($tab) {
+                $s->tab( $tab );
+                $s->attach( $s->tab->{targetId} );
+            });
         });
 
     } elsif( $args{ tab } ) {
