@@ -881,6 +881,9 @@ sub new($class, %options) {
         # Assume some defaults for the already running Chrome executable
         $options{ port } //= 9222;
 
+    } elsif ( $options{ driver } and $options{ driver_transport }) {
+        # We already have a connection to some Chrome running
+
     } else {
         #if ( ! defined $options{ port } and ! $options{ pipe }) {
         #unless ( defined $options{ port } ) {
