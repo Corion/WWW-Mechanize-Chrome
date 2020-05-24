@@ -255,12 +255,33 @@ sub connect( $self, %args ) {
     #if( $args{ tab } and ref $args{ tab } eq 'HASH' ) {
         #$endpoint = $args{ tab }->{webSocketDebuggerUrl};
         #$self->log('trace', "Using webSocketDebuggerUrl endpoint $endpoint");
-    if( $args{ new_tab } ) {
-        $done = $done->then( sub { $s->transport->send_message('Target.createBrowserContext')});
-        $done = $done->then(sub( $info ) {
-            $self->browserContextId( $info->{browserContextId} );
+
+    if( $args{ new_tab } ) { # should be renamed "separate_session"
+        if( $args{ separate_session }) {
+            # Set up a new browser context
+            $done = $done->then( sub { $s->transport->send_message('Target.createBrowserContext')})
+            ->then( sub( $info ) {
+                $self->browserContextId( $info->{browserContextId} );
+                Future->done();
+            });
+
+        } else {
+            # Find an existing browser context and use that one
+            #$done = $done->then( sub { $s->transport->send_message('Target.attachToBrowserTarget')})
+            $done = $done->then( sub { $s->getTargets })
+            ->then( sub( @targets ) {
+                $self->browserContextId( $targets[0]->{browserContextId} );
+                Future->done();
+            });
+        }
+
+        $done = $done->then(sub {
+            my $id = $self->browserContextId;
+
             $s->createTarget(
-                browserContextId => $info->{browserContextId},
+                #url => 'about:blank',
+                url => $args{ start_url } || 'about:blank',
+                maybe browserContextId => $id,
             );
         })->then(sub( $info ) {
             $s->tab( $info );
