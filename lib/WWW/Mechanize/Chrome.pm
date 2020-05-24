@@ -227,8 +227,12 @@ Examples of other useful parameters include:
     '--load-extension'
     '--no-sandbox'
 
+=item B<separate_session>
 
+  separate_session => 1   # create a new, empty session
 
+This creates an empty, fresh Chrome session without any cookies. Setting this
+will disregard any B<data_directory> setting.
 
 =item B<incognito>
 
@@ -236,17 +240,25 @@ Examples of other useful parameters include:
 
 Defaults to false. Set to true to launch the browser in incognito mode.
 
+Most likely, you want to use B<separate_session> instead.
+
 =item B<data_directory>
 
   data_directory => '/path/to/data/directory'  #  set the data directory
 
-By default, the current data directory is used. Use this setting to change the
+By default, an empty data directory is used. Use this setting to change the
 base data directory for the browsing session.
 
   use File::Temp 'tempdir';
   # create a fresh Chrome every time
   my $mech = WWW::Mechanize::Chrome->new(
       data_directory => tempdir(CLEANUP => 1 ),
+  );
+
+Using the "main" Chrome cookies:
+
+  my $mech = WWW::Mechanize::Chrome->new(
+      data_directory => '/home/corion/.config/chromium',
   );
 
 =item B<profile>
