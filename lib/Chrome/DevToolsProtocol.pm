@@ -793,9 +793,10 @@ Returns information about the current target
 
 =cut
 
-sub getTargetInfo( $self, $targetId ) {
+sub getTargetInfo( $self, $targetId=undef ) {
     $self->send_message('Target.getTargetInfo',
-        targetId => $targetId )->then(sub( $info ) {
+        maybe targetId => $targetId
+    )->then(sub( $info ) {
             Future->done( $info->{targetInfo})
     });
 }
