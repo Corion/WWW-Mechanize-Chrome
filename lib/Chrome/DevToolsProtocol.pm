@@ -733,11 +733,11 @@ sub list_tabs( $self, $type = 'page' ) {
 
 =cut
 
-sub new_tab( $self, $url=undef ) {
+sub new_tab( $self, $url=undef, %options ) {
     #my $u = $url ? '?' . $url : '';
     $self->log('trace', "Creating new tab");
     #$self->json_get('new' . $u)
-    $self->createTarget( url => $url );
+    $self->createTarget( url => $url, %options );
 };
 
 =head2 C<< $chrome->activate_tab >>
@@ -813,7 +813,7 @@ sub getTargetInfo( $self, $targetId=undef ) {
     )->get;
     print $targetId;
 
-Creates a new target
+Creates a new target, optionally in a new window
 
 =cut
 
