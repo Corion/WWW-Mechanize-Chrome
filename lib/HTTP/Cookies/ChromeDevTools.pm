@@ -83,6 +83,7 @@ has '_loading' => (
 
 Loads the cookies from the Chrome instance. Passing in a filename to load
 cookies from is currently unsupported.
+
 =cut
 
 sub load($self, $file=undef, %options) {
@@ -100,10 +101,10 @@ sub load($self, $file=undef, %options) {
             $c->{domain},
             undef, # Chrome doesn't support port numbers?!
             undef,
-            $c->{httpOnly},
             $c->{secure},
             $c->{expires},
             #$c->{session},
+            undef,
         );
     };
     if( $file ) {
@@ -142,17 +143,16 @@ sub load_jar($self, $jar, %options) {
             $c->{domain},
             undef, # Chrome doesn't support port numbers?!
             undef,
-            $c->{httpOnly},
             $c->{secure},
             $c->{expires},
-            #$c->{session},
+            undef,
         );
     });
 }
 
 sub set_cookie($self, $version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard) {
-
     # We've just read from Chrome, so just update our local variables
+    #$self->debug_set_cookie($version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard);
     $self->SUPER::set_cookie( $version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard );
 
     if( ! $self->_loading ) {

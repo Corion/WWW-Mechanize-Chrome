@@ -65,14 +65,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
         my $other_jar = HTTP::Cookies->new();
         $other_jar->set_cookie(
-            42,
-            'mycookie' => 'tasty',
+            1,
+            'mycookie' => 'tasty1',
             '/',
             'example.com',
             0,
             '',
             1,
-            time+600,
+            600,
             0
         );
         my $lived = eval {
@@ -95,15 +95,17 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             or diag $@;
 
         $other_jar = HTTP::Cookies->new();
+    #$self->SUPER::set_cookie( $version, $key, $val, $path, $domain, $port, $path_spec, $secure, $maxage, $discard );
         $other_jar->set_cookie(
-            42,
-            'mycookie' => 'tasty',
+            1,
+            'mycookie' => 'tasty2',
             '/',
             $server->url->host_port,
-            0,
+            $server->url->port,
+            #undef,
             '',
-            1,
-            time+600,
+            0, # our test server only implements http
+            600,
             0
         );
         $lived = eval {
@@ -117,8 +119,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         $cookies->scan(sub{$count++; push @c,[@_]});
         is $count, 1, 'We replaced all the cookies with our single cookie from the (manual) jar'
             or diag Dumper \@c;
+        $mech->cookie_jar->load;
         $mech->get($server->url);
-        like $mech->content, qr/\btasty\b/, "Our cookie gets sent";
+        like $mech->content, qr/\btasty2\b/, "Our cookie gets sent";
 
     }
 
