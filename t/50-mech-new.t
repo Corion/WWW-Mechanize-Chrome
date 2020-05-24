@@ -93,13 +93,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech = WWW::Mechanize::Chrome->new(
         autodie   => 0,
         autoclose => 0,
-        reuse     => 1,
         new_tab   => 1,
         driver    => $app,
         driver_transport => $transport,
         %args,
     );
-    is $mech->{pid}, undef, "We didn't start a new process when reusing Chrome";
+    is $mech->{pid}, undef, "We didn't start a new process when reusing a pre-existing transport";
     $mech->update_html(<<HTML);
     <html><head><title>$magic</title></head><body>Test</body></html>
 HTML
@@ -114,12 +113,11 @@ HTML
         autodie   => 0,
         autoclose => 0,
         tab       => qr/^\Q$magic/,
-        reuse     => 1,
         driver    => $app,
         driver_transport => $transport,
         %args,
     );
-    is $mech->{pid}, undef, "We didn't start a new process when reusing Chrome";
+    is $mech->{pid}, undef, "We didn't start a new process when reusing a pre-existing transport";
     $c = $mech->content;
     like $c, qr/\Q$magic/, "We selected the existing tab"
         or do { diag $_->{title} for $mech->driver->getTargets()->get };
@@ -140,7 +138,8 @@ HTML
         driver_transport => $transport,
         %args,
     );
-    is $mech->{pid}, undef, "We didn't start a new process when connecting to the current tab";
+    is $mech->{pid}, undef, "We didn't start a new process when reusing a pre-existing transport";
+#is $mech->{pid}, undef, "We didn't start a new process when connecting to the current tab";
     $c = $mech->content;
     like $mech->content, qr/\Q$magic/, "We connected to the current tab"
         or do { diag $_->{title} for $mech->driver->getTargets()->get() };
@@ -153,7 +152,6 @@ HTML
         $mech = WWW::Mechanize::Chrome->new(
             autodie          => 1,
             tab              => qr/\Q$magic/,
-            reuse            => 1,
             driver           => $app,
             driver_transport => $transport,
             %args,

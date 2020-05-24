@@ -847,7 +847,7 @@ sub new($class, %options) {
 
     my $host = $options{ host } || '127.0.0.1';
 
-    $options{ reuse } ||= defined $options{ tab };
+    $options{ existing_tab } ||= defined $options{ tab };
     $options{ extra_headers } ||= {};
 
     if( $options{ tab } and $options{ tab } eq 'current' ) {
@@ -858,7 +858,7 @@ sub new($class, %options) {
     my $connection_style =    $options{ connection_style }
                            || $ENV{ WWW_MECHANIZE_CHROME_CONNECTION_STYLE }
                            || $class->connection_style( \%options );
-    if( ! $options{ port } and ! $options{ pid } and ! $options{ reuse }) {
+    if( ! $options{ port } and ! $options{ pid } ) {
         if( $options{ pipe } ) {
         #if( $^O !~ /mswin32/i ) {
             $connection_style = 'pipe';
@@ -877,7 +877,7 @@ sub new($class, %options) {
     $self->{log} ||= $self->_build_log;
 
     my( $to_chrome, $from_chrome );
-    if( $options{ pid } or $options{ reuse }) {
+    if( $options{ pid } ) {
         # Assume some defaults for the already running Chrome executable
         $options{ port } //= 9222;
 
@@ -977,10 +977,9 @@ sub new($class, %options) {
 
 sub _setup_driver_future( $self, %options ) {
     $self->target->connect(
-        new_tab => !$options{ reuse },
-        tab     => $options{ tab },
-        #writer_fh => $options{ writer_fh },
-        #reader_fh => $options{ reader_fh },
+        new_tab          => !$options{ existing_tab },
+        tab              => $options{ tab },
+        separate_session => $options{ separate_session },
     )->catch( sub(@args) {
         my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
