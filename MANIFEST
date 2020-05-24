@@ -124,6 +124,7 @@ t/76-scroll.t
 t/77-reload-fragment.t
 t/78-memleak.t
 t/78-two-instances.t
+t/99-interactive-single-window.t
 t/CookiesOld
 t/helper.pm
 t/html5.html
