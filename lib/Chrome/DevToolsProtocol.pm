@@ -3,6 +3,7 @@ use 5.010; # for //
 use strict;
 use warnings;
 use Moo;
+use PerlX::Maybe;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
@@ -856,6 +857,38 @@ sub closeTarget( $self, %options ) {
     $self->send_message('Target.closeTarget',
         %options )
 }
+
+=head2 C<< $target->getWindowForTarget >>
+
+    my $info = $chrome->getWindowForTarget( $targetId )->get;
+    print $info->{windowId};
+
+Returns information about the window of the current target
+
+=cut
+
+sub getWindowForTarget( $self, $targetId ) {
+    $self->send_message('Browser.getWindowForTarget',
+        targetId => $targetId
+    );
+}
+
+=head2 C<< $chrome->getBrowserContexts >>
+
+    my @browserContextIds = $chrome->getBrowserContexts->get;
+
+Gets the list of available browser contexts. These are separate sets of user
+cookies etc.
+
+=cut
+
+sub getBrowserContexts( $self ) {
+    $self->send_message('Target.getBrowserContexts')->then(sub( $info ) {
+        #use Data::Dumper; warn Dumper $info;
+        Future->done( @{$info->{browserContextIds}})
+    });
+}
+
 
 package
     Chrome::DevToolsProtocol::EventListener;
