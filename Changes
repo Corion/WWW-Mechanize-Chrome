@@ -32,6 +32,10 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.59 to be released
+    * Add ->capturePageSnapshot for saving a complete page as MHTML
+    * ->content( format => 'mhtml' ) now returns the complete page as MHTML
+
 0.58 2020-05-25
     * Fixed handling of https "secure" cookies - these can now actually be
       stored and sent

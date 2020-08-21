@@ -11,7 +11,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
-my $testcount = 6;
+my $testcount = 8;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -41,6 +41,20 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     my $text = $mech->content( format => 'text' );
     is $text, '', "We can get the plain text";
+
+    my $version = $mech->chrome_version;
+    if( $version =~ /\b(\d+)\b/ and $1 < 80 ) {
+        SKIP: {
+            skip "Chrome version is $version, need Chrome version 80 for MHTML", 2;
+        };
+    } else {
+        my $mhtml = $mech->content( format => 'mhtml' );
+        like $mhtml, qr/^Snapshot-Content-Location:/m, "We can get the MHTML of the whole page";
+
+        $mech->get_local('52-frameset.html');
+        $mhtml = $mech->content( format => 'mhtml' );
+        like $mhtml, qr!<title>52-subframe.html</title>!, "We can get the MHTML of the whole page, including frames";
+    };
 
     my $text2;
     my $lives = eval { $mech->content( format => 'bogus' ); 1 };

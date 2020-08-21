@@ -2938,6 +2938,7 @@ sub decoded_content($self) {
   print $mech->content;
   print $mech->content( format => 'html' ); # default
   print $mech->content( format => 'text' ); # identical to ->text
+  print $mech->content( format => 'mhtml' ); # identical to ->captureSnapshot
 
 This always returns the content as a Unicode string. It tries
 to decode the raw content according to its input encoding.
@@ -2966,8 +2967,10 @@ sub content( $self, %options ) {
         $content= $self->decoded_content()
     } elsif ( $format eq 'text' ) {
         $content= $self->text;
+    } elsif ( $format eq 'mhtml' ) {
+        $content= $self->captureSnapshot()->{data};
     } else {
-        $self->die( qq{Unknown "format" parameter "$format"} );
+        die qq{Unknown "format" parameter "$format"};
     };
 };
 
@@ -2986,6 +2989,27 @@ sub text {
     # Waugh - this is highly inefficient but conveniently short to write
     # Maybe this should skip SCRIPT nodes...
     join '', map { $_->get_attribute('textContent') } $self->xpath('//body', single => 1 );
+}
+
+=head2 C<< $mech->captureSnapshot_future() >>
+
+=head2 C<< $mech->captureSnapshot() >>
+
+    print $mech->captureSnapshot( format => 'mhtml' )->{data};
+
+Returns the current page as MHTML.
+
+This is WWW::Mechanize::Chrome specific.
+
+=cut
+
+sub captureSnapshot_future( $self, %options ) {
+    #$options{ format } //= 'MHTML';
+    $self->target->send_message( 'Page.captureSnapshot', %options )
+}
+
+sub captureSnapshot( $self, %options ) {
+    $self->captureSnapshot_future(%options)->get
 }
 
 =head2 C<< $mech->content_encoding() >>
