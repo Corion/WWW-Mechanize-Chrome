@@ -4459,6 +4459,11 @@ like the C<< ->field >> method.
 
 =cut
 
+# Page.setInterceptFileChooserDialog
+# doesn't help anything, since we can only suppress that dialog but not
+# supply file names or anything. See the ->upload() method for how to actually
+# set filenames
+
 sub upload($self,$name,$value) {
     my %options;
 
