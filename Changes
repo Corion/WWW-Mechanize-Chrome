@@ -32,7 +32,7 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
-0.59 to be released
+0.59 2020-08-21
     * Add ->capturePageSnapshot for saving a complete page as MHTML
     * ->content( format => 'mhtml' ) now returns the complete page as MHTML
 
