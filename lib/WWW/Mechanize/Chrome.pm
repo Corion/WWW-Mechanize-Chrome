@@ -3312,8 +3312,7 @@ it also C<croak>s when more than one link is found.
 
 =cut
 
-use vars '%xpath_quote';
-%xpath_quote = (
+our %xpath_quote = (
     '"' => '\"',
     #"'" => "\\'",
     #'[' => '&#91;',
