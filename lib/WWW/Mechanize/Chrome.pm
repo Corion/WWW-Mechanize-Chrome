@@ -505,7 +505,7 @@ sub build_command_line {
         infobars
         popup_blocking
         gpu
-        save-password-bubble
+        save_password_bubble
     )) {
         (my $optname = $option) =~ s!_!-!g;
         if( ! exists $options->{$option}) {
