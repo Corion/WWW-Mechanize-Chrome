@@ -3976,7 +3976,7 @@ C<xpath> - Find the element to click by the XPath query
 C<dom> - Click on the passed DOM element
 
 You can use this to click on arbitrary page elements. There is no convenient
-way to pass x/y co-ordinates with this method.
+way to pass x/y co-ordinates when using the C<dom> option.
 
 =item *
 
@@ -5777,6 +5777,7 @@ can be specified through the C<format> option.
 
 Note that this method will only be successful with headless Chrome. At least on
 Windows, when launching Chrome with a UI, printing to PDF will be unavailable.
+See the C<html-to-pdf.pl> script in the C<examples/> directory of this distribution.
 
 This method is specific to WWW::Mechanize::Chrome.
 
