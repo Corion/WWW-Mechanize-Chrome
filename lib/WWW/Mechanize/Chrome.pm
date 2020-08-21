@@ -23,6 +23,7 @@ use Storable 'dclone';
 use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
+#use Future::IO;
 
 our $VERSION = '0.58';
 our @CARP_NOT;
