@@ -88,6 +88,7 @@ cookies from is currently unsupported.
 
 sub load($self, $file=undef, %options) {
     my $driver = $options{ driver } || $self->driver;
+    # Alternative: Storage.getCookies
     my $cookies = $driver->send_message('Network.getAllCookies')->get();
     $cookies = $cookies->{cookies};
     $self->clear();
