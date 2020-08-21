@@ -17,7 +17,6 @@ plan tests => $testcount * 2 * 2;
 
 my $interactive_tests = ($ENV{LOGNAME} || '') eq 'corion'
                         and ($ENV{DISPLAY} or $^X =~ /mswin/i);
-my $interactive_tests;
 
 SKIP: for my $interactive (1,0) {
 
