@@ -28,6 +28,9 @@ use POSIX ':sys_wait_h';
 our $VERSION = '0.59';
 our @CARP_NOT;
 
+# add Browser.setPermission , .grantPermission for
+# restricting/allowing recording, clipboard, idleDetection, ...
+
 =encoding utf-8
 
 =head1 NAME
@@ -3004,7 +3007,6 @@ This is WWW::Mechanize::Chrome specific.
 =cut
 
 sub captureSnapshot_future( $self, %options ) {
-    #$options{ format } //= 'MHTML';
     $self->target->send_message( 'Page.captureSnapshot', %options )
 }
 

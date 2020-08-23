@@ -53,7 +53,7 @@ my %module = (
         'IPC::Open3'         => 0, # for IPC on Windows
         'File::Spec'         => 0,
 
-        'Filter::signatures' => '0.09',
+        'Filter::signatures' => '0.16',
         'Carp'               => 0,
         'Future'             => '0.35', # Some smokers have 0.25 which lacks many features
         #'Future::IO'         => 0,    # For loop-compatible ->sleep()
