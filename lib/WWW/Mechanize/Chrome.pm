@@ -25,7 +25,7 @@ use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 #use Future::IO;
 
-our $VERSION = '0.59';
+our $VERSION = '0.60';
 our @CARP_NOT;
 
 # add Browser.setPermission , .grantPermission for

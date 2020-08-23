@@ -34,7 +34,7 @@ requires:
   Exporter: '5'
   File::Basename: '0'
   File::Spec: '0'
-  Filter::signatures: '0.09'
+  Filter::signatures: '0.16'
   Future: '0.35'
   Future::HTTP: '0.06'
   HTML::Selector::XPath: '0'
@@ -63,6 +63,6 @@ requires:
   perl: '5.010'
 resources:
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
-version: '0.59'
+version: '0.60'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
 x_static_install: 1

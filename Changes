@@ -32,6 +32,13 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.60 2020-08-23
+    * Bump Filter::signatures prerequisite to 0.16
+      This is because we create too many strings so (some versions of)
+      Filter::Simple create placeholder strings that look like (in)valid
+      subroutine signatures. This prerequisite matches these placeholders
+      in a stricter way.
+
 0.59 2020-08-21
     * Add ->capturePageSnapshot for saving a complete page as MHTML
     * ->content( format => 'mhtml' ) now returns the complete page as MHTML

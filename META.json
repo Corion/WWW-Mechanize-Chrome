@@ -37,7 +37,7 @@
             "Exporter" : "5",
             "File::Basename" : "0",
             "File::Spec" : "0",
-            "Filter::signatures" : "0.09",
+            "Filter::signatures" : "0.16",
             "Future" : "0.35",
             "Future::HTTP" : "0.06",
             "HTML::Selector::XPath" : "0",
@@ -90,7 +90,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.59",
+   "version" : "0.60",
    "x_serialization_backend" : "JSON::PP version 4.04",
    "x_static_install" : 1
 }
