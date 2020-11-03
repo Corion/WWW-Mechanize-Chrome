@@ -64,12 +64,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my $ua = "WWW::Mechanize::Chrome $0 $$";
     my $version = $mech->chrome_version;
     my $ref;
-    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" >= 63.84)) {
+    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" eq "64.3275")) {
+        $ref = ''; # Chrome v64 crashes on a referer
+    } elsif( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" >= 63.84)) {
         $ref = 'https://example.com/';
     } else {
         $ref = 'http://example.com/'; # earlier versions crash on https referrer ...
     };
-
     my @host;
     if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" < 76.00)) {
         @host = (Host => 'www.example.com'); # later versions won't fetch a page with a "wrong" Host: header
