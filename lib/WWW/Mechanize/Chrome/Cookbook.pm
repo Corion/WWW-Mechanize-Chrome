@@ -91,6 +91,26 @@ your automation session:
 This will send the progress of your headless session to your browser so you can
 see the differences between what you expect and what the browser displays.
 
+=head1 Listing all requests made by a page
+
+Sometimes you want to block a single class of requests, or just list what
+requests a page makes. This is supported since Chrome 80 or so.
+
+    $mech->target->send_message('Fetch.enable')->get;
+    my $request_listener = $mech->add_listener('Fetch.requestPaused', sub {
+        my( $info ) = @_;
+        my $id = $info->{params}->{requestId};
+        my $request = $info->{params}->{request};
+
+        if( $request->{url} =~ /\.html(\?.*)?$/ ) {
+            $mech->target->send_message('Fetch.continueRequest', requestId => $id, )->retain;
+            return;
+        } else{
+            diag "Ignored $request->{url}";
+            $mech->target->send_message('Fetch.failRequest', requestId => $id, errorReason => 'AddressUnreachable' );
+        };
+    });
+
 =head1 SEE ALSO
 
 L<Detecting Chrome Headless|http://antoinevastel.github.io/bot%20detection/2018/01/17/detect-chrome-headless-v2.html>
