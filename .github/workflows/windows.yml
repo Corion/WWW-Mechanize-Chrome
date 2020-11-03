@@ -12,14 +12,26 @@ jobs:
   perl:
 
     runs-on: windows-latest
+    timeout-minutes: 40
 
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Set up Perl, Chrome
         run: |
-          choco install strawberryperl chromium
-          echo "##[add-path]C:\strawberry\c\bin;C:\strawberry\perl\site\bin;C:\strawberry\perl\bin"
+          choco config set cacheLocation "${{ github.workspace }}\choco-cache"
+      - name: Set up Perl build environment
+        run: |
+          # skip installing perl if it is already installed.
+          if (!(Test-Path "C:\strawberry\perl\bin")) {
+            choco install strawberryperl
+          }
+          echo @"
+          C:\strawberry\c\bin
+          C:\strawberry\perl\site\bin
+          C:\strawberry\perl\bin
+          "@ |
+            Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: perl -V
         run: perl -V
       - name: Install build infrastructure
