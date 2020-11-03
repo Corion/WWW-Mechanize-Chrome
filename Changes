@@ -32,6 +32,10 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.61 2020-11-03
+    * ->content(format => 'text') and ->text() now properly skip the content
+      within <script> tags. Reported by "roho" on Perlmonks, many thanks!
+
 0.60 2020-08-23
     * Bump Filter::signatures prerequisite to 0.16
       This is because we create too many strings so (some versions of)
