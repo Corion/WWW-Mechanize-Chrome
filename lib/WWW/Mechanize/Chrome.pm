@@ -2631,6 +2631,8 @@ at L<https://bugs.chromium.org/p/chromium/issues/detail?id=849972>.
 
 sub _set_extra_headers_future( $self, %headers ) {
     $self->log('debug',"Setting additional headers", \%headers);
+    # force-stringify all header values
+    for (values %headers) { $_ = "$_" };
     $self->target->send_message('Network.setExtraHTTPHeaders',
         headers => \%headers
     );
