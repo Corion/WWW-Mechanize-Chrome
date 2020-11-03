@@ -308,7 +308,7 @@ sub connect( $self, %args ) {
         });
 
     } elsif( ref $args{ tab } ) {
-        # Let's assume that the tab is a tab object:
+        # Let's assume that the tab is a Target hash:
         my $tab = $args{ tab };
         $self->tab($tab);
         $done = $done->then(sub {
