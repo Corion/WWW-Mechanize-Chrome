@@ -11,7 +11,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
-my $testcount = 8;
+my $testcount = 9;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
@@ -66,4 +66,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         $html = $mech->content;
         like $html, qr/^<?xml\b/, "->content preserves the XHTML directive";
     }
+
+    # pm11123357
+    $mech->get_local('scripttag.html');
+    $text = $mech->content( format => 'text' );
+    like $text, qr/^\s*This should appear.\s+This should also appear.\s*$/, "<script> tag contents are not included in text";
 });

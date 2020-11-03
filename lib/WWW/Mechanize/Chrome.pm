@@ -2991,7 +2991,7 @@ sub text {
 
     # Waugh - this is highly inefficient but conveniently short to write
     # Maybe this should skip SCRIPT nodes...
-    join '', map { $_->get_attribute('textContent') } $self->xpath('//body', single => 1 );
+    join '', map { $_->get_attribute('innerText') } $self->xpath('//body', single => 1 );
 }
 
 =head2 C<< $mech->captureSnapshot_future() >>
