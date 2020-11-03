@@ -35,6 +35,9 @@
 0.61 2020-11-03
     * ->content(format => 'text') and ->text() now properly skip the content
       within <script> tags. Reported by "roho" on Perlmonks, many thanks!
+    * Custom headers now always get stringified before passing them to Chrome
+    * Test stability improvements for Windows
+      Chrome 64.0.3725 crashes on setting custom headers, so we skip testing that
 
 0.60 2020-08-23
     * Bump Filter::signatures prerequisite to 0.16
