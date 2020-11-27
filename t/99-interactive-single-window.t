@@ -15,6 +15,9 @@ use Test::More;
 my $testcount = 2;
 plan tests => $testcount * 2 * 2;
 
+# We need to have one cookie stored for some domain:
+my $target_domain = 'https://perlmonks.com';
+
 my $interactive_tests = ($ENV{LOGNAME} || '') eq 'corion'
                         && ($ENV{DISPLAY} || $^O =~ /mswin/i);
 
@@ -37,9 +40,15 @@ SKIP: for my $interactive (1,0) {
             separate_session => $separate_session,
             data_directory => '/home/corion/.config/chromium',
         );
+        {
+        my $cookies = $mech->cookie_jar;
+        my $c = $cookies->get_cookies($target_domain);
+        note sprintf "We have %d cookies stored in chromium", scalar keys %$c;
+        };
 
         my @windows = map {
-                $_->get
+                # An error here likely is "No window found"
+                $_->catch(sub{ Future->done })->get
             } $mech->driver->getTargets->then(sub(@targets) {
             Future->wait_all(
                 map {
@@ -61,7 +70,10 @@ SKIP: for my $interactive (1,0) {
         {
             local $TODO = "Headless reused sessions spawn an additional tab?"
                 if( not $interactive and not $separate_session );
-            is( scalar keys %window, 1+$separate_session,  $name );
+            if( ! is( scalar keys %window, 1+$separate_session,  $name )) {
+                use Data::Dumper;
+                warn Dumper \@windows;
+            };
         };
 
         # Check that we have the expected fixed cookie:
@@ -72,7 +84,7 @@ SKIP: for my $interactive (1,0) {
         my $expected_count = $separate_session ? 0 : 1;
 
         my $cookies = $mech->cookie_jar;
-        my $c = $cookies->get_cookies('https://perlmonks.com');
+        my $c = $cookies->get_cookies($target_domain);
         delete $c->{'$Version'};
         is keys %{ $c }, $expected_count, "We have $expected_count cookies";
     }
