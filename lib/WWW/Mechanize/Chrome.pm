@@ -981,6 +981,7 @@ sub new($class, %options) {
         transport => $options{ transport },
         log => $options{ log },
     );
+
     $options{ target } ||= Chrome::DevToolsProtocol::Target->new(
         auto_close => 0,
         transport  => delete $options{ driver_transport },
@@ -998,15 +999,20 @@ sub new($class, %options) {
     );
 
     # Synchronously connect here, just for easy API compatibility
-    $self->_connect(%options);
+    my $reuse_transport = delete $options{ reuse_transport };
+    $self->_connect(
+        reuse => $reuse_transport,
+        %options,
+    );
 
     $self
 };
 
 sub _setup_driver_future( $self, %options ) {
     $self->target->connect(
-        new_tab          => !$options{ existing_tab },
+        new_tab          => !$options{ existing_tab } || $options{ new_tab },
         tab              => $options{ tab },
+        #reuse            => $options{ reuse_transport },
         separate_session => $options{ separate_session },
         start_url        => $options{ start_url } ? "".$options{ start_url } : undef,
     )->catch( sub(@args) {
@@ -1241,6 +1247,27 @@ This represents the tab we control.
 
 sub tab( $self ) {
     $self->target->tab
+}
+
+=head2 C<< $mech->new_tab >>
+
+    my $tab2 = $mech->new_tab(
+        start_url => 'https://google.com',
+    );
+
+Creates a new tab (basically, a new WWW::Mechanize::Chrome object) connected
+to the same Chrome session.
+
+=cut
+
+sub new_tab( $self, %options ) {
+    return $self->new(
+        %options,
+        new_tab          => 1,
+        headless         => $self->{headless},
+        driver           => $self->driver,
+        driver_transport => $self->transport,
+    );
 }
 
 sub autodie {
