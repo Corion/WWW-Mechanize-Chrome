@@ -443,6 +443,15 @@ Chrome instance.
 Access the tab hash of the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) instance.
 This represents the tab we control.
 
+## `$mech->new_tab`
+
+    my $tab2 = $mech->new_tab(
+        start_url => 'https://google.com',
+    );
+
+Creates a new tab (basically, a new WWW::Mechanize::Chrome object) connected
+to the same Chrome session.
+
 ## `$mech->allow( %options )`
 
     $mech->allow( javascript => 1 );
