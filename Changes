@@ -32,6 +32,10 @@
     * Tested against Chromium Chromium/78.0.3904.108
     * Tested against Chromium Chromium/80.0.3987.106
 
+0.62 2020-11-27
+    * Add ->new_tab() method to create a new tab in the current session
+      (suggested by Patrik)
+
 0.61 2020-11-03
     * ->content(format => 'text') and ->text() now properly skip the content
       within <script> tags. Reported by "roho" on Perlmonks, many thanks!
