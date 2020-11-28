@@ -8,7 +8,7 @@ build_requires:
   ExtUtils::MakeMaker: 5.52_01
   Image::Info: '0'
   Test::Deep: '0'
-  Test::HTTP::LocalServer: '0.61'
+  Test::HTTP::LocalServer: '0.71'
   Test::Memory::Cycle: '0'
   Test::More: '0'
   Test::Without::Module: '0'
