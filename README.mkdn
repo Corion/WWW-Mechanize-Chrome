@@ -785,7 +785,12 @@ about the current directory of your Perl script.
     my $cookies = $mech->cookie_jar
 
 Returns all the Chrome cookies in a [HTTP::Cookies::ChromeDevTools](https://metacpan.org/pod/HTTP::Cookies::ChromeDevTools) instance.
-Setting a cookie in there will also set the cookie in Chrome.
+Setting a cookie in there will also set the cookie in Chrome. Note that
+the `->cookie_jar` does not automatically refresh when a new page is
+loaded. To manually refresh the state of the cookie jar, use:
+
+    $mech->get('https://example.com/some_page');
+    $mech->cookie_jar->load;
 
 ## `$mech->add_header( $name => $value, ... )`
 

@@ -2626,7 +2626,12 @@ sub set_download_directory( $self, $dir="" ) {
     my $cookies = $mech->cookie_jar
 
 Returns all the Chrome cookies in a L<HTTP::Cookies::ChromeDevTools> instance.
-Setting a cookie in there will also set the cookie in Chrome.
+Setting a cookie in there will also set the cookie in Chrome. Note that
+the C<< ->cookie_jar >> does not automatically refresh when a new page is
+loaded. To manually refresh the state of the cookie jar, use:
+
+    $mech->get('https://example.com/some_page');
+    $mech->cookie_jar->load;
 
 =cut
 
