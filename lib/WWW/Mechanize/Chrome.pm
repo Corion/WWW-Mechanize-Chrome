@@ -901,7 +901,7 @@ sub new($class, %options) {
                                    : $^O =~ /darwin/i  ? 'SIGKILL'
                                                        : 'SIGTERM';
 
-    my $self= bless \%options => $class;
+    my $self= bless \%options => (ref $class || $class);
     $self->{log} ||= $self->_build_log;
 
     my( $to_chrome, $from_chrome );
