@@ -50,6 +50,8 @@
       (Thanks to Patrik)
     * Test::HTTP::LocalServer 0.71 is now required as a minimum, since there
       are some tests that require the new form value behaviour
+    * Chrome 62 doesn't handle setting cookies well, so skip the tests on
+      that too
 
 0.62 2020-11-27
     * Add ->new_tab() method to create a new tab in the current session

@@ -43,7 +43,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my $cookies = $mech->cookie_jar;
     isa_ok $cookies, 'HTTP::Cookies';
 
-    if( $version =~ /\b(\d+)\b/ and ($1 >= 59 and $1 <= 61)) {
+    if( $version =~ /\b(\d+)\b/ and ($1 >= 59 and $1 <= 62)) {
         SKIP: {
             skip "Chrome v$1 doesn't properly handle setting cookies...", $testcount-1;
         };
