@@ -5095,6 +5095,12 @@ name, the first one found is set. If you want to select which of the
 duplicate field to set, use a value which is an anonymous array which
 has the field value and its number as the 2 elements.
 
+  $mech->set_fields(
+      user => 'me',
+      pass => 'secret',
+      pass => [ 'secret', 2 ], # repeated password field
+  );
+
 =cut
 
 sub set_fields($self, %fields) {;
