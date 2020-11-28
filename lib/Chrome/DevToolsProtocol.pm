@@ -15,6 +15,7 @@ use Data::Dumper;
 use Chrome::DevToolsProtocol::Transport;
 use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
+use URI;
 
 our $VERSION = '0.62';
 our @CARP_NOT;
@@ -538,9 +539,20 @@ sub current_sequence( $self ) {
 };
 
 sub build_url( $self, %options ) {
-    $options{ host } ||= $self->host;
-    $options{ port } ||= $self->port;
-    my $url = sprintf "http://%s:%s/json", $options{ host }, $options{ port };
+    my $url;
+    if( ! ($options{ host } || $options{ port })
+        and $self->{endpoint}) {
+        # recycle our endpoint if we have it
+        my $ws_uri = URI->new($self->{ endpoint });
+        $url = URI->new($ws_uri->host, 'http');
+        $url->port($ws_uri->port);
+        $url->path( "json" );
+        $url = "$url";
+    } else {
+        $options{ host } ||= $self->host;
+        $options{ port } ||= $self->port;
+        $url = sprintf "http://%s:%s/json", $options{ host }, $options{ port };
+    };
     $url .= '/' . $options{domain} if $options{ domain };
     $url
 };

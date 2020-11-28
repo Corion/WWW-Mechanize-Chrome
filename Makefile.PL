@@ -75,6 +75,7 @@ my %module = (
 
         'URI'                => 0,    # For URL handling
         'URI::file'          => 0,    # For URL handling, just to be explicit
+        'URI::ws'            => 0,    # For port parsing from Websockets
         'Future::HTTP'       => 0.06, # fixes Mojolicious error handling
         'JSON'               => 0,
         'Moo'                => 2, # for some hashes-as-objects

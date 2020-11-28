@@ -59,6 +59,7 @@ requires:
   Try::Tiny: '0'
   URI: '0'
   URI::file: '0'
+  URI::ws: '0'
   WWW::Mechanize::Link: '0'
   perl: '5.010'
 resources:
