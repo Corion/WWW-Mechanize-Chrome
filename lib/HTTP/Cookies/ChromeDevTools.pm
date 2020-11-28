@@ -94,6 +94,10 @@ sub load($self, $file=undef, %options) {
     $self->clear();
     local $self->{_loading} = 1;
     for my $c (@$cookies) {
+        if( $c->{expires} == -1 ) {
+            $c->{expires} = 1; # we need to do it this way or HTTP::Cookies will discard our cookie immediately :(
+        };
+
         $self->set_cookie(
             1,
             $c->{name},
@@ -142,7 +146,7 @@ sub load_jar($self, $jar, %options) {
             $c->{value},
             $c->{path},
             $c->{domain},
-            undef, # Chrome doesn't support port numbers?!
+            undef, # Chrome doesn't support port numbers
             undef,
             $c->{secure},
             $c->{expires},
