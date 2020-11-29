@@ -1865,6 +1865,19 @@ sub DESTROY {
     %{ $_[0] }= (); # clean out all other held references
 }
 
+=head2 C<< $mech->list_tabs >>
+
+    my @open_tabs = $mech->list_tabs()->get;
+    say $open_tabs[0]->{title};
+
+Returns the open tabs as a list of hashrefs.
+
+=cut
+
+sub list_tabs( $self ) {
+    $self->transport->getTargets;
+}
+
 =head2 C<< $mech->highlight_node( @nodes ) >>
 
     my @links = $mech->selector('a');
