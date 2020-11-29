@@ -122,6 +122,13 @@ sub sleep( $self, $seconds ) {
 
 1;
 
+=head1 KNOWN BUGS
+
+Launching a second instance of WWW::Mechanize::Chrome not connected to the
+same Chrome instance when using the pipe backend for communication will crash.
+
+I'm not sure who is at fault, AnyEvent or Chrome.
+
 =head1 SEE ALSO
 
 The factory class for transports

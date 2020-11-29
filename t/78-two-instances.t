@@ -34,8 +34,18 @@ if (my $err = t::helper::default_unavailable) {
 
 sub new_mech {
     t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
+
+    my %args = @_;
+    my $transport = WWW::Mechanize::Chrome->_preferred_transport(
+        \%args
+    );
+    if( $transport =~ /Pipe::AnyEvent$/ ) {
+        die "AnyEvent Pipe transport is broken for this test";
+        # And I don't even know what tickles it, and not the other tests
+    };
+
     WWW::Mechanize::Chrome->new(
-        #autodie => 1,
+        autodie => 1,
         @_,
     );
 };
