@@ -843,7 +843,7 @@ sub connection_style( $class, $options ) {
     };
 };
 
-sub new($class, %options) {
+sub new_future($class, %options) {
 
     if (! exists $options{ autodie }) {
         $options{ autodie } = 1
@@ -906,6 +906,7 @@ sub new($class, %options) {
                                                        : 'SIGTERM';
 
     my $self= bless \%options => (ref $class || $class);
+
     $self->{log} ||= $self->_build_log;
 
     my( $to_chrome, $from_chrome );
@@ -1002,15 +1003,21 @@ sub new($class, %options) {
         log => $options{ log },
     );
 
-    # Synchronously connect here, just for easy API compatibility
     my $reuse_transport = delete $options{ reuse_transport };
-    $self->_connect(
+    my $res = $self->_connect(
         reuse => $reuse_transport,
         %options,
-    );
+    )->then(sub {
+        return Future->done( $self )
+    });
 
-    $self
+    return $res
 };
+
+sub new( $class, %args ) {
+    # Synchronously connect here, just for easy API compatibility
+    return $class->new_future(%args)->get;
+}
 
 sub _setup_driver_future( $self, %options ) {
     $self->target->connect(
@@ -1032,11 +1039,11 @@ sub _setup_driver_future( $self, %options ) {
 # This (tries to) connects to the devtools in the browser
 sub _connect( $self, %options ) {
     my $err;
-    $self->_setup_driver_future( %options )
+    my $setup = $self->_setup_driver_future( %options )
     ->catch( sub(@args) {
         $err = $args[0];
         Future->fail( @args );
-    })->get;
+    });
 
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
@@ -1052,41 +1059,46 @@ sub _connect( $self, %options ) {
 
     my $s = $self;
     weaken $s;
-    my $collect_JS_problems = sub( $msg ) {
-        $s->_handleConsoleAPICall( $msg->{params} )
-    };
-    $self->{consoleAPIListener} =
-        $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
-    $self->{exceptionThrownListener} =
-        $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
-    $self->{nodeGenerationChange} =
-        $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
-    $self->new_generation;
 
-    my @setup = (
-        $self->target->send_message('DOM.enable'),
-        $self->target->send_message('Overlay.enable'),
-        $self->target->send_message('Page.enable'),    # capture DOMLoaded
-        $self->target->send_message('Network.enable'), # capture network
-        $self->target->send_message('Runtime.enable'), # capture console messages
-        #$self->target->send_message('Debugger.enable'), # capture "script compiled" messages
-        $self->set_download_directory_future($self->{download_directory}),
+    my $res = $setup->then(sub {
+        my $collect_JS_problems = sub( $msg ) {
+            $s->_handleConsoleAPICall( $msg->{params} )
+        };
+        $s->{consoleAPIListener} =
+            $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
+        $s->{exceptionThrownListener} =
+            $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
+        $s->{nodeGenerationChange} =
+            $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
+        $s->new_generation;
 
-        keys %{$options{ extra_headers }} ? $self->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
-    );
+        my @setup = (
+            $s->target->send_message('DOM.enable'),
+            $s->target->send_message('Overlay.enable'),
+            $s->target->send_message('Page.enable'),    # capture DOMLoaded
+            $s->target->send_message('Network.enable'), # capture network
+            $s->target->send_message('Runtime.enable'), # capture console messages
+            #$self->target->send_message('Debugger.enable'), # capture "script compiled" messages
+            $s->set_download_directory_future($self->{download_directory}),
 
-    if( my $agent = delete $options{ user_agent }) {
-        push @setup, $self->agent_future( $agent );
-    };
+            keys %{$options{ extra_headers }} ? $s->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
+        );
 
-    Future->wait_all(
-        @setup,
-    )->get;
+        if( my $agent = delete $options{ user_agent }) {
+            push @setup, $s->agent_future( $agent );
+        };
+        my $res = Future->wait_all(
+            @setup,
+        )->on_done(sub {
 
-    # ->get() doesn't have ->get_future() yet
-    if( ! (exists $options{ tab } )) {
-        $self->get($options{ start_url }); # Reset to clean state, also initialize our frame id
-    };
+            # ->get() doesn't have ->get_future() yet
+            if( ! (exists $options{ tab } )) {
+                $self->get($options{ start_url }); # Reset to clean state, also initialize our frame id
+            };
+        });
+    });
+
+    return $res
 }
 
 sub _handleConsoleAPICall( $self, $msg ) {
