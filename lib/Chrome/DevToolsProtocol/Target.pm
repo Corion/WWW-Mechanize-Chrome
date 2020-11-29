@@ -243,10 +243,15 @@ sub connect( $self, %args ) {
 
     $done = $done->then(sub {
         $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
-            my $id = $s->targetId;
-            if( !$id or $id eq $_[0]->{params}->{targetId}) {
-                my $payload = $_[0]->{params}->{message};
-                $s->on_response( undef, $payload );
+            if( $s ) {
+                my $id = $s->targetId;
+                if( !$id or $id eq $_[0]->{params}->{targetId}) {
+                    my $payload = $_[0]->{params}->{message};
+                    $s->on_response( undef, $payload );
+                };
+            #} else {
+            #    warn "Target listener for answers has gone away";
+            #    use Data::Dumper; warn Dumper($_[0]);
             };
         });
         Future->done;
