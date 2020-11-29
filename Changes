@@ -40,6 +40,13 @@
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
 
+0.64 2020-11-29
+    * Add ->on_popup() callback
+    * Add ->list_tabs() method
+    * Add various asynchronous implementations for methods
+    * Don't wait in ->close() anymore for the close to finish
+    * New tabs don't have a way to notice when they are fully loaded yet
+
 0.63 2020-11-28
     * Fix ->new_tab() to actually work, add a unit test for it
     * Fix cookie handling to preserve "immediately" expiring cookies for

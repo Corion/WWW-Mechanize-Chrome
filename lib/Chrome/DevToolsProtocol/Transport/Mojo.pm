@@ -9,7 +9,7 @@ use Scalar::Util 'weaken';
 use Mojo::UserAgent;
 use Future::Mojo;
 
-our $VERSION = '0.63';
+our $VERSION = '0.64';
 
 =head1 NAME
 
