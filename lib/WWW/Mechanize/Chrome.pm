@@ -824,15 +824,19 @@ sub log( $self, $level, $message, @args ) {
     };
 }
 
+sub _preferred_transport($class, $options) {
+       ref( $options->{ transport } )
+    || $options->{ transport }
+    || $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT }
+    || 'Chrome::DevToolsProtocol::Transport'
+}
+
 # Find out what connection style (websocket, pipe) the user wants:
 sub connection_style( $class, $options ) {
     if( $options->{pipe} ) {
         return 'pipe'
     } else {
-        my $t =    ref( $options->{ transport } )
-                || $options->{ transport }
-                || 'Chrome::DevToolsProtocol::Transport';
-        ;
+        my $t = $class->_preferred_transport($options);
         eval "require $t; 1"
             or warn $@;
         return $t->new->type || 'websocket';
@@ -861,7 +865,7 @@ sub new($class, %options) {
 
     $options{ js_events } ||= [];
     if( ! exists $options{ transport }) {
-        $options{ transport } ||= $ENV{ WWW_MECHANIZE_CHROME_TRANSPORT };
+        $options{ transport } = $class->_preferred_transport(\%options);
     };
 
     $options{start_url} = 'about:blank'
