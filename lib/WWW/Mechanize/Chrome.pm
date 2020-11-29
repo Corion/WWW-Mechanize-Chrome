@@ -3202,13 +3202,7 @@ Returns the current document title.
 =cut
 
 sub title( $self ) {
-    #if( $self->tab ) {
-    #    my $id = $self->tab->{id};
-    #    (my $tab_now) = grep { $_->{id} eq $id } $self->target->list_tabs->get;
-    #    return $tab_now->{title};
-    #} else {
-        $self->target->info->{title}
-    #}
+    $self->target->info->{title}
 };
 
 =head1 EXTRACTION METHODS

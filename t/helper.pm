@@ -37,7 +37,6 @@ sub need_minimum_chrome_version {
     };
 };
 
-
 sub browser_instances {
     my ($filter) = @_;
     $filter ||= qr/^/;
