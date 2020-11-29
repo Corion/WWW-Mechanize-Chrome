@@ -1267,24 +1267,104 @@ sub tab( $self ) {
 
 =head2 C<< $mech->new_tab >>
 
-    my $tab2 = $mech->new_tab(
+=head2 C<< $mech->new_tab_future >>
+
+    my $tab2 = $mech->new_tab_future(
         start_url => 'https://google.com',
-    );
+    )->get;
 
 Creates a new tab (basically, a new WWW::Mechanize::Chrome object) connected
 to the same Chrome session.
 
+    # Use a targetInfo structure from Chrome
+    my $tab2 = $mech->new_tab_future(
+        tab => {
+            'targetId' => '1F42BDF32A30700805DDC21EDB5D8C4A',
+        },
+    )->get;
+
+It returns a L<Future> because most event loops do not like recursing within
+themselves, which happens if you want to access a fresh new tab within another
+callback.
+
 =cut
 
-sub new_tab( $self, %options ) {
-    return $self->new(
+sub new_tab_future( $self, %options ) {
+    my $new_tab = $options{ tab } ? undef : 1;
+    return $self->new_future(
         %options,
-        new_tab          => 1,
+        maybe new_tab    => $new_tab,
         headless         => $self->{headless},
         driver           => $self->driver,
         driver_transport => $self->transport,
     );
 }
+
+sub new_tab( $self, %options ) {
+    $self->new_tab_future( %options )->get
+};
+
+=head2 C<< $mech->on_popup >>
+
+    my $opened;
+    $mech->on_popup(sub( $tab_f ) {
+        # This is a bit heavyweight, but ...
+        $tab_f->on_done(sub($tab) {
+            say "New window/tab was popped up:";
+            $tab->uri_future->then(sub($uri) {
+                say $uri;
+            });
+            $opened = $tab;
+        })->retain;
+    });
+
+    $mech->click({ selector => '#popup_window' });
+    if( $opened ) {
+        say $opened->title;
+    } else {
+        say "Did not find new tab?";
+    };
+
+Callback whenever a new tab/window gets popped up or created. The callback
+is handed a complete WWW::Mechanize::Chrome instance. Note that depending on
+your event loop, you are quite restricted on what synchronous methods you can
+call from within the callback.
+
+=cut
+
+sub on_popup( $self, $popup ) {
+    if( $popup ) {
+        # Remember all known targets, because setDiscoverTargets will list all
+        # existing targets too :-/
+        my %known_targets;
+        my $setup = $self->transport->getTargets()->then(sub( @targets ) {
+            %known_targets = map { $_->{targetId} => 1 } @targets;
+            Future->done(1);
+        });
+
+        $self->{target_created} = $self->add_listener('Target.targetCreated' => sub($targetInfo) {
+            #use Data::Dumper; warn Dumper $targetInfo;
+            my $id = $targetInfo->{params}->{targetInfo}->{targetId};
+            if( $targetInfo->{params}->{targetInfo}->{type} eq 'page'
+                && ! $known_targets{ $id }
+            ) {
+                # use Data::Dumper; warn "--- New target"; warn Dumper $targetInfo;
+                my $tab = $self->new_tab_future( tab => $targetInfo->{params}->{targetInfo});
+                $popup->($tab);
+            } else {
+                # warn "...- already know it";
+            };
+        });
+
+        $setup->then(sub {
+            $self->target->send_message('Target.setDiscoverTargets' => discover => JSON::true() )
+        })->get;
+    } else {
+        $self->target->send_message('Target.setDiscoverTargets' => discover => JSON::false() )->get;
+        delete $self->{target_created};
+    };
+};
+
 
 sub autodie {
     my( $self, $val )= @_;
@@ -2019,7 +2099,7 @@ sub _waitForNavigationEnd( $self, %options ) {
 
     my $frameId = $options{ frameId } || $self->frameId;
     my $requestId = $options{ requestId } || $self->requestId;
-    my $msg = sprintf "Capturing events until 'Page.frameStoppedLoading' for frame %s",
+    my $msg = sprintf "Capturing events until 'Page.frameStoppedLoading' or 'Page.frameClearedScheduledNavigation' for frame %s",
                       $frameId || '-';
     $msg .= " or 'Network.loadingFailed' or 'Network.loadingFinished' for request '$requestId'"
         if $requestId;
@@ -2042,6 +2122,9 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && $requestId
                        && (! exists $ev->{params}->{requestId}
                            or ($ev->{params}->{requestId} eq $requestId)));
+        $internal_navigation ||= (   $ev->{method} eq 'Page.frameClearedScheduledNavigation'
+                       && $ev->{params}->{frameId} eq $frameId);
+
         # This is far too early, but some requests only send this?!
         # Maybe this can be salvaged by setting a timeout when we see this?!
         my $domcontent = (  1 # $options{ just_request }
@@ -2474,6 +2557,18 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
             HTTP::Headers->new(),
         );
         $response->request( $request );
+
+    # Popup window, handled in a new instance, if captured
+    } elsif ( $res = $events{ 'Page.frameClearedScheduledNavigation' }
+              and $res->{params}->{frameId} eq $frameId) {
+    #warn "Network.frameNavigated (file)";
+        $response = HTTP::Response->new(
+            200, # is 0 for files?!
+            "OK",
+            HTTP::Headers->new(),
+        );
+        $response->request( $request );
+
 
     } elsif ( $res = $events{ 'Page.frameStoppedLoading' }
               and $res->{params}->{frameId} eq $frameId) {

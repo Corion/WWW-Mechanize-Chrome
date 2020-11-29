@@ -61,6 +61,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->submit_form( with_fields => { query => 'original mech' });
     $tab->submit_form( with_fields => { query => 'secondary mech' });
 
+    $mech->sleep(1); # to give the tabs a chance to catch up
     is $mech->uri, "${url}formsubmit", "We moved the original tab";
     like $mech->content, qr/\boriginal mech\b/, "The original tab has the new content";
     is $tab->uri, "${url}formsubmit", "We moved the second tab";

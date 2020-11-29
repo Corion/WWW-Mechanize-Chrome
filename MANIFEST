@@ -101,9 +101,11 @@ t/53-mech-capture-js-noerror.html
 t/56-render-content.t
 t/58-alert.html
 t/58-alert.t
+t/60-list-tabs.t
 t/60-mech-cookies.t
 t/60-mech-custom-headers.t
 t/61-mech-download.t
+t/61-popup.t
 t/61-screencast.t
 t/62-networkstatus.t
 t/62-viewport-size.t

@@ -445,12 +445,51 @@ This represents the tab we control.
 
 ## `$mech->new_tab`
 
-    my $tab2 = $mech->new_tab(
+## `$mech->new_tab_future`
+
+    my $tab2 = $mech->new_tab_future(
         start_url => 'https://google.com',
-    );
+    )->get;
 
 Creates a new tab (basically, a new WWW::Mechanize::Chrome object) connected
 to the same Chrome session.
+
+    # Use a targetInfo structure from Chrome
+    my $tab2 = $mech->new_tab_future(
+        tab => {
+            'targetId' => '1F42BDF32A30700805DDC21EDB5D8C4A',
+        },
+    )->get;
+
+It returns a [Future](https://metacpan.org/pod/Future) because most event loops do not like recursing within
+themselves, which happens if you want to access a fresh new tab within another
+callback.
+
+## `$mech->on_popup`
+
+    my $opened;
+    $mech->on_popup(sub( $tab_f ) {
+        # This is a bit heavyweight, but ...
+        $tab_f->on_done(sub($tab) {
+            say "New window/tab was popped up:";
+            $tab->uri_future->then(sub($uri) {
+                say $uri;
+            });
+            $opened = $tab;
+        })->retain;
+    });
+
+    $mech->click({ selector => '#popup_window' });
+    if( $opened ) {
+        say $opened->title;
+    } else {
+        say "Did not find new tab?";
+    };
+
+Callback whenever a new tab/window gets popped up or created. The callback
+is handed a complete WWW::Mechanize::Chrome instance. Note that depending on
+your event loop, you are quite restricted on what synchronous methods you can
+call from within the callback.
 
 ## `$mech->allow( %options )`
 
@@ -660,6 +699,13 @@ Set the `autoclose` option
     $mech->close()
 
 Tear down all connections and shut down Chrome.
+
+## `$mech->list_tabs`
+
+    my @open_tabs = $mech->list_tabs()->get;
+    say $open_tabs[0]->{title};
+
+Returns the open tabs as a list of hashrefs.
 
 ## `$mech->highlight_node( @nodes )`
 
@@ -881,8 +927,10 @@ This function is mostly of use in callbacks or in a timer callback from your
 event loop.
 
 ## `$mech->uri()`
+=head2 `$mech->uri_future()`
 
     print "We are at " . $mech->uri;
+    print "We are at " . $mech->uri_future->get;
 
 Returns the current document URI.
 
