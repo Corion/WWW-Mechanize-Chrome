@@ -143,7 +143,7 @@ sub fetchNode( $class, %options ) {
     my $driver = delete $options{ driver }
         or croak "Need a valid driver for communication";
     weaken $driver;
-    my $nodeId = delete $options{ nodeId }
+    defined(my $nodeId = delete $options{ nodeId })
         or croak "Need a valid nodeId for requesting";
     my $body = delete $options{ body };
     my $attributes = delete $options{ attributes };

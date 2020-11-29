@@ -46,6 +46,7 @@
     * Add various asynchronous implementations for methods
     * Don't wait in ->close() anymore for the close to finish
     * New tabs don't have a way to notice when they are fully loaded yet
+    * Fix rare error when a node with nodeId 0 could not be fetched
 
 0.63 2020-11-28
     * Fix ->new_tab() to actually work, add a unit test for it
