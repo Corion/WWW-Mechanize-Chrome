@@ -14,6 +14,7 @@ GetOptions(
     'b|backend=s' => \my $backend,
     'c|continue' => \my $continue,
     's|separate-instances=s' => \my $separate_instances,
+    'j|jobs=i' => \my $jobcount,
     'level|l=s' => \my $log_level,
 );
 if( @tests ) {
@@ -23,6 +24,11 @@ if( @tests ) {
 if( ! defined $separate_instances) {
     $separate_instances = 1;
 }
+
+if( defined $jobcount ) {
+    $ENV{HARNESS_OPTIONS} ||= "j$jobcount";
+    $ENV{HARNESS_OPTIONS} =~ s/\bj\d+/j$jobcount/;
+};
 
 if( $ENV{HARNESS_OPTIONS} and $ENV{HARNESS_OPTIONS}=~ /\bj\d+/) {
     die "Mixing parallel tests and a single browser instance spells danger"
