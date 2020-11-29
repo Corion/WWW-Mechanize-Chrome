@@ -1781,7 +1781,7 @@ sub close {
     #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
     if( $_[0]->{autoclose} and $_[0]->target and $_[0]->tab  ) {
-        $_[0]->target->close->get();
+        $_[0]->target->close->retain();
     };
 
     #if( $pid and $_[0]->{cached_version} > 65) {
