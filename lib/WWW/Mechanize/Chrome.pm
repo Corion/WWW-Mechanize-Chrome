@@ -2886,17 +2886,25 @@ sub stop( $self ) {
 }
 
 =head2 C<< $mech->uri() >>
+=head2 C<< $mech->uri_future() >>
 
     print "We are at " . $mech->uri;
+    print "We are at " . $mech->uri_future->get;
 
 Returns the current document URI.
 
 =cut
 
-sub uri( $self ) {
-    my $d = $self->document;
-    URI->new( $d->{root}->{documentURL} )
+sub uri_future( $self ) {
+    $self->document_future->then(sub($d) {
+        Future->done( URI->new( $d->{root}->{documentURL} ))
+    });
 }
+
+sub uri( $self ) {
+    $self->uri_future->get
+}
+
 
 =head2 C<< $mech->infinite_scroll( [$wait_time_in_seconds] ) >>
 
