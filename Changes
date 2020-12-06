@@ -40,6 +40,9 @@
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
 
+0.66 to be released
+    * Move bugtracker to Github
+
 0.65 2020-11-30
     * Fix missing use of Filter::signatures to allow running on Perl 5.18
 

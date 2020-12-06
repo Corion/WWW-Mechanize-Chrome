@@ -85,6 +85,9 @@
    },
    "release_status" : "stable",
    "resources" : {
+      "bugtracker" : {
+         "web" : "http://github.com/Corion/WWW-Mechanize-Chrome/issues"
+      },
       "repository" : {
          "type" : "git",
          "url" : "git://github.com/Corion/WWW-Mechanize-Chrome.git",

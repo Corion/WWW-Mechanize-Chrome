@@ -32,7 +32,11 @@ my %module = (
                 web => "https://github.com/Corion/$distbase",
                 url => "git://github.com/Corion/$distbase.git",
                 type => 'git',
-            }
+            },
+            bugtracker  => {
+              web    => "http://github.com/Corion/$distbase/issues",
+              # mailto => 'meta-bugs@example.com',
+            },
         },
         dynamic_config   => 1, # we have prerequisites depending on the OS
         x_static_install => 1, # we are pure Perl and don't do anything fancy
