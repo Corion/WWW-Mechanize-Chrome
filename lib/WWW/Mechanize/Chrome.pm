@@ -4758,6 +4758,129 @@ sub _field_by_name {
     @fields
 }
 
+=head2 C<< $mech->set_field( %options ) >>
+
+    $mech->set_field(
+        field => $field_node,
+        value => 'foo',
+    );
+
+Low level value setting method. Use this if you have an input element outside
+of a E<lt>formE<gt> tag.
+
+=cut
+
+sub set_field($self, %options ) {
+    my $value = delete $options{ value };
+    my $pre   = delete $options{pre};
+    $pre = [$pre]
+        if (defined $pre and ! ref $pre);
+    my $post  = delete $options{post};
+    $post = [$post]
+        if (defined $post and ! ref $post);
+    $pre  ||= ['focus']; # just to eliminate some checks downwards
+    $post ||= ['change']; # just to eliminate some checks downwards
+    my $obj = delete $options{ field }
+        or croak "Need a field to set";
+    my $tag = $obj->get_tag_name();
+
+    my %method = (
+        input    => 'value',
+        textarea => 'content',
+        select   => 'selected',
+    );
+    my $method = $method{ lc $tag };
+    if( lc $tag eq 'input' and $obj->get_attribute('type') eq 'radio' ) {
+        $method = 'checked';
+    };
+
+    my $id = $obj->{objectId};
+
+    # Send pre-change events:
+    for my $ev (@$pre) {
+        $self->target->send_message(
+                'Runtime.callFunctionOn',
+                objectId => $id,
+                functionDeclaration => <<'JS',
+function(ev) {
+    var event = new Event(ev, {
+        view : window,
+        bubbles: true,
+        cancelable: true
+    });
+    this.dispatchEvent(event);
+}
+JS
+                arguments => [{ value => $ev }],
+            );
+    };
+
+    if( 'value' eq $method ) {
+        $self->target->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
+
+    } elsif( 'selected' eq $method ) {
+        # ignoring undef; but [] would reset to no option
+        if (defined $value) {
+            $value = [ $value ] unless ref $value;
+            $self->target->send_message(
+                'Runtime.callFunctionOn',
+                objectId => $id,
+                functionDeclaration => <<'JS',
+function(newValue) {
+  var i, j;
+  if (this.multiple == true) {
+    for (i=0; i<this.options.length; i++) {
+      this.options[i].selected = false
+    }
+  }
+  for (j=0; j<newValue.length; j++) {
+    for (i=0; i<this.options.length; i++) {
+      if (this.options[i].value == newValue[j]) {
+        this.options[i].selected = true
+      }
+    }
+  }
+}
+JS
+                arguments => [{ value => $value }],
+            )->get;
+        }
+    } elsif( 'checked' eq $method ) {
+        if (defined $value) {
+            $value = [ $value ] unless ref $value;
+            $obj->set_attribute('checked' => JSON::true);
+        }
+    } elsif( 'content' eq $method ) {
+        $self->target->send_message('Runtime.callFunctionOn',
+            objectId => $id,
+            functionDeclaration => 'function(newValue) { this.innerHTML = newValue }',
+            arguments => [{ value => $value }]
+        )->get;
+    } else {
+        die "Don't know how to set the value for node '$tag', sorry";
+    };
+
+    # Send post-change events
+    # Send pre-change events:
+    for my $ev (@$post) {
+        $self->target->send_message(
+                'Runtime.callFunctionOn',
+                objectId => $id,
+                functionDeclaration => <<'JS',
+function(ev) {
+    var event = new Event(ev, {
+        view : window,
+        bubbles: true,
+        cancelable: true
+    });
+    this.dispatchEvent(event);
+}
+JS
+                arguments => [{ value => $ev }],
+            );
+    };
+}
+
 sub get_set_value($self,%options) {
     my $set_value = exists $options{ value };
     my $value = delete $options{ value };
@@ -4795,103 +4918,13 @@ sub get_set_value($self,%options) {
 
     if (my $obj = $fields[0]) {
 
-        my $tag = $obj->get_tag_name();
         if ($set_value) {
-            my %method = (
-                input    => 'value',
-                textarea => 'content',
-                select   => 'selected',
+            $self->set_field(
+                field => $obj,
+                value => $value,
+                pre => $pre,
+                post => $post,
             );
-            my $method = $method{ lc $tag };
-            if( lc $tag eq 'input' and $obj->get_attribute('type') eq 'radio' ) {
-                $method = 'checked';
-            };
-
-            my $id = $obj->{objectId};
-
-            # Send pre-change events:
-            for my $ev (@$pre) {
-                $self->target->send_message(
-                        'Runtime.callFunctionOn',
-                        objectId => $id,
-                        functionDeclaration => <<'JS',
-function(ev) {
-    var event = new Event(ev, {
-        view : window,
-        bubbles: true,
-        cancelable: true
-    });
-    this.dispatchEvent(event);
-}
-JS
-                        arguments => [{ value => $ev }],
-                    );
-            };
-
-            if( 'value' eq $method ) {
-                $self->target->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
-
-            } elsif( 'selected' eq $method ) {
-                # ignoring undef; but [] would reset to no option
-                if (defined $value) {
-                    $value = [ $value ] unless ref $value;
-                    $self->target->send_message(
-                        'Runtime.callFunctionOn',
-                        objectId => $id,
-                        functionDeclaration => <<'JS',
-function(newValue) {
-  var i, j;
-  if (this.multiple == true) {
-    for (i=0; i<this.options.length; i++) {
-      this.options[i].selected = false
-    }
-  }
-  for (j=0; j<newValue.length; j++) {
-    for (i=0; i<this.options.length; i++) {
-      if (this.options[i].value == newValue[j]) {
-        this.options[i].selected = true
-      }
-    }
-  }
-}
-JS
-                        arguments => [{ value => $value }],
-                    )->get;
-                }
-            } elsif( 'checked' eq $method ) {
-                if (defined $value) {
-                    $value = [ $value ] unless ref $value;
-                    $obj->set_attribute('checked' => JSON::true);
-                }
-            } elsif( 'content' eq $method ) {
-                $self->target->send_message('Runtime.callFunctionOn',
-                    objectId => $id,
-                    functionDeclaration => 'function(newValue) { this.innerHTML = newValue }',
-                    arguments => [{ value => $value }]
-                )->get;
-            } else {
-                die "Don't know how to set the value for node '$tag', sorry";
-            };
-
-            # Send post-change events
-            # Send pre-change events:
-            for my $ev (@$post) {
-                $self->target->send_message(
-                        'Runtime.callFunctionOn',
-                        objectId => $id,
-                        functionDeclaration => <<'JS',
-function(ev) {
-    var event = new Event(ev, {
-        view : window,
-        bubbles: true,
-        cancelable: true
-    });
-    this.dispatchEvent(event);
-}
-JS
-                        arguments => [{ value => $ev }],
-                    );
-            };
         };
 
         # Don't bother to fetch the field's value if it's not wanted
@@ -4899,6 +4932,7 @@ JS
 
         # We could save some work here for the simple case of single-select
         # dropdowns by not enumerating all options
+        my $tag = $obj->get_tag_name();
         if ('SELECT' eq uc $tag) {
             my $id = $obj->{objectId};
             my $arr = $self->target->send_message(
