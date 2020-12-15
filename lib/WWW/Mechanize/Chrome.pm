@@ -5432,6 +5432,15 @@ C<timeout> - the timeout after which the function will C<croak>. To catch
 the condition and handle it in your calling program, use an L<eval> block.
 A timeout of C<0> means to never time out.
 
+See also C<max_wait> if you want to wait a limited time for an element to
+appear.
+
+=item *
+
+C<max_wait> - the maximum time to wait until the function will return.
+A max_wait of C<0> means to never time out. If the element is still visible,
+the function will return a false value.
+
 =item *
 
 C<sleep> - the interval in seconds used to L<sleep>. Subsecond
@@ -5458,6 +5467,8 @@ sub wait_until_invisible( $self, %options ) {
     };
     my $sleep = delete $options{ sleep } || 0.3;
     my $timeout = delete $options{ timeout } || 0;
+    my $wait = delete $options{ max_wait } || 0;
+    $timeout ||= $wait;
 
     _default_limiter( 'maybe', \%options );
 
@@ -5481,8 +5492,13 @@ sub wait_until_invisible( $self, %options ) {
     } while ( $v
            and (!$timeout or time < $timeout_after ));
     if ($v and $timeout and time >= $timeout_after) {
-        croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
+        if( $wait ) {
+            return()
+        } else {
+            croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
+        };
     };
+    return 1;
 };
 
 =head2 C<< $mech->wait_until_visible( %options ) >>
