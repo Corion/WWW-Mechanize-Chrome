@@ -518,6 +518,14 @@ Allow or disallow execution of Javascript
 Sets the list of request patterns and resource types for which the interception
 callback will be invoked.
 
+## `$mech->continueInterceptedRequest( %options )`
+
+    $mech->continueInterceptedRequest_future(
+        interceptionId => ...
+    );
+
+Continues an intercepted request
+
 ## `$mech->add_listener`
 
     my $url_loaded = $mech->add_listener('Network.responseReceived', sub {
@@ -1464,6 +1472,16 @@ with a different API. Supported keys are:
 
 in addition to all keys that `$mech->xpath` supports.
 
+## `$mech->set_field( %options )`
+
+    $mech->set_field(
+        field => $field_node,
+        value => 'foo',
+    );
+
+Low level value setting method. Use this if you have an input element outside
+of a &lt;form> tag.
+
 ## `$mech->select( $name, $value )`
 
 ## `$mech->select( $name, \@values )`
@@ -1891,9 +1909,8 @@ that talk are
 
 # BUG TRACKER
 
-Please report bugs in this module via the RT CPAN bug queue at
-[https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome](https://rt.cpan.org/Public/Dist/Display.html?Name=WWW-Mechanize-Chrome)
-or via mail to [www-mechanize-Chrome-Bugs@rt.cpan.org](mailto:www-mechanize-Chrome-Bugs@rt.cpan.org).
+Please report bugs in this module via the Github bug queue at
+[https://github.com/Corion/WWW-Mechanize-Chrome/issues](https://github.com/Corion/WWW-Mechanize-Chrome/issues)
 
 # CONTRIBUTING
 
