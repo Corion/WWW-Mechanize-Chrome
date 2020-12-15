@@ -1432,11 +1432,29 @@ callback will be invoked.
 =cut
 
 sub setRequestInterception_future( $self, @patterns ) {
-    $self->target->send_message('Network.setRequestInterception', patterns => @patterns)
+    $self->target->send_message('Network.setRequestInterception', patterns => \@patterns)
 }
 
 sub setRequestInterception( $self, @patterns ) {
     $self->setRequestInterception_future( @patterns )->get
+}
+
+=head2 C<< $mech->continueInterceptedRequest( %options ) >>
+
+    $mech->continueInterceptedRequest_future(
+        interceptionId => ...
+    );
+
+Continues an intercepted request
+
+=cut
+
+sub continueInterceptedRequest_future( $self, %options ) {
+    $self->target->send_message('Network.continueInterceptedRequest', %options)
+}
+
+sub continueInterceptedRequest( $self, %options ) {
+    $self->continueInterceptedRequest_future( %options )->get
 }
 
 =head2 C<< $mech->add_listener >>
