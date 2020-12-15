@@ -2134,7 +2134,12 @@ sub _waitForNavigationEnd( $self, %options ) {
         $requestId ||= $self->_fetchRequestId($ev);
 
         my $stopped = (    $ev->{method} eq 'Page.frameStoppedLoading'
-                       && $ev->{params}->{frameId} eq $frameId);
+                       && $ev->{params}->{frameId} eq $frameId)
+                       ||
+                      (    $ev->{method} eq 'Network.loadingFinished'
+                       && (! $ev->{params}->{frameId}   || $ev->{params}->{frameId} eq ($frameId || ''))
+                       && (! $ev->{params}->{requestId} || $ev->{params}->{requestId} eq ($requestId || ''))
+                      );
         # This means basically no navigation events will follow:
         my $internal_navigation = (   $ev->{method} eq 'Page.navigatedWithinDocument'
                        && $requestId
