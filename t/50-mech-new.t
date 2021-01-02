@@ -63,7 +63,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     undef $mech; # our own tab should now close automatically
     note "Released mechanize";
 
-    sleep 1;
+    # Should we maybe busy-wait here to possibly be faster?!
+    my $timeout = time+2;
+    my @new_tabs;
+    while(    time < $timeout
+           && 0+@new_tabs != 0+@tabs-1 ) {
+        eval { @new_tabs = $app->getTargets()->get; 1 };
+        sleep 0.1;
+    };
 
     SKIP: {
         # In some Chrome versions, Chrome goes away when we closed our websocket?!
@@ -106,7 +113,7 @@ HTML
     like $c, qr/\Q$magic/, "We can read our content back immediately";
 
     undef $mech;
-    sleep 1; # to give chrome time to reopen its socket for our tab
+    #sleep 1; # to give chrome time to reopen its socket for our tab
 
     # Now check that we don't open a new tab if we try to find an existing tab:
     $mech = WWW::Mechanize::Chrome->new(
@@ -128,7 +135,7 @@ HTML
     # while we test
     #$app->activate_tab($mech->tab)->get;
     undef $mech,
-    sleep 2; # to make the socket available again
+    #sleep 2; # to make the socket available again
 
     $mech = WWW::Mechanize::Chrome->new(
         autodie   => 0,
