@@ -1082,6 +1082,9 @@ sub _connect( $self, %options ) {
             $s->set_download_directory_future($self->{download_directory}),
 
             keys %{$options{ extra_headers }} ? $s->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
+
+            # do a dummy search so no nodeId 0 gets used (?!)
+            # $s->_performSearch(query => '//'),
         );
 
         if( my $agent = delete $options{ user_agent }) {
@@ -1880,6 +1883,7 @@ sub close {
     #};
     if( $_[0]->{autoclose} and $_[0]->target and $_[0]->tab  ) {
         $_[0]->target->close->retain();
+        #$_[0]->target->close->get(); # just to see if there is an error
     };
 
     #if( $pid and $_[0]->{cached_version} > 65) {
@@ -3901,11 +3905,12 @@ sub _performSearch( $self, %args ) {
             my $searchId = $results->{searchId};
             my @childNodes;
             my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
+                #use Data::Dumper; warn "setChildNodes: "; warn Dumper $ev;
                 push @childNodes, @{ $ev->{params}->{nodes} };
             });
 
             my $childNodes;
-            if( $subTreeId ) {
+            if( defined $subTreeId ) {
                 $childNodes =
                     $self->target->send_message( 'DOM.requestChildNodes',
                         nodeId => 0+$subTreeId,
@@ -3935,8 +3940,15 @@ sub _performSearch( $self, %args ) {
                 # the setChildNodes messages onto @childNodes
                 my @discard = $childNodes->get();
 
-                $search
+                return $search;
+
             })->then( sub( $response ) {
+                # you might get a node with nodeId 0. This one
+                # can't be retrieved. Bad luck.
+                if($response->{nodeIds}->[0] == 0) {
+                    warn "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved.";
+                    # splice @{ $response->{nodeIds}}, 0, 1;
+                };
 
                 # Resolve the found nodes directly with the
                 # found node ids instead of returning the numbers and fetching
@@ -3965,7 +3977,15 @@ sub _performSearch( $self, %args ) {
 
                 for (@foundNodes) {
                     my $id = $_->nodeId;
-                    #warn "Found " . $_->nodeId;
+                    if( ! defined $id ) {
+                        #use Data::Dumper;
+                        #warn "Found node without nodeId: " . Dumper $_;
+                        # Sometimes we get a spurious, empty node, so we ignore that
+                        # Maybe that is because the node we searched for went
+                        # away, but we'd need to associate the information
+                        # before we get the response, so ...
+                        next;
+                    };
                     # Backfill here instead of overwriting!
                     if( my $n = $nodes->{$id} ) {
                         for my $key (qw( backendNodeId parentId )) {
@@ -4067,6 +4087,9 @@ sub xpath( $self, $query, %options) {
         my $id;
         if ($options{ node }) {
             $id = $options{ node }->backendNodeId;
+            #warn "Performing search (below '$id')";
+        } else {
+            #warn "Performing search across complete DOM";
         };
         Future->wait_all(
             map {
@@ -4075,6 +4098,10 @@ sub xpath( $self, $query, %options) {
         );
     })->then( sub {
         my @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @_;
+        #for( @found ) {
+        #    use Data::Dumper;
+        #    warn "Found " . Dumper $_;
+        #};
         push @res, @found;
         Future->done( 1 );
     })->get;
