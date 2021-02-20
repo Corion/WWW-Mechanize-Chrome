@@ -3,6 +3,7 @@ use Test::More;
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
+use WWW::Mechanize::Chrome::URLBlacklist;
 use lib '.';
 
 use t::helper;
@@ -20,18 +21,39 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => $testcount*@instances;
 };
 
+#my $bl = WWW::Mechanize::Chrome::URLBlacklist->new(
+#    blacklist => [
+#    ],
+#    whitelist => [
+#        qr!localhost!,
+#        qr!^file://!,
+#    ],
+#
+#    # fail all unknown URLs
+#    default => 'failRequest',
+#    # allow all unknown URLs
+#    # default => 'continueRequest',
+#
+#    on_default => sub {
+#        warn "*** Ignored URL $_[0] (action was '$_[1]')",
+#    },
+#);
+
 sub new_mech {
     t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
-    WWW::Mechanize::Chrome->new(
+    my $mech = WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
     );
+    #$bl->enable($mech);
+    return $mech;
 };
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form-with-fields-gh48.html');
+    note "Loaded page";
 #$mech->dump_forms;
     my $f;
     my $ok = eval {
@@ -39,8 +61,9 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         1;
     };
     my $err = $@;
-    is $err, '', "No error when retrieving ->current_form() again";
+    is $err, '', "No fatal error when retrieving ->current_form() again";
     if( isn't $f, undef, "We have a form" ) {
+        note "Retrieving HTML from ->current_form()";
         my $html = $mech->current_form()->get_attribute('outerHTML');
         like $html, qr/^<form/i, "The form outer HTML looks like we expect";
     } else {

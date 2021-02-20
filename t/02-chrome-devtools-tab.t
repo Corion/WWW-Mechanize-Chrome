@@ -58,9 +58,16 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
         } else {
             $chrome->transport->closeTarget( targetId => $new->{targetId} )->get;
 
-            sleep 1; # need to give Chrome some time here to clean up its act?!
-
             my @tabs3;
+            eval { @tabs3 = $chrome->getTargets()->get; 1 };
+            my $timeout = time+1;
+            while( time <= $timeout
+                   && (grep { $_->{targetId} eq $new->{targetId} } @tabs3) != 0 ) {
+                # need to give Chrome some time here to clean up its act?!
+                sleep(0.1);
+                eval { @tabs3 = $chrome->getTargets()->get; 1 };
+            }
+
             my $ok = eval { @tabs3 = $chrome->getTargets()->get; 1 };
             SKIP: {
                 if( ! $ok ) {

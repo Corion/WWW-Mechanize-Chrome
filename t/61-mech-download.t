@@ -73,7 +73,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, 5, sub {
             ok $mech->success, "The download (always) succeeds";
             like $res->header('Content-Disposition'), qr/attachment;/, "We got a download response";
 
-            $mech->sleep(1); # well, should be faster, but...
+            my $timeout = time+1;
+            while( time < $timeout
+                   && ! -f "$d/mytest.txt" ) {
+                $mech->sleep(0.1);
+            };
             ok -f "$d/mytest.txt", "File 'mytest.txt' was downloaded OK";
         };
     }
