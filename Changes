@@ -43,6 +43,9 @@
 0.66 to be released
     * Move bugtracker to Github
 
+    * ->click() now always returns the HTTP response. In cases of internal
+      navigation, it  used to erroneously return an arrayref
+
 0.65 2020-11-30
     * Fix missing use of Filter::signatures to allow running on Perl 5.18
 

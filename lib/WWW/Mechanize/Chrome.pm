@@ -4230,11 +4230,12 @@ sub click {
     #warn Dumper $self->target->send_message('Runtime.getProperties', objectId => $id)->get;
     #warn Dumper $self->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
 
-    my $response =
     $self->_mightNavigate( sub {
         $self->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
     }, %options)
     ->get;
+
+    return $self->response;
 }
 
 # Internal method to run either an XPath, CSS or id query against the DOM
