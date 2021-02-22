@@ -3114,19 +3114,36 @@ sub document( $self ) {
 }
 
 sub decoded_content($self) {
-    $self->document_future->then(sub( $root ) {
-        # Join _all_ child nodes together to also fetch DOCTYPE nodes
-        # and the stuff that comes after them
-        my @content = map {
-            my $nodeId = $_->{nodeId};
-            $self->log('trace', "Fetching HTML for node " . $nodeId );
-            $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-        } @{ $root->{root}->{children} };
+    my $res;
+    my $ct = $self->ct || 'text/html';
+    if( $ct eq 'text/html' ) {
+        $res = $self->document_future->then(sub( $root ) {
+            # Join _all_ child nodes together to also fetch DOCTYPE nodes
+            # and the stuff that comes after them
 
-        Future->wait_all( @content )
-    })->then( sub( @outerHTML_f ) {
-        Future->done( join "", map { $_->get->{outerHTML} } @outerHTML_f )
-    })->get;
+            my @content = map {
+                my $nodeId = $_->{nodeId};
+                $self->log('trace', "Fetching HTML for node " . $nodeId );
+                $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+            } @{ $root->{root}->{children} };
+
+            return Future->wait_all( @content )
+            ->then( sub( @outerHTML_f ) {
+                Future->done( join "", map { $_->get->{outerHTML} } @outerHTML_f );
+            });
+        });
+    } else {
+        # Return the raw body
+        #use Data::Dumper;
+        #warn Dumper $self->response;
+        #warn $self->response->content;
+
+        # The content is already decoded (?!)
+        # I'm not sure how well this plays with encodings, and
+        # binary content
+        $res = Future->done($self->response->content);
+    };
+    return $res->get
 };
 
 =head2 C<< $mech->content( %options ) >>
