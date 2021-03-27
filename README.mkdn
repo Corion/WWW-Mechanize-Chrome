@@ -1632,6 +1632,13 @@ In addition, the following options are accepted:
 - `timeout` - the timeout after which the function will `croak`. To catch
 the condition and handle it in your calling program, use an [eval](https://metacpan.org/pod/eval) block.
 A timeout of `0` means to never time out.
+
+    See also `max_wait` if you want to wait a limited time for an element to
+    appear.
+
+- `max_wait` - the maximum time to wait until the function will return.
+A max\_wait of `0` means to never time out. If the element is still visible,
+the function will return a false value.
 - `sleep` - the interval in seconds used to [sleep](https://metacpan.org/pod/sleep). Subsecond
 intervals are possible.
 
