@@ -153,7 +153,7 @@ sub run_across_instances {
     for my $browser_instance (@{$_[0]}) {
         runtests( $browser_instance, @_[1,3,2] );
         #undef $new_mech;
-        sleep 0.5 if @{$_[0]};
+        #sleep 0.5 if @{$_[0]};
         # So the browser can shut down before we try to connect
         # to the new instance
     };
