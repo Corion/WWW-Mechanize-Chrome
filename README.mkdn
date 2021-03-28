@@ -1939,7 +1939,7 @@ Steven Dondley `s@dondley.org`
 
 # COPYRIGHT (c)
 
-Copyright 2010-2020 by Max Maischein `corion@cpan.org`.
+Copyright 2010-2021 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 

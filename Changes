@@ -40,11 +40,21 @@
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
 
-0.66 to be released
+0.66 2021-03-28
     * Move bugtracker to Github
 
     * ->click() now always returns the HTTP response. In cases of internal
       navigation, it  used to erroneously return an arrayref
+
+    * Fix for GH #55 , ->decoded_content() does not work for HTML content
+
+    * Test stability fixes, adapt tests to Chrome 88
+
+    * Remove some hardcoded sleep() calls from the test harness
+
+    * Chrome DOM nodes can have a node id of 0 , but the Chrome API does not
+      gracefully handle these. We output "Bad luck" on encountering such
+      a node.
 
 0.65 2020-11-30
     * Fix missing use of Filter::signatures to allow running on Perl 5.18

@@ -148,5 +148,5 @@ This module is released under the same terms as Perl itself.
 =cut
 
 package WWW::Mechanize::Chrome::Cookbook;
-our $VERSION = '0.65';
+our $VERSION = '0.66';
 1;

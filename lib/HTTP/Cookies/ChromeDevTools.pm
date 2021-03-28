@@ -2,7 +2,7 @@ package HTTP::Cookies::ChromeDevTools;
 use strict;
 use Carp qw[croak];
 
-our $VERSION = '0.65';
+our $VERSION = '0.66';
 our @CARP_NOT;
 
 use Moo 2;
