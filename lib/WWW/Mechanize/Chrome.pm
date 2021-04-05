@@ -1994,22 +1994,21 @@ got the right nodes.
 
 =cut
 
-sub highlight_node {
-    my ($self,@nodes) = @_;
-    for (@nodes) {
-        #  Overlay.highlightNode
-        my $style= $self->eval_in_page(<<JS, $_);
-        (function(el) {
-            if( 'none' == el.style.display ) {
-                el.style.display= 'block';
-            };
-            el.style.background= 'red';
-            el.style.border= 'solid black 1px';
-        })(arguments[0]);
-JS
-    };
-};
-
+sub highlight_nodes($self, @nodes) {
+    foreach my $node (@nodes) {
+        $self->callFunctionOn(
+            'function() {
+                if( "none" == this.style.display ) {
+                    this.style.display= "block";
+                };
+                this.style.backgroundColor = "red";
+                this.style.border = "solid black 1px"
+             }',
+             objectId => $node->objectId,
+             arguments => []
+        );
+    }
+}
 =head1 NAVIGATION METHODS
 
 =head2 C<< $mech->get( $url, %options ) >>
