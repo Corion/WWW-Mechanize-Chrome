@@ -1127,12 +1127,20 @@ sub requestId( $self ) {
 
   print $mech->chrome_version;
 
-Returns the version of the Chrome executable being used. This information
+Synonym for C<< ->browser_version >>
+
+=cut
+
+=head2 C<< $mech->browser_version >>
+
+  print $mech->browser_version;
+
+Returns the version of the browser executable being used. This information
 needs launching the browser and asking for the version via the network.
 
 =cut
 
-sub chrome_version_from_stdout( $class, $options={} ) {
+sub browser_version_from_stdout( $class, $options={} ) {
     # We can try to get at the version through the --version command line:
     my @cmd = $class->build_command_line({
         launch_arg => ['--version'],
@@ -1150,12 +1158,17 @@ sub chrome_version_from_stdout( $class, $options={} ) {
     # Chromium 58.0.3029.96 Built on Ubuntu , running on Ubuntu 14.04
     # Chromium 76.0.4809.100 built on Debian 10.0, running on Debian 10.0
     # Google Chrome 78.0.3904.97
-    $v =~ /^(.*?)\s+(\d+\.\d+\.\d+\.\d+)\b/
-        or return; # we didn't find anything
-    return "$1/$2"
+    # Mozilla Firefox 87.0
+    if( $v =~ m!^(.*?)\s+(\d+\.\d+\.\d+\.\d+)\b!) {
+        return "$1/$2"
+    } elsif($v =~ m!^(Mozilla Firefox)[ /](\d+.\d+)\b!) {
+        return "$1/$2.0.0"
+    } else {
+        return; # we didn't find anything
+    }
 }
 
-sub chrome_version_from_executable_win32( $class, $options={} ) {
+sub browser_version_from_executable_win32( $class, $options={} ) {
     require Win32::File::VersionInfo;
 
     my @names = ($options->{launch_exe} ? $options->{launch_exe}: ());
@@ -1181,20 +1194,22 @@ sub chrome_version_from_executable_win32( $class, $options={} ) {
     };
 }
 
-sub chrome_version( $self, %options ) {
+sub browser_version( $self, %options ) {
     if( blessed $self and $self->target ) {
         return $self->chrome_version_info()->{product};
 
     } elsif( $^O !~ /mswin/i ) {
-        my $version = $self->chrome_version_from_stdout(\%options);
+        my $version = $self->browser_version_from_stdout(\%options);
         if( $version ) {
             return $version;
         };
 
     } else {
-        $self->chrome_version_from_executable_win32( \%options )
+        $self->browser_version_from_executable_win32( \%options )
     };
 }
+
+*chrome_version = \&browser_version;
 
 =head2 C<< $mech->chrome_version_info >>
 
