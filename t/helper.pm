@@ -106,7 +106,7 @@ sub runtests {
     } else {
         @launch = ( launch_exe => $browser_instance,
                     #port => $port,
-                    data_directory => $tempdir,
+                    profile => $tempdir,
                     headless => 1,
                   );
     };
