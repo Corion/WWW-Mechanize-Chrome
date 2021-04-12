@@ -491,13 +491,13 @@ sub on_response( $self, $connection, $message ) {
         my $receiver = delete $self->{receivers}->{ $id };
 
         if( ! $receiver) {
-            $self->log( 'debug', "Ignored response to unknown receiver", $response )
+            $self->log( 'debug', "(target) Ignored response to unknown receiver", $response )
 
         } elsif( $response->{error} ) {
-            $self->log( 'debug', "Replying to error $response->{id}", $response );
+            $self->log( 'debug', "(target) Replying to error $response->{id}", $response );
             $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
         } else {
-            $self->log( 'trace', "Replying to $response->{id}", $response );
+            $self->log( 'trace', "(target) Replying to $response->{id}", $response );
             $receiver->done( $response->{result} );
         };
     };
@@ -571,7 +571,7 @@ sub _send_packet( $self, $response, $method, %params ) {
         $self->log('error', $@ );
     };
 
-    $self->log( 'trace', "Sent message", $payload );
+    $self->log( 'trace', "(target) Sent message", $payload );
     my $result;
     try {
         # this is half right - we get an ack when the message was accepted
@@ -579,7 +579,7 @@ sub _send_packet( $self, $response, $method, %params ) {
         # real target. This is done in the listener for receivedMessageFromTarget
         #my $ignore = $s->future->retain;
         $result = $s->transport->_send_packet(
-            #$ignore, # this one leads to a circular reference somewher?!
+            #$ignore, # this one leads to a circular reference somewhere?!
             undef,
             'Target.sendMessageToTarget',
             message => $payload,

@@ -514,13 +514,17 @@ sub on_response( $self, $connection, $message ) {
         my $receiver = delete $self->{receivers}->{ $id };
 
         if( ! $receiver) {
-            $self->log( 'debug', "Ignored response to unknown receiver", $response )
+            if( $response->{sessionId} ) {
+                $self->log( 'trace', "$self Ignored response to (other?) session", $response );
+            } else {
+            $self->log( 'debug', "$self Ignored response to unknown receiver", $response );
+            };
 
         } elsif( $response->{error} ) {
-            $self->log( 'debug', "Replying to error $response->{id}", $response );
+            $self->log( 'debug', "Replying to error $id", $response );
             $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
         } else {
-            $self->log( 'trace', "Replying to $response->{id}", $response );
+            $self->log( 'trace', "Replying to $id", $response );
             $receiver->done( $response->{result} );
         };
     };
@@ -575,8 +579,10 @@ sub json_get($self, $domain, %options) {
 
 sub _send_packet( $self, $response, $method, %params ) {
     my $id = $self->next_sequence;
+
     if( $response ) {
         $self->{receivers}->{ $id } = $response;
+        $self->log( 'trace', "(send) Available receivers", join ",", sort { $a cmp $b } keys %{$self->{receivers }});
     };
 
     my $payload = eval {
@@ -590,7 +596,7 @@ sub _send_packet( $self, $response, $method, %params ) {
         $self->log('error', $@ );
     };
 
-    $self->log( 'trace', "Sent message", $payload );
+    $self->log( 'trace', "(dtp) Sent message", $payload );
     my $result;
     try {
         $result = $self->transport->send( $payload );
