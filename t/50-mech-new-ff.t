@@ -28,7 +28,7 @@ my %args;
 sub new_mech {
     # Just keep these to pass the parameters to new instances
     %args = @_;
-    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
+    #t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
     WWW::Mechanize::Firefox->new(
         autodie => 1,
         %args,

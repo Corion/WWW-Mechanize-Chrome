@@ -78,5 +78,4 @@ around default_executable_names => sub( $class, @other ) {
     @program_names
 };
 
-
 1;
