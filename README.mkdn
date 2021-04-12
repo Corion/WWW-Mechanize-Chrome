@@ -401,7 +401,13 @@ and does not contain a directory separator.
 
     print $mech->chrome_version;
 
-Returns the version of the Chrome executable being used. This information
+Synonym for `->browser_version`
+
+## `$mech->browser_version`
+
+    print $mech->browser_version;
+
+Returns the version of the browser executable being used. This information
 needs launching the browser and asking for the version via the network.
 
 ## `$mech->chrome_version_info`
