@@ -37,7 +37,7 @@ around build_command_line => sub( $orig, $class, $options ) {
         if (exists $options->{port}) {
             $options->{port} ||= 0;
             push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
-        };
+        }
 
         if ($options->{listen_host}) {
             push @{ $options->{ launch_arg }}, "--remote-debugging-address==$options->{ listen_host }";
@@ -63,6 +63,20 @@ around build_command_line => sub( $orig, $class, $options ) {
     @cmd
 };
 
+around default_executable_names => sub( $class, @other ) {
+    my @program_names
+        = grep { defined($_) } (
+        $ENV{CHROME_BIN},
+        @other,
+    );
+    if( ! @program_names ) {
+        push @program_names,
+          $^O =~ /mswin/i ? 'firefox.exe'
+        : $^O =~ /darwin/i ? ('Mozilla', 'Firefox')
+        : ('firefox', 'firefox-esr')
+    };
+    @program_names
+};
 
 
 1;
