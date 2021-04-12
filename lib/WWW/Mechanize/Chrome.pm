@@ -1072,14 +1072,20 @@ sub _connect( $self, %options ) {
             $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
         $s->new_generation;
 
+        # XXX Browser specific setup
+
         my @setup = (
             $s->target->send_message('DOM.enable'),
+
+            # Chrome only
             $s->target->send_message('Overlay.enable'),
             $s->target->send_message('Page.enable'),    # capture DOMLoaded
             $s->target->send_message('Network.enable'), # capture network
             $s->target->send_message('Runtime.enable'), # capture console messages
             #$self->target->send_message('Debugger.enable'), # capture "script compiled" messages
+            # Chrome only
             $s->set_download_directory_future($self->{download_directory}),
+
 
             keys %{$options{ extra_headers }} ? $s->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
 
