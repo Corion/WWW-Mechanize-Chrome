@@ -137,6 +137,7 @@ has 'transport' => (
     ]],
 );
 
+# This is maybe deprecated?
 has 'targetId' => (
     is => 'rw',
 );
@@ -245,7 +246,14 @@ sub connect( $self, %args ) {
         $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
             if( $s ) {
                 my $id = $s->targetId;
-                if( !$id or $id eq $_[0]->{params}->{targetId}) {
+                my $sid = $s->sessionId;
+                if( exists $_[0]->{params}->{sessionId}
+                    and $sid
+                    and $_[0]->{params}->{sessionId} eq $sid) {
+                    my $payload = $_[0]->{params}->{message};
+                    $s->on_response( undef, $payload );
+                } elsif( !$id
+                         or ($_[0]->{params}->{targetId} and $id eq $_[0]->{params}->{targetId})) {
                     my $payload = $_[0]->{params}->{message};
                     $s->on_response( undef, $payload );
                 };
