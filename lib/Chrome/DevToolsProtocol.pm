@@ -420,8 +420,6 @@ sub one_shot( $self, @events ) {
     $result
 };
 
-my %stack;
-my $r;
 sub on_response( $self, $connection, $message ) {
     my $response = eval { $self->json->decode( $message ) };
     if( $@ ) {
