@@ -633,9 +633,6 @@ has sent a response to this query.
 
 sub send_message( $self, $method, %params ) {
     my $response = $self->future;
-    # We add our response listener before we've even sent our request to
-    # Chrome. This ensures that no amount of buffering etc. will make us
-    # miss a reply from Chrome to a request
     $self->_send_packet( $response, $method, %params )->retain;
     $response
 }
