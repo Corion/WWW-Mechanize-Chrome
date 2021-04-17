@@ -245,6 +245,7 @@ sub connect( $self, %args ) {
     $done = $done->then(sub {
         $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
             if( $s ) {
+                $s->log( 'trace', '(target) receivedMessage', $_[0] );
                 my $id = $s->targetId;
                 my $sid = $s->sessionId;
                 if( exists $_[0]->{params}->{sessionId}
