@@ -1,5 +1,5 @@
 package Chrome::DevToolsProtocol;
-use 5.010; # for //
+use 5.012; # for say, //
 use strict;
 use warnings;
 use Moo;
@@ -200,6 +200,24 @@ Returns a backend-specific generic future
     my $url = $driver->endpoint();
 
 Returns the URL endpoint to talk to for the connected tab
+
+=cut
+
+has 'json_log_fh' => (
+    is => 'rw', # actually, it isn't really rw, but set-once
+);
+
+=head2 C<< json_log_fh >>
+
+Filehandle where all communications will be logged to, one line
+per message/response. Each line will be of the format
+
+  { type: "message", payload: { ... } }
+  { type: "reply", payload: { ... } }
+  { type: "event", payload: { ... } }
+
+The filehandle must be opened as :raw , as UTF-8 encoded bytes will
+be written to it.
 
 =cut
 
@@ -430,6 +448,10 @@ sub on_response( $self, $connection, $message ) {
         return;
     };
 
+    if( my $fh = $self->json_log_fh ) {
+        say $fh $self->json->encode( { type => 'response', payload => $response } );
+    };
+
     if( ! exists $response->{id} ) {
         # Generic message, dispatch that:
         if( my $error = $response->{error} ) {
@@ -582,15 +604,24 @@ sub _send_packet( $self, $response, $method, %params ) {
         $self->{receivers}->{ $id } = $response;
     };
 
+    my $msg = {
+        id     => 0+$id,
+        method => $method,
+        params => \%params
+    };
     my $payload = eval {
-        $self->json->encode({
-            id     => 0+$id,
-            method => $method,
-            params => \%params
-        });
+        $self->json->encode($msg);
     };
     if( my $err = $@ ) {
         $self->log('error', $@ );
+    };
+
+    if( my $fh = $self->json_log_fh ) {
+        say $fh
+        $self->json->encode({
+            type   => "message",
+            payload => $msg
+        });
     };
 
     $self->log( 'trace', "Sent message", $payload );

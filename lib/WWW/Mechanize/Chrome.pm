@@ -392,6 +392,19 @@ Defaults to false (off). A true value turns syncing on.
 
 Defaults to false (off). A true value turns web resources on.
 
+=item B<json_log_file>
+
+Filename to log all JSON communications to, one line per message/event/reply
+
+=item B<json_log_fh>
+
+Filehandle to log all JSON communications to, one line per message/event/reply
+
+Open this filehandle via
+
+  open my $fh, '>:utf8', $logfilename
+      or die "Couldn't create '$logfilename': $!";
+
 =back
 
 The C<< $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} >> variable can be set to a
@@ -980,11 +993,18 @@ sub new_future($class, %options) {
             host => $host,
         );
     };
+
+    if( my $fn = delete $options{ json_log_file }) {
+        open $options{ json_log_fh }, '>:utf8', $fn
+            or die "Couldn't create '$fn': $!";
+    };
+
     # Connect to it via TCP or local pipe
     $options{ driver_transport } ||= Chrome::DevToolsProtocol->new(
-        @connection,
-        transport => $options{ transport },
-        log => $options{ log },
+              @connection,
+              transport   => $options{ transport },
+              log         => $options{ log },
+        maybe json_log_fh => delete $options{ json_log_fh },
     );
 
     $options{ target } ||= Chrome::DevToolsProtocol::Target->new(
