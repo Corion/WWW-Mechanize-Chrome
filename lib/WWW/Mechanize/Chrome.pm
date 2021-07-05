@@ -1995,7 +1995,7 @@ got the right nodes.
 =cut
 
 sub highlight_nodes {
-    my @nodes = @_;
+    my ($mech, @nodes) = @_;
     foreach my $node (@nodes) {
         $mech->callFunctionOn(
             'function() {
