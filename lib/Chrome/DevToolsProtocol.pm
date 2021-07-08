@@ -551,6 +551,7 @@ sub build_url( $self, %options ) {
         $url = URI->new('json', 'http');
         $url->port( $self->port );
         $url->host( $self->host );
+	$url->scheme('http');
         $url = "$url";
     };
     $url .= '/' . $options{domain} if $options{ domain };
