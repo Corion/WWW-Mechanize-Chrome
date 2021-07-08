@@ -6396,14 +6396,24 @@ L<WWW::Mechanize::Chrome::Node> - objects representing HTML in Chrome
 =item *
 
 L<WWW::Mechanize::Firefox> - a similar module with a visible application
-automating Firefox
+automating Firefox , currently on hiatus, since Mozilla does not yet
+implement the Chrome DevTools Protocol properly
 
 =item *
 
 L<WWW::Mechanize::PhantomJS> - a similar module without a visible application
-automating PhantomJS
+automating PhantomJS , now discontinued since PhantomJS is discontinued
 
 =back
+
+=head1 MASQUERADING AS OTHER BROWSERS
+
+Some articles about what you need to change to appear as a different
+browser
+
+L<https://multilogin.com/why-mimicking-a-device-is-almost-impossible/>
+
+L<https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth>
 
 =head1 REPOSITORY
 
