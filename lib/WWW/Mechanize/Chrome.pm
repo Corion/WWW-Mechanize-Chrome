@@ -1994,10 +1994,9 @@ got the right nodes.
 
 =cut
 
-sub highlight_nodes {
-    my ($mech, @nodes) = @_;
+sub highlight_nodes($self, @nodes) {
     foreach my $node (@nodes) {
-        $mech->callFunctionOn(
+        $self->callFunctionOn(
             'function() {
                 if( "none" == this.style.display ) {
                     this.style.display= "block";
@@ -2010,6 +2009,7 @@ sub highlight_nodes {
         );
     }
 }
+
 =head1 NAVIGATION METHODS
 
 =head2 C<< $mech->get( $url, %options ) >>
