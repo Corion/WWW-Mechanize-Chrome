@@ -45,6 +45,7 @@ has 'ws_client' => (
 
 sub connect( $self, $handler, $got_endpoint, $logger ) {
     weaken $handler;
+    weaken(my $s = $self);
 
     local @CARP_NOT = (@CARP_NOT, 'Chrome::DevToolsProtocol::Transport');
 
@@ -54,12 +55,12 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     $got_endpoint->then( sub( $endpoint ) {
         die "Got an undefined endpoint" unless defined $endpoint;
 
-        my $res = $self->future;
+        my $res = $s->future;
         $logger->('debug',"Connecting to $endpoint");
-        $self->ws_client( AnyEvent::WebSocket::Client->new(
+        $s->ws_client( AnyEvent::WebSocket::Client->new(
             max_payload_size => 0, # allow unlimited size for messages
         ));
-        $self->ws_client->connect( $endpoint )->cb( sub {
+        $s->ws_client->connect( $endpoint )->cb( sub {
             $res->done( @_ )
         });
         $res
@@ -68,8 +69,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
         $logger->( 'trace', sprintf "Connected" );
         my $connection = $c->recv;
 
-        $self->connection( $connection );
-        undef $self;
+        $s->connection( $connection );
+        #undef $self;
 
         # Kick off the continous polling
         $connection->on( each_message => sub( $connection,$message, @rest) {
@@ -80,8 +81,8 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
             $logger->('error', $error);
         });
 
-        my $res = Future->done( $self );
-        undef $self;
+        my $res = Future->done( $s );
+        undef $s;
         $res
     });
 }

@@ -330,8 +330,10 @@ sub connect( $self, %args ) {
 
         # Set these values so anyone reusing the parameters will find them
         my $ws = URI->new( $endpoint );
-        $self->{port} = $ws->port;
-        $self->{host} = $ws->host;
+        if( $s ) {
+            $s->{port} = $ws->port;
+            $s->{host} = $ws->host;
+        };
     };
 
     my $got_endpoint;
@@ -340,7 +342,7 @@ sub connect( $self, %args ) {
             die "Can't connect without knowing the port?! " . $self->port;
         };
         $got_endpoint = $self->version_info()->then(sub( $info ) {
-            $self->log('debug', "Found webSocket URL", $info );
+            $s->log('debug', "Found webSocket URL", $info );
             #$self->tab( $info );
             return Future->done( $info->{webSocketDebuggerUrl} );
         });
@@ -351,13 +353,13 @@ sub connect( $self, %args ) {
             # We need to somehow find the tab id for our tab, so let's fake it:
             $endpoint =~ m!/([^/]+)$!
                 or die "Couldn't find tab id in '$endpoint'";
-            $self->{tab} = {
+            $s->{tab} = {
                 targetId => $1,
             };
         };
     };
     $got_endpoint = $got_endpoint->then(sub($endpoint) {
-        $self->{ endpoint } = $endpoint;
+        $s->{ endpoint } = $endpoint;
         return Future->done( $endpoint );
     })->catch(sub(@args) {
         #croak @args;
