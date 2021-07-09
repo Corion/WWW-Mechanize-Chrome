@@ -40,13 +40,15 @@
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
 
-0.67 to be released
+0.67 2021-07-09
     * Add json_log_file and json_log_fh options
       This is in preparation of supporting Firefox as well and collecting
       verbatim communications for debugging
     * Really fix the ->highlight_nodes() method, thanks to Joshua Pollack
     * Restore the ability to connect to an existing Chrome instance,
       thanks to Joshua Pollack
+    * Added test for connecting to running Chrome instances
+    * Test resiliency improved
 
 0.66 2021-03-28
     * Move bugtracker to Github
