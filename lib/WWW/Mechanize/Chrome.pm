@@ -799,7 +799,9 @@ sub read_devtools_url( $self, $fh, $lines = 10 ) {
             $devtools_url = $1;
             $self->log('trace', "Found ws endpoint from child output as '$devtools_url'");
             last;
-        };
+        } elsif( $line =~ m!ERROR:headless_shell.cc! ) {
+            die "Chrome launch error: $line";
+        }
     };
     $devtools_url
 };
