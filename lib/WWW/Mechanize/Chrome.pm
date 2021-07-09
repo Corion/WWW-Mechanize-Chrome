@@ -1247,6 +1247,7 @@ sub browser_version( $self, %options ) {
     };
 }
 
+*chrome_version =
 *chrome_version = \&browser_version;
 
 =head2 C<< $mech->chrome_version_info >>
