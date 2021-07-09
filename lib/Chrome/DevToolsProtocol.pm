@@ -570,10 +570,10 @@ sub build_url( $self, %options ) {
         $url->path('json');
         $url = "$url";
     } else {
-        $url = URI->new('json', 'http');
-        $url->port( $self->port );
+        $url = URI->new('json','http');
+        $url->scheme('http');
         $url->host( $self->host );
-	$url->scheme('http');
+        $url->port( $self->port );
         $url = "$url";
     };
     $url .= '/' . $options{domain} if $options{ domain };
