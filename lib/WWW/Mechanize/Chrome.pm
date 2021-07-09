@@ -1027,6 +1027,12 @@ sub _spawn_new_chrome_instance( $self, $options ) {
             # class to asynchronously wait on a filehandle?!
             $options->{ endpoint } = $self->read_devtools_url( $chrome_stdout );
             close $chrome_stdout;
+
+            # set up host/port here so it can be used later by other instances
+            my $ws = URI->new( $options->{endpoint});
+            $options->{port} = $ws->port;
+            $options->{host} = $ws->host;
+
         } else {
 
             # Try a fresh socket connection, blindly
@@ -1036,7 +1042,6 @@ sub _spawn_new_chrome_instance( $self, $options ) {
                 $self->{port},
                 $self->{startup_timeout}
             );
-            warn "Have socket connection";
             if( ! $ok) {
                 die join ' ',
                    "Timeout while connecting to $options->{ host }:$self->{port}.",

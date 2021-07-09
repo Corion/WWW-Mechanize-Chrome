@@ -327,6 +327,11 @@ sub connect( $self, %args ) {
     } elsif( $args{ endpoint }) {
         $endpoint = $args{ endpoint } || $self->endpoint;
         $self->log('trace', "Using endpoint $endpoint");
+
+        # Set these values so anyone reusing the parameters will find them
+        my $ws = URI->new( $endpoint );
+        $self->{port} = $ws->port;
+        $self->{host} = $ws->host;
     };
 
     my $got_endpoint;
