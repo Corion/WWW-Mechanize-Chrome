@@ -783,7 +783,7 @@ sub spawn_child( $self, $method, @cmd ) {
     } else {
         ($pid,$to_chrome,$from_chrome, $chrome_stdout) = $self->spawn_child_posix($method, @cmd)
     };
-    $self->log('debug', "Spawned child as $pid");
+    $self->log('debug', "Spawned child as $pid, communicating via $method");
 
     return ($pid,$to_chrome,$from_chrome, $chrome_stdout)
 }
@@ -938,7 +938,7 @@ sub new_future($class, %options) {
         );
         # If not, launch Chrome with that debugging port
         if( ! $ok) {
-            $self->log('debug', "No response on $options{ host }:$options{ port }, launching fresh instance");
+            $self->log('debug', "No response on $host:$self->{ port }, launching fresh instance");
             $self->_spawn_new_chrome_instance( \%options );
         };
 
@@ -1009,7 +1009,7 @@ sub new_future($class, %options) {
 sub _spawn_new_chrome_instance( $self, $options ) {
     my $class = ref $self;
     my @cmd = $class->build_command_line( $options );
-    $self->log('debug', "Spawning", \@cmd);
+    $self->log('debug', "Spawning for $options->{ connection_style }", \@cmd);
     (my( $pid , $to_chrome, $from_chrome, $chrome_stdout ))
         = $self->spawn_child( $options->{ connection_style }, @cmd );
     $options->{ writer_fh } = $to_chrome;
