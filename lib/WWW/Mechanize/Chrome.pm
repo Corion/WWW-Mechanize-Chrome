@@ -24,6 +24,7 @@ use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 #use Future::IO;
+use Time::HiRes ();
 
 our $VERSION = '0.66';
 our @CARP_NOT;
@@ -666,6 +667,7 @@ sub _find_free_port( $class, $start ) {
 }
 
 sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
+    my $res = 0;
     my $wait = time + $timeout;
     while ( time < $wait ) {
         my $t = time;
@@ -676,18 +678,14 @@ sub _wait_for_socket_connection( $class, $host, $port, $timeout=20 ) {
         );
         if( $socket ) {
             close $socket;
-            sleep(1);
+            #Time::HiRes::sleep(0.5);
+            $res = 1;
             last;
         };
-        sleep(1) if time - $t < 1;
+        Time::HiRes::sleep(0.1) if time - $t < 1;
     }
-    my $res = 1;
-    if( time >= $wait ) {
-        # No logger available yet
-        #warn "Got timeout while waiting for Chrome at $host:$port";
-        $res = 0;
-    };
-    $res
+
+    return $res
 };
 
 sub spawn_child_win32( $self, $method, @cmd ) {
