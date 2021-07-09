@@ -926,6 +926,22 @@ sub new_future($class, %options) {
     } elsif ( $options{ driver } and $options{ driver_transport }) {
         # We already have a connection to some Chrome running
 
+    } elsif( $options{ port }) {
+        # User has specified a port, so we will tell Chrome to use it
+        # Check whether the port is readily available
+        my $ok = $self->_wait_for_socket_connection(
+            $host,
+            $self->{port},
+            2 # we don't need a long timeout here since Chrome either runs already
+              # or we need to start it ourselves. But we seem to need two
+              # seconds in most cases on my (fast) machine ...
+        );
+        # If not, launch Chrome with that debugging port
+        if( ! $ok) {
+            $self->log('debug', "No response on $options{ host }:$options{ port }, launching fresh instance");
+            $self->_spawn_new_chrome_instance( \%options );
+        };
+
     } else {
         # We want Chrome to tell us the address to use
         $options{ port } = 0;
@@ -3040,6 +3056,7 @@ sub stop( $self ) {
 }
 
 =head2 C<< $mech->uri() >>
+
 =head2 C<< $mech->uri_future() >>
 
     print "We are at " . $mech->uri;

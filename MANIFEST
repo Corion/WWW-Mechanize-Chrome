@@ -48,6 +48,7 @@ t/01-select-backend-implementation.t
 t/02-chrome-devtools-tab.t
 t/03-listener-leak-test.t
 t/47-mech-simplest.t
+t/49-existing-port.t
 t/49-launch.t
 t/49-mech-get-file-lc-ct.html
 t/49-mech-get-file.html
