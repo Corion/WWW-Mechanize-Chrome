@@ -28,16 +28,25 @@ if (my $err = t::helper::default_unavailable) {
 my $existing_mech = WWW::Mechanize::Chrome->new(
     autodie => 1,
     headless => 1,
-    connection_style => 'port',
+    connection_style => 'websocket',
+
+    # Using localhost or ::1 is flakey - we require IPv4 it seems
     #host             => 'localhost',
-    port             => 9222,
+    #host             => '::1',
+
+
+    #port             => 9222,
+    #port             => 0,
 );
 my $expected_location = "data:text/html,Test-$$";
 $existing_mech->get($expected_location);
 #my $existing_mech;
 #my $instance_port = 9222;
 
-my $instance_port = $existing_mech->target->transport->port;
+#my $instance_port = $existing_mech->target->transport->port;
+my $instance_port = $existing_mech->{ port };
+my $instance_host = $existing_mech->{ host };
+note "Instance communicates on port $instance_host:$instance_port";
 
 my $browser_launched = 0;
 my $org = \&WWW::Mechanize::Chrome::_spawn_new_chrome_instance;
@@ -45,7 +54,7 @@ my $org = \&WWW::Mechanize::Chrome::_spawn_new_chrome_instance;
     no warnings 'redefine';
     *WWW::Mechanize::Chrome::_spawn_new_chrome_instance = sub {
         $browser_launched++;
-        goto &org;
+        goto &$org;
     };
 }
 
@@ -54,6 +63,7 @@ sub new_mech {
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         port    => $instance_port,
+        host    => $instance_host,
         # tab     => 'current',
         @_,
     );
