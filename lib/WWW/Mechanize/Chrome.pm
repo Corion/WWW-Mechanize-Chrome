@@ -6478,8 +6478,12 @@ Max Maischein C<corion@cpan.org>
 =head1 CONTRIBUTORS
 
 Andreas König C<andk@cpan.org>
+
 Tobias Leich C<froggs@cpan.org>
+
 Steven Dondley C<s@dondley.org>
+
+Joshua Pollack
 
 =head1 COPYRIGHT (c)
 
