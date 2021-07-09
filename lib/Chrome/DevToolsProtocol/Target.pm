@@ -494,6 +494,9 @@ sub on_response( $self, $connection, $message ) {
         if( ! $receiver) {
             $self->log( 'debug', "Ignored response to unknown receiver", $response )
 
+        } elsif( $receiver eq 'ignore') {
+            # silently ignore that reply
+
         } elsif( $response->{error} ) {
             $self->log( 'debug', "Replying to error $response->{id}", $response );
             $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
@@ -578,10 +581,10 @@ sub _send_packet( $self, $response, $method, %params ) {
         # this is half right - we get an ack when the message was accepted
         # but we want to send the real reply when it comes back from the
         # real target. This is done in the listener for receivedMessageFromTarget
-        my $ignore = $s->future->retain;
+        #my $ignore = $s->future->retain;
         $result = $s->transport->_send_packet(
-            $ignore, # this one leads to a circular reference somewhere?!
-            #undef,
+            #$ignore, # this one leads to a circular reference somewhere when using AnyEvent backends?!
+            'ignore',
             'Target.sendMessageToTarget',
             message => $payload,
             targetId => $s->targetId,

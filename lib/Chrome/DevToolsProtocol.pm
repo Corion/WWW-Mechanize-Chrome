@@ -547,6 +547,9 @@ sub on_response( $self, $connection, $message ) {
         if( ! $receiver) {
             $self->log( 'debug', "Ignored response to unknown receiver", $response )
 
+        } elsif( $receiver eq 'ignore') {
+            # silently ignore that reply
+
         } elsif( $response->{error} ) {
             $self->log( 'debug', "Replying to error $response->{id}", $response );
             $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
