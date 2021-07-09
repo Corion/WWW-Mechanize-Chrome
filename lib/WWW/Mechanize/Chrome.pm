@@ -880,6 +880,7 @@ sub new_future($class, %options) {
         unless exists $options{start_url};
 
     my $host = $options{ host } || '127.0.0.1';
+    $options{ host } = $host;
 
     $options{ extra_headers } ||= {};
 
@@ -904,6 +905,7 @@ sub new_future($class, %options) {
             $connection_style = 'pipe';
         };
     };
+    $options{ connection_style } = $connection_style;
 
     if( ! exists $options{ pipe }) {
         $options{ pipe } = 'pipe' eq $connection_style;
@@ -917,7 +919,6 @@ sub new_future($class, %options) {
 
     $self->{log} ||= $self->_build_log;
 
-    my( $to_chrome, $from_chrome );
     if( $options{ pid } ) {
         # Assume some defaults for the already running Chrome executable
         $options{ port } //= 9222;
@@ -926,50 +927,10 @@ sub new_future($class, %options) {
         # We already have a connection to some Chrome running
 
     } else {
-        #if ( ! defined $options{ port } and ! $options{ pipe }) {
-        #unless ( defined $options{ port } ) {
-        #    # Find free port for Chrome to listen on
-        #    $options{ port } = $class->_find_free_port( 9222 );
-        #};
         # We want Chrome to tell us the address to use
         $options{ port } = 0;
 
-        my @cmd= $class->build_command_line( \%options );
-        $self->log('debug', "Spawning", \@cmd);
-        (my( $pid ), $to_chrome, $from_chrome, my $chrome_stdout )
-            = $self->spawn_child( $connection_style, @cmd );
-        $options{ writer_fh } = $to_chrome;
-        $options{ reader_fh } = $from_chrome;
-        $self->{pid} = $pid;
-        $self->{ kill_pid } = 1;
-        if( $connection_style eq 'pipe') {
-            $options{ writer_fh } = $to_chrome;
-            $options{ reader_fh } = $from_chrome;
-
-        } else {
-            if( $chrome_stdout ) {
-                # Synchronously wait for the URL we can connect to
-                # Maybe this should become part of the transport, or a second
-                # class to asynchronously wait on a filehandle?!
-                $options{ endpoint } = $self->read_devtools_url( $chrome_stdout );
-                close $chrome_stdout;
-            } else {
-
-                # Try a fresh socket connection, blindly
-                # Just to give Chrome time to start up, make sure it accepts connections
-                my $ok = $self->_wait_for_socket_connection(
-                    $host,
-                    $self->{port},
-                    $self->{startup_timeout}
-                );
-                if( ! $ok) {
-                    die join ' ',
-                       "Timeout while connecting to $host:$self->{port}.",
-                       "Do you maybe have a non-debug instance of Chrome",
-                       "already running?";
-                };
-            };
-        };
+        $self->_spawn_new_chrome_instance( \%options );
     };
 
     my @connection;
@@ -1028,6 +989,47 @@ sub new_future($class, %options) {
 
     return $res
 };
+
+sub _spawn_new_chrome_instance( $self, $options ) {
+    my $class = ref $self;
+    my @cmd = $class->build_command_line( $options );
+    $self->log('debug', "Spawning", \@cmd);
+    (my( $pid , $to_chrome, $from_chrome, $chrome_stdout ))
+        = $self->spawn_child( $options->{ connection_style }, @cmd );
+    $options->{ writer_fh } = $to_chrome;
+    $options->{ reader_fh } = $from_chrome;
+    $self->{pid} = $pid;
+    $self->{ kill_pid } = 1;
+    if( $options->{ connection_style } eq 'pipe') {
+        $options->{ writer_fh } = $to_chrome;
+        $options->{ reader_fh } = $from_chrome;
+
+    } else {
+        if( $chrome_stdout ) {
+            # Synchronously wait for the URL we can connect to
+            # Maybe this should become part of the transport, or a second
+            # class to asynchronously wait on a filehandle?!
+            $options->{ endpoint } = $self->read_devtools_url( $chrome_stdout );
+            close $chrome_stdout;
+        } else {
+
+            # Try a fresh socket connection, blindly
+            # Just to give Chrome time to start up, make sure it accepts connections
+            my $ok = $self->_wait_for_socket_connection(
+                $options->{ host },
+                $self->{port},
+                $self->{startup_timeout}
+            );
+            warn "Have socket connection";
+            if( ! $ok) {
+                die join ' ',
+                   "Timeout while connecting to $options->{ host }:$self->{port}.",
+                   "Do you maybe have a non-debug instance of Chrome",
+                   "already running?";
+            };
+        };
+    };
+}
 
 sub new( $class, %args ) {
     # Synchronously connect here, just for easy API compatibility
