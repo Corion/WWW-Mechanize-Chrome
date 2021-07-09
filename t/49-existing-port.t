@@ -17,9 +17,16 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 my @instances = t::helper::browser_instances();
 my $test_count = 4;
 
+my $transport = WWW::Mechanize::Chrome->_preferred_transport({});
+
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
+
+} elsif( $transport =~ /::Pipe::/ ) {
+    plan skip_all => "Pipe transport makes no sense for this test";
+    exit
+
 } else {
     plan tests => $test_count*@instances;
 };
@@ -59,7 +66,9 @@ my $org = \&WWW::Mechanize::Chrome::_spawn_new_chrome_instance;
 }
 
 sub new_mech {
+    my(%args) = @_;
     t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
+
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         port    => $instance_port,
