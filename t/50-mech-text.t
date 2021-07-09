@@ -34,6 +34,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     $mech->get_local('50-form2.html');
+    # A second attempt, to cycle the node ids quickly to avoid a node id 0
+    $mech->get_local('50-form2.html');
 
     my $node = $mech->selector('#target_select',single=>1);
     like $node->get_text, qr!\A\s+Mercanti 20/20\s+Villaggio:\s+oppure\s+X:\s+Y:\s+\z!sm, "We retrieve text, not HTML";

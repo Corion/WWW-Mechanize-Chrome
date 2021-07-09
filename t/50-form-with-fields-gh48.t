@@ -53,6 +53,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
     $mech->get_local('50-form-with-fields-gh48.html');
+    # A second attempt, to cycle the node ids quickly to avoid a node id 0
+    $mech->get_local('50-form-with-fields-gh48.html');
     note "Loaded page";
 #$mech->dump_forms;
     my $f;
