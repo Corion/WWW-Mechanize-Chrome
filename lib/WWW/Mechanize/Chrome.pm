@@ -3968,6 +3968,7 @@ sub _performSearch( $self, %args ) {
     my $subTreeId = $args{ subTreeId };
     #my $parentNode = WWW::Mechanize::Chrome::Node->fetchNode( nodeId => $backendNodeId, driver => $self->driver );
     my $query = $args{ query };
+    weaken( my $s = $self );
     $self->target->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
         $self->log('debug', "XPath query '$query' (". $results->{resultCount} . " node(s))");
 
@@ -4017,8 +4018,14 @@ sub _performSearch( $self, %args ) {
                 # you might get a node with nodeId 0. This one
                 # can't be retrieved. Bad luck.
                 if($response->{nodeIds}->[0] == 0) {
-                    warn "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved.";
+                    warn "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved";
                     # splice @{ $response->{nodeIds}}, 0, 1;
+                    # Can we retry the whole search from here?!
+                    # Nope, this has never returned better results
+                    #if( ! $args{ _retry }++) {
+                    #    warn "Retrying search";
+                    #    return $s->_performSearch( %args );
+                    #};
                 };
 
                 # Resolve the found nodes directly with the
