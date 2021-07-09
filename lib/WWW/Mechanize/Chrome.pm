@@ -136,6 +136,8 @@ window.
 
 =item B<host>
 
+=item B<listen_host>
+
 Set the host the browser listens on:
 
   host => '192.168.1.2'
@@ -292,14 +294,6 @@ Higher or lower values can be set based on the speed of the machine. The
 process attempts to connect to the browser once each second over the duration
 of this setting.
 
-=item B<listen_host>
-
-  listen_host => '192.1.168.7'  # set an IP address for listening
-
-Specifies an IP address the launched browser process should listen on. This
-option is useful for controlling the browser from another machine on your
-network.
-
 =item B<driver>
 
   driver => $driver_object  # specify the driver object
@@ -455,8 +449,9 @@ sub build_command_line {
             push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
         };
 
-        if ($options->{listen_host}) {
-            push @{ $options->{ launch_arg }}, "--remote-debugging-address==$options->{ listen_host }";
+        if ($options->{listen_host} || $options->{host} ) {
+            my $host = $options->{listen_host} || $options->{host};
+            push @{ $options->{ launch_arg }}, "--remote-debugging-address=$host";
         };
     };
 
