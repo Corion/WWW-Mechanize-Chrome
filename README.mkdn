@@ -101,6 +101,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
     window.
 
 - **host**
+- **listen\_host**
 
     Set the host the browser listens on:
 
@@ -258,14 +259,6 @@ them in a Perl object to provide the easy-to-use methods documented here.
     process attempts to connect to the browser once each second over the duration
     of this setting.
 
-- **listen\_host**
-
-        listen_host => '192.1.168.7'  # set an IP address for listening
-
-    Specifies an IP address the launched browser process should listen on. This
-    option is useful for controlling the browser from another machine on your
-    network.
-
 - **driver**
 
         driver => $driver_object  # specify the driver object
@@ -357,6 +350,19 @@ them in a Perl object to provide the easy-to-use methods documented here.
         web_resources => 1   # turn web resources on
 
     Defaults to false (off). A true value turns web resources on.
+
+- **json\_log\_file**
+
+    Filename to log all JSON communications to, one line per message/event/reply
+
+- **json\_log\_fh**
+
+    Filehandle to log all JSON communications to, one line per message/event/reply
+
+    Open this filehandle via
+
+        open my $fh, '>:utf8', $logfilename
+            or die "Couldn't create '$logfilename': $!";
 
 The `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` variable can be set to a
 different transport class to override the default [transport
@@ -941,7 +947,8 @@ This function is mostly of use in callbacks or in a timer callback from your
 event loop.
 
 ## `$mech->uri()`
-=head2 `$mech->uri_future()`
+
+## `$mech->uri_future()`
 
     print "We are at " . $mech->uri;
     print "We are at " . $mech->uri_future->get;
@@ -1196,6 +1203,10 @@ Runs an XPath query in Chrome against the current document.
 
 If you need more information about the returned results,
 use the `->xpathEx()` function.
+
+Note that Chrome sometimes returns a node with node id 0. This node then
+cannot be found again using the Chrome API. This is bad luck and results in
+a warning.
 
 The options allow the following keys:
 
@@ -1892,9 +1903,19 @@ client of the Chrome API
 - [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
 - [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW::Mechanize::Chrome::Node) - objects representing HTML in Chrome
 - [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
-automating Firefox
+automating Firefox , currently on hiatus, since Mozilla does not yet
+implement the Chrome DevTools Protocol properly
 - [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS) - a similar module without a visible application
-automating PhantomJS
+automating PhantomJS , now discontinued since PhantomJS is discontinued
+
+# MASQUERADING AS OTHER BROWSERS
+
+Some articles about what you need to change to appear as a different
+browser
+
+[https://multilogin.com/why-mimicking-a-device-is-almost-impossible/](https://multilogin.com/why-mimicking-a-device-is-almost-impossible/)
+
+[https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth](https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth)
 
 # REPOSITORY
 
@@ -1940,8 +1961,12 @@ Max Maischein `corion@cpan.org`
 # CONTRIBUTORS
 
 Andreas König `andk@cpan.org`
+
 Tobias Leich `froggs@cpan.org`
+
 Steven Dondley `s@dondley.org`
+
+Joshua Pollack
 
 # COPYRIGHT (c)
 

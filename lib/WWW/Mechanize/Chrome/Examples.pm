@@ -15,7 +15,7 @@ package WWW::Mechanize::Chrome::Examples;
 #
 
 use strict;
-our $VERSION = '0.66';
+our $VERSION = '0.67';
 
 1;
 

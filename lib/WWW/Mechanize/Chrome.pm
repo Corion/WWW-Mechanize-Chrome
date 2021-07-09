@@ -26,7 +26,7 @@ use POSIX ':sys_wait_h';
 #use Future::IO;
 use Time::HiRes ();
 
-our $VERSION = '0.66';
+our $VERSION = '0.67';
 our @CARP_NOT;
 
 # add Browser.setPermission , .grantPermission for
@@ -3882,6 +3882,10 @@ Runs an XPath query in Chrome against the current document.
 
 If you need more information about the returned results,
 use the C<< ->xpathEx() >> function.
+
+Note that Chrome sometimes returns a node with node id 0. This node then
+cannot be found again using the Chrome API. This is bad luck and results in
+a warning.
 
 The options allow the following keys:
 
