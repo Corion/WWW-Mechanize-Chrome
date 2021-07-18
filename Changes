@@ -40,6 +40,11 @@
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
 
+0.68 to be released
+    * The tab numbers now exclude loaded extension and background pages. This
+      means that you may (or may not) have to adjust the number for the "tab"
+      option in the constructor
+
 0.67 2021-07-09
     * Add json_log_file and json_log_fh options
       This is in preparation of supporting Firefox as well and collecting
