@@ -795,7 +795,7 @@ sub read_devtools_url( $self, $fh, $lines = 10 ) {
         my $line = <$fh>;
         last unless defined $line;
         $line =~ s!\s+$!!;
-        #$self->log('trace', "[[$line]]");
+        $self->log('trace', "[[$line]]");
         if( $line =~ m!^DevTools listening on (ws:\S+)$!) {
             $devtools_url = $1;
             $self->log('trace', "Found ws endpoint from child output as '$devtools_url'");
@@ -1028,6 +1028,14 @@ sub _spawn_new_chrome_instance( $self, $options ) {
             # class to asynchronously wait on a filehandle?!
             $options->{ endpoint } = $self->read_devtools_url( $chrome_stdout );
             close $chrome_stdout;
+
+            if( ! $options->{endpoint} ) {
+                die join ' ',
+                   "Could not read websocket endpoint from Chrome output.",
+                   "Do you maybe have a non-debug instance of Chrome",
+                   "already running?"
+                   ;
+            };
 
             # set up host/port here so it can be used later by other instances
             my $ws = URI->new( $options->{endpoint});
