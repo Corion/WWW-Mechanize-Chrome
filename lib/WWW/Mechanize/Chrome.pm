@@ -2515,7 +2515,7 @@ sub httpResponseFromChromeResponse( $self, $res ) {
         weaken $s;
         $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
             $s->log('debug', "Response body arrived");
-            $response->content( $body );
+            $response->content( encode_json( $body ) );
             #undef $full_response_future;
             Future->done($body)
         })->retain;
