@@ -25,6 +25,7 @@ use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 #use Future::IO;
 use Time::HiRes ();
+use Encode 'encode';
 
 our $VERSION = '0.67';
 our @CARP_NOT;
@@ -2515,6 +2516,20 @@ sub httpResponseFromChromeResponse( $self, $res ) {
         weaken $s;
         $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
             $s->log('debug', "Response body arrived");
+
+            # We need to encode the body back to the appropriate bytes:
+            my $ct = $response->content_type;
+
+            $ct ||= 'text/plain';
+
+            if( $ct =~ m!^text/(\w+); charset=(.*?)! ) {
+                warn "Re-encoding back to $2";
+                $body = encode( "$2", $body );
+            } else {
+                # assume Latin-1 (actually, strip the encoding information from the Perl string)
+                $body = encode( 'Latin-1', $body );
+            };
+
             $response->content( $body );
             #undef $full_response_future;
             Future->done($body)
