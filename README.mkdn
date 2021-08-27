@@ -29,20 +29,20 @@ WWW::Mechanize::Chrome - automate the Chrome browser
     $mech->eval_in_page('alert("Hello Chrome")');
     my $png = $mech->content_as_png();
 
-A collection of other [Examples](https://metacpan.org/pod/WWW::Mechanize::Chrome::Examples) is available
+A collection of other [Examples](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome%3A%3AExamples) is available
 to help you get started.
 
 # DESCRIPTION
 
-Like [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize), this module automates web browsing with a Perl object.
+Like [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize), this module automates web browsing with a Perl object.
 Fetching and rendering of web pages is delegated to the Chrome (or Chromium)
 browser by starting an instance of the browser and controlling it with [Chrome
 DevTools](https://developers.google.com/web/tools/chrome-devtools/).
 
-## Advantages Over [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)
+## Advantages Over [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize)
 
 The Chrome browser provides advanced abilities useful for automating modern
-web applications that are not (yet) possible with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) alone:
+web applications that are not (yet) possible with [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize) alone:
 
 - Page content can be created or modified with JavaScript. You can also execute
 custom JavaScript code on the page content.
@@ -263,7 +263,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
         driver => $driver_object  # specify the driver object
 
-    Use a [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) object that has been manually constructed.
+    Use a [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome%3A%3ADevToolsProtocol%3A%3ATarget) object that has been manually constructed.
 
 - **report\_js\_errors**
 
@@ -366,7 +366,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
 The `$ENV{WWW_MECHANIZE_CHROME_TRANSPORT}` variable can be set to a
 different transport class to override the default [transport
-class](https://metacpan.org/pod/Chrome::DevToolsProtcol::Transport). This is primarily used for testing
+class](https://metacpan.org/pod/Chrome%3A%3ADevToolsProtcol%3A%3ATransport). This is primarily used for testing
 but can also help eliminate introducing bugs from the underlying websocket
 implementation(s).
 
@@ -429,7 +429,7 @@ APIs of Chrome that the object is connected to.
 
     my $driver = $mech->driver
 
-Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome::DevToolsProtocol) instance connecting to Chrome.
+Access the [Chrome::DevToolsProtocol](https://metacpan.org/pod/Chrome%3A%3ADevToolsProtocol) instance connecting to Chrome.
 
 Deprecated, don't use this anymore. Most likely you want to use `->target`
 to talk to the Chrome tab or `->transport` to talk to the Chrome instance.
@@ -438,21 +438,21 @@ to talk to the Chrome tab or `->transport` to talk to the Chrome instance.
 
     my $target = $mech->target
 
-Access the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) instance connecting to the
+Access the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome%3A%3ADevToolsProtocol%3A%3ATarget) instance connecting to the
 Chrome tab we use.
 
 ## `$mech->transport`
 
     my $transport = $mech->transport
 
-Access the [Chrome::DevToolsProtocol::Transport](https://metacpan.org/pod/Chrome::DevToolsProtocol::Transport) instance connecting to the
+Access the [Chrome::DevToolsProtocol::Transport](https://metacpan.org/pod/Chrome%3A%3ADevToolsProtocol%3A%3ATransport) instance connecting to the
 Chrome instance.
 
 ## `$mech->tab`
 
     my $tab = $mech->tab
 
-Access the tab hash of the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome::DevToolsProtocol::Target) instance.
+Access the tab hash of the [Chrome::DevToolsProtocol::Target](https://metacpan.org/pod/Chrome%3A%3ADevToolsProtocol%3A%3ATarget) instance.
 This represents the tab we control.
 
 ## `$mech->new_tab`
@@ -747,10 +747,10 @@ got the right nodes.
 
 Retrieves the URL `URL`.
 
-It returns a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object for interface compatibility
-with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
+It returns a [HTTP::Response](https://metacpan.org/pod/HTTP%3A%3AResponse) object for interface compatibility
+with [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize).
 
-Note that the returned [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object gets the response body
+Note that the returned [HTTP::Response](https://metacpan.org/pod/HTTP%3A%3AResponse) object gets the response body
 filled in lazily, so you might have to wait a moment to get the response
 body from the result. This is a premature optimization and later releases of
 WWW::Mechanize::Chrome are planned to fetch the response body immediately when
@@ -850,7 +850,7 @@ about the current directory of your Perl script.
 
     my $cookies = $mech->cookie_jar
 
-Returns all the Chrome cookies in a [HTTP::Cookies::ChromeDevTools](https://metacpan.org/pod/HTTP::Cookies::ChromeDevTools) instance.
+Returns all the Chrome cookies in a [HTTP::Cookies::ChromeDevTools](https://metacpan.org/pod/HTTP%3A%3ACookies%3A%3AChromeDevTools) instance.
 Setting a cookie in there will also set the cookie in Chrome. Note that
 the `->cookie_jar` does not automatically refresh when a new page is
 loaded. To manually refresh the state of the cookie jar, use:
@@ -899,7 +899,7 @@ resilience in face of bad network conditions.
 
     my $response = $mech->response(headers => 0);
 
-Returns the current response as a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
+Returns the current response as a [HTTP::Response](https://metacpan.org/pod/HTTP%3A%3AResponse) object.
 
 ## `$mech->success()`
 
@@ -1032,7 +1032,7 @@ to convert the content from UTF-8 back to its native encoding.
     $mech->update_html($html);
 
 Writes `$html` into the current document. This is mostly
-implemented as a convenience method for [HTML::Display::MozRepl](https://metacpan.org/pod/HTML::Display::MozRepl).
+implemented as a convenience method for [HTML::Display::MozRepl](https://metacpan.org/pod/HTML%3A%3ADisplay%3A%3AMozRepl).
 
 The value passed in as `$html` will be stringified.
 
@@ -1075,7 +1075,7 @@ Returns the current document title.
     print $_->text . " -> " . $_->url . "\n"
         for $mech->links;
 
-Returns all links in the document as [WWW::Mechanize::Link](https://metacpan.org/pod/WWW::Mechanize::Link) objects.
+Returns all links in the document as [WWW::Mechanize::Link](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3ALink) objects.
 
 Currently accepts no parameters. See `->xpath`
 or `->selector` when you want more control.
@@ -1090,14 +1090,14 @@ all nodes matched by any of the CSS selectors in the array.
 
 This takes the same options that `->xpath` does.
 
-This method is implemented via [WWW::Mechanize::Plugin::Selector](https://metacpan.org/pod/WWW::Mechanize::Plugin::Selector).
+This method is implemented via [WWW::Mechanize::Plugin::Selector](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3APlugin%3A%3ASelector).
 
 ## `$mech->find_link_dom( %options )`
 
     print $_->{innerHTML} . "\n"
         for $mech->find_link_dom( text_contains => 'CPAN' );
 
-A method to find links, like [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)'s
+A method to find links, like [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize)'s
 `->find_links` method. This method returns DOM objects from
 Chrome instead of WWW::Mechanize::Link objects.
 
@@ -1105,7 +1105,7 @@ Note that Chrome
 might have reordered the links or frame links in the document
 so the absolute numbers passed via `n`
 might not be the same between
-[WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) and [WWW::Mechanize::Chrome](https://metacpan.org/pod/WWW::Mechanize::Chrome).
+[WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize) and [WWW::Mechanize::Chrome](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome).
 
 The supported options are:
 
@@ -1143,10 +1143,10 @@ or carp, depending on the `autodie` parameter.
     print $_->text . "\n"
         for $mech->find_link( text_contains => 'CPAN' );
 
-A method quite similar to [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize)'s method.
+A method quite similar to [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize)'s method.
 The options are documented in `->find_link_dom`.
 
-Returns a [WWW::Mechanize::Link](https://metacpan.org/pod/WWW::Mechanize::Link) object.
+Returns a [WWW::Mechanize::Link](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3ALink) object.
 
 This defaults to not look through child frames.
 
@@ -1240,7 +1240,7 @@ to count the number of matched elements, as it will otherwise emit a warning
 for each usage in scalar context without any of the above restricting options.
 - `any` - no error is raised, no matter if an item is found or not.
 
-Returns the matched results as [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW::Mechanize::Chrome::Node) objects.
+Returns the matched results as [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome%3A%3ANode) objects.
 
 You can pass in a list of queries as an array reference for the first parameter.
 The result will then be the list of all elements matching any of the queries.
@@ -1248,7 +1248,7 @@ The result will then be the list of all elements matching any of the queries.
 This is a method that is not implemented in WWW::Mechanize.
 
 In the long run, this should go into a general plugin for
-[WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
+[WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize).
 
 ## `$mech->by_id( $id, %options )`
 
@@ -1301,7 +1301,7 @@ the following keys are recognized:
 - `intrapage` - Override the detection of whether to wait for a HTTP response
 or not. Setting this will never wait for an HTTP response.
 
-Returns a [HTTP::Response](https://metacpan.org/pod/HTTP::Response) object.
+Returns a [HTTP::Response](https://metacpan.org/pod/HTTP%3A%3AResponse) object.
 
 As a deviation from the WWW::Mechanize API, you can also pass a
 hash reference as the first parameter. In it, you can specify
@@ -1333,9 +1333,9 @@ If you find yourself wanting to specify a button through its
 
 Returns the current form.
 
-This method is incompatible with [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize).
+This method is incompatible with [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize).
 It returns the DOM `<form>` object and not
-a [HTML::Form](https://metacpan.org/pod/HTML::Form) instance.
+a [HTML::Form](https://metacpan.org/pod/HTML%3A%3AForm) instance.
 
 The current form will be reset by WWW::Mechanize::Chrome
 on calls to `->get()` and `->get_local()`,
@@ -1415,7 +1415,7 @@ Sets the field with the name given in `$selector` to the given value.
 Returns the value.
 
 The method understands very basic CSS selectors in the value for `$selector`,
-like the [HTML::Form](https://metacpan.org/pod/HTML::Form) find\_input() method.
+like the [HTML::Form](https://metacpan.org/pod/HTML%3A%3AForm) find\_input() method.
 
 A selector prefixed with '#' must match the id attribute of the input.
 A selector prefixed with '.' matches the class attribute. A selector
@@ -1642,7 +1642,7 @@ The remaining options are passed through to either the
 
 Waits until an element is not visible anymore.
 
-Takes the same options as ["->is\_visible" in $mech->is\_visible](https://metacpan.org/pod/$mech->is_visible#is_visible).
+Takes the same options as ["->is\_visible" in $mech->is\_visible](https://metacpan.org/pod/%24mech-%3Eis_visible#is_visible).
 
 In addition, the following options are accepted:
 
@@ -1674,7 +1674,7 @@ passing the selector.
 
 Waits until an query returns a visible element.
 
-Takes the same options as ["->is\_visible" in $mech->is\_visible](https://metacpan.org/pod/$mech->is_visible#is_visible).
+Takes the same options as ["->is\_visible" in $mech->is\_visible](https://metacpan.org/pod/%24mech-%3Eis_visible#is_visible).
 
 In addition, the following options are accepted:
 
@@ -1830,7 +1830,7 @@ out of them or dumps them to disk as sequential images.
     $mech->setScreenFrameCallback( undef ); # stop recording
 
 If you want a premade screencast receiver for debugging headless Chrome
-sessions, see [Mojolicious::Plugin::PNGCast](https://metacpan.org/pod/Mojolicious::Plugin::PNGCast).
+sessions, see [Mojolicious::Plugin::PNGCast](https://metacpan.org/pod/Mojolicious%3A%3APlugin%3A%3APNGCast).
 
 ## `$mech->sleep`
 
@@ -1892,7 +1892,7 @@ they make little sense in the context of Chrome.
 
 # INSTALLING
 
-See [WWW::Mechanize::Chrome::Install](https://metacpan.org/pod/WWW::Mechanize::Chrome::Install)
+See [WWW::Mechanize::Chrome::Install](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome%3A%3AInstall)
 
 # SEE ALSO
 
@@ -1900,12 +1900,12 @@ See [WWW::Mechanize::Chrome::Install](https://metacpan.org/pod/WWW::Mechanize::C
 DevTools homepage
 - [https://github.com/GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) - Google Lighthouse, the main
 client of the Chrome API
-- [WWW::Mechanize](https://metacpan.org/pod/WWW::Mechanize) - the module whose API grandfathered this module
-- [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW::Mechanize::Chrome::Node) - objects representing HTML in Chrome
-- [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW::Mechanize::Firefox) - a similar module with a visible application
+- [WWW::Mechanize](https://metacpan.org/pod/WWW%3A%3AMechanize) - the module whose API grandfathered this module
+- [WWW::Mechanize::Chrome::Node](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome%3A%3ANode) - objects representing HTML in Chrome
+- [WWW::Mechanize::Firefox](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AFirefox) - a similar module with a visible application
 automating Firefox , currently on hiatus, since Mozilla does not yet
 implement the Chrome DevTools Protocol properly
-- [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW::Mechanize::PhantomJS) - a similar module without a visible application
+- [WWW::Mechanize::PhantomJS](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3APhantomJS) - a similar module without a visible application
 automating PhantomJS , now discontinued since PhantomJS is discontinued
 
 # MASQUERADING AS OTHER BROWSERS
@@ -1948,11 +1948,11 @@ Please report bugs in this module via the Github bug queue at
 
 # CONTRIBUTING
 
-Please see [WWW::Mechanize::Chrome::Contributing](https://metacpan.org/pod/WWW::Mechanize::Chrome::Contributing).
+Please see [WWW::Mechanize::Chrome::Contributing](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome%3A%3AContributing).
 
 # KNOWN ISSUES
 
-Please see [WWW::Mechanize::Chrome::Troubleshooting](https://metacpan.org/pod/WWW::Mechanize::Chrome::Troubleshooting).
+Please see [WWW::Mechanize::Chrome::Troubleshooting](https://metacpan.org/pod/WWW%3A%3AMechanize%3A%3AChrome%3A%3ATroubleshooting).
 
 # AUTHOR
 

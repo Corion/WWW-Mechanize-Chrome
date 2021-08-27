@@ -27,7 +27,7 @@ use POSIX ':sys_wait_h';
 use Time::HiRes ();
 use Encode 'encode';
 
-our $VERSION = '0.67';
+our $VERSION = '0.68';
 our @CARP_NOT;
 
 # add Browser.setPermission , .grantPermission for
