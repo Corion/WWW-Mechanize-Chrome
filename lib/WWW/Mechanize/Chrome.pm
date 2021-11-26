@@ -2481,11 +2481,16 @@ sub getResponseBody( $self, $requestId ) {
     $self->log('debug', "Fetching response body for $requestId");
     my $s = $self;
     weaken $s;
+
+    $self->{__responseInFlight} = 1;
+
     return
         $self->target->send_message('Network.getResponseBody', requestId => $requestId)
         ->then(sub {
         $s->log('debug', "Have body", @_);
         my ($body_obj) = @_;
+
+        delete $s->{__responseInFlight};
 
         my $body = $body_obj->{body};
         $body = decode_base64( $body )
