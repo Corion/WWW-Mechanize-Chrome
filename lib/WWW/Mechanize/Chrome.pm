@@ -1113,11 +1113,11 @@ sub _connect( $self, %options ) {
             $s->_handleConsoleAPICall( $msg->{params} )
         };
         $s->{consoleAPIListener} =
-            $self->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
+            $s->add_listener( 'Runtime.consoleAPICalled', $collect_JS_problems );
         $s->{exceptionThrownListener} =
-            $self->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
+            $s->add_listener( 'Runtime.exceptionThrown', $collect_JS_problems );
         $s->{nodeGenerationChange} =
-            $self->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
+            $s->add_listener( 'DOM.attributeModified', sub { $s->new_generation() } );
         $s->new_generation;
 
         my @setup = (
@@ -1144,7 +1144,7 @@ sub _connect( $self, %options ) {
 
             # ->get() doesn't have ->get_future() yet
             if( ! (exists $options{ tab } )) {
-                $self->get($options{ start_url }); # Reset to clean state, also initialize our frame id
+                $s->get($options{ start_url }); # Reset to clean state, also initialize our frame id
             };
         });
     });
@@ -2191,6 +2191,9 @@ sub _waitForNavigationEnd( $self, %options ) {
         if $requestId;
 
     $self->log('debug', $msg);
+
+    my $s = $self;
+    weaken $s;
     my $events_f = $self->_collectEvents( sub( $ev ) {
         if( ! $ev->{method}) {
             # We get empty responses when talking to indirect targets
@@ -2198,8 +2201,8 @@ sub _waitForNavigationEnd( $self, %options ) {
         };
 
         # Let's assume that the first frame id we see is "our" frame
-        $frameId ||= $self->_fetchFrameId($ev);
-        $requestId ||= $self->_fetchRequestId($ev);
+        $frameId ||= $s->_fetchFrameId($ev);
+        $requestId ||= $s->_fetchRequestId($ev);
 
         my $stopped = (    $ev->{method} eq 'Page.frameStoppedLoading'
                        && $ev->{params}->{frameId} eq $frameId)
@@ -2321,6 +2324,9 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     };
 
     # Kick off the navigation ourselves
+    my $s = $self;
+    weaken $s;
+
     my $nav;
     $get_navigation_future->()
     ->then( sub {
@@ -2328,7 +2334,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
 
         # We have a race condition to find out whether Chrome navigates or not
         # so we wait a bit to see if it will navigate in response to our click
-        $self->sleep_future(0.1); # X XX baad fix
+        $s->sleep_future(0.1); # X XX baad fix
     })->then( sub {
         my $f;
         my @events;
@@ -2374,8 +2380,8 @@ sub get_future($self, $url, %options ) {
         )
         }, url => "$url", %options, navigates => 1 )
     ->then( sub {
-        $self->clear_current_form();
-        Future->done( $self->response )
+        $s->clear_current_form();
+        Future->done( $s->response )
     })
 };
 
