@@ -38,6 +38,7 @@ my $server = Test::HTTP::LocalServer->spawn(
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
     $mech->get($server->url);
+    #$mech->sleep(1);
     my $text;
     my $ok = eval {
         $text = $mech->text;
