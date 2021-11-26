@@ -4058,7 +4058,9 @@ sub _performSearch( $self, %args ) {
                 # you might get a node with nodeId 0. This one
                 # can't be retrieved. Bad luck.
                 if($response->{nodeIds}->[0] == 0) {
+
                     warn "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved";
+                    #die "This could have maybe been avoided if we had waited ..." if $s->{__responseInFlight};
                     # splice @{ $response->{nodeIds}}, 0, 1;
                     # Can we retry the whole search from here?!
                     # Nope, this has never returned better results
