@@ -537,6 +537,7 @@ sub build_command_line {
         popup_blocking
         gpu
         save_password_bubble
+        domain_reliability
     )) {
         (my $optname = $option) =~ s!_!-!g;
         if( ! exists $options->{$option}) {
