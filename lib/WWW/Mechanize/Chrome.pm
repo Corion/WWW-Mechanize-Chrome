@@ -530,13 +530,10 @@ sub build_command_line {
         hang_monitor
         prompt_on_repost
         sync
-        translate
         web_resources
         default_apps
-        infobars
         popup_blocking
         gpu
-        save_password_bubble
         domain_reliability
     )) {
         (my $optname = $option) =~ s!_!-!g;
