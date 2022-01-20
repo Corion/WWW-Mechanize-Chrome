@@ -271,13 +271,15 @@ Using the "main" Chrome cookies:
 
 =item B<profile>
 
-  profile => '/path/to/profile/directory'  #  set the profile directory
+  profile => 'ProfileDirectory'  #  set the profile directory
 
 By default, your current user profile directory is used. Use this setting
 to change the profile directory for the browsing session.
 
 You will need to set the B<data_directory> as well, so that Chrome finds the
-profile within the data directory.
+profile within the data directory. The profile directory/name itself needs
+to be a single directory name, not the full path. That single directory name
+will be relative to the data directory.
 
 =item B<wait_file>
 
@@ -465,8 +467,19 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--user-data-dir=$options->{ data_directory }";
     };
 
-    if ($options->{profile}) {
-        push @{ $options->{ launch_arg }}, "--profile-directory=$options->{ profile }";
+    if (my $profile = $options->{profile}) {
+        if(! $options->{data_directory}) {
+            croak "Cannot use the 'profile' option without also having 'data_directory'";
+        } elsif( $profile =~ m![/\\]! ) {
+            my $rel = File::Spec->rel2abs($profile, $options->{data_directory});
+            if( $rel =~ m![/\\]!) {
+                croak "The 'profile' option may not contain the path separator";
+            } else {
+                $profile = $rel;
+            };
+        }
+
+        push @{ $options->{ launch_arg }}, "--profile-directory=$profile";
     };
 
     if( ! exists $options->{enable_automation} || $options->{enable_automation}) {
