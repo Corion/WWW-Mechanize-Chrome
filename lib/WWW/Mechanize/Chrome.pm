@@ -513,6 +513,10 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--safebrowsing-disable-auto-update";
     };
 
+    if( ! exists $options->{default_browser_check} || ! $options->{default_browser_check}) {
+        push @{ $options->{ launch_arg }}, "--no-default-browser-check";
+    };
+
     if( exists $options->{disable_prompt_on_repost}) {
         carp "Option 'disable_prompt_on_repost' is deprecated, use prompt_on_repost instead";
         $options->{prompt_on_repost} = !$options->{disable_prompt_on_repost};
