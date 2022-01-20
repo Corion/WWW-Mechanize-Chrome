@@ -361,7 +361,7 @@ Defaults to false (off). A true value will turn infobars on.
 
 =item B<popup_blocking>
 
-  popup_bloacking => 1  # block popups
+  popup_blocking => 1  # block popups
 
 Defaults to false (off). A true value will block popups.
 
