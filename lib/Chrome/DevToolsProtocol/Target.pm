@@ -245,7 +245,7 @@ sub connect( $self, %args ) {
     $done = $done->then(sub {
         $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
             if( $s ) {
-                $s->log( 'trace', '(target) receivedMessage', $_[0] );
+                #$s->log( 'trace', '(target) receivedMessage', $_[0] );
                 my $id = $s->targetId;
                 my $sid = $s->sessionId;
                 if( exists $_[0]->{params}->{sessionId}
@@ -790,12 +790,15 @@ sub attach( $self, $targetId=$self->targetId ) {
     weaken $s;
     $self->targetId( $targetId );
 
-    $self->{have_target_info} = $self->transport->one_shot('Target.attachedToTarget', sub($r) {
-        $s->log('debug', "Attached to", $r );
-        #$s->sessionId( $target->{sessionId});
-        #$s->log('debug', "Attached to session $target->{sessionId}" );
-        #undef $s->{have_session};
-    });
+    $self->{have_target_info} = $self->transport->one_shot('Target.attachedToTarget')->then(sub($r) {
+    #    #$s->log('trace', "Attached to", $r );
+        #use Data::Dumper; warn Dumper $r;
+        #$s->browserContextId($r->{params}->{targetInfo}->{browserContextId});
+    #    #$s->sessionId( $target->{sessionId});
+    #    #$s->log('debug', "Attached to session $target->{sessionId}" );
+    #    #undef $s->{have_session};
+        return Future->done;
+    })->retain;
 
     $self->transport->attachToTarget( targetId => $targetId )
     ->on_done(sub( $sessionId ) {

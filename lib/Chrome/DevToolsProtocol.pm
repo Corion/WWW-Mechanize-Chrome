@@ -480,15 +480,15 @@ sub on_response( $self, $connection, $message ) {
 
         if( my $listeners = $self->listener->{ $response->{method} } ) {
             @$listeners = grep { defined $_ } @$listeners;
-            if( $self->_log->is_trace ) {
-                if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
-                    $self->log( 'trace', "Notifying listeners", $response );
-                };
-            } else {
-                if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
-                    $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
-                };
-            };
+            #if( $self->_log->is_trace ) {
+            #    if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
+            #        $self->log( 'trace', "Notifying listeners", $response );
+            #    };
+            #} else {
+            #    if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
+            #        $self->log( 'debug', sprintf "Notifying listeners for '%s'", $response->{method} );
+            #    };
+            #};
             for my $listener (@$listeners) {
                 eval {
                     $listener->notify( $response );
@@ -501,9 +501,9 @@ sub on_response( $self, $connection, $message ) {
                 weaken $listeners->[$_]
                     if not isweak $listeners->[$_];
             };
-            if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
-                $self->log('trace', "Message handled", $response);
-            };
+            #if( $response->{method} ne 'Target.receivedMessageFromTarget' ) {
+            #    $self->log('trace', "Message handled", $response);
+            #};
 
             $handled++;
         };
@@ -633,12 +633,14 @@ sub _send_packet( $self, $response, $method, %params ) {
             payload => $msg
         });
     };
-
-    $self->log( 'trace', "Sent message", $payload );
+if( $method ne 'Target.sendMessageToTarget' ) {
+    $self->log( 'trace', "Sent '$method' message", $payload );
+};
     my $result;
     try {
         $result = $self->transport->send( $payload );
     } catch {
+        $self->log( 'error', "Sent '$method' message", $payload );
         $self->log('error', $_ );
         $result = Future->fail( $_ );
     };
