@@ -2123,8 +2123,8 @@ or not. Setting this will never wait for an HTTP response.
 
 sub update_response($self, $response) {
     $self->log('trace', 'Updated response object');
-    $self->clear_current_form();
-    $self->{response} = $response
+    $self->invalidate_cached_values;
+    $self->{response} = $response;
 }
 
 =head2 C<< $mech->_collectEvents >>
@@ -2395,7 +2395,7 @@ sub get_future($self, $url, %options ) {
         )
         }, url => "$url", %options, navigates => 1 )
     ->then( sub {
-        $s->clear_current_form();
+        $self->invalidate_cached_values;
         Future->done( $s->response )
     })
 };
@@ -2510,6 +2510,8 @@ sub getResponseBody( $self, $requestId ) {
         ->then(sub {
         $s->log('debug', "Have body", @_);
         my ($body_obj) = @_;
+
+        $s->invalidate_cached_values;
 
         delete $s->{__responseInFlight};
 
@@ -2769,7 +2771,7 @@ C<data> - the raw data to send, if you've encoded it already.
 sub post {
     my ($self, $url, %options) = @_;
     #my $b = $self->tab->{linkedBrowser};
-    $self->clear_current_form;
+    $self->invalidate_cached_values;
 
     #my $flags = 0;
     #if ($options{no_cache}) {
@@ -3210,6 +3212,11 @@ This is WWW::Mechanize::Chrome specific.
 
 =cut
 
+sub _clear_cached_document {
+    delete $_[0]->{_document};
+};
+
+# Move to DOMSnapshot.captureSnapshot / DOMSnapshot.DocumentSnapshot instead
 sub document_future( $self ) {
     $self->target->send_message( 'DOM.getDocument' )
 }
@@ -4537,6 +4544,11 @@ sub clear_current_form {
     undef $_[0]->{current_form};
 };
 
+sub invalidate_cached_values($self) {
+    $self->clear_current_form;
+    $self->_clear_cached_document;
+}
+
 sub active_form {
     my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
@@ -5329,6 +5341,7 @@ sub submit($self,$dom_form = $self->current_form) {
         # We should prepare for navigation here as well
         # The __proto__ invocation is so we can have a HTML form field entry
         # named "submit"
+
         $self->_mightNavigate( sub {
             $self->target->send_message(
                 'Runtime.callFunctionOn',
@@ -5338,7 +5351,7 @@ sub submit($self,$dom_form = $self->current_form) {
         })
         ->get;
 
-        $self->clear_current_form;
+        $self->invalidate_cached_values;
     } else {
         croak "I don't know which form to submit, sorry.";
     }
