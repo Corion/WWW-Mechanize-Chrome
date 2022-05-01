@@ -119,23 +119,29 @@ sub find_string_exact($heap, $value, $path='/strings') {
     @res
 }
 
-use Data::Dumper;
-#my @usage = find_string_exact($heap,'Rick Astley');
-my @usage = find_string_exact($heap,'bar');
-#my @usage = find_string($heap,'bar');
-#my @usage = find_string($heap,'foo');
-#my @usage = find_string($heap,'baz');
-print Dumper \@usage;
-#print Dumper $heap->{strings};
+# Object variable:
+my %node_field_index;
+my %edge_field_index;
+my $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
+my $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
+sub init_heap( $heap ) {
+    $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
+    $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
+    #say "Node size: $node_size";
+    #say "Edge size: $edge_size";
 
-$usage[0]->{path} =~ /\[(\d+)\]/ or die "Weirdo path: '$usage[0]->{path}'";
-my $idx = $1;
 
-# strings <- edge
-# strings <- node
+    my $f = $heap->{snapshot}->{meta}->{node_fields};
+    %node_field_index = map {
+        $f->[$_] => $_
+    } 0..$#$f;
 
-say "Edge:", $heap->{edges}->[$idx];
-say "Node:", $heap->{nodes}->[$idx];
+    $f = $heap->{snapshot}->{meta}->{edge_fields};
+    %edge_field_index = map {
+        $f->[$_] => $_
+    } 0..$#$f;
+}
+init_heap($heap);
 
 sub field_value( $heap, $type, $name, $values ) {
     my $f = $heap->{snapshot}->{meta}->{"${type}_fields"};
@@ -160,14 +166,6 @@ sub field_value( $heap, $type, $name, $values ) {
 # in snapshot/meta/{node,edge}_fields
 # each node has (currently) 7 fields
 # each edge has (currently) 3 fields
-#print Dumper $heap->{snapshot}->{meta}->{node_fields};
-#print Dumper $heap->{snapshot}->{meta}->{edge_fields};
-my $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
-my $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
-say "Node size: $node_size";
-say "Edge size: $edge_size";
-
-say Dumper $heap->{snapshot}->{meta}->{edge_types};
 
 sub edge_at_index( $heap, $idx ) {
     my $ofs = $idx * $edge_size;
@@ -194,11 +192,137 @@ sub node( $heap, $idx ) {
     }
 }
 
-#print field_value($heap, 'node', ,
-print Dumper [ edge( $heap, $idx )];
-print Dumper [ node( $heap, $idx )];
+sub full_node( $heap, $idx ) {
+    return +{
+        map {
+            $_ => get_node_field( $heap, $idx, $_ )
+        } @{ $heap->{snapshot}->{meta}->{node_fields} }
+    }
+}
 
-#print Dumper $heap->{snapshot}->{meta}->{node_types};
+sub get_node_field($heap, $idx, $fieldname) {
+    croak "Invalid node field name '$fieldname'"
+        unless exists $node_field_index{ $fieldname };
+
+    # Depending on the type of the field, this can be either a string id
+    # or the numeric value to use...
+    my $fi = $node_field_index{ $fieldname };
+    my $val = $heap->{nodes}->[$idx*$node_size+$fi];
+
+    my $ft = $heap->{snapshot}->{meta}->{node_types}->[$fi];
+    if( ref $ft eq 'ARRAY' ) {
+        $val = $ft->[$val]
+    } elsif( $ft eq 'number' ) {
+        # we use the value as-is
+    } elsif( $ft eq 'string' ) {
+        $val = $heap->{strings}->[$val]
+        #croak "String-fetching for node types not implemented";
+    } else {
+        croak "Unknown node field type '$ft' for '$fieldname'";
+    }
+
+    return $val;
+}
+
+sub get_edge_field($heap, $idx, $fieldname) {
+    croak "Invalid edge field name '$fieldname'"
+        unless exists $edge_field_index{ $fieldname };
+
+    # Depending on the type of the field, this can be either a string id
+    # or the numeric value to use...
+    my $fi = $edge_field_index{ $fieldname };
+    my $val = $heap->{edges}->[$idx*$edge_size+$fi];
+
+    my $ft = $heap->{snapshot}->{meta}->{edge_types}->[$fi];
+    if( ref $ft eq 'ARRAY' ) {
+        $val = $ft->[$val]
+    } elsif( $ft eq 'number' ) {
+        # we use the value as-is
+    } elsif( $ft eq 'node' ) {
+        # we use the value as-is
+    } elsif( $ft eq 'string' ) {
+        $val = $heap->{strings}->[$val]
+    } else {
+        croak "Unknown edge field type '$ft' for '$fieldname'";
+    }
+
+    return $val;
+}
+
+# Returns the edge_count field of a node
+sub get_edge_count( $heap, $idx ) {
+    return get_node_field( $heap, $idx, 'edge_count' )
+}
+
+sub filter_edges( $heap, $cb ) {
+    my $edges = $heap->{edges};
+    grep { $cb->($edges, $_) } 0..$heap->{snapshot}->{edge_count}-1
+}
+
+sub edges_referencing_node( $heap, $node_id ) {
+    my $to_node = $node_field_index{'to_node'};
+    filter_edges( $heap, sub($edges, $idx) {
+        my $v = get_edge_field( $heap, $idx, 'to_node' );
+        if( ! defined $v ) {
+            croak "Invalid edge index $idx!";
+        };
+        $v == $node_id
+    })
+}
+
+sub edge_ids_from_node( $heap, $node_id ) {
+    # Find where our node_id starts in the list of edges. For that, we need
+    # to sum the edgecount of all previous nodes.
+    # This should maybe later be cached/indexed so we don't always have
+    # to rescan the whole array
+    my $to_node = $node_field_index{'to_node'};
+    filter_edges( $heap, sub($edges, $idx) {
+        my $v = get_edge_field( $heap, $idx, 'to_node' );
+        if( ! defined $v ) {
+            croak "Invalid edge index $idx!";
+        };
+        $v == $node_id
+    })
+}
+
+
+sub nodes_with_string_id($heap,$string_id) {
+    my $n = $heap->{nodes};
+    my $str = $heap->{strings}->[$string_id];
+    #croak "No node field index 'name' found"
+    #    unless exists $node_field_index{'name'};
+    #my $fi = $node_field_index{'name'};
+    grep {
+        get_node_field( $heap, $_, 'name') eq $str
+        # $n->[$idx*$node_size+$fi] == $string_id;
+    } 0..$heap->{snapshot}->{node_count}-1
+}
+
+use Data::Dumper;
+#my @usage = find_string_exact($heap,'Rick Astley');
+my @usage = find_string_exact($heap,'structname');
+$usage[0]->{path} =~ /\[(\d+)\]/
+    or die "Weirdo path: '$usage[0]->{path}'";
+my $idx = $1;
+say "'structname' has string id $idx ($usage[0]->{path})";
+my @nodes = nodes_with_string_id( $heap, $idx );
+say "Nodes referencing that string: " . Dumper \@nodes;
+say "Edges referencing that node: " . Dumper [edges_referencing_node( $heap, $nodes[0] )];
+
+# strings <- edge
+# strings <- node
+
 
 #find_value($heap,'Astley');
 #find_value($heap,'dQw4w9WgXcQ');
+
+sub dump_nodes( $heap, $string ) {
+    @usage = find_string_exact($heap,$string);
+    $usage[0]->{path} =~ /\[(\d+)\]/
+        or die "Weirdo path: '$usage[0]->{path}'";
+    $idx = $1;
+    print "Nodes using '$string' " . Dumper [map{full_node($heap,$_)} nodes_with_string_id($heap, $idx)];
+}
+
+dump_nodes($heap, 'onload');
+dump_nodes($heap, 'bar');
