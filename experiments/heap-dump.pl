@@ -78,9 +78,9 @@ sub iterate($heap, $visit, $path='', $vis=$path) {
     };
 }
 
-sub find_string($heap, $value, $path='') {
+sub find_string($heap, $value, $path='/strings') {
     my @res;
-    iterate($heap, sub($item, $path) {
+    iterate($heap->{strings}, sub($item, $path) {
         if( ref $item eq 'HASH' ) {
             if( grep { defined $_ and $_ =~ /$value/ } values %$item ) {
                 my @keys = grep { defined $item->{$_} and $item->{$_} =~ $value } keys %$item;
@@ -98,9 +98,9 @@ sub find_string($heap, $value, $path='') {
     @res
 }
 
-sub find_string_exact($heap, $value, $path='') {
+sub find_string_exact($heap, $value, $path='/strings') {
     my @res;
-    iterate($heap, sub($item, $path) {
+    iterate($heap->{strings}, sub($item, $path) {
         if( ref $item eq 'HASH' ) {
             if( grep { defined $_ and $_ =~ /$value/ } values %$item ) {
                 my @keys = grep { defined $item->{$_} and $item->{$_} eq $value } keys %$item;
