@@ -92,7 +92,8 @@ Another id of this node within Chrome
 has 'objectId' => (
     is => 'lazy',
     default => sub( $self ) {
-        my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => $self->nodeId)->get;
+        #warn "Realizing objectId";
+        my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => 0+$self->nodeId)->get;
         $obj->{object}->{objectId}
     },
 );
