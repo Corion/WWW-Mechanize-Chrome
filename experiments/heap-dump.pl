@@ -15,6 +15,7 @@ Log::Log4perl->easy_init($WARN);
 
 my $mech = WWW::Mechanize::Chrome->new(
     data_directory => tempdir( CLEANUP => 1 ),
+    headless => 1,
 );
 $mech->target->send_message('HeapProfiler.enable')->get;
 
