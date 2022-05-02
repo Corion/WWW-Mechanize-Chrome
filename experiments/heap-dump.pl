@@ -1,12 +1,14 @@
 #!perl
 use strict;
 use warnings;
+use 5.020;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'say';
 use File::Temp 'tempdir';
 use Carp 'croak';
 
+use Data::Dumper;
 use WWW::Mechanize::Chrome;
 use JSON;
 use Log::Log4perl ':easy';
@@ -181,9 +183,15 @@ sub node_by_id( $heap, $node_id ) {
     # Maybe some kind of caching here, as well, or gradually building
     # a hash out of/into the structure?!
     for my $idx ( 0..$heap->{snapshot}->{node_count}-1 ) {
-        return $idx
-            if( get_node_field($heap, $idx, 'id') == $node_id );
+        my $id = get_node_field($heap, $idx, 'id');
+        #my $name = get_node_field($heap, $idx, 'name');
+        #my $type = get_node_field($heap, $idx, 'type');
+        #warn "$node_id:$idx: $id $name [$type]";
+        if( $id == $node_id ) {
+            return $idx
+        };
     }
+    croak "Unknown node id $node_id";
 }
 
 sub edge( $heap, $idx ) {
@@ -195,6 +203,7 @@ sub edge( $heap, $idx ) {
 
 sub full_edge( $heap, $idx ) {
     return +{
+        _idx => $idx,
         map {
             $_ => get_edge_field( $heap, $idx, $_ )
         } @{ $heap->{snapshot}->{meta}->{edge_fields} }
@@ -210,6 +219,7 @@ sub node( $heap, $idx ) {
 
 sub full_node( $heap, $idx ) {
     return +{
+        _idx => $idx,
         map {
             $_ => get_node_field( $heap, $idx, $_ )
         } @{ $heap->{snapshot}->{meta}->{node_fields} }
@@ -250,10 +260,15 @@ sub get_edge_field($heap, $idx, $fieldname) {
     croak "Invalid edge field name '$fieldname'"
         unless exists $edge_field_index{ $fieldname };
 
+    if( $idx >= $heap->{snapshot}->{edge_count} ) {
+        croak "Invalid edge index $idx, maximum is $heap->{snapshot}->{edge_count}";
+    }
+
     # Depending on the type of the field, this can be either a string id
     # or the numeric value to use...
     my $fi = $edge_field_index{ $fieldname };
-    my $val = $heap->{edges}->[$idx*$edge_size+$fi];
+    #my $val = $heap->{edges}->[$idx*$edge_size+$fi];
+    my $val = (edge_at_index( $heap, $idx ))[$fi];
 
     my $ft = $heap->{snapshot}->{meta}->{edge_types}->[$fi];
     if( ref $ft eq 'ARRAY' ) {
@@ -284,16 +299,22 @@ sub filter_edges( $heap, $cb ) {
     grep { $cb->($edges, $_) } 0..$heap->{snapshot}->{edge_count}-1
 }
 
+# idx
+sub get_edge_target( $heap, $idx ) {
+    my $v = get_edge_field( $heap, $idx, 'to_node' );
+    return $v / $node_size
+}
+
 # "Parent" nodes?
-sub edges_referencing_node( $heap, $node_id ) {
-    croak "Invalid node id $node_id"
-        if $node_id >= $heap->{snapshot}->{node_count};
+sub edges_referencing_node( $heap, $node_idx ) {
+    croak "Invalid node index $node_idx"
+        if $node_idx >= $heap->{snapshot}->{node_count};
     filter_edges( $heap, sub($edges, $idx) {
-        my $v = get_edge_field( $heap, $idx, 'to_node' );
+        my $v = get_edge_target( $heap, $idx );
         if( ! defined $v ) {
             croak "Invalid edge index $idx!";
         };
-        $v == $node_id
+        $v == $node_idx
     })
 }
 
@@ -302,8 +323,7 @@ sub edge_ids_from_node( $heap, $node_idx ) {
     # to sum the edgecount of all previous nodes.
     # This should maybe later be cached/indexed so we don't always have
     # to rescan the whole array
-    my $to_node = $node_field_index{'to_node'};
-    my $edge_offset;
+    my $edge_offset = 0;
     for my $idx (0..$node_idx-1) {
         $edge_offset += get_node_field($heap,$idx,'edge_count');
     };
@@ -312,10 +332,13 @@ sub edge_ids_from_node( $heap, $node_idx ) {
 }
 
 # "Child" nodes?
-sub nodes_from_node( $heap, $node_id ) {
-    my @edges = edge_ids_from_node( $heap, $node_id );
-    my @node_ids = map { get_edge_field( $heap, $_, 'to_node' ) } @edges;
-    return map { full_node( $heap, node_by_id($heap,$_) ) } @node_ids
+# idx -> full nodes
+sub nodes_from_node( $heap, $node_idx ) {
+    my @edges = edge_ids_from_node( $heap, $node_idx );
+    my @node_idxs = map {
+        get_edge_target( $heap, $_ );
+    } @edges;
+    return map { full_node( $heap, $_ ) } @node_idxs
 }
 
 sub nodes_with_string_id($heap,$string_id) {
@@ -330,19 +353,19 @@ sub nodes_with_string_id($heap,$string_id) {
     } 0..$heap->{snapshot}->{node_count}-1
 }
 
-use Data::Dumper;
 #my @usage = find_string_exact($heap,'Rick Astley');
-my @usage = find_string_exact($heap,'structname');
-$usage[0]->{path} =~ /\[(\d+)\]/
-    or die "Weirdo path: '$usage[0]->{path}'";
-my $idx = $1;
-say "'structname' has string id $idx ($usage[0]->{path})";
-my @nodes = nodes_with_string_id( $heap, $idx );
-say "Nodes referencing that string: " . Dumper \@nodes;
-my $id = get_node_field( $heap, $nodes[0], 'id');
-say "Edges referencing that node: " . Dumper [edges_referencing_node( $heap, $id )];
-say "Edges from that node: " . Dumper [map { full_edge( $heap, $_ ) } edge_ids_from_node( $heap, $id )];
-say "Nodes from that node: " . Dumper [nodes_from_node( $heap, $id )];
+#my @usage = find_string_exact($heap,'structname');
+#$usage[0]->{path} =~ /\[(\d+)\]/
+#    or die "Weirdo path: '$usage[0]->{path}'";
+#my $idx = $1;
+#say "'structname' has string id $idx ($usage[0]->{path})";
+#my @nodes = nodes_with_string_id( $heap, $idx );
+#say "Nodes referencing that string: " . Dumper \@nodes;
+#my $id = get_node_field( $heap, $nodes[0], 'id');
+#my $idx = node_by_id($heap,$id);
+#say "Edges referencing that node: " . Dumper [edges_referencing_node( $heap, $id )];
+#say "Edges from that node: " . Dumper [map { full_edge( $heap, $_ ) } edge_ids_from_node( $heap, $idx )];
+#say "Nodes from that node: " . Dumper [nodes_from_node( $heap, $idx )];
 
 # strings <- edge
 # strings <- node
@@ -354,23 +377,105 @@ sub dump_node( $heap, $msg, @node_ids ) {
     my @nodes = map { full_node($heap,$_) }
                 map { node_by_id( $heap, $_ ) } @node_ids;
     for my $n (@nodes) {
-        my @edge_ids = edge_ids_from_node( $heap, $n->{id} );
-        warn sprintf "%d edges\n", scalar @edge_ids;
+        my @edge_ids = edge_ids_from_node( $heap, $n->{_idx} );
         $n->{edges} = [map {full_edge($heap,$_)} @edge_ids ];
     };
 
     print "$msg: " . Dumper \@nodes;
 }
 
+sub _node_as_dot( $node ) {
+    my $name = $node->{name} || "($node->{id})";
+    return qq{$node->{id} [label = "$name ($node->{type})"]};
+}
+
+sub _edge_as_dot( $nid, $edge ) {
+    # to_node is the _index_ of the first field of the node in the array!
+    # NOT the index of the node...
+    my $node_idx = $edge->{to_node} / $node_size;
+    my $targ = get_node_field( $heap, $node_idx, 'id' );
+    return qq{$nid -> $targ [ label="$edge->{name_or_index}" ]};
+}
+
+sub dump_node_as_dot( $heap, $msg, @node_ids ) {
+    my @nodes = map { full_node($heap,$_) }
+                map { node_by_id( $heap, $_ ) }
+                @node_ids;
+    for my $n (@nodes) {
+        my @edge_ids = edge_ids_from_node( $heap, $n->{_idx} );
+        $n->{edges} = [map {full_edge($heap,$_)} @edge_ids ];
+    };
+
+    my %leaves;
+
+    my %node_seen;
+    for my $n (@nodes) {
+        my $nid = $n->{id};
+        next if $node_seen{ $nid }++;
+        delete $leaves{ $nid };
+
+        say _node_as_dot( $n );
+
+        for my $e (@{$n->{edges}}) {
+            my $node_idx = $e->{to_node}/$node_size;
+            my $id = get_node_field( $heap, $node_idx, 'id');
+            $leaves{ $id } = 1;
+            say _edge_as_dot($n->{id}, $e);
+        };
+    };
+    for my $nid (sort { $a <=> $b } keys %leaves) {
+        say "# leaf ($nid)";
+        my $n = full_node( $heap, node_by_id( $heap, $nid ));
+        say _node_as_dot( $n );
+    };
+}
+
 sub dump_nodes_with_string( $heap, $string ) {
-    @usage = find_string_exact($heap,$string);
+    my @usage = find_string_exact($heap,$string);
     $usage[0]->{path} =~ /\[(\d+)\]/
         or die "Weirdo path: '$usage[0]->{path}'";
-    $idx = $1;
+    my $idx = $1;
     dump_node( "Nodes using '$string'", nodes_with_string_id($heap, $idx) );
 }
 
-dump_node( $heap, 'First node', 1 );
+# This includes the nodes themselves!
+sub reachable( $heap, $start, $depth=1 ) {
+    my %reachable = map { $_ => 1 } @$start;
+    my @curr = @$start;
+    for my $d (1..$depth) {
+        my %new;
+        for my $nid (@curr) {
+            my $idx = node_by_id( $heap, $nid );
+            my @reachable = nodes_from_node( $heap, $idx );
+            for my $r (@reachable) {
+                if( !$reachable{ $r->{id}}) {
+                    $new{ $r->{id} } = 1
+                };
+            };
+        }
+        @reachable{ keys %new } = values %new;
+        @curr = sort { $a <=> $b } keys %new;
+    };
+    return sort { $a <=> $b } keys %reachable;
+}
+
+#for my $edge_idx (0..10000) {
+#    my $e = full_edge($heap, $edge_idx);
+#    if( $e->{type} eq 'property' ) {
+#        say Dumper $e;
+#    };
+#}
+
+#for my $e (0..10) {
+#    my $edge = full_edge($heap,$e);
+#    say _edge_as_dot( 0, $edge );
+#};
+
+my @two_levels = reachable( $heap, [1], 1 );
+
+say "digraph G {";
+dump_node_as_dot( $heap, 'First node', @two_levels );
+say "}"
 
 #dump_nodes_with_string($heap, 'onload');
 #dump_nodes_with_string($heap, 'bar');
