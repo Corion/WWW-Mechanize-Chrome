@@ -479,6 +479,7 @@ sub reachable( $heap, $start, $depth=1 ) {
 my @two_levels = reachable( $heap, [1], 1 );
 
 say "digraph G {";
+say "rankdir = LR";
 dump_node_as_dot( $heap, 'First node', @two_levels );
 say "}"
 
