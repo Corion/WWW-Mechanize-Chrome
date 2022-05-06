@@ -391,7 +391,15 @@ sub _edge_as_dot( $nid, $edge ) {
     # NOT the index of the node...
     my $node_idx = $edge->{to_node} / $node_size;
     my $targ = get_node_field( $heap, $node_idx, 'id' );
-    return qq{$nid -> $targ [ label="$edge->{name_or_index}" ]};
+
+    my $label = $edge->{name_or_index};
+    if( $label =~ /^\d+$/ ) {
+        $label = '';
+    } else {
+        $label = qq([label="$label"]);
+    };
+
+    return qq{$nid -> $targ$label};
 }
 
 sub dump_node_as_dot( $heap, $msg, @node_ids ) {
@@ -443,6 +451,7 @@ sub reachable( $heap, $start, $depth=1 ) {
         for my $nid (@curr) {
             my $idx = node_by_id( $heap, $nid );
             my @reachable = nodes_from_node( $heap, $idx );
+            warn sprintf "%d new nodes directly reachable from source set", scalar @reachable;
             for my $r (@reachable) {
                 if( !$reachable{ $r->{id}}) {
                     $new{ $r->{id} } = 1
