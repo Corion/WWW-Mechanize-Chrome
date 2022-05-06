@@ -267,7 +267,6 @@ sub get_edge_field($heap, $idx, $fieldname) {
     # Depending on the type of the field, this can be either a string id
     # or the numeric value to use...
     my $fi = $edge_field_index{ $fieldname };
-    #my $val = $heap->{edges}->[$idx*$edge_size+$fi];
     my $val = (edge_at_index( $heap, $idx ))[$fi];
 
     my $ft = $heap->{snapshot}->{meta}->{edge_types}->[$fi];
@@ -280,12 +279,10 @@ sub get_edge_field($heap, $idx, $fieldname) {
     } elsif( $ft eq 'string' ) {
         $val = $heap->{strings}->[$val]
     } elsif( $ft eq 'string_or_number' ) {
-        # we don't support the string yet
-        #$val = $heap->{strings}->[$val]
+        $val = $heap->{strings}->[$val]
     } else {
         croak "Unknown edge field type '$ft' for '$fieldname'";
     }
-
     return $val;
 }
 
@@ -424,7 +421,6 @@ sub dump_node_as_dot( $heap, $msg, @node_ids ) {
         };
     };
     for my $nid (sort { $a <=> $b } keys %leaves) {
-        say "# leaf ($nid)";
         my $n = full_node( $heap, node_by_id( $heap, $nid ));
         say _node_as_dot( $n );
     };
