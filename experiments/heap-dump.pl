@@ -5,7 +5,7 @@ use 5.020;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'say';
-use File::Temp 'tempdir';
+use File::Temp 'tempdir', 'tempfile';
 use Carp 'croak';
 
 use Data::Dumper;
@@ -14,6 +14,13 @@ use JSON;
 use Log::Log4perl ':easy';
 use List::Util 'mesh';
 Log::Log4perl->easy_init($WARN);
+
+# We use an in-memory SQLite database as our memory structure to
+# better be able to query the graph
+use DBI;
+use DBD::SQLite;
+use DBD::SQLite::VirtualTable::PerlData;
+use DBIx::RunSQL;
 
 my $mech = WWW::Mechanize::Chrome->new(
     data_directory => tempdir( CLEANUP => 1 ),
@@ -47,9 +54,6 @@ $mech->target->send_message(
 #$mech->sleep(30);
 my $heapdump = $done->get;
 my $heap = decode_json($heapdump);
-
-#use Data::Dumper;
-#print Dumper $heap->{strings};
 
 # Now, search the heap for an object containing our magic strings:
 #
@@ -105,16 +109,16 @@ sub find_string_exact($heap, $value, $path='/strings') {
     my @res;
     iterate($heap->{strings}, sub($item, $path) {
         if( ref $item eq 'HASH' ) {
-            if( grep { defined $_ and $_ =~ /$value/ } values %$item ) {
+            if( grep { defined $_ and $_ eq $value } values %$item ) {
                 my @keys = grep { defined $item->{$_} and $item->{$_} eq $value } keys %$item;
                 for my $k (sort @keys) {
-                    push @res, { path => "$path/$k", value => $item->{k} };
+                    push @res, { path => "$path/$k", value => $item->{k}, index => $k };
                 };
             };
         } elsif( ref $item eq 'ARRAY' ) {
-            if( grep { defined $_ and $_ =~ /$value/ } @$item ) {
+            if( grep { defined $_ and $_ eq $value } @$item ) {
                 my @indices = grep { defined $item->[$_] and $item->[$_] eq $value } 0..$#$item;
-                push @res, map +{ path => "$path\[$_]", value => $item->[$_] }, @indices;
+                push @res, map +{ path => "$path\[$_]", value => $item->[$_], index => $_ }, @indices;
             };
         }
     });
@@ -124,14 +128,17 @@ sub find_string_exact($heap, $value, $path='/strings') {
 # Object variable:
 my %node_field_index;
 my %edge_field_index;
-my $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
-my $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
+my $node_size;
+my $edge_size;
+# Create a temporary database, but on disk so indices actually work
+my ($fh, $dbname) = tempfile;
+close $fh;
+my $dbh = DBI->connect('dbi:SQLite:dbname='.$dbname);
 sub init_heap( $heap ) {
     $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
     $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
     #say "Node size: $node_size";
     #say "Edge size: $edge_size";
-
 
     my $f = $heap->{snapshot}->{meta}->{node_fields};
     %node_field_index = map {
@@ -142,8 +149,217 @@ sub init_heap( $heap ) {
     %edge_field_index = map {
         $f->[$_] => $_
     } 0..$#$f;
+
+    # Now, "load" the nodes and edges
+    # We convert everything to a hash first, while we could instead keep all
+    # the things as separate arrays. Ah well ...
+    my $edge_offset = 0;
+    our $node = [map {
+        my $n = full_node($heap, $_);
+        $n->{edge_offset} = $edge_offset;
+        $edge_offset += get_edge_count( $heap, $_ );
+        $n
+    } 0..$heap->{snapshot}->{node_count}-1];
+    say $node->[0]->{id};
+    our $edge = [map { full_edge($heap, $_) } 0..$heap->{snapshot}->{edge_count}-1];
+    $dbh->sqlite_create_module(perl => "DBD::SQLite::VirtualTable::PerlData");
+
+    my $node_cols = join ",", @{ $heap->{snapshot}->{meta}->{node_fields}};
+    my $edge_cols = join ",", @{ $heap->{snapshot}->{meta}->{edge_fields}};
+
+    $dbh->do(<<SQL);
+    CREATE VIRTUAL TABLE node_mem USING perl(_idx, edge_offset, $node_cols,
+                                        hashrefs="main::node");
+SQL
+    $dbh->do(<<SQL);
+    CREATE VIRTUAL TABLE edge_mem USING perl(_idx, _to_node_idx, $edge_cols,
+                                        hashrefs="main::edge");
+SQL
+
+    $dbh->do(<<SQL);
+        create table node as select * from node_mem
+SQL
+    $dbh->do(<<SQL);
+        create table edge as select * from edge_mem
+SQL
+
+
+# Not allowed for virtual tables, which is why we use the on disk variant
+    $dbh->do(<<SQL);
+    CREATE index by_name_index on node (name, _idx, id);
+    CREATE unique index by_idx_index on node (_idx, name, type, edge_count);
+    CREATE unique index by_id_index on node (id, _idx, name, type, edge_count);
+SQL
+    $dbh->do(<<SQL);
+    CREATE unique index by_index on edge (_idx, _to_node_idx, name_or_index);
+SQL
 }
 init_heap($heap);
+
+# turn into view, node_edges
+my $sth= $dbh->prepare( <<'SQL' );
+    select
+        *
+    from node n
+    join edge e on e._idx between n.edge_offset and n.edge_offset+n.edge_count-1
+    where n.id = ?;
+SQL
+$sth->execute(1);
+
+# turn into view, node_children
+$sth= $dbh->prepare( <<'SQL' );
+    select
+        *
+    from node parent
+    join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+    join node child on child._idx = e._to_node_idx
+    where parent.id = ?;
+SQL
+$sth->execute(1);
+say "-- children";
+say DBIx::RunSQL->format_results( sth => $sth );
+
+# turn into view, node_children / child_nodes
+$sth= $dbh->prepare( <<'SQL' );
+    with immediate_children as (
+        select
+            parent.id as parent_id
+          , parent._idx as parent_idx
+          , parent.type as parent_type
+          , parent.name as parent_name
+          , e.name_or_index as relation
+          , child.id as child_id
+          , child._idx as child_idx
+          , child.type as child_type
+          , child.name as child_name
+        from node parent
+        join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+        join node child on child._idx = e._to_node_idx
+    )
+    select
+         *
+      from immediate_children
+    where parent_id = ?;
+SQL
+$sth->execute(1);
+say DBIx::RunSQL->format_results( sth => $sth );
+
+# turn into view, node_children / child_nodes
+$sth= $dbh->prepare( <<'SQL' );
+    with immediate_parents as (
+        select
+            parent.id as parent_id
+          , parent._idx as parent_idx
+          , parent.type as parent_type
+          , parent.name as parent_name
+          , e.name_or_index as relation
+          , child.id as child_id
+          , child._idx as child_idx
+          , child.type as child_type
+          , child.name as child_name
+        from node child
+        join edge e on child._idx = e._to_node_idx
+        join node parent on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+    )
+    select
+         *
+      from immediate_parents
+    where child_name = ?
+      and parent_type = 'object'
+SQL
+#$sth->execute('bar');
+#$sth->execute('Hello World');
+$sth->execute('complex_struct');
+my $res = $sth->fetchall_arrayref( {});
+my $obj = 0+$res->[0]->{parent_id};
+say "Target object id: <$obj>";
+$sth->execute('complex_struct');
+say "-- All JS objects containing a string 'complex_struct'";
+say DBIx::RunSQL->format_results( sth => $sth );
+
+# turn into view, node_children / child_nodes
+say "--- Found object $obj";
+$sth= $dbh->prepare( <<'SQL' );
+    select
+           *
+      from node
+     where id >?-1
+       and id <?+1
+SQL
+$sth->execute(0+$obj, $obj);
+say DBIx::RunSQL->format_results( sth => $sth );
+
+# turn into view, node_children / child_nodes
+say "--- All object properties";
+$sth= $dbh->prepare( <<'SQL' );
+    with object as (
+        select
+            parent.id as parent_id
+          , parent._idx as parent_idx
+          , parent.type as parent_type
+          , parent.name as parent_name
+          , e.name_or_index as relation
+          , child.id as child_id
+          , child._idx as child_idx
+          , child.type as child_type
+          , child.name as child_name
+        from node parent
+        left join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+        left join node child on e._to_node_idx = child._idx
+       where parent.type = 'object'
+         and child.type not in ('hidden')
+    )
+    select
+           parent_name
+         , parent_id as id
+         , parent_idx
+         , child_id
+         , relation
+         , child_type
+         , child_name
+      from object
+    where id > ? -1
+      and id < ? +1
+    -- group by name, id, _idx
+SQL
+$sth->execute($obj, $obj);
+say DBIx::RunSQL->format_results( sth => $sth );
+
+# turn into view, node_children / child_nodes
+say "-- Reconstructed JSON object";
+$sth= $dbh->prepare( <<'SQL' );
+    with object as (
+        select
+            parent.id as id
+          , parent._idx
+          , parent.type
+          , parent.name
+          , e.name_or_index as fieldname
+          , child.id   as child_id
+          , child._idx as child_idx
+          , child.type as child_type
+          , child.name as child_name
+        from node parent
+        join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+        join node child on e._to_node_idx = child._idx
+       where parent.type = 'object'
+         and child.type not in ('hidden')
+    )
+    select
+           name
+         , id
+         , _idx
+         -- nice try, but that won't hold up when trying to recursively fetch
+         -- related object
+         -- unless we do a recursive CTE, that is
+         , json_group_object(fieldname, child_name)
+      from object
+    where id >= ? -1
+      and id <= ? +1
+    group by name, id, _idx
+SQL
+$sth->execute($obj,$obj);
+say DBIx::RunSQL->format_results( sth => $sth );
 
 sub field_value( $heap, $type, $name, $values ) {
     my $f = $heap->{snapshot}->{meta}->{"${type}_fields"};
@@ -202,12 +418,14 @@ sub edge( $heap, $idx ) {
 }
 
 sub full_edge( $heap, $idx ) {
-    return +{
+    my $res = +{
         _idx => $idx,
         map {
             $_ => get_edge_field( $heap, $idx, $_ )
         } @{ $heap->{snapshot}->{meta}->{edge_fields} }
-    }
+    };
+    $res->{_to_node_idx} = $res->{to_node} / @{ $heap->{snapshot}->{meta}->{node_fields} };
+    $res;
 }
 
 sub node( $heap, $idx ) {
@@ -227,7 +445,7 @@ sub full_node( $heap, $idx ) {
 }
 
 sub get_node_field($heap, $idx, $fieldname) {
-    croak "Invalid node field name '$fieldname'"
+    croak "Invalid node field name '$fieldname'. Known fields are " . join ", ", values %node_field_index
         unless exists $node_field_index{ $fieldname };
     if( $idx > $heap->{snapshot}->{node_count}) {
         croak "Invalid node index '$idx'";
@@ -313,6 +531,30 @@ sub edges_referencing_node( $heap, $node_idx ) {
         };
         $v == $node_idx
     })
+}
+
+# Find all parent nodes referencing this node
+sub parents_idx( $heap, $node_idx ) {
+    croak "Invalid node index $node_idx"
+        if $node_idx >= $heap->{snapshot}->{node_count};
+    my @edges_idx = edges_referencing_node( $heap, $node_idx );
+    my @parents = map { nodes_having_edge( $heap, $_ ) } @edges_idx;
+}
+
+sub filter_nodes( $heap, $cb ) {
+    my $nodes = $heap->{nodes};
+    grep { $cb->($nodes, $_) } 0..$heap->{snapshot}->{node_count}-1
+}
+
+# Returns indices, not node ids ...
+sub nodes_having_edge( $heap, $edge_idx ) {
+    filter_nodes( $heap, sub( $nodes, $node_idx ) {
+        if( grep {
+                $_ == $edge_idx
+            } edge_ids_from_node( $heap, $node_idx )) {
+            1
+        };
+    });
 }
 
 sub edge_ids_from_node( $heap, $node_idx ) {
@@ -478,10 +720,53 @@ sub reachable( $heap, $start, $depth=1 ) {
 
 my @two_levels = reachable( $heap, [1], 1 );
 
-say "digraph G {";
-say "rankdir = LR";
-dump_node_as_dot( $heap, 'First node', @two_levels );
-say "}"
+#say "digraph G {";
+#say "rankdir = LR";
+#dump_node_as_dot( $heap, 'First node', @two_levels );
+#say "}"
 
 #dump_nodes_with_string($heap, 'onload');
 #dump_nodes_with_string($heap, 'bar');
+
+sub node_ancestor_paths($heap, $prefix, $seen={}) {
+    my @res = @$prefix;
+    my @ancestors = parents_idx( $heap, $res[0] );
+
+    if( @ancestors ) {
+        return map {
+            node_ancestor_paths( [$_, @res] )
+        }
+        grep { ! $seen->{$_}++ } @ancestors;
+    } else {
+        return $prefix
+    }
+}
+
+my $string = find_string_exact($heap,'bar')->{index};
+say "Finding ancestors of $string";
+my @path = node_ancestor_paths($heap, [$string]);
+say "digraph G {";
+say "rankdir = LR";
+dump_node_as_dot( $heap, 'First node', @path );
+say "}";
+
+# Output the path between two nodes
+# The approach is to choose the parents of each node until
+# we find a common node, which obviously must be a link
+# this maybe even is the shortest link
+sub node_path( $heap, $start_node, $end_node, $parents_s = {}, $parents_e = {} ) {
+    $parents_s->{ $start_node->{id}} = $start_node;
+    $parents_e->{ $end_node->{id}} = $end_node;
+
+    if( my @common = (grep { exists $parents_s->{ $_->{id} } } values( %$parents_e ),
+                      grep { exists $parents_e->{ $_->{id} } } values( %$parents_s )
+                     )) {
+        # we found that a common ancestor exists, but we don't know
+        # the path :-/
+        return @common
+    } else {
+        # flood-fill by using all parents
+        my @p = parents_idx( $heap, $start_node );
+        my @q = parents_idx( $heap, $end_node );
+    }
+}
