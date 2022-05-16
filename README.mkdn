@@ -322,7 +322,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
 - **popup\_blocking**
 
-        popup_bloacking => 1  # block popups
+        popup_blocking => 1  # block popups
 
     Defaults to false (off). A true value will block popups.
 
