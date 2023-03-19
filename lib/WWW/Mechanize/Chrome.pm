@@ -451,6 +451,7 @@ sub build_command_line {
         if (exists $options->{port}) {
             $options->{port} ||= 0;
             push @{ $options->{ launch_arg }}, "--remote-debugging-port=$options->{ port }";
+            push @{ $options->{ launch_arg }}, "--remote-allow-origins=*";
         };
 
         if ($options->{listen_host} || $options->{host} ) {
