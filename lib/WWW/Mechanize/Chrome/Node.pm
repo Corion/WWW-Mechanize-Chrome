@@ -217,14 +217,16 @@ sub _fetchObjectId( $self ) {
     if( $self->{objectId}) {
         return Future->done( $self->{objectId} )
     } else {
+        weaken(my $s=$self);
         $self->driver->send_message('DOM.resolveNode', nodeId => 0+$self->nodeId)->then(sub( $obj ) {
-            $self->{objectId} = $obj->{object}->{objectId};
+            $s->{objectId} = $obj->{object}->{objectId};
             Future->done( $obj->{object}->{objectId} );
         });
     }
 }
 
 sub _fetchNodeId($self) {
+    weaken( my $s = $self );
     $self->_fetchObjectId->then(sub( $objectId ) {
         $self->driver->send_message('DOM.requestNode', objectId => $objectId)
     })->then(sub($d) {
@@ -232,10 +234,10 @@ sub _fetchNodeId($self) {
             # Ugh - that node has gone away before we could request it ...
             Future->done( $d->{nodeId} );
         } else {
-            $self->{backendNodeId} = 0+$d->{node}->{backendNodeId};
-            $self->{nodeId} = 0+$d->{node}->{nodeId} // 0+$self->{nodeId}; # keep old one ...
-            $self->cachedNodeId( 0+$d->{node}->{nodeId} // 0+$self->{nodeId} );
-            Future->done( $self->{nodeId} );
+            $s->{backendNodeId} = 0+$d->{node}->{backendNodeId};
+            $s->{nodeId} = 0+$d->{node}->{nodeId} // 0+$s->{nodeId}; # keep old one ...
+            $s->cachedNodeId( 0+$d->{node}->{nodeId} // 0+$s->{nodeId} );
+            Future->done( $s->{nodeId} );
         };
     });
 }
@@ -295,9 +297,10 @@ sub _false_to_undef( $val ) {
 }
 
 sub _fetch_attribute_eval( $self, $attribute ) {
+    weaken(my $s=$self);
     $self->_fetchObjectId
     ->then( sub( $objectId ) {
-        $self->driver->send_message('Runtime.callFunctionOn',
+        $s->driver->send_message('Runtime.callFunctionOn',
             functionDeclaration => '(o,a) => { console.log(o[a]); return o[a] }',
             arguments => [ { objectId => $objectId }, { value => $attribute } ],
             objectId => $objectId,
@@ -339,11 +342,12 @@ sub _fetch_attribute_property( $self, $attribute ) {
 }
 
 sub _fetch_attribute( $self, $attribute ) {
-    my $attr = $self->_fetch_attribute_attribute( $attribute )->then(sub ($val) {
+    weaken(my $s=$self);
+    my $attr = $s->_fetch_attribute_attribute( $attribute )->then(sub ($val) {
         if( ! defined $val) {
-            my $attr = $self->_fetch_attribute_property( $attribute )->then(sub ($val) {
+            my $attr = $s->_fetch_attribute_property( $attribute )->then(sub ($val) {
                 if( ! defined $val) {
-                    return $self->_fetch_attribute_eval( $attribute )
+                    return $s->_fetch_attribute_eval( $attribute )
                 } else {
                     return Future->done( $val )
                 }
@@ -418,7 +422,7 @@ sub set_attribute_future( $self, $attribute, $value ) {
     if( defined $value ) {
         $r = $self->_fetchNodeId()
            ->then(sub( $nodeId ) {
-            $self->driver->send_message(
+            $s->driver->send_message(
                 'DOM.setAttributeValue',
                 name => $attribute,
                 value => ''.$value,
@@ -429,7 +433,7 @@ sub set_attribute_future( $self, $attribute, $value ) {
     } else {
         $r = $self->_fetchNodeId()
            ->then(sub( $nodeId ) {
-            $self->driver->send_message('DOM.removeAttribute',
+            $s->driver->send_message('DOM.removeAttribute',
                 name => $attribute,
                 nodeId => 0+$nodeId
             )
@@ -501,7 +505,7 @@ sub set_text_future( $self, $value ) {
     weaken $s;
     my $nid = $self->_nodeId();
     $nid->then(sub( $nodeId ) {
-        $self->driver->send_message('DOM.setNodeValue', nodeId => 0+$nodeId, value => $value )
+        $s->driver->send_message('DOM.setNodeValue', nodeId => 0+$nodeId, value => $value )
     });
 }
 

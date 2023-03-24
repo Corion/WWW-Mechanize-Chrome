@@ -1448,15 +1448,15 @@ sub on_popup( $self, $popup ) {
             };
         });
 
+        weaken( my $s = $self );
         $setup->then(sub {
-            $self->target->send_message('Target.setDiscoverTargets' => discover => JSON::true() )
+            $s->target->send_message('Target.setDiscoverTargets' => discover => JSON::true() )
         })->get;
     } else {
         $self->target->send_message('Target.setDiscoverTargets' => discover => JSON::false() )->get;
         delete $self->{target_created};
     };
 };
-
 
 sub autodie {
     my( $self, $val )= @_;
@@ -2410,7 +2410,7 @@ sub get_future($self, $url, %options ) {
         )
         }, url => "$url", %options, navigates => 1 )
     ->then( sub {
-        $self->invalidate_cached_values;
+        $s->invalidate_cached_values;
         Future->done( $s->response )
     })
 };
@@ -4131,12 +4131,15 @@ sub _performSearch( $self, %args ) {
 
         if( $retry ) {
             # close the previous search attempt
-            $search->then(sub($results) {
+            my $se = $search->then(sub($results) {
                 my $searchId = $results->{searchId};
+                warn "!!! Discarding search";
                 $s->target->send_message( 'DOM.discardSearchResults',
                     searchId => $searchId,
                 );
-            })->retain;
+            });
+            warn "Closed search: $se";
+            $se->retain;
         }
 
         if( $retry ) {
@@ -4384,6 +4387,8 @@ sub xpath( $self, $query, %options) {
     #my $doc= $options{ document } ? Future->done( $options{ document } ) : $self->document_future;
     my $doc = Future->done();
 
+    weaken(my $s = $self);
+
     $doc->then( sub {
         my $q = join "|", @$query;
 
@@ -4397,7 +4402,7 @@ sub xpath( $self, $query, %options) {
         };
         Future->wait_all(
             map {
-                $self->_performSearch( query => $_, subTreeId => $id )
+                $s->_performSearch( query => $_, subTreeId => $id )
             } @$query
         );
     })->then( sub {

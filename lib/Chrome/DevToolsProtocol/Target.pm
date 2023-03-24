@@ -243,7 +243,7 @@ sub connect( $self, %args ) {
         : $self->transport->connect();
 
     $done = $done->then(sub {
-        $self->{l} = $self->transport->add_listener('Target.receivedMessageFromTarget', sub {
+        $s->{l} = $s->transport->add_listener('Target.receivedMessageFromTarget', sub {
             if( $s ) {
                 #$s->log( 'trace', '(target) receivedMessage', $_[0] );
                 my $id = $s->targetId;
@@ -271,7 +271,7 @@ sub connect( $self, %args ) {
             # Set up a new browser context
             $done = $done->then( sub { $s->transport->send_message('Target.createBrowserContext')})
             ->then( sub( $info ) {
-                $self->browserContextId( $info->{browserContextId} );
+                $s->browserContextId( $info->{browserContextId} );
                 Future->done();
             });
 
@@ -285,7 +285,7 @@ sub connect( $self, %args ) {
         }
 
         $done = $done->then(sub {
-            my $id = $self->browserContextId;
+            my $id = $s->browserContextId;
 
             $s->createTarget(
                 url => $args{ start_url } || 'about:blank',
@@ -347,8 +347,8 @@ sub connect( $self, %args ) {
         $done = $done->then(sub {
             $s->getTargetInfo( $args{tab})
         })->then(sub( $tab ) {
-            $self->tab($tab);
-            $self->attach( $tab->{targetId});
+            $s->tab($tab);
+            $s->attach( $tab->{targetId});
         });
 
     } else {
@@ -378,8 +378,9 @@ sub close( $self ) {
 }
 
 sub DESTROY( $self ) {
-    $self->close
-        if $self->autoclose;
+    if( $self->autoclose ) {
+        $self->close->catch(sub {})->retain;
+    }
 };
 
 =head2 C<< ->sleep >>
