@@ -234,6 +234,7 @@ Examples of other useful parameters include:
 
     '--load-extension'
     '--no-sandbox'
+    '--password-store=basic'
 
 =item B<separate_session>
 
