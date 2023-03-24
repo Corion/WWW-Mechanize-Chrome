@@ -133,7 +133,7 @@ my $edge_size;
 # Create a temporary database, but on disk so indices actually work
 my ($fh, $dbname) = tempfile;
 close $fh;
-my $dbh = DBI->connect('dbi:SQLite:dbname='.$dbname);
+my $dbh = DBI->connect('dbi:SQLite:dbname='.$dbname, undef, undef, { RaiseError => 1, PrintError => 0 });
 sub init_heap( $heap ) {
     $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
     $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
