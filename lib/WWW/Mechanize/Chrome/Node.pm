@@ -1,5 +1,6 @@
 package WWW::Mechanize::Chrome::Node;
 use strict;
+use 5.016; # __SUB__
 use Moo 2;
 use Filter::signatures;
 no warnings 'experimental::signatures';
@@ -405,12 +406,26 @@ Returns the text of the node and the contained child nodes.
 =cut
 
 sub get_text( $self ) {
+    # We need to describe all the children and concatenate their
+    # contents to retrieve the text...
+
     $self->driver->send_message('DOM.describeNode',
-        nodeId => 0+$self->nodeId)->then(sub($info) {
-        Future->done( $info->{node}->{nodeValue})
-    })->get
-    #$self->get_attribute('textContent')
-    #$self->get_attribute('nodeValue')
+        nodeId => 0+$self->nodeId, depth => -1)->then(sub($info) {
+
+        my $text = '';
+
+        my $collect_text = sub( $n ) {
+            if( $n->{nodeType} == 3 ) {
+                $text .= $n->{nodeValue} // '';
+            };
+            for( $n->{children}->@* ) {
+                __SUB__->($_);
+            }
+        };
+        $collect_text->( $info->{node} );
+
+        Future->done( $text )
+    })->get;
 }
 
 =head2 C<< ->set_text >>
