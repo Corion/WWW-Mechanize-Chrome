@@ -186,16 +186,18 @@ sub fetchNode( $class, %options ) {
         my $node = {
             cachedNodeId => $nodeId,
             objectId => $body->{ objectId },
-            backendNodeId => $attr->{ backendNodeId },
+            backendNodeId => $body->{backendNodeId} || $attr->{ backendNodeId },
+            nodeId => $nodeId,
+            parentId => $body->{ parentId },
             attributes => {
                 @{ $attributes },
             },
             nodeName => $nodeName,
-            driver => $driver,
-            nodeId => $nodeId,
+            #driver => $driver,
             #mech => $s,
             #_generation => $s->_generation,
         };
+        $node->{driver} = $driver;
         my $n = $class->new( $node );
 
         # Fetch additional data into the object
