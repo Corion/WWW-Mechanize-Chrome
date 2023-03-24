@@ -197,6 +197,7 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
         '--load-extension'
         '--no-sandbox'
+        '--password-store=basic'
 
 - **separate\_session**
 
@@ -234,13 +235,15 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
 - **profile**
 
-        profile => '/path/to/profile/directory'  #  set the profile directory
+        profile => 'ProfileDirectory'  #  set the profile directory
 
     By default, your current user profile directory is used. Use this setting
     to change the profile directory for the browsing session.
 
     You will need to set the **data\_directory** as well, so that Chrome finds the
-    profile within the data directory.
+    profile within the data directory. The profile directory/name itself needs
+    to be a single directory name, not the full path. That single directory name
+    will be relative to the data directory.
 
 - **wait\_file**
 
