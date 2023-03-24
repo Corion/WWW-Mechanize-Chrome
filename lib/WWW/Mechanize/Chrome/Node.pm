@@ -218,9 +218,8 @@ sub fetchNode( $class, %options ) {
 
 
 sub _fetchNodeId($self) {
-    #$self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
-    $self->driver->send_message('DOM.describeNode', objectId => $self->objectId)->then(sub($d) {
-        warn "::Node _fetchNodeId: nodeId= $d->{node}->{nodeId}";
+    $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
+    #$self->driver->send_message('DOM.describeNode', objectId => $self->objectId)->then(sub($d) {
         $self->{backendNodeId} = 0+$d->{node}->{backendNodeId};
         $self->{nodeId} = 0+$d->{node}->{nodeId} || $self->{nodeId}; # keep old one ...
         $self->cachedNodeId( 0+$d->{node}->{nodeId} || $self->{nodeId} );
@@ -275,19 +274,65 @@ the current value of the attribute.
 
 =cut
 
-sub _fetch_attribute( $self, $attribute ) {
-    #$self->driver->send_message('Runtime.getProperties',
-    $self->driver->send_message('DOM.describeNode',
+sub _false_to_undef( $val ) {
+    if( ref $val and ref $val eq 'JSON::PP::Boolean' ) {
+        $val = $val ? $val : undef;
+    }
+    return $val
+}
+
+sub _fetch_attribute_eval( $self, $attribute ) {
+    $self->driver->send_message('Runtime.callFunctionOn',
+        functionDeclaration => '(o,a) => { console.log(o[a]); return o[a] }',
+        arguments => [ { objectId => $self->objectId }, { value => $attribute } ],
         objectId => $self->objectId,
-        #ownProperties => JSON::true,
-        #accessorPropertiesOnly => JSON::true,
+        returnByValue => $JSON::true
     )
-    ->then(sub( $res ) {
-        my %attributes = @{ $res->{node}->{attributes}};
-        return Future->done( $attributes{ $attribute});
-        #(my $result) = grep { $_->{name} eq $attribute } @{$res->{result}};
-        #$result ||= {};
-        #return Future->done( $result->{value}->{value} )
+    ->then(sub($res) {
+        $res = $res->{result}->{value};
+        return Future->done( _false_to_undef( $res ))
+    });
+}
+
+sub _fetch_attribute_attribute( $self, $attribute ) {
+    $self->driver->send_message('DOM.getAttributes',
+        nodeId => 0+$self->nodeId,
+    )
+    ->then(sub($_res) {
+        my %attr = $_res->{attributes}->@*;
+        my $res = $attr{ $attribute };
+        return Future->done( _false_to_undef( $res ))
+    });
+}
+
+sub _fetch_attribute_property( $self, $attribute ) {
+    $self->driver->send_message('Runtime.getProperties',
+        objectId => $self->objectId,
+        #ownProperties => $JSON::true,
+        #accessorPropertiesOnly => $JSON::true,
+        #returnByValue => $JSON::true
+    )
+    ->then(sub($_res) {
+        (my $attr) = grep { $_->{name} eq $attribute } $_res->{result}->@*;
+        $attr //= {};
+        my $res = $attr->{value}->{value};
+        return Future->done( _false_to_undef( $res ))
+    });
+}
+
+sub _fetch_attribute( $self, $attribute ) {
+    my $attr = $self->_fetch_attribute_attribute( $attribute )->then(sub ($val) {
+        if( ! defined $val) {
+            my $attr = $self->_fetch_attribute_property( $attribute )->then(sub ($val) {
+                if( ! defined $val) {
+                    return $self->_fetch_attribute_eval( $attribute )
+                } else {
+                    return Future->done( $val )
+                }
+            })
+        } else {
+                return Future->done( $val )
+        }
     });
 }
 
@@ -295,10 +340,6 @@ sub get_attribute_future( $self, $attribute, %options ) {
     my $s = $self;
     weaken $s;
 
-    #if( exists $self->attributes->{ $attribute } and !$options{live}) {
-    #    return Future->done( $self->attributes->{ $attribute })
-    #
-    #} els
     if( $attribute eq 'innerHTML' ) {
         my $html = $s->get_attribute_future('outerHTML')
         ->then(sub( $html ) {
