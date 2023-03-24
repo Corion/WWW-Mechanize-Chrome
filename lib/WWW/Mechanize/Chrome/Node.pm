@@ -159,6 +159,10 @@ sub fetchNode( $class, %options ) {
             $driver->send_message( 'DOM.requestNode', objectId => $info{objectId} )
         })->then(sub( $info ) {
             %info = (%info, %$info);
+            $driver->send_message( 'DOM.describeNode', objectId => $info{objectId} )
+        })->then(sub( $info ) {
+            %info = (%info, %{$info->{node}}, nodeId => 0+$nodeId);
+
             Future->done( \%info );
         });
     };
@@ -211,11 +215,13 @@ sub fetchNode( $class, %options ) {
 
 
 sub _fetchNodeId($self) {
-    $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
-        #$self->backendNodeId( $d->{backendNodeId} );
-        $self->{nodeId} = 0+$d->{nodeId};
-        $self->cachedNodeId( 0+$d->{nodeId} );
-        Future->done( 0+$d->{nodeId} );
+    #$self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
+    $self->driver->send_message('DOM.describeNode', objectId => $self->objectId)->then(sub($d) {
+        warn "::Node _fetchNodeId: nodeId= $d->{node}->{nodeId}";
+        $self->{backendNodeId} = 0+$d->{node}->{backendNodeId};
+        $self->{nodeId} = 0+$d->{node}->{nodeId} || $self->{nodeId}; # keep old one ...
+        $self->cachedNodeId( 0+$d->{node}->{nodeId} || $self->{nodeId} );
+        Future->done( $self->{nodeId} );
     });
 }
 
@@ -267,23 +273,30 @@ the current value of the attribute.
 =cut
 
 sub _fetch_attribute( $self, $attribute ) {
-    $self->driver->send_message('Runtime.getProperties',
+    #$self->driver->send_message('Runtime.getProperties',
+    $self->driver->send_message('DOM.describeNode',
         objectId => $self->objectId,
+        #ownProperties => JSON::true,
+        #accessorPropertiesOnly => JSON::true,
     )
     ->then(sub( $res ) {
-        (my $result) = grep { $_->{name} eq $attribute } @{$res->{result}};
-        $result ||= {};
-        return Future->done( $result->{value}->{value} )
+        my %attributes = @{ $res->{node}->{attributes}};
+        return Future->done( $attributes{ $attribute});
+        #(my $result) = grep { $_->{name} eq $attribute } @{$res->{result}};
+        #$result ||= {};
+        #return Future->done( $result->{value}->{value} )
     });
 }
 
 sub get_attribute_future( $self, $attribute, %options ) {
     my $s = $self;
     weaken $s;
-    if( exists $self->attributes->{ $attribute } and !$options{live}) {
-        return Future->done( $self->attributes->{ $attribute })
 
-    } elsif( $attribute eq 'innerHTML' ) {
+    #if( exists $self->attributes->{ $attribute } and !$options{live}) {
+    #    return Future->done( $self->attributes->{ $attribute })
+    #
+    #} els
+    if( $attribute eq 'innerHTML' ) {
         my $html = $s->get_attribute_future('outerHTML')
         ->then(sub( $html ) {
             # Strip first and last tag in a not so elegant way
@@ -295,14 +308,27 @@ sub get_attribute_future( $self, $attribute, %options ) {
 
     } elsif( $attribute eq 'outerHTML' ) {
         my $nid = $s->_fetchNodeId();
+        # If we only have a backendNodeId, use that
         my $html = $nid->then(sub( $nodeId ) {
-            $s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+            (my $key) = grep { $s->$_ } (qw(backendNodeId nodeId));
+            my $val;
+
+            if( ! $key ) {
+                $key = 'nodeId';
+                $val = $nodeId;
+            } else {
+                $val = $self->$key;
+            };
+
+            #$s->driver->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+            $s->driver->send_message('DOM.getOuterHTML', $key => $val )
         })->then(sub( $res ) {
             Future->done( $res->{outerHTML} )
         });
         return $html
 
     } else {
+        #warn "Fetching '$attribute'";
         return $self->_fetch_attribute($attribute);
     }
 }
@@ -377,7 +403,12 @@ Returns the text of the node and the contained child nodes.
 =cut
 
 sub get_text( $self ) {
-    $self->get_attribute('textContent')
+    $self->driver->send_message('DOM.describeNode',
+        nodeId => 0+$self->nodeId)->then(sub($info) {
+        Future->done( $info->{node}->{nodeValue})
+    })->get
+    #$self->get_attribute('textContent')
+    #$self->get_attribute('nodeValue')
 }
 
 =head2 C<< ->set_text >>
