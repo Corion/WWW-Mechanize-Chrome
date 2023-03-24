@@ -24,6 +24,7 @@ use HTML::Selector::XPath 'selector_to_xpath';
 use HTTP::Cookies::ChromeDevTools;
 use POSIX ':sys_wait_h';
 #use Future::IO;
+use Future::Utils 'repeat';
 use Time::HiRes ();
 use Encode 'encode';
 
@@ -1165,7 +1166,8 @@ sub _connect( $self, %options ) {
             };
 
             $s->{_fresh_document} = $s->add_listener('DOM.documentUpdated', sub {
-                $s->log('debug', "Need new node ids!");
+                $s->{_currentNodeGeneration}++;
+                $s->log('debug', "Need new node ids! Now: $s->{_currentNodeGeneration}");
                 # Maybe simply ->clear_cached_document is enough?!
                 $s->_clear_cached_document;
             });
@@ -4102,18 +4104,48 @@ sub _performSearch( $self, %args ) {
     my $query = $args{ query };
     weaken( my $s = $self );
 
-    # Lock the document, hoping that no intermittent update messes up our IDs
-    # Just to make sure we avoid nodeId 0 ?!
-    # https://github.com/cyrus-and/chrome-remote-interface/issues/165
     my $doc;
-    my $wait = $self->_cached_document->then(sub( $r ) {
-        $doc = $r->{root};
-        Future->done
-    });
+    # Retry a search up to three times if the page changes in the meantime
+    my $nodeGeneration;
+    $s->{_currentNodeGeneration} //= 0;
+    my $retries = 3;
+    my $last_search;
+    my $search = repeat {
+        $nodeGeneration = $self->{_currentNodeGeneration};
+        # Lock the document, hoping that no intermittent update messes up our IDs
+        # Just to make sure we avoid nodeId 0 ?!
+        # https://github.com/cyrus-and/chrome-remote-interface/issues/165
+        my $wait = $s->_cached_document->then(sub( $r ) {
+            $doc = $r->{root};
+            Future->done
+        });
 
-    $wait->then( sub(@info) {
+        $wait = $wait->then( sub(@info) {
+            my $res = $s->target->send_message( 'DOM.performSearch', query => $query );
+            return $res
+        });
+        return $wait
 
-    $self->target->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
+    } while => sub($search) {
+        my $retry = ($nodeGeneration != $s->{_currentNodeGeneration} and $retries--);
+
+        if( $retry ) {
+            # close the previous search attempt
+            $search->then(sub($results) {
+                my $searchId = $results->{searchId};
+                $s->target->send_message( 'DOM.discardSearchResults',
+                    searchId => $searchId,
+                );
+            })->retain;
+        }
+
+        if( $retry ) {
+            warn "!!! Retrying search ($retries attempts left)";
+        }
+        $retry
+    };
+
+    $search->then(sub($results) {
         $self->log('debug', "XPath query '$query' (". $results->{resultCount} . " node(s))");
 
         if( $results->{resultCount} ) {
@@ -4307,7 +4339,6 @@ sub _performSearch( $self, %args ) {
         } else {
             return Future->done()
         };
-    });
     });
 }
 
