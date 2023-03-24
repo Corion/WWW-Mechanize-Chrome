@@ -283,10 +283,9 @@ $sth= $dbh->prepare( <<'SQL' );
     select
            *
       from node
-     where id >?-1
-       and id <?+1
+     where id = ?+0
 SQL
-$sth->execute(0+$obj, $obj);
+$sth->execute(0+$obj);
 say DBIx::RunSQL->format_results( sth => $sth );
 
 # turn into view, node_children / child_nodes
@@ -318,8 +317,7 @@ $sth= $dbh->prepare( <<'SQL' );
          , child_type
          , child_name
       from object
-    where id > ? -1
-      and id < ? +1
+    where id = ? +0
     -- group by name, id, _idx
 SQL
 $sth->execute($obj, $obj);
