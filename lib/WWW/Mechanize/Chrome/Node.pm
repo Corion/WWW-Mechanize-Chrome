@@ -318,7 +318,7 @@ sub get_attribute_future( $self, $attribute, %options ) {
 
             if( ! $key ) {
                 $key = 'nodeId';
-                $val = $nodeId;
+                $val = 0+$nodeId;
             } else {
                 $val = $self->$key;
             };
