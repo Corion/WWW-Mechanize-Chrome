@@ -320,7 +320,51 @@ $sth= $dbh->prepare( <<'SQL' );
     where id = ? +0
     -- group by name, id, _idx
 SQL
-$sth->execute($obj, $obj);
+$sth->execute($obj);
+say DBIx::RunSQL->format_results( sth => $sth );
+
+# turn into view, node_children / child_nodes
+say "--- How an array looks";
+$obj = $dbh->selectall_arrayref(<<'SQL', {}, $obj)->[0]->[0];
+    select child.id
+      from node parent
+      left join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+      left join node child on e._to_node_idx = child._idx
+     where parent.id = 0+?
+       and e.name_or_index = 'items'
+SQL
+say "(array items: $obj)";
+
+$sth= $dbh->prepare( <<'SQL' );
+    with object as (
+        select
+            parent.id as parent_id
+          , parent._idx as parent_idx
+          , parent.type as parent_type
+          , parent.name as parent_name
+          , e.name_or_index as relation
+          , child.id as child_id
+          , child._idx as child_idx
+          , child.type as child_type
+          , child.name as child_name
+        from node parent
+        left join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+        left join node child on e._to_node_idx = child._idx
+    )
+    select
+           parent_name
+         , parent_id as id
+         , parent_idx
+         , child_id
+         , relation
+         , child_type
+         , child_name
+      from object
+    where id = ? +0
+    order by child_id
+    -- group by name, id, _idx
+SQL
+$sth->execute($obj);
 say DBIx::RunSQL->format_results( sth => $sth );
 
 # turn into view, node_children / child_nodes
@@ -352,11 +396,10 @@ $sth= $dbh->prepare( <<'SQL' );
          -- unless we do a recursive CTE, that is
          , json_group_object(fieldname, child_name)
       from object
-    where id >= ? -1
-      and id <= ? +1
+    where id = ? +0
     group by name, id, _idx
 SQL
-$sth->execute($obj,$obj);
+$sth->execute($obj);
 say DBIx::RunSQL->format_results( sth => $sth );
 
 sub field_value( $heap, $type, $name, $values ) {
@@ -495,7 +538,7 @@ sub get_edge_field($heap, $idx, $fieldname) {
     } elsif( $ft eq 'string' ) {
         $val = $heap->{strings}->[$val]
     } elsif( $ft eq 'string_or_number' ) {
-        $val = $heap->{strings}->[$val]
+        $val = $heap->{strings}->[$val] // $val
     } else {
         croak "Unknown edge field type '$ft' for '$fieldname'";
     }
@@ -740,7 +783,7 @@ sub node_ancestor_paths($heap, $prefix, $seen={}) {
     }
 }
 
-my $string = find_string_exact($heap,'bar')->{index};
+my $string = [find_string_exact($heap,'bar')]->[0]->{index};
 say "Finding ancestors of $string";
 my @path = node_ancestor_paths($heap, [$string]);
 say "digraph G {";

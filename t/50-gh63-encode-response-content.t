@@ -51,6 +51,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->get($link);
     # The error with HTTP::Message must be occurred on the next step
 
+# It seems we have some delayed loading that messes up the DOM here :-(
+    $mech->sleep(1);
+    delete $mech->{_document};
+
     my $error;
     local $SIG{__DIE__} = sub {
         $error = shift;

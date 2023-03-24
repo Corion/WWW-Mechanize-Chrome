@@ -70,7 +70,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     isnt $content2, $content, "we managed to change the form by setting the 'id' field";
     is $mech->xpath('.//*[@name="id"]',
         node => $mech->current_form,
-        single => 1)->get_attribute('value'), 99,
+        single => 1)->get_attribute('value', live => 1), 99,
         "We have set field 'id' to '99' in the correct form";
 
     $mech->get_local('50-form2.html');

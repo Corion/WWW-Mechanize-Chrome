@@ -1011,7 +1011,7 @@ sub new_future($class, %options) {
             croak $_[1]
         },
         #transport => $options{ transport },
-        log => $options{ log },
+        #log => $options{ log },
     );
 
     my $reuse_transport = delete $options{ reuse_transport };
@@ -1163,6 +1163,12 @@ sub _connect( $self, %options ) {
             if( ! (exists $options{ tab } )) {
                 $s->get($options{ start_url }); # Reset to clean state, also initialize our frame id
             };
+
+            $s->{_fresh_document} = $s->add_listener('DOM.documentUpdated', sub {
+                $s->log('debug', "Need new node ids!");
+                # Maybe simply ->clear_cached_document is enough?!
+                $s->_clear_cached_document;
+            });
         });
     });
 
@@ -2202,6 +2208,9 @@ sub _waitForNavigationEnd( $self, %options ) {
 
     my $frameId = $options{ frameId } || $self->frameId;
     my $requestId = $options{ requestId } || $self->requestId;
+
+    # Actually, we need to wait for DOM.documentUpdated!
+
     my $msg = sprintf "Capturing events until 'Page.frameStoppedLoading' or 'Page.frameClearedScheduledNavigation' for frame %s",
                       $frameId || '-';
     $msg .= " or 'Network.loadingFailed' or 'Network.loadingFinished' for request '$requestId'"
@@ -2238,8 +2247,10 @@ sub _waitForNavigationEnd( $self, %options ) {
 
         # This is far too early, but some requests only send this?!
         # Maybe this can be salvaged by setting a timeout when we see this?!
-        my $domcontent = (  1 # $options{ just_request }
-                       && $ev->{method} eq 'Page.domContentEventFired', # this should be the only one we need (!)
+        my $domcontent = (  0 # $options{ just_request }
+                       #&& $ev->{method} eq 'Page.domContentEventFired', # this should be the only one we need (!)
+                       # but we never learn which page (!). So this does not play well with iframes :(
+                       && $ev->{method} eq 'DOM.documentUpdated', # this should be the only one we need (!)
                        # but we never learn which page (!). So this does not play well with iframes :(
         );
 
@@ -2252,7 +2263,7 @@ sub _waitForNavigationEnd( $self, %options ) {
                        && exists $ev->{params}->{response}->{headers}->{"Content-Disposition"}
                        && $ev->{params}->{response}->{headers}->{"Content-Disposition"} =~ m!^attachment\b!
                        );
-        return $stopped || $internal_navigation || $failed || $download # || $domcontent;
+        return $stopped || $internal_navigation || $failed || $download; # $domcontent;
     });
 
     $events_f;
@@ -3127,8 +3138,8 @@ Returns the current document URI.
 =cut
 
 sub uri_future( $self ) {
-    $self->document_future->then(sub($d) {
-        Future->done( URI->new( $d->{root}->{documentURL} ))
+    $self->_cached_document->then(sub ($d) {
+        return Future->done( URI->new( $d->{root}->{documentURL} ))
     });
 }
 
@@ -3214,24 +3225,40 @@ This is WWW::Mechanize::Chrome specific.
 
 =cut
 
+sub _cached_document($self) {
+    if( $self->{_document}) {
+        #warn "Cached document";
+        return Future->done( $self->{_document} )
+
+    } else {
+        #warn "Requesting fresh document";
+        weaken( my $s = $self );
+        return $self->document_future->then(sub ($d) {
+            #warn "Have fresh document";
+            $s->{_document} = $d;
+            Future->done( $s->{_document} )
+        });
+    }
+}
+
 sub _clear_cached_document {
     delete $_[0]->{_document};
 };
 
 # Move to DOMSnapshot.captureSnapshot / DOMSnapshot.DocumentSnapshot instead
 sub document_future( $self ) {
-    $self->target->send_message( 'DOM.getDocument' )
+    return $self->target->send_message('DOM.getDocument', depth => -1, pierce => JSON::false );
 }
 
 sub document( $self ) {
-    $self->document_future->get
+    $self->_cached_document->get
 }
 
 sub decoded_content($self) {
     my $res;
     my $ct = $self->ct || 'text/html';
     if( $ct eq 'text/html' ) {
-        $res = $self->document_future->then(sub( $root ) {
+        $res = $self->_cached_document->then(sub( $root ) {
             # Join _all_ child nodes together to also fetch DOCTYPE nodes
             # and the stuff that comes after them
 
@@ -3315,7 +3342,7 @@ sub text {
 
     # Waugh - this is highly inefficient but conveniently short to write
     # Maybe this should skip SCRIPT nodes...
-    join '', map { $_->get_attribute('innerText') } $self->xpath('//body', single => 1 );
+    join '', map { $_->get_attribute('innerText', live => 1) } $self->xpath('//body', single => 1 );
 }
 
 =head2 C<< $mech->captureSnapshot_future() >>
@@ -3371,11 +3398,53 @@ The value passed in as C<$html> will be stringified.
 =cut
 
 sub update_html( $self, $content ) {
-    $self->document_future->then(sub( $root ) {
+    my $doc = $self->_cached_document;
+    $doc->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        $self->log('trace', "Setting HTML for node " . $nodeId );
-        $self->target->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => "$content" )
+        my $id;
+        if( ! $nodeId ) {
+            use Data::Dumper;
+            warn Dumper $root;
+            warn "Need / fetching nodeId from backendNodeId";
+
+            my @parentNodes; # we only expect one ...
+            my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
+                #use Data::Dumper; warn "setChildNodes: "; warn Dumper $ev;
+                push @parentNodes, @{ $ev->{params}->{nodes} };
+            });
+
+            $id = $self->target->send_message('DOM.resolveNode', backendNodeId => $root->{root}->{children}->[0]->{backendNodeId} )
+            ->then( sub ( $nodeInfo ) {
+                use Data::Dumper;
+                warn Dumper $nodeInfo;
+                $self->target->send_message('DOM.requestNode', objectId => $nodeInfo->{object}->{objectId})
+                #return Future->done( $nodeInfo->{node}->{nodeId} )
+            })->then(sub ( $node ) {
+
+                # Implicitly, @parentNodes has been filled ...
+
+                use Data::Dumper;
+                warn Dumper $node;
+                return Future->done( $node->{nodeId} )
+                #return Future->done( $childNodes[0]->{nodeId} )
+            });
+
+        } else {
+            $id = $self->target->future->done( $nodeId );
+        };
+
+        $id->then( sub {
+            $self->log('trace', "Setting HTML for node " . $nodeId );
+            $self->target->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => "$content" )
+            ->then(sub {;
+                $self->invalidate_cached_values;
+                Future->done()
+            })
+
+            # Also, we need to wait for a DOM.documentUpdated here before querying
+            # again ... XXX
+        });
      })->get;
 };
 
@@ -3395,7 +3464,7 @@ This method is specific to WWW::Mechanize::Chrome.
 sub base {
     my ($self) = @_;
     (my $base) = $self->selector('base');
-    $base = $base->get_attribute('href')
+    $base = $base->get_attribute('href', live => 1)
         if $base;
     $base ||= $self->uri;
 };
@@ -3493,7 +3562,7 @@ sub make_link {
             carp "Unknown link-spec tag '$tag'";
             $url= '';
         } else {
-            $url = $node->get_attribute( $link_spec{ $tag }->{url} );
+            $url = $node->get_attribute( $link_spec{ $tag }->{url}, live => 1 );
         };
     };
 
@@ -3515,7 +3584,7 @@ sub make_link {
         $text =~ s!\s+\z!!s;
         my $res = WWW::Mechanize::Link->new({
             tag   => $tag,
-            name  => $node->get_attribute('name'),
+            name  => $node->get_attribute('name', live => 1),
             base  => $base,
             url   => $url,
             text  => $text,
@@ -3899,7 +3968,7 @@ sub activate_container {
         #warn "Switching frames downwards ($el)";
         #warn "Tag: " . $el->get_tag_name;
         #warn Dumper $el;
-        warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src');
+        warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src', live => 1);
         $driver->switch_to_frame( $el );
     };
 
@@ -3921,7 +3990,7 @@ sub activate_container {
     #my $body= $doc->get_attribute('contentDocument');
     my $body= $driver->find_element('/*', 'xpath');
     if( $body ) {
-        warn "Now active container: " . $body->get_attribute('innerHTML');
+        warn "Now active container: " . $body->get_attribute('innerHTML', live => 1);
         #$body= $body->get_attribute('document');
         #warn $body->get_attribute('innerHTML');
     };
@@ -4030,9 +4099,20 @@ sub _unwrapChildNodeTree( $self, $nodes, $tree={} ) {
 
 sub _performSearch( $self, %args ) {
     my $subTreeId = $args{ subTreeId };
-    #my $parentNode = WWW::Mechanize::Chrome::Node->fetchNode( nodeId => $backendNodeId, driver => $self->driver );
     my $query = $args{ query };
     weaken( my $s = $self );
+
+    # Lock the document, hoping that no intermittent update messes up our IDs
+    # Just to make sure we avoid nodeId 0 ?!
+    # https://github.com/cyrus-and/chrome-remote-interface/issues/165
+    my $doc;
+    my $wait = $self->_cached_document->then(sub( $r ) {
+        $doc = $r->{root};
+        Future->done
+    });
+
+    $wait->then( sub(@info) {
+
     $self->target->send_message( 'DOM.performSearch', query => $query )->then(sub($results) {
         $self->log('debug', "XPath query '$query' (". $results->{resultCount} . " node(s))");
 
@@ -4082,15 +4162,16 @@ sub _performSearch( $self, %args ) {
                 # you might get a node with nodeId 0. This one
                 # can't be retrieved. Bad luck.
                 if($response->{nodeIds}->[0] == 0) {
+                    # Maybe we did receive exactly one childnode?!
+                    #if( @childNodes == 1 ) {
+                    #    warn "Maybe we can hacky-salvage this?! Forcing nodeId to $childNodes[0]->{nodeId}";
+                    #    # Nope - in the bad case, we always get the root node
+                    #    # instead of something usable :-/
+                    #    $response->{nodeIds}->[0] = $childNodes[0]->{nodeId};
+                    #} else {
 
-                    warn "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved";
-                    #die "This could have maybe been avoided if we had waited ..." if $s->{__responseInFlight};
-                    # splice @{ $response->{nodeIds}}, 0, 1;
-                    # Can we retry the whole search from here?!
-                    # Nope, this has never returned better results
-                    #if( ! $args{ _retry }++) {
-                    #    warn "Retrying search";
-                    #    return $s->_performSearch( %args );
+                        #warn "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved";
+                        $self->signal_condition( "Bad luck: Node with nodeId 0 found. Info for this one cannot be retrieved" );
                     #};
                 };
 
@@ -4099,11 +4180,48 @@ sub _performSearch( $self, %args ) {
                 # them later
                 # We could also prefill some data with the results from
                 # $childNodes here, if we have that?!
+                # We build and search the document here:
+                my %node_ids;
+                #use Data::Dumper;
+                #warn Dumper $doc;
+                my @scan = @{ $doc->{children}};
+                while( my $node = shift @scan ) {
+                    $node_ids{ $node->{nodeId}} = $node;
+
+                    #warn join ",", sort keys %node_ids;
+                    if( $node->{children} ) {
+                        unshift @scan,
+                            map { $_->{parentNodeId} = $node->{nodeId}; $_ }
+                            @{$node->{children}};
+                    };
+                };
+
+                #my @nodes = map {
+                #    WWW::Mechanize::Chrome::Node->fetchNode(
+                #        nodeId => 0+$_,
+                #        driver => $self->target,
+                #    );
+                #} @{ $response->{nodeIds}};
                 my @nodes = map {
-                    WWW::Mechanize::Chrome::Node->fetchNode(
-                        nodeId => 0+$_,
-                        driver => $self->target,
-                    );
+                    my $nid = $_;
+                    #my $request_f = $self->target->send_message('DOM.pushNodesByBackendIdsToFrontend',
+                    #backendNodeIds => [$node_ids{$_}->{backendNodeId}])
+                    #->then(sub( $info ) {
+                    #    warn Dumper $info;
+
+                    # Convert the array of attributes to a hash of attributes ...
+                    if( ref $node_ids{$nid}->{attributes} eq 'ARRAY') {
+                        $node_ids{$nid}->{attributes} = +{
+                            @{ $node_ids{$nid}->{attributes} }
+                        };
+                    };
+                    Future->done(
+                        WWW::Mechanize::Chrome::Node->new(
+                            +{ %{$node_ids{$nid} },
+                            driver => $self->target,
+                            }
+                        ))
+                    #});
                 } @{ $response->{nodeIds}};
 
                 Future->wait_all( @nodes )
@@ -4148,26 +4266,35 @@ sub _performSearch( $self, %args ) {
                 if( $subTreeId ) {
 
                     $self->log('trace', "Filtering query results for ancestor backendNodeId $subTreeId");
-                    @foundNodes = grep {
-                        my $id = $_->nodeId();
-                        my $searchId = $id;
-                        #warn "Looking if node $id has ancestor backendNodeId $subTreeId";
-                        my $p = $nodes->{ $id };
-                        #use Data::Dumper;
-                        #warn Dumper $p;
-                        #warn "$id => parent $p->{parentId} / backendNodeId $p->{backendNodeId}";
-                        while( $p and $p->{backendNodeId} != $subTreeId ) {
-                            $p = $nodes->{ $p->{parentId} };
+
+                    # Find all nodes contained in our subtree
+                    my @scan = @{ $doc->{children}};
+                    my $subTree;
+                    my $inSubTree;
+                    my %foundNodes = map { $_->nodeId => $_ } @foundNodes;
+                    @foundNodes = ();
+
+                    while( my $node = shift @scan ) {
+                        #warn join ",", sort keys %node_ids;
+
+                        if( $node->{backendNodeId} == $subTreeId ) {
+                            $subTree = $node;
+                            $inSubTree = 1;
+                            @scan = @{$subTree->{children}};
+                            next;
                         };
-                        my $res = ($p && $p->{backendNodeId} == $subTreeId);
-                        if( $res ) {
-                            my $id = $p->{nodeId};
-                            $self->log('trace', "Node $searchId has ancestor $id (backendNodeId $subTreeId)");
-                        } else {
-                            $self->log('trace', "Node $searchId does not have ancestor backendNodeId $subTreeId, discarding from results");
+
+                        if( $inSubTree and exists $foundNodes{ $node->{nodeId}}) {
+                            push @foundNodes, $foundNodes{ $node->{nodeId}};
                         };
-                        $res
-                    } @foundNodes;
+
+                        if( $node->{children} ) {
+                            unshift @scan,
+                                map { $_->{parentNodeId} = $node->{nodeId}; $_ }
+                                @{$node->{children}};
+                        };
+                    };
+
                     $self->log('debug', "filtered XPath query '$query' for ancestor $subTreeId (". (0+@foundNodes) . " node(s))");
                 } else {
                     #warn "*** Not filtering for any parent node";
@@ -4180,6 +4307,7 @@ sub _performSearch( $self, %args ) {
         } else {
             return Future->done()
         };
+    });
     });
 }
 
@@ -4222,7 +4350,8 @@ sub xpath( $self, $query, %options) {
         warn sprintf "Document %s", $options{ document }->{id};
     };
 
-    my $doc= $options{ document } ? Future->done( $options{ document } ) : $self->document_future;
+    #my $doc= $options{ document } ? Future->done( $options{ document } ) : $self->document_future;
+    my $doc = Future->done();
 
     $doc->then( sub {
         my $q = join "|", @$query;
@@ -4582,17 +4711,17 @@ sub dump_forms {
     my $fh = shift || \*STDOUT;
 
     for my $form ( $self->forms ) {
-        print {$fh} "[FORM] ", $form->get_attribute('name') || '<no name>', ' ', $form->get_attribute('action'), "\n";
+        print {$fh} "[FORM] ", $form->get_attribute('name', live => 1) || '<no name>', ' ', $form->get_attribute('action'), "\n";
         #for my $f ($self->xpath( './/*', node => $form )) {
         #for my $f ($self->xpath( './/*[contains(" "+translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")+" "," input textarea button select "
         #                                        )]', node => $form )) {
         for my $f ($self->xpath( './/*[contains(" input textarea button select ",concat(" ",translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")," "))]', node => $form )) {
             my $type;
-            if($type= $f->get_attribute('type') || '' ) {
+            if($type= $f->get_attribute('type', live => 1) || '' ) {
                 $type= " ($type)";
             };
 
-            print {$fh} "    [", $f->get_attribute('tagName'), $type, "] ", $f->get_attribute('name') || '<no name>', "\n";
+            print {$fh} "    [", $f->get_attribute('tagName', live => 1), $type, "] ", $f->get_attribute('name') || '<no name>', "\n";
         };
     }
     return;
@@ -4967,11 +5096,14 @@ sub set_field($self, %options ) {
         select   => 'selected',
     );
     my $method = $method{ lc $tag };
-    if( lc $tag eq 'input' and $obj->get_attribute('type') eq 'radio' ) {
+    if( lc $tag eq 'input' and $obj->get_attribute('type', live => 1) eq 'radio' ) {
         $method = 'checked';
     };
 
-    my $id = $obj->{objectId};
+    my $id = $obj->objectId;
+    if( ! $id ) {
+        warn "No object id for nodeId " . $obj->nodeId;
+    };
 
     # Send pre-change events:
     for my $ev (@$pre) {
@@ -4998,6 +5130,7 @@ JS
     } elsif( 'selected' eq $method ) {
         # ignoring undef; but [] would reset to no option
         if (defined $value) {
+
             $value = [ $value ] unless ref $value;
             $self->target->send_message(
                 'Runtime.callFunctionOn',
@@ -5111,7 +5244,10 @@ sub get_set_value($self,%options) {
         # dropdowns by not enumerating all options
         my $tag = $obj->get_tag_name();
         if ('SELECT' eq uc $tag) {
-            my $id = $obj->{objectId};
+            my $id = $obj->objectId;
+                if( ! $id ) {
+                    warn "No object id for nodeId " . $obj->nodeId;
+                };
             my $arr = $self->target->send_message(
                     'Runtime.callFunctionOn',
                     objectId => $id,
@@ -5137,7 +5273,7 @@ JS
                 return $values[0];
             }
         } else {
-            return $obj->get_attribute('value');
+            return $obj->get_attribute('value', live => 1);
         };
     } else {
         return
@@ -5185,7 +5321,7 @@ sub select($self, $name, $value) {
     my @options = $self->xpath( './/option', node => $field);
     my @by_index;
     my @by_value;
-    my $single = $field->get_attribute('type') eq "select-one";
+    my $single = $field->get_attribute('type', live => 1) eq "select-one";
     my $deselect;
 
     if ('HASH' eq ref $value||'') {
@@ -5300,7 +5436,7 @@ sub tick($self, $name, $value=undef, $set=1) {
     };
 
     my $target = $boxes[0];
-    my $is_set = ($target->get_attribute( 'checked' ) || '') eq 'checked';
+    my $is_set = ($target->get_attribute( 'checked', live => 1 ) || '') eq 'checked';
     if ($set xor $is_set) {
         if ($set) {
             $target->set_attribute('checked', 'checked');
