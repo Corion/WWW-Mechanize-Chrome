@@ -574,6 +574,7 @@ sub _send_packet( $self, $response, $method, %params ) {
     };
     if( my $err = $@ ) {
         $self->log('error', $@ );
+        $self->log('error', Dumper \%params );
     };
 
     $self->log( 'trace', "Sent message", $payload );
