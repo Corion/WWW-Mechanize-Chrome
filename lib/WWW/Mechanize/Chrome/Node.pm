@@ -450,23 +450,24 @@ sub get_text( $self ) {
     # We need to describe all the children and concatenate their
     # contents to retrieve the text...
 
-    $self->driver->send_message('DOM.describeNode',
-        nodeId => 0+$self->nodeId, depth => -1)->then(sub($info) {
-
-        my $text = '';
-
-        my $collect_text = sub( $n ) {
-            if( $n->{nodeType} == 3 ) {
-                $text .= $n->{nodeValue} // '';
-            };
-            for( $n->{children}->@* ) {
-                __SUB__->($_);
-            }
-        };
-        $collect_text->( $info->{node} );
-
-        Future->done( $text )
-    })->get;
+    #$self->driver->send_message('DOM.describeNode',
+    #    nodeId => 0+$self->nodeId, depth => -1)->then(sub($info) {
+    #
+    #    my $text = '';
+    #
+    #    my $collect_text = sub( $n ) {
+    #        if( $n->{nodeType} == 3 ) {
+    #            $text .= $n->{nodeValue} // '';
+    #        };
+    #        for( $n->{children}->@* ) {
+    #            __SUB__->($_);
+    #        }
+    #    };
+    #    $collect_text->( $info->{node} );
+    #
+    #    Future->done( $text )
+    #})->get;
+    $self->get_attribute('innerText')
 }
 
 =head2 C<< ->set_text >>

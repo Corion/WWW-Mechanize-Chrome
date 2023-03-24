@@ -38,6 +38,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     $mech->get_local('50-form2.html');
 
     my $node = $mech->selector('#target_select',single=>1);
-    like $node->get_text, qr!\A\s+Mercanti 20/20\s+Villaggio:\s+oppure\s+X:\s+Y:\s+\z!sm, "We retrieve text, not HTML";
+    like $node->get_text, qr!\A\s*Mercanti 20/20\s+Villaggio:\s+oppure\s+X:\s+Y:\s*\z!sm, "We retrieve text, not HTML";
 });
 
