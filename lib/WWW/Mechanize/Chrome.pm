@@ -4140,13 +4140,13 @@ sub _performSearch( $self, %args ) {
         }
 
         if( $retry ) {
-            warn "!!! Retrying search ($retries attempts left)";
+            $s->log('trace', "Retrying search ($retries attempts left)");
         }
         $retry
     };
 
     $search->then(sub($results) {
-        $self->log('debug', "XPath query '$query' (". $results->{resultCount} . " node(s))");
+        $s->log('debug', "XPath query '$query' (". $results->{resultCount} . " node(s))");
 
         if( $results->{resultCount} ) {
             my $searchResults;
