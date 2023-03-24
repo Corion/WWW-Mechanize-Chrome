@@ -92,11 +92,7 @@ Another id of this node within Chrome
 
 has 'objectId' => (
     is => 'lazy',
-    default => sub( $self ) {
-        #warn "Realizing objectId";
-        my $obj = $self->driver->send_message('DOM.resolveNode', nodeId => 0+$self->nodeId)->get;
-        $obj->{object}->{objectId}
-    },
+    default => sub { $_[0]->_fetchObjectId()->get },
 );
 
 =head2 C<driver>
@@ -216,14 +212,31 @@ sub fetchNode( $class, %options ) {
     });
 }
 
+sub _fetchObjectId( $self ) {
+    #warn "Realizing objectId";
+    if( $self->{objectId}) {
+        return Future->done( $self->{objectId} )
+    } else {
+        $self->driver->send_message('DOM.resolveNode', nodeId => 0+$self->nodeId)->then(sub( $obj ) {
+            $self->{objectId} = $obj->{object}->{objectId};
+            Future->done( $obj->{object}->{objectId} );
+        });
+    }
+}
 
 sub _fetchNodeId($self) {
-    $self->driver->send_message('DOM.requestNode', objectId => $self->objectId)->then(sub($d) {
-    #$self->driver->send_message('DOM.describeNode', objectId => $self->objectId)->then(sub($d) {
-        $self->{backendNodeId} = 0+$d->{node}->{backendNodeId};
-        $self->{nodeId} = 0+$d->{node}->{nodeId} || $self->{nodeId}; # keep old one ...
-        $self->cachedNodeId( 0+$d->{node}->{nodeId} || $self->{nodeId} );
-        Future->done( $self->{nodeId} );
+    $self->_fetchObjectId->then(sub( $objectId ) {
+        $self->driver->send_message('DOM.requestNode', objectId => $objectId)
+    })->then(sub($d) {
+        if( ! exists $d->{node} ) {
+            # Ugh - that node has gone away before we could request it ...
+            Future->done( $d->{nodeId} );
+        } else {
+            $self->{backendNodeId} = 0+$d->{node}->{backendNodeId};
+            $self->{nodeId} = 0+$d->{node}->{nodeId} // 0+$self->{nodeId}; # keep old one ...
+            $self->cachedNodeId( 0+$d->{node}->{nodeId} // 0+$self->{nodeId} );
+            Future->done( $self->{nodeId} );
+        };
     });
 }
 
@@ -282,12 +295,15 @@ sub _false_to_undef( $val ) {
 }
 
 sub _fetch_attribute_eval( $self, $attribute ) {
-    $self->driver->send_message('Runtime.callFunctionOn',
-        functionDeclaration => '(o,a) => { console.log(o[a]); return o[a] }',
-        arguments => [ { objectId => $self->objectId }, { value => $attribute } ],
-        objectId => $self->objectId,
-        returnByValue => $JSON::true
-    )
+    $self->_fetchObjectId
+    ->then( sub( $objectId ) {
+        $self->driver->send_message('Runtime.callFunctionOn',
+            functionDeclaration => '(o,a) => { console.log(o[a]); return o[a] }',
+            arguments => [ { objectId => $objectId }, { value => $attribute } ],
+            objectId => $objectId,
+            returnByValue => $JSON::true
+        )
+    })
     ->then(sub($res) {
         $res = $res->{result}->{value};
         return Future->done( _false_to_undef( $res ))
@@ -306,12 +322,14 @@ sub _fetch_attribute_attribute( $self, $attribute ) {
 }
 
 sub _fetch_attribute_property( $self, $attribute ) {
+    $self->_fetchObjectId
+    ->then( sub( $objectId ) {
     $self->driver->send_message('Runtime.getProperties',
-        objectId => $self->objectId,
+        objectId => $objectId,
         #ownProperties => $JSON::true,
         #accessorPropertiesOnly => $JSON::true,
         #returnByValue => $JSON::true
-    )
+    )})
     ->then(sub($_res) {
         (my $attr) = grep { $_->{name} eq $attribute } $_res->{result}->@*;
         $attr //= {};
