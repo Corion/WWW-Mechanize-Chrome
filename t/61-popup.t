@@ -71,7 +71,6 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     <body><a href="javascript:window.open('$url')" id="launch_popup">Pop up</a>
     </html>
 HTML
-    # $mech->sleep(1);
 
     note "Set up Javascript popup";
 
@@ -89,7 +88,13 @@ HTML
         });
     });
 
-    #$mech->sleep(1);
+    #$mech->target->send_message( 'DOM.performSearch', query => "#launch_popup" )->then(sub($results) {
+    #    $mech->target->send_message( 'DOM.getSearchResults',
+    #            searchId => $results->{searchId},
+    #            fromIndex => 0,
+    #            toIndex => 0+$results->{resultCount},
+    #    );
+    #})->get;
     note "Launching Javascript popup";
     $mech->click({ selector => "#launch_popup" });
     # $mech->sleep(0); # just in case, to get the event loop a chance to catch up
