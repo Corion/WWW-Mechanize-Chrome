@@ -4133,12 +4133,12 @@ sub _performSearch( $self, %args ) {
             # close the previous search attempt
             my $se = $search->then(sub($results) {
                 my $searchId = $results->{searchId};
-                warn "!!! Discarding search";
+                #warn "!!! Discarding search";
                 $s->target->send_message( 'DOM.discardSearchResults',
                     searchId => $searchId,
                 );
             });
-            warn "Closed search: $se";
+            #warn "Closed search: $se";
             $se->retain;
         }
 
