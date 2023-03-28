@@ -6,6 +6,7 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use Carp qw( croak );
+use JSON;
 
 use Scalar::Util 'weaken';
 
@@ -304,7 +305,7 @@ sub _fetch_attribute_eval( $self, $attribute ) {
             functionDeclaration => '(o,a) => { console.log(o[a]); return o[a] }',
             arguments => [ { objectId => $objectId }, { value => $attribute } ],
             objectId => $objectId,
-            returnByValue => $JSON::true
+            returnByValue => JSON::true
         )
     })
     ->then(sub($res) {
@@ -329,9 +330,9 @@ sub _fetch_attribute_property( $self, $attribute ) {
     ->then( sub( $objectId ) {
     $self->driver->send_message('Runtime.getProperties',
         objectId => $objectId,
-        #ownProperties => $JSON::true,
-        #accessorPropertiesOnly => $JSON::true,
-        #returnByValue => $JSON::true
+        #ownProperties => JSON::true,
+        #accessorPropertiesOnly => JSON::true,
+        #returnByValue => JSON::true
     )})
     ->then(sub($_res) {
         (my $attr) = grep { $_->{name} eq $attribute } $_res->{result}->@*;
