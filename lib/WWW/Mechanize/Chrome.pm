@@ -3445,7 +3445,7 @@ sub update_html( $self, $content ) {
             })
 
             # Also, we need to wait for a DOM.documentUpdated here before querying
-            # again ... XXX
+            # again ... do we?!
         });
      })->get;
 };
