@@ -139,7 +139,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2021 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2023 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
