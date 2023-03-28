@@ -40,6 +40,19 @@
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
 
+0.69 2023-03-27
+    * Add documentation on the profile directory / C<profile> constructor option
+    * Add --domain-reliability-option to disable one more Google ping
+    * some obsolete command line options removed
+    * Add --remote-allow-origins=* to fix working on Chrome 111 onwards
+    * Revamp fetching of node properties
+    * Redo node invalidation and retry searches - this could help when receiving NodeID=0
+    * Some memory usage improvements
+
+KNOWN BUGS
+    * Some (closed over?) Futures are not awaited or cancelled properly but
+      are lost. Hints to where they are constructed are welcome.
+
 0.68 2021-08-27
     * The tab numbers now exclude loaded extension and background pages. This
       means that you may (or may not) have to adjust the number for the "tab"
