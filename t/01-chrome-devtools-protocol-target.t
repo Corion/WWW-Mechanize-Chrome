@@ -50,7 +50,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     } else {
         $chrome->connect(tab => $target_tab)->get();
         my $tab = $chrome->tab;
-        isn::t $tab, undef, "Attached to tab '$target_tab->{title}'";
+        isnt $tab, undef, "Attached to tab '$target_tab->{title}'";
     };
 
     my $res = $chrome->eval('1+1')->get;
