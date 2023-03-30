@@ -319,7 +319,7 @@ sub _fetch_attribute_attribute( $self, $attribute ) {
         nodeId => 0+$self->nodeId,
     )
     ->then(sub($_res) {
-        my %attr = $_res->{attributes}->@*;
+        my %attr = @{ $_res->{attributes} };
         my $res = $attr{ $attribute };
         return Future->done( _false_to_undef( $res ))
     });
@@ -335,7 +335,7 @@ sub _fetch_attribute_property( $self, $attribute ) {
         #returnByValue => JSON::true
     )})
     ->then(sub($_res) {
-        (my $attr) = grep { $_->{name} eq $attribute } $_res->{result}->@*;
+        (my $attr) = grep { $_->{name} eq $attribute } @{ $_res->{result} };
         $attr //= {};
         my $res = $attr->{value}->{value};
         return Future->done( _false_to_undef( $res ))
