@@ -1,5 +1,6 @@
 .gitignore
 Changes
+examples/attach-to-chrome.pl
 examples/dump-links.pl
 examples/gen_examples_pod.pl
 examples/html-to-pdf.pl
