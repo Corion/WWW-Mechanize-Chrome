@@ -28,7 +28,7 @@ use Future::Utils 'repeat';
 use Time::HiRes ();
 use Encode 'encode';
 
-our $VERSION = '0.70';
+our $VERSION = '0.71';
 our @CARP_NOT;
 
 # add Browser.setPermission , .grantPermission for

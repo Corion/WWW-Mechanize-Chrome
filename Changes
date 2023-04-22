@@ -1,6 +1,3 @@
-    * Tested against Google Chrome 67.0.3396.99  Built on OSX, thanks Travis CI
-    * Tested against Google Chrome 78.0.3904.97, thanks Travis CI
-    * Tested against Chrome/75.0.3770.90 / Win64, thanks AppVeyor
     * Windows tests
     * Tested against Chrome/62.0.3202.94
     * Tested against Chrome/63.0.3239.132
@@ -39,6 +36,17 @@
     * Tested against Chromium Chromium/80.0.3987.106
     * Tested against Chromium Chromium/83.0.4103.97
     * Tested against Chromium Chromium/85.0.4183.102
+    * Tested against Chromium Chromium/86.0.4240.198
+    * Tested against Chromium Chromium/87.0.4280.141
+    * Tested against Chromium Chromium/90.0.4430.212
+    * Tested against Chromium Chromium/91.0.4472.164
+    * Tested against Chromium Chromium/95.0.4638.54
+    * Tested against Chromium Chromium/111.0.5563.65
+    * Tested against Chromium Chromium/112.0.5615.121
+
+0.71 2023-04-22
+    * Add example script showing how to attach to a running Chrome instance
+    * No code changes, no need to upgrade
 
 0.70 2023-03-30
     * Move tests from Test::More::isn::t to Test::More::isnt

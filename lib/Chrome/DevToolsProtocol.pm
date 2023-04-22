@@ -17,7 +17,7 @@ use Scalar::Util 'weaken', 'isweak';
 use Try::Tiny;
 use URI;
 
-our $VERSION = '0.70';
+our $VERSION = '0.71';
 our @CARP_NOT;
 
 =head1 NAME
@@ -952,7 +952,7 @@ use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-our $VERSION = '0.70';
+our $VERSION = '0.71';
 
 has 'protocol' => (
     is => 'ro',

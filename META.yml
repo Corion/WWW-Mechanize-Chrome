@@ -65,6 +65,6 @@ requires:
 resources:
   bugtracker: http://github.com/Corion/WWW-Mechanize-Chrome/issues
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git
-version: '0.70'
+version: '0.71'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
 x_static_install: 1

@@ -94,7 +94,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.70",
+   "version" : "0.71",
    "x_serialization_backend" : "JSON::PP version 4.11",
    "x_static_install" : 1
 }
