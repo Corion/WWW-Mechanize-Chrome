@@ -7,6 +7,8 @@ use feature 'signatures';
 use Scalar::Util 'weaken';
 use IO::Async::Loop;
 
+with 'MooX::Role::EventEmitter';
+
 use Net::Async::WebSocket::Client;
 Net::Async::WebSocket::Client->VERSION(0.12); # fixes some errors with masked frames
 
@@ -46,6 +48,7 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
     $logger ||= sub{};
     weaken $handler;
 
+    weaken( my $s = $self );
     my $client;
     $got_endpoint->then( sub( $endpoint ) {
         $client = Net::Async::WebSocket::Client->new(
@@ -60,6 +63,9 @@ sub connect( $self, $handler, $got_endpoint, $logger ) {
                 my( $connection )=@_;
                 $logger->('info', "Connection closed");
                 # TODO: should we tell handler?
+
+                $s->emit('closed')
+                    if( $s );
             },
         );
 
