@@ -531,17 +531,24 @@ sub build_command_line {
 
     for my $option (qw(
         background_networking
+        background_timer_throttling
+        backgrounding_occluded_windows
         breakpad
+        default_apps
+        dev_shm_usage
+        disable_infobars
+        domain_reliability
+        gpu
+        ipc_flooding_protection
         client_side_phishing_detection
         component_update
         hang_monitor
-        prompt_on_repost
-        sync
-        web_resources
-        default_apps
         popup_blocking
-        gpu
-        domain_reliability
+        prompt_on_repost
+        renderer_backgrounding
+        sync
+        translate
+        web_resources
     )) {
         (my $optname = $option) =~ s!_!-!g;
         if( ! exists $options->{$option}) {
