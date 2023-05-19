@@ -2198,13 +2198,13 @@ sub _collectEvents( $self, @info ) {
     my $done = $self->target->future;
     my $s = $self;
     weaken $s;
-    $self->target->on_message( sub( $message ) {
+    $self->target->on( 'message' => sub( $target, $message ) {
         push @events, $message;
         if( $predicate->( $events[-1] )) {
             my $frameId = $events[-1]->{params}->{frameId};
             $s->log( 'debug', "Received final message, unwinding", sprintf "(%s)", $frameId || '-');
             $s->log( 'trace', "Received final message, unwinding", $events[-1] );
-            $s->target->on_message( undef );
+            $target->unsubscribe('message', __SUB__);
             $done->done( @info, @events );
         };
     });
