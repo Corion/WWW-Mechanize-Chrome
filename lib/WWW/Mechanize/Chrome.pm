@@ -506,9 +506,9 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--no-zygote";
     };
 
-    if( $no_sandbox) {
-        push @{ $options->{ launch_arg }}, "--no-sandbox";
-    };
+    #if( $no_sandbox) {
+    #    push @{ $options->{ launch_arg }}, "--no-sandbox";
+    #};
 
     if( $options->{hide_scrollbars}) {
         push @{ $options->{ launch_arg }}, "--hide-scrollbars";
