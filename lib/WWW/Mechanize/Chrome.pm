@@ -497,6 +497,10 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--mute-audio";
     };
 
+    if( ! exists $options->{default_browser_check} || $options->{default_browser_check}) {
+        push @{ $options->{ launch_arg }}, "--no-default-browser-check";
+    };
+
     my $no_sandbox = $options->{no_sandbox} || ! (exists $options->{no_zygote});
     if( ! $no_sandbox) {
         push @{ $options->{ launch_arg }}, "--no-zygote";
