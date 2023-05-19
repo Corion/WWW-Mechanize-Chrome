@@ -77,13 +77,14 @@ HTML
     my @opened;
     my $opened_tab_f;
 
-    $mech->on_popup(sub( $tab_f ) {
+    $mech->on( popup => sub( $mech, $tab_f ) {
         # This is a bit heavyweight, but ...
         warn "Already have a future?!"
             if $opened_tab_f;
+        note "New tab was detected ($tab_f)";
         $opened_tab_f = $tab_f;
         $opened_tab_f->on_done(sub($tab) {
-            note "New window/tab has popped up";
+            note "New window/tab has popped up ($tab)";
             push @opened, $tab;
         });
     });
@@ -107,6 +108,9 @@ HTML
 #};
 
     # Make sure we can access the newly opened tab
+    if(! $opened_tab_f) {
+        die "We didn't find an opened tab?!";
+    }
     $opened_tab_f->get();
     undef $opened_tab_f;
     if( ! isa_ok $opened[0], 'WWW::Mechanize::Chrome' ) {
@@ -155,7 +159,7 @@ HTML
     @tabs_after = $mech->list_tabs->get;
     cmp_ok 0+@tabs_after, '<', 0+@tabs, "We autoclosed the newfound tab";
 
-    $mech->on_popup(undef);
+    $mech->unsubscribe( 'popup' );
     $mech->click({ selector => "#launch_popup" });
     $mech->sleep(0.1);
 

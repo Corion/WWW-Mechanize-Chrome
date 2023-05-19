@@ -4,6 +4,7 @@ use warnings;
 use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
+no warnings 'experimental::signatures';
 use PerlX::Maybe;
 use File::Spec;
 use HTTP::Response;
@@ -30,6 +31,9 @@ use Encode 'encode';
 
 our $VERSION = '0.71';
 our @CARP_NOT;
+
+# We don't yet inherit from Moo 2, so patch up things manually
+use parent 'MooX::Role::EventEmitter';
 
 # add Browser.setPermission , .grantPermission for
 # restricting/allowing recording, clipboard, idleDetection, ...
@@ -1168,6 +1172,8 @@ sub _connect( $self, %options ) {
             #$self->target->send_message('Debugger.enable'), # capture "script compiled" messages
             $s->set_download_directory_future($self->{download_directory}),
 
+            $s->_listen_for_popup_f(1),
+
             keys %{$options{ extra_headers }} ? $s->_set_extra_headers_future( %{$options{ extra_headers }} ) : (),
 
             # do a dummy search so no nodeId 0 gets used (?!)
@@ -1410,6 +1416,7 @@ sub new_tab_future( $self, %options ) {
         headless         => $self->{headless},
         driver           => $self->driver,
         driver_transport => $self->transport,
+        autoclose_tab    => 1,
     );
 }
 
@@ -1417,10 +1424,12 @@ sub new_tab( $self, %options ) {
     $self->new_tab_future( %options )->get
 };
 
-=head2 C<< $mech->on_popup >>
+=head1 EVENTS
+
+=head2 C<< popup >>
 
     my $opened;
-    $mech->on_popup(sub( $tab_f ) {
+    $mech->on( 'popup' => sub( $mech, $tab_f ) {
         # This is a bit heavyweight, but ...
         $tab_f->on_done(sub($tab) {
             say "New window/tab was popped up:";
@@ -1438,14 +1447,15 @@ sub new_tab( $self, %options ) {
         say "Did not find new tab?";
     };
 
-Callback whenever a new tab/window gets popped up or created. The callback
-is handed a complete WWW::Mechanize::Chrome instance. Note that depending on
-your event loop, you are quite restricted on what synchronous methods you can
-call from within the callback.
+This event is sent whenever a new tab/window gets popped up or created. The
+callback is handed the current and a second WWW::Mechanize::Chrome instance.
+Note that depending on your event loop, you are quite restricted on what
+synchronous methods you can call from within the callback.
 
 =cut
 
-sub on_popup( $self, $popup ) {
+sub _listen_for_popup_f( $self, $popup ) {
+    my $res;
     if( $popup ) {
         # Remember all known targets, because setDiscoverTargets will list all
         # existing targets too :-/
@@ -1455,28 +1465,32 @@ sub on_popup( $self, $popup ) {
             Future->done(1);
         });
 
+        weaken( my $s = $self );
         $self->{target_created} = $self->add_listener('Target.targetCreated' => sub($targetInfo) {
-            #use Data::Dumper; warn Dumper $targetInfo;
-            my $id = $targetInfo->{params}->{targetInfo}->{targetId};
-            if( $targetInfo->{params}->{targetInfo}->{type} eq 'page'
-                && ! $known_targets{ $id }
-            ) {
-                # use Data::Dumper; warn "--- New target"; warn Dumper $targetInfo;
-                my $tab = $self->new_tab_future( tab => $targetInfo->{params}->{targetInfo});
-                $popup->($tab);
-            } else {
-                # warn "...- already know it";
+
+            if( $s && $s->has_subscribers('popup') ) {
+                #use Data::Dumper; warn Dumper $targetInfo;
+                my $id = $targetInfo->{params}->{targetInfo}->{targetId};
+                if( $targetInfo->{params}->{targetInfo}->{type} eq 'page'
+                    && ! $known_targets{ $id }
+                ) {
+                    my $tab = $s->new_tab_future( tab => $targetInfo->{params}->{targetInfo});
+                    $s->emit('popup', $tab);
+                } else {
+                    # warn "...- already know it";
+                };
             };
         });
 
-        weaken( my $s = $self );
-        $setup->then(sub {
+        $res = $setup->then(sub {
             $s->target->send_message('Target.setDiscoverTargets' => discover => JSON::true() )
-        })->get;
+        });
     } else {
-        $self->target->send_message('Target.setDiscoverTargets' => discover => JSON::false() )->get;
+        $res = $self->target->send_message('Target.setDiscoverTargets' => discover => JSON::false() );
         delete $self->{target_created};
     };
+
+    return $res
 };
 
 sub autodie {
