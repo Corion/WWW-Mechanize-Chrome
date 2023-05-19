@@ -436,6 +436,7 @@ sub build_command_line {
     $program = File::Spec->rel2abs( $program ) || $program;
 
     $options->{ launch_arg } ||= [];
+    $options->{ exclude_switches } ||= [];
 
     # We want to read back the URL we can use to talk to Chrome
     if( $^O =~ /mswin/i ) {
@@ -485,8 +486,12 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--profile-directory=$profile";
     };
 
-    if( ! exists $options->{enable_automation} || $options->{enable_automation}) {
+    if( $options->{enable_automation}) {
         push @{ $options->{ launch_arg }}, "--enable-automation";
+    };
+
+    if( $options->{infobars}) {
+        push @{ $options->{ launch_arg }}, "--enable-infobars";
     };
 
     if( ! exists $options->{enable_first_run} || ! $options->{enable_first_run}) {
@@ -520,10 +525,6 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--safebrowsing-disable-auto-update";
     };
 
-    if( ! exists $options->{default_browser_check} || ! $options->{default_browser_check}) {
-        push @{ $options->{ launch_arg }}, "--no-default-browser-check";
-    };
-
     if( exists $options->{disable_prompt_on_repost}) {
         carp "Option 'disable_prompt_on_repost' is deprecated, use prompt_on_repost instead";
         $options->{prompt_on_repost} = !$options->{disable_prompt_on_repost};
@@ -536,7 +537,6 @@ sub build_command_line {
         breakpad
         default_apps
         dev_shm_usage
-        disable_infobars
         domain_reliability
         gpu
         ipc_flooding_protection
@@ -561,8 +561,18 @@ sub build_command_line {
     push @{ $options->{ launch_arg }}, "--headless"
         if $options->{ headless };
 
-    push @{ $options->{ launch_arg }}, "$options->{start_url}"
-        if exists $options->{start_url};
+    if( $options->{ app } ) {
+        $options->{start_url} //= 'data:text/html,<html></html>';
+        push @{ $options->{ launch_arg }}, "--app=$options->{start_url}";
+
+    } elsif( exists $options->{start_url}) {
+        push @{ $options->{ launch_arg }}, "$options->{start_url}"
+            ;
+    }
+
+    if( @{ $options->{exclude_switches}}) {
+        push @{ $options->{ launch_arg }}, "--exclude-switches=" . join ",", @{ $options->{exclude_switches }}
+    }
 
     my $quoted_program = ($^O =~ /mswin/i and $program =~ /[\s|<>&]/)
         ?  qq("$program")
