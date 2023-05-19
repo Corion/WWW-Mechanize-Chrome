@@ -1,10 +1,11 @@
 package WWW::Mechanize::Chrome;
-use strict;
-use warnings;
-use Filter::signatures;
-no warnings 'experimental::signatures';
+use 5.020;
+
 use feature 'signatures';
 no warnings 'experimental::signatures';
+
+use feature 'current_sub';
+
 use PerlX::Maybe;
 use File::Spec;
 use HTTP::Response;
