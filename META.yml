@@ -34,7 +34,6 @@ requires:
   Exporter: '5'
   File::Basename: '0'
   File::Spec: '0'
-  Filter::signatures: '0.16'
   Future: '0.35'
   Future::HTTP: '0.06'
   HTML::Selector::XPath: '0'
@@ -50,6 +49,7 @@ requires:
   Log::Log4perl: '0'
   MIME::Base64: '0'
   Moo: '2'
+  MooX::Role::EventEmitter: '0'
   Net::Async::WebSocket::Client: '0.12'
   Object::Import: '0'
   POSIX: '0'
@@ -61,7 +61,7 @@ requires:
   URI::file: '0'
   URI::ws: '0'
   WWW::Mechanize::Link: '0'
-  perl: '5.010'
+  perl: '5.020'
 resources:
   bugtracker: http://github.com/Corion/WWW-Mechanize-Chrome/issues
   repository: git://github.com/Corion/WWW-Mechanize-Chrome.git

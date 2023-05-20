@@ -480,10 +480,12 @@ It returns a [Future](https://metacpan.org/pod/Future) because most event loops 
 themselves, which happens if you want to access a fresh new tab within another
 callback.
 
-## `$mech->on_popup`
+# EVENTS
+
+## `popup`
 
     my $opened;
-    $mech->on_popup(sub( $tab_f ) {
+    $mech->on( 'popup' => sub( $mech, $tab_f ) {
         # This is a bit heavyweight, but ...
         $tab_f->on_done(sub($tab) {
             say "New window/tab was popped up:";
@@ -501,10 +503,10 @@ callback.
         say "Did not find new tab?";
     };
 
-Callback whenever a new tab/window gets popped up or created. The callback
-is handed a complete WWW::Mechanize::Chrome instance. Note that depending on
-your event loop, you are quite restricted on what synchronous methods you can
-call from within the callback.
+This event is sent whenever a new tab/window gets popped up or created. The
+callback is handed the current and a second WWW::Mechanize::Chrome instance.
+Note that depending on your event loop, you are quite restricted on what
+synchronous methods you can call from within the callback.
 
 ## `$mech->allow( %options )`
 
