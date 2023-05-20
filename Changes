@@ -44,6 +44,21 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.72 to be released
+    * requires Perl 5.020 due to various features
+    * WWW::Mechanize::Chrome now emits events instead of having callbacks. This
+      allows multiple subscribers for an event.
+    * ->on_popup is now an event. To port replace
+      ->on_popup with
+      ->on( 'popup' => sub( $mech, $tab ) { ... })
+    * Chrome::DevToolsProtocol::Target::on_message now emits an event.
+      To port replace
+      ->on_message with
+      ->on( 'message' => sub( $mech, $m ) { ... })
+    * Added "app" option to make Chrome show up without address bar etc.
+    * More command line switches to disable Chrome update behaviour
+
+
 0.71 2023-04-22
     * Add example script showing how to attach to a running Chrome instance
     * No code changes, no need to upgrade
