@@ -1,6 +1,5 @@
 package Chrome::DevToolsProtocol::Transport;
 use strict;
-use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 

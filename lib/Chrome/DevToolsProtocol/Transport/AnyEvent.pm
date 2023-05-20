@@ -1,6 +1,5 @@
 package Chrome::DevToolsProtocol::Transport::AnyEvent;
 use strict;
-use Filter::signatures;
 use Moo 2;
 no warnings 'experimental::signatures';
 use feature 'signatures';

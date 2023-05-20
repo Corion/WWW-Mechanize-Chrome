@@ -7,7 +7,6 @@ our @CARP_NOT;
 
 use Moo 2;
 use JSON;
-use Filter::signatures;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 

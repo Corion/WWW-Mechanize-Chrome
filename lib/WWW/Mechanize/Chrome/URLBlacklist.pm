@@ -1,6 +1,5 @@
 package WWW::Mechanize::Chrome::URLBlacklist;
 use Moo 2;
-use Filter::signatures;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 

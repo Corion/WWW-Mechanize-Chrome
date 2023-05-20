@@ -1,8 +1,7 @@
 package WWW::Mechanize::Chrome::Node;
 use strict;
-use 5.016; # __SUB__
+use 5.020; # __SUB__, signatures
 use Moo 2;
-use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use Carp qw( croak );

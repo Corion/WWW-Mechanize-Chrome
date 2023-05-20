@@ -1,6 +1,5 @@
 package Chrome::DevToolsProtocol::Transport::Mojo;
 use strict;
-use Filter::signatures;
 use Moo 2;
 no warnings 'experimental::signatures';
 use feature 'signatures';

@@ -1,6 +1,5 @@
 package Chrome::DevToolsProtocol::Transport::Pipe::AnyEvent;
 use strict;
-use Filter::signatures;
 use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
 use Moo 2;
 no warnings 'experimental::signatures';

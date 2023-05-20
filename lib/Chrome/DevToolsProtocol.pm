@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Moo;
 use PerlX::Maybe;
-use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use Future;
@@ -927,7 +926,6 @@ package
 use strict;
 use Moo;
 use Carp 'croak';
-use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 

@@ -1,7 +1,6 @@
 package Chrome::DevToolsProtocol::Transport::NetAsync;
 use strict;
 use Moo 2;
-use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 use Scalar::Util 'weaken';
