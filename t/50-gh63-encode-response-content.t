@@ -46,7 +46,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     is $mech->uri, $site, "Navigated to $site";
 
-    my $link = "http://google.com/maps/search/Furniture+at+Praha/@50.1064625,14.3744223,14z/";
+    my $link = "https://google.com/maps/search/Furniture+at+Praha/@50.1064625,14.3744223,14z/";
 
     $mech->get($link);
     # The error with HTTP::Message must be occurred on the next step
