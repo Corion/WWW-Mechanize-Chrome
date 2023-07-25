@@ -119,6 +119,8 @@ L<Making Chrome Headless Undetectable|https://intoli.com/blog/making-chrome-head
 
 L<Chrome Headless Detection|https://github.com/paulirish/headless-cat-n-mouse>
 
+L<How to bypass CloudFlare|https://scrapeops.io/web-scraping-playbook/how-to-bypass-cloudflare/>
+
 =head1 REPOSITORY
 
 The public repository of this module is
