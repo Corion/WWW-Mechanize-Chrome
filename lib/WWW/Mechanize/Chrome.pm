@@ -859,7 +859,7 @@ sub _build_log( $self ) {
 
 # The generation of node ids
 sub _generation( $self, $val=undef ) {
-    @_ == 2 and $self->{_generation} = $_[1];
+    if( defined $val ) { $self->{_generation} = $val; };
     $self->{_generation}
 };
 
@@ -2039,7 +2039,7 @@ sub kill_child( $self, $signal, $pid, $wait_file ) {
         undef $!;
         if( ! kill $signal => $pid ) {
             # The child already has gone away?!
-            warn "Couldn't kill browser child process $pid with $_[0]->{cleanup_signal}: $!";
+            warn "Couldn't kill browser child process $pid with $self->{cleanup_signal}: $!";
             # Gobble up any exit status
             warn waitpid -1, WNOHANG;
         } else {
@@ -5734,7 +5734,8 @@ L<< /$mech->xpath|xpath >> or L<< /$mech->selector|selector >> method.
 
 =cut
 
-sub is_visible ( $self, @ ) {
+sub is_visible {
+    my( $self, @args ) = @_;
     my %options;
     if (2 == @_) {
         ($self,$options{dom}) = @_;
@@ -5845,7 +5846,8 @@ passing the selector.
 
 =cut
 
-sub wait_until_invisible( $self, %options ) {
+sub wait_until_invisible {
+    my( $self, %options );
     if (2 == @_) {
         ($self,$options{dom}) = @_;
     } else {
