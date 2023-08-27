@@ -1,8 +1,6 @@
 #!perl
-use strict;
-use warnings;
 use 5.020;
-use Filter::signatures;
+use feature 'signatures';
 no warnings 'experimental::signatures';
 use feature 'say';
 use File::Temp 'tempdir', 'tempfile';
