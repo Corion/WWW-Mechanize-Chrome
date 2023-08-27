@@ -42,15 +42,26 @@ my $collector = $mech->target->add_listener( 'HeapProfiler.addHeapSnapshotChunk'
     };
 });
 
-my $info =
-$mech->target->send_message(
-    'HeapProfiler.takeHeapSnapshot',
-    captureNumericValue => JSON::true,
-    treatGlobalObjectsAsRoots => JSON::true,
-)->get;
+my $heapdump;
+if( 0 ) {
+    my $info =
+    $mech->target->send_message(
+        'HeapProfiler.takeHeapSnapshot',
+        captureNumericValue => JSON::true,
+        treatGlobalObjectsAsRoots => JSON::true,
+    )->get;
 
-#$mech->sleep(30);
-my $heapdump = $done->get;
+    #my $heapdump = $done->get;
+    #open my $fh, '>:raw', 'tmp.heapsnapshot'
+    #    or die "$!";
+    #print {$fh} $heapdump;
+    #close $fh;
+} else {
+    open my $fh, '<:raw', 'tmp.heapsnapshot'
+        or die "$!";
+    $heapdump = do { local $/; <$fh> };
+}
+
 my $heap = decode_json($heapdump);
 
 # Now, search the heap for an object containing our magic strings:
