@@ -456,7 +456,7 @@ Fetches the tag name of this node
 =cut
 
 sub get_tag_name( $self ) {
-    my $tag = $self->nodeName;
+    my $tag = $self->nodeName // "";
     $tag =~ s!\..*!!; # strip away the eventual classname
     $tag
 }
