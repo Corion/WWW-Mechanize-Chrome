@@ -3503,7 +3503,7 @@ sub base {
     my ($self) = @_;
     (my $base) = $self->selector('base');
     $base = $base->get_attribute('href', live => 1)
-        if $base;
+        if $base && defined ($base->{nodeId});
     $base ||= $self->uri;
 };
 
