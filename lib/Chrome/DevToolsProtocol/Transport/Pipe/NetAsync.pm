@@ -8,7 +8,7 @@ use Scalar::Util 'weaken';
 use IO::Async::Loop;
 use IO::Async::Stream;
 
-our $VERSION = '0.71';
+our $VERSION = '0.72';
 
 =head1 NAME
 

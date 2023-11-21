@@ -30,7 +30,7 @@ use Future::Utils 'repeat';
 use Time::HiRes ();
 use Encode 'encode';
 
-our $VERSION = '0.71';
+our $VERSION = '0.72';
 our @CARP_NOT;
 
 # We don't yet inherit from Moo 2, so patch up things manually
