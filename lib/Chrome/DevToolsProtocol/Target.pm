@@ -101,6 +101,8 @@ has 'receivers' => (
     default => sub { {} },
 );
 
+=back
+
 =head1 EVENTS
 
 =item B<message>
