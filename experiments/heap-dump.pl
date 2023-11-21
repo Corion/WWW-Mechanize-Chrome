@@ -225,7 +225,7 @@ $sth= $dbh->prepare( <<'SQL' );
     where parent.id = ?;
 SQL
 $sth->execute(1);
-say "-- children";
+say "-- children of 1";
 say DBIx::RunSQL->format_results( sth => $sth );
 
 # turn into view, node_children / child_nodes
@@ -334,6 +334,7 @@ say DBIx::RunSQL->format_results( sth => $sth );
 
 # turn into view, node_children / child_nodes
 say "--- How an array looks";
+# Note that the relation is the value for smi numbers (?)
 $obj = $dbh->selectall_arrayref(<<'SQL', {}, $obj)->[0]->[0];
     select child.id
       from node parent
@@ -564,13 +565,14 @@ sub filter_edges( $heap, $cb ) {
     grep { $cb->($edges, $_) } 0..$heap->{snapshot}->{edge_count}-1
 }
 
-# idx
+# Returns the node index of the target node
 sub get_edge_target( $heap, $idx ) {
     my $v = get_edge_field( $heap, $idx, 'to_node' );
     return $v / $node_size
 }
 
 # "Parent" nodes?
+# Returns edge indices
 sub edges_referencing_node( $heap, $node_idx ) {
     croak "Invalid node index $node_idx"
         if $node_idx >= $heap->{snapshot}->{node_count};
@@ -587,8 +589,12 @@ sub edges_referencing_node( $heap, $node_idx ) {
 sub parents_idx( $heap, $node_idx ) {
     croak "Invalid node index $node_idx"
         if $node_idx >= $heap->{snapshot}->{node_count};
+    say "Edges referencing $node_idx";
     my @edges_idx = edges_referencing_node( $heap, $node_idx );
+    say "Nodes having edges @edges_idx";
     my @parents = map { nodes_having_edge( $heap, $_ ) } @edges_idx;
+    say "Found @parents";
+    return @parents;
 }
 
 sub filter_nodes( $heap, $cb ) {
@@ -612,11 +618,38 @@ sub edge_ids_from_node( $heap, $node_idx ) {
     # to sum the edgecount of all previous nodes.
     # This should maybe later be cached/indexed so we don't always have
     # to rescan the whole array
-    my $edge_offset = 0;
-    for my $idx (0..$node_idx-1) {
-        $edge_offset += get_node_field($heap,$idx,'edge_count');
-    };
-    my $edges = get_node_field($heap,$node_idx,'edge_count');
+
+    # This should maybe be done at start
+    state @edge_offset = 0;
+
+    if( $#edge_offset < $node_idx ) {
+        my $edge_offset = @edge_offset ? $edge_offset[ $#edge_offset ] : 0;
+        #use Data::Dumper; warn Dumper \@edge_offset;
+        #say "Starting from $edge_offset for $node_idx";
+
+        for my $idx ($#edge_offset..$node_idx-1) {
+            #say "(build) Fetching index $idx";
+            #$edge_offset += get_node_field($heap,$idx,'edge_count');
+            $edge_offset += get_edge_count($heap,$idx);
+            $edge_offset[ $idx ] = $edge_offset;
+            #say "Building offset $node_idx from $#edge_offset";
+        };
+        $edge_offset[ $node_idx ] = $edge_offset;
+
+        #my $edge_offset_slow = 0;
+        #for my $idx (0..$node_idx-1) {
+        #    say "(check) Fetching index $idx";
+        #    $edge_offset_slow += get_node_field($heap,$idx,'edge_count');
+        #};
+        #die "Inconsistent build for $node_idx: $edge_offset_slow != $edge_offset[ $node_idx ]"
+        #    if $edge_offset_slow != $edge_offset[ $node_idx ];
+    }
+    my $edge_offset = $edge_offset[ $node_idx ];
+    #my $edges = get_node_field($heap,$node_idx,'edge_count');
+    my $edges = get_edge_count($heap,$node_idx);
+
+    # XXX are these indices or ids?!
+    # our subroutine name says ids
     return @{ $heap->{edges} }[$edge_offset..$edge_offset+$edges]
 }
 
@@ -778,13 +811,40 @@ my @two_levels = reachable( $heap, [1], 1 );
 #dump_nodes_with_string($heap, 'onload');
 #dump_nodes_with_string($heap, 'bar');
 
+=head2 C<< node_ancestor_paths $heap, $prefix, $seen >>
+
+  my @paths = node_ancestor_paths( $heap, [$index] );
+
+Finds all the paths from the given set of nodes to the
+root node. Returns the paths as indices (?!)
+
+=cut
+
 sub node_ancestor_paths($heap, $prefix, $seen={}) {
     my @res = @$prefix;
-    my @ancestors = parents_idx( $heap, $res[0] );
+    #say "Finding parents of $res[0]";
+    my @ancestors;# = parents_idx( $heap, $res[0] );
+    #say "ancestors: @ancestors";
+
+    # turn into view, node_parents
+    # Maybe just do a recursive CTE here instead?!
+    my $sth= $dbh->prepare( <<'SQL' );
+        select
+            *
+        from node parent
+        join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+        join node child on child._idx = e._to_node_idx
+        where child._idx = 0+?;
+SQL
+    $sth->execute($res[0]);
+    say "-- parents of $res[0] (index)";
+    say DBIx::RunSQL->format_results( sth => $sth );
+    $sth->execute(0+$res[0]);
+    @ancestors = map { $_->{id} } $sth->fetchall_arrayref({})->@*;
 
     if( @ancestors ) {
         return map {
-            node_ancestor_paths( [$_, @res] )
+            node_ancestor_paths( $heap, [$_, @res], $seen )
         }
         grep { ! $seen->{$_}++ } @ancestors;
     } else {
@@ -792,12 +852,15 @@ sub node_ancestor_paths($heap, $prefix, $seen={}) {
     }
 }
 
-my $string = [find_string_exact($heap,'bar')]->[0]->{index};
-say "Finding ancestors of $string";
+my $str = 'bar';
+my $string = [find_string_exact($heap, $str)]->[0]->{index};
+say "Finding ancestors of $str (index $string)";
 my @path = node_ancestor_paths($heap, [$string]);
 say "digraph G {";
 say "rankdir = LR";
-dump_node_as_dot( $heap, 'First node', @path );
+for (@path) {
+    dump_node_as_dot( $heap, 'First node', @$_ );
+} @path;
 say "}";
 
 # Output the path between two nodes
