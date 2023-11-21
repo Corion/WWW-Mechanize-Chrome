@@ -105,6 +105,8 @@ has 'receivers' => (
 
 =head1 EVENTS
 
+=over 4
+
 =item B<message>
 
 A callback invoked for every message
