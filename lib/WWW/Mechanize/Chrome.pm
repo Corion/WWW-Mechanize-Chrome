@@ -832,8 +832,8 @@ sub spawn_child( $self, $method, @cmd ) {
     return ($pid,$to_chrome,$from_chrome, $chrome_stdout)
 }
 
-sub read_devtools_url( $self, $fh, $lines = 10 ) {
-    # We expect the output within the first 10 lines...
+sub read_devtools_url( $self, $fh, $lines = 50 ) {
+    # We expect the output within the first 50 lines...
     my $devtools_url;
 
     while( $lines-- and ! defined $devtools_url and ! eof($fh)) {
