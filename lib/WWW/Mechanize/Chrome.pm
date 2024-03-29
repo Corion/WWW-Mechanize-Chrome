@@ -811,6 +811,7 @@ sub spawn_child_posix( $self, $method, @cmd ) {
     };
 
     my ($from_chrome, $to_chrome);
+    local $^F;
     if( $method eq 'pipe' ) {
         # We want handles 0,1,2,3,4 to be inherited by Chrome
         $^F = 4;
