@@ -1,10 +1,8 @@
 package WWW::Mechanize::Chrome;
 use 5.020;
 
-use feature 'signatures';
-no warnings 'experimental::signatures';
+use experimental 'signatures';
 use stable 'postderef';
-
 use feature 'current_sub';
 
 use PerlX::Maybe;

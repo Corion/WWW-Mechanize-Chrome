@@ -1,5 +1,6 @@
 #!perl -w
 use strict;
+use stable 'postderef';
 use Test::More;
 use File::Basename;
 use Log::Log4perl qw(:easy);
