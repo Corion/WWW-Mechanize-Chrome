@@ -40,13 +40,13 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
-    my $pid = $mech->{pid};
+    my $pids = $mech->{pid};
     undef $mech;
 
-    my $alive = kill 0 => $pid;
+    my $alive = kill 0 => $pids->@*;
     is $alive, 1, "The Chrome process stays alive if 'autoclose' is set to 0";
 
-    if( $pid ) {
-        WWW::Mechanize::Chrome->kill_child('SIGKILL', $pid, undef);
+    if( $pids->@* ) {
+        WWW::Mechanize::Chrome->kill_child('SIGKILL', $pids, undef);
     };
 });

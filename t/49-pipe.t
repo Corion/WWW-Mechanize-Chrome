@@ -2,6 +2,7 @@
 
 use warnings;
 use strict;
+use stable 'postderef';
 use Test::More;
 
 use Log::Log4perl qw(:easy);
@@ -43,13 +44,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech->get($server->url);
     pass "We launch Chrome and control it via two filehandles";
 
-    my $pid = $mech->{pid};
+    my $pids = $mech->{pid};
 
     like $mech->title, qr/^WWW::Mechanize::Firefox test page$/, "Retrieving the title works";
     undef $mech;
 
-    my $alive = kill( 0 => $pid);
-    is $alive, 0, "The chrome process $pid was removed";
+    my $alive = kill( 0 => $pids->@*);
+    is $alive, 0, "The chrome process $pids->@* was removed";
 });
 
 $server->stop;
