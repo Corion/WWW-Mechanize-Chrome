@@ -248,7 +248,7 @@ Contributed examples contain the original author's name.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2023 by Max Maischein C<corion@cpan.org>.
+Copyright 2009-2024 by Max Maischein C<corion@cpan.org>.
 
 All Rights Reserved. This module is free software. It may be used, redistributed and/or modified under the same terms as Perl itself.
 

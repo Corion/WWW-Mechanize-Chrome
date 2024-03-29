@@ -1975,7 +1975,7 @@ Joshua Pollack
 
 # COPYRIGHT (c)
 
-Copyright 2010-2023 by Max Maischein `corion@cpan.org`.
+Copyright 2010-2024 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 
