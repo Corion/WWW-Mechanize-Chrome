@@ -904,6 +904,23 @@ sub getWindowForTarget( $self, $targetId ) {
     );
 }
 
+=head2 C<< $target->setWindowBoundsForTarget >>
+
+    my $info = $chrome->getWindowForTarget( $targetId )->get;
+    $info->{bounds}->{width} = 100;
+    $chrome->setWindowBounds( $info->{windowId}, $info->{bounds} )->get;
+
+Sets the window dimensions of the current target
+
+=cut
+
+sub setWindowBounds( $self, $windowId, $bounds ) {
+    $self->send_message('Browser.setWindowBounds',
+        windowId => 0+$windowId,
+        bounds => $bounds,
+    );
+}
+
 =head2 C<< $chrome->getBrowserContexts >>
 
     my @browserContextIds = $chrome->getBrowserContexts->get;
