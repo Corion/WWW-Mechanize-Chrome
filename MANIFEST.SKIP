@@ -28,5 +28,6 @@ Makefile$
 ^demo/
 ^development/
 ^experiments/
+^tmp/
 ^[^/]*\.pl$ # ignore all test scripts
 ^[^/]*\.png$ # ignore all test images
