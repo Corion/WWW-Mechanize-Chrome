@@ -849,6 +849,7 @@ sub read_devtools_url( $self, $fh, $lines = 50 ) {
     # We expect the output within the first 50 lines...
     my $devtools_url;
 
+    my %pids;
     while( $lines-- and ! defined $devtools_url and ! eof($fh)) {
         my $line = <$fh>;
         last unless defined $line;
@@ -860,8 +861,10 @@ sub read_devtools_url( $self, $fh, $lines = 50 ) {
             last;
         } elsif( $line =~ m!^\[(\d+):(\d+):!) {
             my $pid = $1;
-            $self->log('trace', "Found a pid as '$pid', original pid is $self->{pid}->@*");
-            push $self->{pid}->@*, $pid;
+            if( !$pids{ $pid }++ ) {
+                $self->log('trace', "Found a pid as '$pid', original pid is $self->{pid}->@*");
+                push $self->{pid}->@*, $pid;
+            };
         } elsif( $line =~ m!ERROR:headless_shell.cc! ) {
             die "Chrome launch error: $line";
         }
