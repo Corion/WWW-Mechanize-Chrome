@@ -105,6 +105,7 @@ my %module = (
     },
     TEST_REQUIRES => {
         'Test::More'   => 0,
+        'Test2::V0'    => 0,
         'Test::Deep'   => 0,
         'Test::Without::Module' => 0,
         'Data::Dumper' => 0,

@@ -492,6 +492,13 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--profile-directory=$profile";
     };
 
+    if( $options->{temp_profile}) {
+        if( $options->{profile} ) {
+            croak "Cannot use the 'profile' option together with 'temp_profile'";
+        }
+        push @{ $options->{ launch_arg }}, "--temp-profile";
+    }
+
     if( $options->{enable_automation}) {
         push @{ $options->{ launch_arg }}, "--enable-automation";
     };
