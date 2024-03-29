@@ -846,6 +846,10 @@ sub read_devtools_url( $self, $fh, $lines = 50 ) {
             $devtools_url = $1;
             $self->log('trace', "Found ws endpoint from child output as '$devtools_url'");
             last;
+        } elsif( $line =~ m!^\[(\d+):(\d+):!) {
+            my $pid = $1;
+            $self->log('trace', "Found a pid as '$pid', original pid is $self->{pid}->@*");
+            push $self->{pid}->@*, $pid;
         } elsif( $line =~ m!ERROR:headless_shell.cc! ) {
             die "Chrome launch error: $line";
         }
@@ -1061,7 +1065,7 @@ sub _spawn_new_chrome_instance( $self, $options ) {
         = $self->spawn_child( $options->{ connection_style }, @cmd );
     $options->{ writer_fh } = $to_chrome;
     $options->{ reader_fh } = $from_chrome;
-    $self->{pid} = $pid;
+    push $self->{pid}->@*, $pid;
     $self->{ kill_pid } = 1;
     if( $options->{ connection_style } eq 'pipe') {
         $options->{ writer_fh } = $to_chrome;
@@ -1141,8 +1145,9 @@ sub _connect( $self, %options ) {
     # if Chrome started, but so slow or unresponsive that we cannot connect
     # to it, kill it manually to avoid waiting for it indefinitely
     if ( $err ) {
-        if( $self->{ kill_pid } and my $pid = delete $self->{ pid }) {
-            $self->kill_child( 'SIGKILL', $pid, $self->{wait_file} );
+        if( $self->{ kill_pid } and $self->{ pid }->@*) {
+            my $pids = $self->{ pid };
+            $self->kill_child( 'SIGKILL', $pids, $self->{wait_file} );
         };
         croak $err;
     }
@@ -2002,8 +2007,7 @@ Tear down all connections and shut down Chrome.
 =cut
 
 sub close {
-    my $pid= delete $_[0]->{pid};
-
+    my $pids = delete $_[0]->{pid};
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
     #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
@@ -2030,17 +2034,17 @@ sub close {
     delete $_[0]->{ driver };
 
     if( $_[0]->{autoclose} and $_[0]->{kill_pid} ) {
-        $_[0]->kill_child( $_[0]->{cleanup_signal}, $pid, $_[0]->{wait_file} );
+        $_[0]->kill_child( $_[0]->{cleanup_signal}, $pids, $_[0]->{wait_file} );
     }
 }
 
-sub kill_child( $self, $signal, $pid, $wait_file ) {
-    if( $pid and kill 0 => $pid) {
+sub kill_child( $self, $signal, $pids, $wait_file ) {
+    if( $pids and kill 0 => $pids->@*) {
         local $SIG{CHLD} = 'IGNORE';
         undef $!;
-        if( ! kill $signal => $pid ) {
+        if( ! kill $signal => $pids->@* ) {
             # The child already has gone away?!
-            warn "Couldn't kill browser child process $pid with $self->{cleanup_signal}: $!";
+            warn "Couldn't kill browser child process $pids->@* with $self->{cleanup_signal}: $!";
             # Gobble up any exit status
             warn waitpid -1, WNOHANG;
         } else {
@@ -2050,9 +2054,9 @@ sub kill_child( $self, $signal, $pid, $wait_file ) {
                 # infinite hangs at least on Travis CI !?
                 my $timeout = time+2;
                 while( time < $timeout ) {
-                    my $res = waitpid $pid, WNOHANG;
-                    if( $res != -1 and $res != $pid ) {
-                        warn "Couldn't wait for child '$pid' ($res)?"
+                    my $res = waitpid $pids->[0], WNOHANG;
+                    if( $res != -1 and $res != $pids->[0] ) {
+                        warn "Couldn't wait for child '$pids->@*' ($res)?"
                             if $res != 0;
                         sleep 0.1;
                     } else {
@@ -2061,11 +2065,11 @@ sub kill_child( $self, $signal, $pid, $wait_file ) {
                 };
             } else {
                 # on Linux and Windows, plain waitpid Just Works
-                waitpid $pid, 0;
+                waitpid $pids->[0], 0;
                 # but still, check again that the child has really gone away:
                 my $timeout = time+2;
                 while( time < $timeout ) {
-                    my $res = kill 0 => $pid;
+                    my $res = kill 0 => $pids->@*;
                     if( $res ) {
                         sleep 0.1;
                     } else {
