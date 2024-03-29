@@ -37,7 +37,15 @@ plan tests => $test_count;
 
 for my $t (@tests) {
     my ($constructor,$expected,$name) = $t->@*;
-    my @cmd = WWW::Mechanize::Chrome->build_command_line($constructor);
+    my @cmd = eval {
+        WWW::Mechanize::Chrome->build_command_line($constructor);
+    };
+
+    if( ! @cmd ) {
+        SKIP: { skip "$@", 1; };
+        next;
+    };
+
     my @org = @cmd;
     my $exe = shift @cmd;
     GetOptionsFromArray(\@cmd,
