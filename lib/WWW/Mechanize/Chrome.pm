@@ -441,7 +441,9 @@ sub build_command_line {
     # Convert the path to an absolute filename, so we can chdir() later
     $program = File::Spec->rel2abs( $program ) || $program;
 
-    my $is_root = ($> != 0);
+    my $is_root = ($> == 0);
+    $options->{ no_sandbox } = 1
+        if $is_root;     # We need this when running as root
 
     $options->{ launch_arg } ||= [];
     $options->{ exclude_switches } ||= [];
@@ -526,8 +528,7 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--no-zygote";
     };
 
-    # We need this when running as root
-    if( $no_sandbox or $is_root) {
+    if( $no_sandbox ) {
         push @{ $options->{ launch_arg }}, "--no-sandbox";
     };
 
