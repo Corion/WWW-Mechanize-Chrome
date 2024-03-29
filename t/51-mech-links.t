@@ -34,7 +34,8 @@ if (my $err = t::helper::default_unavailable) {
 };
 
 sub new_mech {
-    t::helper::need_minimum_chrome_version( '62.0.0.0', @_ );
+    # Chrome 65 doesn't find some iframes?!
+    t::helper::need_minimum_chrome_version( '66.0.0.0', @_ );
     WWW::Mechanize::Chrome->new(
         autodie => 1,
         @_,
