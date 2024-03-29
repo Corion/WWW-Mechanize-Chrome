@@ -64,7 +64,9 @@
             "URI::file" : "0",
             "URI::ws" : "0",
             "WWW::Mechanize::Link" : "0",
-            "perl" : "5.020"
+            "experimental" : "0.031",
+            "perl" : "5.020",
+            "stable" : "0.031"
          }
       },
       "test" : {
@@ -72,6 +74,7 @@
             "Data::Dump" : "0",
             "Data::Dumper" : "0",
             "Image::Info" : "0",
+            "Test2::V0" : "0",
             "Test::Deep" : "0",
             "Test::HTTP::LocalServer" : "0.71",
             "Test::Memory::Cycle" : "0",
@@ -94,7 +97,7 @@
          "web" : "https://github.com/Corion/WWW-Mechanize-Chrome"
       }
    },
-   "version" : "0.72",
+   "version" : "0.73",
    "x_serialization_backend" : "JSON::PP version 4.07",
    "x_static_install" : 1
 }

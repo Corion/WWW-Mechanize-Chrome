@@ -44,6 +44,10 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.73 2024-03-29
+    * Tests should not hang when run as root now
+    * Sandbox is automatically disabled when running as root
+
 0.72 2023-11-21
     * requires Perl 5.020 due to various features
     * WWW::Mechanize::Chrome now emits events instead of having callbacks. This
