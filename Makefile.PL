@@ -52,6 +52,8 @@ my %module = (
     },
 
     PREREQ_PM => {
+        'experimental'       => '0.031',
+        'stable'             => '0.031',
         'Exporter'           => 5, # for 'import'
         'POSIX'              => 0, # for 'setsid' on POSIXish systems
         'IPC::Open3'         => 0, # for IPC on Windows
