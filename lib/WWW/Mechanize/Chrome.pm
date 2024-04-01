@@ -521,12 +521,13 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--no-default-browser-check";
     };
 
-    my $no_sandbox = $options->{no_sandbox} || ! (exists $options->{no_zygote});
-    if( ! $no_sandbox) {
+    #my $no_sandbox = $options->{no_sandbox} || ! (exists $options->{no_zygote});
+    if( $options->{no_zygote}) {
         push @{ $options->{ launch_arg }}, "--no-zygote";
     };
 
-    if( $no_sandbox ) {
+    #my $no_sandbox = $options->{no_sandbox} || ! (exists $options->{no_zygote});
+    if( $options->{no_sandbox} || $is_root ) {
         push @{ $options->{ launch_arg }}, "--no-sandbox";
     };
 
