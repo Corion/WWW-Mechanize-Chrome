@@ -22,8 +22,8 @@ if( $ok ) {
 };
 
 Test::Without::Module->import( qw( Net::Async::HTTP ) );
-isn't( Chrome::DevToolsProtocol::Transport->best_implementation, 'Chrome::DevToolsProtocol::Transport::NetAsync',
+isnt( Chrome::DevToolsProtocol::Transport->best_implementation, 'Chrome::DevToolsProtocol::Transport::NetAsync',
     "We select a different socket backend if IO::Async is unavailable");
 
-isn't( Chrome::DevToolsProtocol::Transport::Pipe->best_implementation, 'Chrome::DevToolsProtocol::Transport::NetAsync',
+isnt( Chrome::DevToolsProtocol::Transport::Pipe->best_implementation, 'Chrome::DevToolsProtocol::Transport::NetAsync',
     "We select a different pipe backend if IO::Async is unavailable");
