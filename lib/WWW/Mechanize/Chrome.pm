@@ -3453,9 +3453,9 @@ The value passed in as C<$html> will be stringified.
 
 =cut
 
-sub update_html( $self, $content ) {
+sub update_html_future( $self, $content ) {
     my $doc = $self->_cached_document;
-    $doc->then(sub( $root ) {
+    return $doc->then(sub( $root ) {
         # Find "HTML" child node:
         my $nodeId = $root->{root}->{children}->[0]->{nodeId};
         my $id;
@@ -3501,9 +3501,12 @@ sub update_html( $self, $content ) {
             # Also, we need to wait for a DOM.documentUpdated here before querying
             # again ... do we?!
         });
-     })->get;
+     });
 };
 
+sub update_html( $self, $content ) {
+    $self->update_html_future($content)->get
+}
 =head2 C<< $mech->base() >>
 
   print $mech->base;
