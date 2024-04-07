@@ -241,6 +241,11 @@ Examples of other useful parameters include:
     '--no-sandbox'
     '--password-store=basic'
 
+Also see
+L<https://peter.sh/experiments/chromium-command-line-switches/>
+for a list of command line arguments that Chrome actually has in the source
+code.
+
 =item B<separate_session>
 
   separate_session => 1   # create a new, empty session
