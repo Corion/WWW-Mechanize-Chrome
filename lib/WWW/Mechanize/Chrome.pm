@@ -581,6 +581,11 @@ sub build_command_line {
         $options->{start_url} //= 'data:text/html,<html></html>';
         push @{ $options->{ launch_arg }}, "--app=$options->{start_url}";
 
+    } elsif( my $dir = $options->{ app_dir } ) {
+        # Be Electron-like
+        #$options->{start_url} //= 'data:text/html,<html></html>';
+        push @{ $options->{ launch_arg }}, "--load-and-launch-app=$dir";
+
     } elsif( exists $options->{start_url}) {
         push @{ $options->{ launch_arg }}, "$options->{start_url}"
             ;
@@ -1131,10 +1136,16 @@ sub new( $class, %args ) {
 }
 
 sub _setup_driver_future( $self, %options ) {
+    if( $options{ app_dir }) {
+        # Give Chrome a second to start up, even if that means our App
+        # starts slow
+        sleep 1;
+    };
     $self->target->connect(
         new_tab          => !$options{ existing_tab } || $options{ new_tab },
         tab              => $options{ tab },
         #reuse            => $options{ reuse_transport },
+        app              => $options{ app_dir },
         separate_session => $options{ separate_session },
         start_url        => $options{ start_url } ? "".$options{ start_url } : undef,
     )->catch( sub(@args) {
@@ -1144,7 +1155,7 @@ sub _setup_driver_future( $self, %options ) {
             $err .= $args[1]->{Reason};
         };
         Future->fail( $err );
-    })
+    });
 }
 
 # This (tries to) connects to the devtools in the browser

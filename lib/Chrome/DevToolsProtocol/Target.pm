@@ -2,10 +2,9 @@ package Chrome::DevToolsProtocol::Target;
 use 5.020; # for signatures
 use strict;
 use warnings;
-use Moo;
+use Moo 2;
 
-no warnings 'experimental::signatures';
-use feature 'signatures';
+use experimental 'signatures';
 
 use Future;
 use Future::HTTP;
@@ -99,6 +98,17 @@ A premade L<Log::Log4perl> object to act as logger
 has 'receivers' => (
     is => 'ro',
     default => sub { {} },
+);
+
+=item B<app>
+
+If launching Chrome in app mode, connect to this page
+
+=cut
+
+has 'app' => (
+    is => 'ro',
+    default => sub { undef },
 );
 
 =back
@@ -290,7 +300,6 @@ sub connect( $self, %args ) {
 
         $done = $done->then(sub {
             my $id = $s->browserContextId;
-
             $s->createTarget(
                 url => $args{ start_url } || 'about:blank',
                 maybe browserContextId => $id,
@@ -332,7 +341,12 @@ sub connect( $self, %args ) {
             $s->getTargets()
         })->then(sub( @tabs ) {
             my $res;
-            my @visible_tabs = grep { $_->{type} eq 'page' && $_->{targetId} } @tabs;
+            my @visible_tabs;
+            if( $args{ app } // $self->app ) {
+                @visible_tabs = grep { $_->{type} eq 'app' && $_->{targetId} } @tabs;
+            } else {
+                @visible_tabs = grep { $_->{type} eq 'page' && $_->{targetId} } @tabs;
+            }
             if( ! @visible_tabs ) {
                 $res = $s->createTarget(
                     url => $args{ start_url } || 'about:blank',
