@@ -165,7 +165,7 @@ The event-loop specific transport backend
 
 has 'transport' => (
     is => 'ro',
-    handles => ['future'],
+    handles => ['future','sleep'],
 );
 
 has 'is_connected' => (
@@ -407,10 +407,6 @@ sub close( $self ) {
 Sleep for the amount of seconds in an event-loop compatible way
 
 =cut
-
-sub sleep( $self, $seconds ) {
-    $self->transport->sleep($seconds);
-};
 
 sub DESTROY( $self ) {
     delete $self->{ua};
