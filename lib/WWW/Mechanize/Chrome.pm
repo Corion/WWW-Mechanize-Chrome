@@ -1869,15 +1869,18 @@ This method is special to WWW::Mechanize::Chrome.
 
 =cut
 
-sub eval_in_page($self,$str, %options) {
+sub eval_in_page_future($self,$str, %options) {
     # Report errors from scope of caller
     # This feels weirdly backwards here, but oh well:
     local @Chrome::DevToolsProtocol::CARP_NOT
         = (@Chrome::DevToolsProtocol::CARP_NOT, (ref $self)); # we trust this
     local @CARP_NOT
         = (@CARP_NOT, 'Chrome::DevToolsProtocol', (ref $self)); # we trust this
-    my $result = $self->target->evaluate("$str", %options)->get;
+    return $self->target->evaluate("$str", %options);
+}
 
+sub eval_in_page( $self, $str, %options) {
+    my $result = $self->eval_in_page_future("$str", %options)->get;
     if( $result->{error} ) {
         $self->signal_condition(
             join "\n", grep { defined $_ }
@@ -1903,6 +1906,7 @@ sub eval_in_page($self,$str, %options) {
 {
     no warnings 'once';
     *eval = \&eval_in_page;
+    *eval_future = \&eval_in_page_future;
 }
 
 =head2 C<< $mech->eval_in_chrome $code, @args >>
