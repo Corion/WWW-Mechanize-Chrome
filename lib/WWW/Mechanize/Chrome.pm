@@ -1052,8 +1052,7 @@ sub new_future($class, %options) {
               log         => $options{ log },
         maybe json_log_fh => delete $options{ json_log_fh },
     );
-
-    $options{ target } ||= Chrome::DevToolsProtocol::Target->new(
+    $options{ target } //= Chrome::DevToolsProtocol::Target->new(
         auto_close => 0,
         transport  => delete $options{ driver_transport },
         error_handler => sub {
