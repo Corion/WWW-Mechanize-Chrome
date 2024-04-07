@@ -501,6 +501,10 @@ sub build_command_line {
         push @{ $options->{ launch_arg }}, "--temp-profile";
     }
 
+    if( $options->{silent_launch}) {
+        push @{ $options->{ launch_arg }}, "--silent-launch";
+    }
+
     if( $options->{enable_automation}) {
         push @{ $options->{ launch_arg }}, "--enable-automation";
     };
