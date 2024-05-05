@@ -229,7 +229,9 @@ SQL
 
 say "(array 'items': $obj)";
 
-$sth= $dbh->prepare( <<'SQL' );
+sub dump_object( $obj ) {
+
+    my $sth= $dbh->prepare( <<'SQL' );
     with object as (
         select
             parent.id as parent_id
@@ -262,8 +264,10 @@ $sth= $dbh->prepare( <<'SQL' );
     where id = ? +0
     order by relation, child_id
 SQL
-$sth->execute($obj);
-say DBIx::RunSQL->format_results( sth => $sth );
+    $sth->execute($obj);
+    say DBIx::RunSQL->format_results( sth => $sth );
+}
+dump_object($obj);
 
 # turn into view, node_children / child_nodes
 # Actually, this isn't correct - "smi number" should not be a relation but a value
