@@ -192,7 +192,7 @@ sub full_edge( $self, $idx ) {
 
 sub get_edge_field($self, $idx, $fieldname) {
     croak "Invalid edge field name '$fieldname'"
-        unless exists $self->{edge_field_index}->{ $fieldname };
+        unless exists $self->edge_field_index->{ $fieldname };
     croak "Invalid index"
         unless defined $idx;
     my $heap = $self->data;
@@ -203,8 +203,8 @@ sub get_edge_field($self, $idx, $fieldname) {
 
     # Depending on the type of the field, this can be either a string id
     # or the numeric value to use...
-    my $fi = $self->{edge_field_index}->{ $fieldname };
-    my $val = (edge_at_index( $self, $heap, $idx ))[$fi];
+    my $fi = $self->edge_field_index->{ $fieldname };
+    my $val = ($self->edge_at_index( $idx ))[$fi];
 
     my $ft = $heap->{snapshot}->{meta}->{edge_types}->[$fi];
     if( ref $ft eq 'ARRAY' ) {
@@ -223,9 +223,10 @@ sub get_edge_field($self, $idx, $fieldname) {
     return $val;
 }
 
-sub edge_at_index( $self, $heap, $idx ) {
+sub edge_at_index( $self, $idx ) {
     my $ofs = $idx * $self->{edge_size};
     # Maybe return an arrayref here, later?
+    my $heap = $self->data;
     return @{ $heap->{edges} }[ $ofs .. $ofs+($self->edge_size-1) ];
 }
 
@@ -253,7 +254,7 @@ sub node_by_id( $self, $node_id ) {
 }
 
 sub edge( $self, $heap, $idx ) {
-    my @vals = edge_at_index( $self, $heap, $idx );
+    my @vals = $self->edge_at_index( $idx );
     +{
         mesh $heap->{snapshot}->{meta}->{edge_fields}, \@vals
     }
