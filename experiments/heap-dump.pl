@@ -20,30 +20,31 @@ use DBD::SQLite;
 use DBD::SQLite::VirtualTable::PerlData;
 use DBIx::RunSQL;
 
-my $mech = WWW::Mechanize::Chrome->new(
-    data_directory => tempdir( CLEANUP => 1 ),
-    headless => 1,
-);
-$mech->target->send_message('HeapProfiler.enable')->get;
-
-#$mech->get('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-#$mech->get('https://www.youtube.com/embed/dQw4w9WgXcQ');
-
-# Let's start with something simpler
-$mech->get_local('heap-test-01.html');
-my $chunk;
-my $done = $mech->target->future;
-my $collector = $mech->target->add_listener( 'HeapProfiler.addHeapSnapshotChunk', sub($message) {
-    $chunk .= $message->{params}->{chunk};
-
-    # We know that we're done if we receive a chunk with "]}" ?!
-    if( $chunk =~ /\]\}$/ ) {
-        $done->done($chunk);
-    };
-});
 
 my $heapdump;
 if( 0 ) {
+    my $mech = WWW::Mechanize::Chrome->new(
+        data_directory => tempdir( CLEANUP => 1 ),
+        headless => 1,
+    );
+    $mech->target->send_message('HeapProfiler.enable')->get;
+
+    #$mech->get('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    #$mech->get('https://www.youtube.com/embed/dQw4w9WgXcQ');
+
+    # Let's start with something simpler
+    $mech->get_local('heap-test-01.html');
+    my $chunk;
+    my $done = $mech->target->future;
+    my $collector = $mech->target->add_listener( 'HeapProfiler.addHeapSnapshotChunk', sub($message) {
+        $chunk .= $message->{params}->{chunk};
+
+        # We know that we're done if we receive a chunk with "]}" ?!
+        if( $chunk =~ /\]\}$/ ) {
+            $done->done($chunk);
+        };
+    });
+
     my $info =
     $mech->target->send_message(
         'HeapProfiler.takeHeapSnapshot',
