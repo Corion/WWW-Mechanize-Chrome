@@ -66,36 +66,6 @@ if( 0 ) {
 
 my $heap = Chrome::Heapdump->from_string($heapdump);
 
-# Now, search the heap for an object containing our magic strings:
-#
-my %seen;
-sub iterate($heap, $visit, $path='', $vis=$path) {
-    # Check if we find the hash keys:
-    if( ! $seen{ $vis }++ ) {
-        print "$vis\n";
-    };
-    $visit->($heap, $path);
-    if( ref $heap eq 'HASH' ) {
-        for my $key (sort keys %$heap) {
-            my $val = $heap->{$key};
-            if( ref $val) {
-                my $sub = "$path/$key";
-                my $subvis = $sub;
-                iterate( $val, $visit, $sub, $subvis );
-            }
-        }
-    } elsif( ref $heap eq 'ARRAY' ) {
-        for my $i (0..$#$heap) {
-            my $val = $heap->[$i];
-            if( ref $val) {
-                my $sub = "$path\[$i\]";
-                my $subvis = "$path\[.\]";
-                iterate( $val, $visit, $sub, $subvis );
-            }
-        }
-    };
-}
-
 sub find_string($heap, $value, $path='/strings') {
     my @res;
     iterate($heap->{strings}, sub($item, $path) {
@@ -116,96 +86,7 @@ sub find_string($heap, $value, $path='/strings') {
     @res
 }
 
-sub find_string_exact($heap, $value, $path='/strings') {
-    my @res;
-    iterate($heap->{strings}, sub($item, $path) {
-        if( ref $item eq 'HASH' ) {
-            if( grep { defined $_ and $_ eq $value } values %$item ) {
-                my @keys = grep { defined $item->{$_} and $item->{$_} eq $value } keys %$item;
-                for my $k (sort @keys) {
-                    push @res, { path => "$path/$k", value => $item->{k}, index => $k };
-                };
-            };
-        } elsif( ref $item eq 'ARRAY' ) {
-            if( grep { defined $_ and $_ eq $value } @$item ) {
-                my @indices = grep { defined $item->[$_] and $item->[$_] eq $value } 0..$#$item;
-                push @res, map +{ path => "$path\[$_]", value => $item->[$_], index => $_ }, @indices;
-            };
-        }
-    });
-    @res
-}
-
-# Object variable:
-my %node_field_index;
-my %edge_field_index;
-my $node_size;
-my $edge_size;
-# Create a temporary database, but on disk so indices actually work
-my ($fh, $dbname) = tempfile;
-close $fh;
-my $dbh = DBI->connect('dbi:SQLite:dbname='.$dbname, undef, undef, { RaiseError => 1, PrintError => 0 });
-sub init_heap( $heap ) {
-    $node_size = scalar @{ $heap->{snapshot}->{meta}->{node_fields} };
-    $edge_size = scalar @{ $heap->{snapshot}->{meta}->{edge_fields} };
-    #say "Node size: $node_size";
-    #say "Edge size: $edge_size";
-
-    my $f = $heap->{snapshot}->{meta}->{node_fields};
-    %node_field_index = map {
-        $f->[$_] => $_
-    } 0..$#$f;
-
-    $f = $heap->{snapshot}->{meta}->{edge_fields};
-    %edge_field_index = map {
-        $f->[$_] => $_
-    } 0..$#$f;
-
-    # Now, "load" the nodes and edges
-    # We convert everything to a hash first, while we could instead keep all
-    # the things as separate arrays. Ah well ...
-    my $edge_offset = 0;
-    our $node = [map {
-        my $n = full_node($heap, $_);
-        $n->{edge_offset} = $edge_offset;
-        $edge_offset += get_edge_count( $heap, $_ );
-        $n
-    } 0..$heap->{snapshot}->{node_count}-1];
-    say $node->[0]->{id};
-    our $edge = [map { full_edge($heap, $_) } 0..$heap->{snapshot}->{edge_count}-1];
-    $dbh->sqlite_create_module(perl => "DBD::SQLite::VirtualTable::PerlData");
-
-    my $node_cols = join ",", @{ $heap->{snapshot}->{meta}->{node_fields}};
-    my $edge_cols = join ",", @{ $heap->{snapshot}->{meta}->{edge_fields}};
-
-    $dbh->do(<<SQL);
-    CREATE VIRTUAL TABLE node_mem USING perl(_idx, edge_offset, $node_cols,
-                                        hashrefs="main::node");
-SQL
-    $dbh->do(<<SQL);
-    CREATE VIRTUAL TABLE edge_mem USING perl(_idx, _to_node_idx, $edge_cols,
-                                        hashrefs="main::edge");
-SQL
-
-    $dbh->do(<<SQL);
-        create table node as select * from node_mem
-SQL
-    $dbh->do(<<SQL);
-        create table edge as select * from edge_mem
-SQL
-
-
-# Not allowed for virtual tables, which is why we use the on disk variant
-    $dbh->do(<<SQL);
-    CREATE index by_name_index on node (name, _idx, id);
-    CREATE unique index by_idx_index on node (_idx, name, type, edge_count);
-    CREATE unique index by_id_index on node (id, _idx, name, type, edge_count);
-SQL
-    $dbh->do(<<SQL);
-    CREATE unique index by_index on edge (_idx, _to_node_idx, name_or_index);
-SQL
-}
-init_heap($heap);
+my $dbh = $heap->dbh;
 
 # turn into view, node_edges
 my $sth= $dbh->prepare( <<'SQL' );
@@ -437,140 +318,9 @@ sub field_value( $heap, $type, $name, $values ) {
 # each node has (currently) 7 fields
 # each edge has (currently) 3 fields
 
-sub edge_at_index( $heap, $idx ) {
-    my $ofs = $idx * $edge_size;
-    # Maybe return an arrayref here, later?
-    return @{ $heap->{edges} }[ $ofs .. $ofs+($edge_size-1) ];
-}
-
-sub node_at_index( $heap, $idx ) {
-    my $ofs = $idx * $node_size;
-    @{ $heap->{nodes} }[ $ofs .. $ofs+($node_size-1) ];
-}
-
-sub node_by_id( $heap, $node_id ) {
-    # Maybe some kind of caching here, as well, or gradually building
-    # a hash out of/into the structure?!
-    for my $idx ( 0..$heap->{snapshot}->{node_count}-1 ) {
-        my $id = get_node_field($heap, $idx, 'id');
-        #my $name = get_node_field($heap, $idx, 'name');
-        #my $type = get_node_field($heap, $idx, 'type');
-        #warn "$node_id:$idx: $id $name [$type]";
-        if( $id == $node_id ) {
-            return $idx
-        };
-    }
-    croak "Unknown node id $node_id";
-}
-
-sub edge( $heap, $idx ) {
-    my @vals = edge_at_index( $heap, $idx );
-    +{
-        mesh $heap->{snapshot}->{meta}->{edge_fields}, \@vals
-    }
-}
-
-sub full_edge( $heap, $idx ) {
-    my $res = +{
-        _idx => $idx,
-        map {
-            $_ => get_edge_field( $heap, $idx, $_ )
-        } @{ $heap->{snapshot}->{meta}->{edge_fields} }
-    };
-    $res->{_to_node_idx} = $res->{to_node} / @{ $heap->{snapshot}->{meta}->{node_fields} };
-    $res;
-}
-
-sub node( $heap, $idx ) {
-    my @vals = node_at_index( $heap, $idx );
-    +{
-        mesh $heap->{snapshot}->{meta}->{node_fields}, \@vals
-    }
-}
-
-sub full_node( $heap, $idx ) {
-    return +{
-        _idx => $idx,
-        map {
-            $_ => get_node_field( $heap, $idx, $_ )
-        } @{ $heap->{snapshot}->{meta}->{node_fields} }
-    }
-}
-
-sub get_node_field($heap, $idx, $fieldname) {
-    croak "Invalid node field name '$fieldname'. Known fields are " . join ", ", values %node_field_index
-        unless exists $node_field_index{ $fieldname };
-    if( $idx > $heap->{snapshot}->{node_count}) {
-        croak "Invalid node index '$idx'";
-    };
-
-    # Depending on the type of the field, this can be either a string id
-    # or the numeric value to use...
-    my $fi = $node_field_index{ $fieldname };
-    my $val = $heap->{nodes}->[$idx*$node_size+$fi];
-    if( ! defined $val ) {
-        warn "Node $idx.$fieldname: undefined"; # $idx*$node_size+$fi
-    }
-
-    my $ft = $heap->{snapshot}->{meta}->{node_types}->[$fi];
-    if( ref $ft eq 'ARRAY' ) {
-        $val = $ft->[$val]
-    } elsif( $ft eq 'number' ) {
-        # we use the value as-is
-    } elsif( $ft eq 'string' ) {
-        $val = $heap->{strings}->[$val]
-        #croak "String-fetching for node types not implemented";
-    } else {
-        croak "Unknown node field type '$ft' for '$fieldname'";
-    }
-
-    return $val;
-}
-
-sub get_edge_field($heap, $idx, $fieldname) {
-    croak "Invalid edge field name '$fieldname'"
-        unless exists $edge_field_index{ $fieldname };
-
-    if( $idx >= $heap->{snapshot}->{edge_count} ) {
-        croak "Invalid edge index $idx, maximum is $heap->{snapshot}->{edge_count}";
-    }
-
-    # Depending on the type of the field, this can be either a string id
-    # or the numeric value to use...
-    my $fi = $edge_field_index{ $fieldname };
-    my $val = (edge_at_index( $heap, $idx ))[$fi];
-
-    my $ft = $heap->{snapshot}->{meta}->{edge_types}->[$fi];
-    if( ref $ft eq 'ARRAY' ) {
-        $val = $ft->[$val]
-    } elsif( $ft eq 'number' ) {
-        # we use the value as-is
-    } elsif( $ft eq 'node' ) {
-        # we use the value as-is
-    } elsif( $ft eq 'string' ) {
-        $val = $heap->{strings}->[$val]
-    } elsif( $ft eq 'string_or_number' ) {
-        $val = $heap->{strings}->[$val] // $val
-    } else {
-        croak "Unknown edge field type '$ft' for '$fieldname'";
-    }
-    return $val;
-}
-
-# Returns the edge_count field of a node
-sub get_edge_count( $heap, $idx ) {
-    return get_node_field( $heap, $idx, 'edge_count' )
-}
-
 sub filter_edges( $heap, $cb ) {
-    my $edges = $heap->{edges};
+    my $edges = $heap->edges;
     grep { $cb->($edges, $_) } 0..$heap->{snapshot}->{edge_count}-1
-}
-
-# Returns the node index of the target node
-sub get_edge_target( $heap, $idx ) {
-    my $v = get_edge_field( $heap, $idx, 'to_node' );
-    return $v / $node_size
 }
 
 # "Parent" nodes?
@@ -632,7 +382,7 @@ sub edge_ids_from_node( $heap, $node_idx ) {
         for my $idx ($#edge_offset..$node_idx-1) {
             #say "(build) Fetching index $idx";
             #$edge_offset += get_node_field($heap,$idx,'edge_count');
-            $edge_offset += get_edge_count($heap,$idx);
+            $edge_offset += $heap->get_edge_count($idx);
             $edge_offset[ $idx ] = $edge_offset;
             #say "Building offset $node_idx from $#edge_offset";
         };
@@ -648,11 +398,15 @@ sub edge_ids_from_node( $heap, $node_idx ) {
     }
     my $edge_offset = $edge_offset[ $node_idx ];
     #my $edges = get_node_field($heap,$node_idx,'edge_count');
-    my $edges = get_edge_count($heap,$node_idx);
+    my $edges = $heap->get_edge_count($node_idx);
+    croak "Weird edge count for node index $node_idx"
+        unless defined $edges;
+    croak "Too large edge count for node index $node_idx"
+        if $edges+$edge_offset > $heap->edges->@*;
 
     # XXX are these indices or ids?!
     # our subroutine name says ids
-    return @{ $heap->{edges} }[$edge_offset..$edge_offset+$edges]
+    return @{ $heap->edges }[$edge_offset..$edge_offset+$edges]
 }
 
 # "Child" nodes?
@@ -660,9 +414,9 @@ sub edge_ids_from_node( $heap, $node_idx ) {
 sub nodes_from_node( $heap, $node_idx ) {
     my @edges = edge_ids_from_node( $heap, $node_idx );
     my @node_idxs = map {
-        get_edge_target( $heap, $_ );
+        $heap->get_edge_target( $_ );
     } @edges;
-    return map { full_node( $heap, $_ ) } @node_idxs
+    return map { $heap->full_node( $_ ) } @node_idxs
 }
 
 sub nodes_with_string_id($heap,$string_id) {
@@ -672,7 +426,7 @@ sub nodes_with_string_id($heap,$string_id) {
     #    unless exists $node_field_index{'name'};
     #my $fi = $node_field_index{'name'};
     grep {
-        get_node_field( $heap, $_, 'name') eq $str
+        $heap->get_node_field( $_, 'name') eq $str
         # $n->[$idx*$node_size+$fi] == $string_id;
     } 0..$heap->{snapshot}->{node_count}-1
 }
@@ -698,11 +452,11 @@ sub nodes_with_string_id($heap,$string_id) {
 #find_value($heap,'dQw4w9WgXcQ');
 
 sub dump_node( $heap, $msg, @node_ids ) {
-    my @nodes = map { full_node($heap,$_) }
-                map { node_by_id( $heap, $_ ) } @node_ids;
+    my @nodes = map { $heap->full_node($_) }
+                map { $heap->node_by_id( $_ ) } @node_ids;
     for my $n (@nodes) {
         my @edge_ids = edge_ids_from_node( $heap, $n->{_idx} );
-        $n->{edges} = [map {full_edge($heap,$_)} @edge_ids ];
+        $n->{edges} = [map { $heap->full_edge($_)} @edge_ids ];
     };
 
     print "$msg: " . Dumper \@nodes;
@@ -716,8 +470,8 @@ sub _node_as_dot( $node ) {
 sub _edge_as_dot( $nid, $edge ) {
     # to_node is the _index_ of the first field of the node in the array!
     # NOT the index of the node...
-    my $node_idx = $edge->{to_node} / $node_size;
-    my $targ = get_node_field( $heap, $node_idx, 'id' );
+    my $node_idx = $edge->{to_node} / $heap->node_size;
+    my $targ = $heap->get_node_field( $node_idx, 'id' );
 
     my $label = $edge->{name_or_index};
     if( $label =~ /^\d+$/ ) {
@@ -730,12 +484,15 @@ sub _edge_as_dot( $nid, $edge ) {
 }
 
 sub dump_node_as_dot( $heap, $msg, @node_ids ) {
-    my @nodes = map { full_node($heap,$_) }
-                map { node_by_id( $heap, $_ ) }
+    use Data::Dumper;
+    warn Dumper \@node_ids
+        if grep { ! defined $_ } @node_ids;
+    my @nodes = map { $heap->full_node($_) }
+                map { $heap->node_by_id( $_ ) }
                 @node_ids;
     for my $n (@nodes) {
         my @edge_ids = edge_ids_from_node( $heap, $n->{_idx} );
-        $n->{edges} = [map {full_edge($heap,$_)} @edge_ids ];
+        $n->{edges} = [map {$heap->full_edge($_)} @edge_ids ];
     };
 
     my %leaves;
@@ -749,14 +506,14 @@ sub dump_node_as_dot( $heap, $msg, @node_ids ) {
         say _node_as_dot( $n );
 
         for my $e (@{$n->{edges}}) {
-            my $node_idx = $e->{to_node}/$node_size;
-            my $id = get_node_field( $heap, $node_idx, 'id');
+            my $node_idx = $e->{to_node}/$heap->node_size;
+            my $id = $heap->get_node_field( $node_idx, 'id');
             $leaves{ $id } = 1;
             say _edge_as_dot($n->{id}, $e);
         };
     };
     for my $nid (sort { $a <=> $b } keys %leaves) {
-        my $n = full_node( $heap, node_by_id( $heap, $nid ));
+        my $n = $heap->full_node( $heap->node_by_id( $nid ));
         say _node_as_dot( $n );
     };
 }
@@ -776,7 +533,7 @@ sub reachable( $heap, $start, $depth=1 ) {
     for my $d (1..$depth) {
         my %new;
         for my $nid (@curr) {
-            my $idx = node_by_id( $heap, $nid );
+            my $idx = $heap->node_by_id( $nid );
             my @reachable = nodes_from_node( $heap, $idx );
             warn sprintf "%d new nodes directly reachable from source set", scalar @reachable;
             for my $r (@reachable) {
@@ -827,6 +584,7 @@ sub node_ancestor_paths($heap, $prefix, $seen={}) {
     #say "Finding parents of $res[0]";
     my @ancestors;# = parents_idx( $heap, $res[0] );
     #say "ancestors: @ancestors";
+    my $dbh = $heap->dbh;
 
     # turn into view, node_parents
     # Maybe just do a recursive CTE here instead?!
@@ -855,7 +613,9 @@ SQL
 }
 
 my $str = 'bar';
-my $string = [find_string_exact($heap, $str)]->[0]->{index};
+my $string = [$heap->find_string_exact($str)]->[0]->{index};
+die "Could not find the exact string '$str' in the heap"
+    unless defined $string;
 say "Finding ancestors of $str (index $string)";
 my @path = node_ancestor_paths($heap, [$string]);
 say "digraph G {";
