@@ -261,7 +261,6 @@ $sth= $dbh->prepare( <<'SQL' );
       from object
     where id = ? +0
     order by relation, child_id
-    -- group by name, id, _idx
 SQL
 $sth->execute($obj);
 say DBIx::RunSQL->format_results( sth => $sth );
@@ -279,8 +278,11 @@ $sth= $dbh->prepare( <<'SQL' );
           , e.name_or_index as fieldname
           , child.id   as child_id
           , child._idx as child_idx
-          , child.type as child_type
           , child.name as child_name
+          , case when child.type = 'number' then e.name_or_index
+                 when child.type = 'string' then child.name
+                else 'Unknown type "' || child.type || '"'
+            end as child_value
         from node parent
         join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
         join node child on e._to_node_idx = child._idx
@@ -294,7 +296,7 @@ $sth= $dbh->prepare( <<'SQL' );
          -- nice try, but that won't hold up when trying to recursively fetch
          -- related object
          -- unless we do a recursive CTE, that is
-         , json_group_object(fieldname, child_name)
+         , json_group_object(fieldname, child_value)
       from object
     where id = ? +0
     group by name, id, _idx
