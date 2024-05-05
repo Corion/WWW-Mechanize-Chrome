@@ -186,11 +186,18 @@ sub full_edge( $self, $idx ) {
             $_ => $self->get_edge_field( $idx, $_ )
         } @{ $heap->{snapshot}->{meta}->{edge_fields} }
     };
+
+    if( $res->{type} eq 'element'
+        or $res->{type} eq 'hidden' ) {
+        # We don't want the string but the number as value:
+            $res->{name_or_index} = $self->get_edge_field( $idx, 'name_or_index', 1 )
+    }
+
     $res->{_to_node_idx} = $res->{to_node} / @{ $heap->{snapshot}->{meta}->{node_fields} };
     $res;
 }
 
-sub get_edge_field($self, $idx, $fieldname) {
+sub get_edge_field($self, $idx, $fieldname, $as_index=undef) {
     croak "Invalid edge field name '$fieldname'"
         unless exists $self->edge_field_index->{ $fieldname };
     croak "Invalid index"
@@ -216,7 +223,9 @@ sub get_edge_field($self, $idx, $fieldname) {
     } elsif( $ft eq 'string' ) {
         $val = $heap->{strings}->[$val]
     } elsif( $ft eq 'string_or_number' ) {
-        $val = $heap->{strings}->[$val] // $val
+        if( !$as_index ) {
+            $val = $heap->{strings}->[$val]
+        }
     } else {
         croak "Unknown edge field type '$ft' for '$fieldname'";
     }
