@@ -20,6 +20,7 @@ use DBD::SQLite;
 use DBD::SQLite::VirtualTable::PerlData;
 use DBIx::RunSQL;
 
+use Chrome::Heapdump;
 
 my $heapdump;
 if( 0 ) {
@@ -63,7 +64,7 @@ if( 0 ) {
     $heapdump = do { local $/; <$fh> };
 }
 
-my $heap = decode_json($heapdump);
+my $heap = Chrome::Heapdump->from_string($heapdump);
 
 # Now, search the heap for an object containing our magic strings:
 #
