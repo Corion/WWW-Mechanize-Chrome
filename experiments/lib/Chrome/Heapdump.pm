@@ -190,7 +190,11 @@ sub full_edge( $self, $idx ) {
     if( $res->{type} eq 'element'
         or $res->{type} eq 'hidden' ) {
         # We don't want the string but the number as value:
-            $res->{name_or_index} = $self->get_edge_field( $idx, 'name_or_index', 1 )
+        $res->{index} = $res->{name_or_index} = $self->get_edge_field( $idx, 'name_or_index', 1 );
+        $res->{name} = undef;
+    } else {
+        $res->{name} = $res->{name_or_index};
+        $res->{index} = undef;
     }
 
     $res->{_to_node_idx} = $res->{to_node} / @{ $heap->{snapshot}->{meta}->{node_fields} };
