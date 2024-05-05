@@ -181,43 +181,10 @@ $sth->execute(0+$obj);
 say DBIx::RunSQL->format_results( sth => $sth );
 
 # turn into view, node_children / child_nodes
-say "--- All object properties";
-$sth= $dbh->prepare( <<'SQL' );
-    with object as (
-        select
-            parent.id as parent_id
-          , parent._idx as parent_idx
-          , parent.type as parent_type
-          , parent.name as parent_name
-          , e.name_or_index as relation
-          , child.id as child_id
-          , child._idx as child_idx
-          , child.type as child_type
-          , child.name as child_name
-        from node parent
-        left join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
-        left join node child on e._to_node_idx = child._idx
-       where parent.type = 'object'
-         and child.type not in ('hidden')
-    )
-    select
-           parent_name
-         , parent_id as id
-         , parent_idx
-         , child_id
-         , relation
-         , child_type
-         , child_name
-      from object
-    where id = ? +0
-    -- group by name, id, _idx
-SQL
-$sth->execute($obj);
-say DBIx::RunSQL->format_results( sth => $sth );
+say "--- All object properties of $obj";
+dump_object( $obj );
 
-# turn into view, node_children / child_nodes
 say "--- How an array looks";
-# Note that the relation is the value for smi numbers (?)
 $obj = $dbh->selectall_arrayref(<<'SQL', {}, $obj)->[0]->[0];
     select child.id
       from node parent
@@ -268,6 +235,7 @@ SQL
     say DBIx::RunSQL->format_results( sth => $sth );
 }
 dump_object($obj);
+dump_object(22297);
 
 # turn into view, node_children / child_nodes
 # Actually, this isn't correct - "smi number" should not be a relation but a value
