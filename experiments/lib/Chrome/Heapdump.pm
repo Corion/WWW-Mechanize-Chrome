@@ -318,7 +318,7 @@ sub find_string_exact($self, $value, $path='/strings') {
 #
 sub iterate($self, $data, $visit, $path='', $vis=$path, $seen={}) {
     # Check if we find the hash keys:
-    if( ! $seen{ $vis }++ ) {
+    if( ! $seen->{ $vis }++ ) {
         print "$vis\n";
     };
     $visit->($data, $path);
