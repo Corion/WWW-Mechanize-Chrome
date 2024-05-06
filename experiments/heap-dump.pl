@@ -206,6 +206,9 @@ warn Dumper $heap->get_object( $obj );
 dump_object(22391);
 warn Dumper $heap->get_object( 22391 ); # complex_struct
 
+dump_object(24229); # a closure
+
+
 # turn into view, node_children / child_nodes
 # Actually, this isn't correct - "smi number" should not be a relation but a value
 say "-- Reconstructed JSON object";
