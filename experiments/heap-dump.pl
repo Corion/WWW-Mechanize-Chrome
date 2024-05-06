@@ -571,11 +571,13 @@ sub node_ancestor_paths($heap, $prefix, $seen={}) {
     # Maybe just do a recursive CTE here instead?!
     my $sth= $dbh->prepare( <<'SQL' );
         select
-            *
+            parent.*
         from node parent
         join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
         join node child on child._idx = e._to_node_idx
-        where child._idx = 0+?;
+        where child._idx = 0+?
+          and parent.type <> 'hidden'
+        ;
 SQL
     $sth->execute($res[0]);
     say "-- parents of $res[0] (index)";
