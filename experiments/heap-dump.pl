@@ -203,6 +203,9 @@ dump_object(22297);
 use Data::Dumper;
 warn Dumper $heap->get_object( $obj );
 
+dump_object(22391);
+warn Dumper $heap->get_object( 22391 ); # complex_struct
+
 # turn into view, node_children / child_nodes
 # Actually, this isn't correct - "smi number" should not be a relation but a value
 say "-- Reconstructed JSON object";

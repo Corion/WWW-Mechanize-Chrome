@@ -398,6 +398,29 @@ sub get_object( $self, $obj ) {
                 $res->[$1] = $r->{child_value};
             }
         }
+    } elsif( $object_type->{child_name} eq 'Object' ) {
+        $res = {
+            __proto__ => $object_type->{child_name},
+        };
+        for my $r ($info->@*) {
+            if( $r->{child_type} eq 'object' ) {
+                # Have an option to be shallow here!
+                if( $r->{relation} ne '__proto__' ) {
+                    #say sprintf "Not recreating recursive child %d", $r->{child_id};
+                    #$res->{$r->{relation}} = undef;
+                    $res->{$r->{relation}} = $self->get_object($r->{child_id});
+                };
+                #$res->{$r->{relation}} = $self->get_object( $child_id );
+            } elsif( $r->{child_type} eq 'string' ) {
+                $res->{$r->{relation}} = $r->{child_value};
+            } elsif( $r->{child_type} eq 'number' ) {
+                $res->{$r->{relation}} = $r->{child_value};
+            } elsif( $r->{child_type} eq 'object shape' ) {
+                # ignore
+            } else {
+                croak sprintf "Don't know how to recreate child type '%s'", $r->{child_type};
+            }
+        }
     } else {
         croak sprintf "Don't know how to recreate type '%s'", $object_type->{child_name};
     }
