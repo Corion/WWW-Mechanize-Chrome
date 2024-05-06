@@ -316,8 +316,7 @@ sub find_string_exact($self, $value, $path='/strings') {
 
 # Now, search the heap for an object containing our magic strings:
 #
-my %seen;
-sub iterate($self, $data, $visit, $path='', $vis=$path) {
+sub iterate($self, $data, $visit, $path='', $vis=$path, $seen={}) {
     # Check if we find the hash keys:
     if( ! $seen{ $vis }++ ) {
         print "$vis\n";
@@ -329,7 +328,7 @@ sub iterate($self, $data, $visit, $path='', $vis=$path) {
             if( ref $val) {
                 my $sub = "$path/$key";
                 my $subvis = $sub;
-                $self->iterate( $val, $visit, $sub, $subvis );
+                $self->iterate( $val, $visit, $sub, $subvis, $seen );
             }
         }
     } elsif( ref $data eq 'ARRAY' ) {
@@ -338,7 +337,7 @@ sub iterate($self, $data, $visit, $path='', $vis=$path) {
             if( ref $val) {
                 my $sub = "$path\[$i\]";
                 my $subvis = "$path\[.\]";
-                $self->iterate( $val, $visit, $sub, $subvis );
+                $self->iterate( $val, $visit, $sub, $subvis, $seen );
             }
         }
     };
