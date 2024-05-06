@@ -561,9 +561,7 @@ root node. Returns the paths as indices (?!)
 =cut
 
 sub node_ancestor_paths($heap, $prefix, $seen={}) {
-    my @res = @$prefix;
     #say "Finding parents of $res[0]";
-    my @ancestors;# = parents_idx( $heap, $res[0] );
     #say "ancestors: @ancestors";
     my $dbh = $heap->dbh;
 
@@ -579,20 +577,28 @@ sub node_ancestor_paths($heap, $prefix, $seen={}) {
           and parent.type <> 'hidden'
         ;
 SQL
-    $sth->execute($res[0]);
-    say "-- parents of $res[0] (index)";
-    say DBIx::RunSQL->format_results( sth => $sth );
-    $sth->execute(0+$res[0]);
-    @ancestors = map { $_->{id} } $sth->fetchall_arrayref({})->@*;
 
-    if( @ancestors ) {
-        return map {
-            node_ancestor_paths( $heap, [$_, @res], $seen )
+    my @res;
+    my $found = 1;
+    my @new = $prefix->@*;
+    while( @new ) {
+        die if @new > 10;
+        my @ancestors;
+        for my $r (@new) {
+            $sth->execute(0+$r);
+            say "-- parents of $r (index)";
+            say DBIx::RunSQL->format_results( sth => $sth );
+            $sth->execute(0+$r);
+            my @found = map { $_->{_idx} } $sth->fetchall_arrayref({})->@*;
+
+            say "Already know $_" for grep { $seen->{$_} } @found;
+            @found = grep { ! $seen->{$_}++ } @found;
+            push @ancestors, @found;
         }
-        grep { ! $seen->{$_}++ } @ancestors;
-    } else {
-        return $prefix
-    }
+        last if not @ancestors;
+        @new = @ancestors;
+    };
+    return @res;
 }
 
 my $str = 'bar';
