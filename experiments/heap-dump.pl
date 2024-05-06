@@ -15,9 +15,6 @@ Log::Log4perl->easy_init($WARN);
 
 # We use an in-memory SQLite database as our memory structure to
 # better be able to query the graph
-use DBI;
-use DBD::SQLite;
-use DBD::SQLite::VirtualTable::PerlData;
 use DBIx::RunSQL;
 
 use Chrome::Heapdump;

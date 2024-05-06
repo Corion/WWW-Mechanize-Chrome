@@ -2,8 +2,12 @@ package Chrome::Heapdump 0.01;
 use 5.020;
 use Moo 2;
 use Carp 'croak';
-
 use experimental 'signatures';
+
+use DBI;
+use DBD::SQLite;
+use DBD::SQLite::VirtualTable::PerlData;
+
 use JSON::XS 'decode_json';
 use File::Temp 'tempfile';
 
