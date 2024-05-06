@@ -347,6 +347,63 @@ sub iterate($self, $data, $visit, $path='', $vis=$path, $seen={}) {
     };
 }
 
+sub object_info( $self, $obj_id ) {
+    my $sth = $self->dbh->prepare( <<'SQL' );
+    with object as (
+        select
+            parent.id as parent_id
+          , parent._idx as parent_idx
+          , parent.type as parent_type
+          , parent.name as parent_name
+          , e.name_or_index as relation
+          , child.id as child_id
+          , child._idx as child_idx
+          , child.type as child_type
+          , child.name as child_name
+          , case when child.type = 'number' then e.name_or_index
+                 when child.type = 'string' then child.name
+                else 'Unknown type "' || child.type || '"'
+            end as child_value
+        from node parent
+        left join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
+        left join node child on e._to_node_idx = child._idx
+    )
+    select
+           parent_name
+         , parent_id as id
+         , parent_idx
+         , child_id
+         , relation
+         , child_type
+         , child_name
+         , child_value
+      from object
+    where id = ? +0
+    order by relation, child_id
+SQL
+    $sth->execute($obj_id);
+    return $sth
+}
+
+sub get_object( $self, $obj ) {
+    my $info = $self->object_info( $obj )->fetchall_arrayref( {} );
+    (my $object_type) = grep { $_->{relation} eq '__proto__' } $info->@*;
+
+    my $res;
+    if( $object_type->{child_name} eq 'Array' ) {
+        $res = [];
+        for my $r ($info->@*) {
+            if( $r->{relation} =~ /^(\d+)$/ ) {
+                # We don't yet handle nested structures
+                $res->[$1] = $r->{child_value};
+            }
+        }
+    } else {
+        croak sprintf "Don't know how to recreate type '%s'", $object_type->{child_name};
+    }
+    return $res
+}
+
 1;
 
 =head1 SEE ALSO

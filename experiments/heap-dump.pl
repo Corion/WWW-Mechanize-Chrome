@@ -193,50 +193,15 @@ SQL
 
 say "(array 'items': $obj)";
 
-sub object_info( $obj_id ) {
-    my $sth = $dbh->prepare( <<'SQL' );
-    with object as (
-        select
-            parent.id as parent_id
-          , parent._idx as parent_idx
-          , parent.type as parent_type
-          , parent.name as parent_name
-          , e.name_or_index as relation
-          , child.id as child_id
-          , child._idx as child_idx
-          , child.type as child_type
-          , child.name as child_name
-          , case when child.type = 'number' then e.name_or_index
-                 when child.type = 'string' then child.name
-                else 'Unknown type "' || child.type || '"'
-            end as child_value
-        from node parent
-        left join edge e on e._idx between parent.edge_offset and parent.edge_offset+parent.edge_count-1
-        left join node child on e._to_node_idx = child._idx
-    )
-    select
-           parent_name
-         , parent_id as id
-         , parent_idx
-         , child_id
-         , relation
-         , child_type
-         , child_name
-         , child_value
-      from object
-    where id = ? +0
-    order by relation, child_id
-SQL
-    $sth->execute($obj_id);
-    return $sth
-}
-
 sub dump_object( $obj ) {
-    my $sth = object_info( $obj );
+    my $sth = $heap->object_info( $obj );
     say DBIx::RunSQL->format_results( sth => $sth );
 }
 dump_object($obj);
 dump_object(22297);
+
+use Data::Dumper;
+warn Dumper $heap->get_object( $obj );
 
 # turn into view, node_children / child_nodes
 # Actually, this isn't correct - "smi number" should not be a relation but a value
