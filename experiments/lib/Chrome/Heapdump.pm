@@ -344,3 +344,11 @@ sub iterate($self, $data, $visit, $path='', $vis=$path, $seen={}) {
 }
 
 1;
+
+=head1 SEE ALSO
+
+L<https://learn.microsoft.com/en-us/microsoft-edge/devtools-guide-chromium/memory-problems/heap-snapshot-schema>
+
+A good introduction to the heapdump schema
+
+=cut
