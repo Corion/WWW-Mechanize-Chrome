@@ -193,9 +193,8 @@ SQL
 
 say "(array 'items': $obj)";
 
-sub dump_object( $obj ) {
-
-    my $sth= $dbh->prepare( <<'SQL' );
+sub object_info( $obj_id ) {
+    my $sth = $dbh->prepare( <<'SQL' );
     with object as (
         select
             parent.id as parent_id
@@ -228,7 +227,12 @@ sub dump_object( $obj ) {
     where id = ? +0
     order by relation, child_id
 SQL
-    $sth->execute($obj);
+    $sth->execute($obj_id);
+    return $sth
+}
+
+sub dump_object( $obj ) {
+    my $sth = object_info( $obj );
     say DBIx::RunSQL->format_results( sth => $sth );
 }
 dump_object($obj);
