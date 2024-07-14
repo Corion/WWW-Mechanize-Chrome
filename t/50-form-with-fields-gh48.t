@@ -64,7 +64,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     };
     my $err = $@;
     is $err, '', "No fatal error when retrieving ->current_form() again";
-    if( isn't $f, undef, "We have a form" ) {
+    if( isnt $f, undef, "We have a form" ) {
         note "Retrieving HTML from ->current_form()";
         my $html = $mech->current_form()->get_attribute('outerHTML');
         like $html, qr/^<form/i, "The form outer HTML looks like we expect";
