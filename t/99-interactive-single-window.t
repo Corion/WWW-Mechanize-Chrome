@@ -4,7 +4,6 @@ use warnings;
 use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;
 use Data::Dumper;
-use Filter::signatures;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
