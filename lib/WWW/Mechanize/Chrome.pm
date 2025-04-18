@@ -6730,6 +6730,10 @@ See L<WWW::Mechanize::Chrome::Install>
 
 =item *
 
+L<https://chromedevtools.github.io/devtools-protocol/> - the Chrome DevTools Protocol
+
+=item *
+
 L<https://developer.chrome.com/devtools/docs/debugging-clients> - the Chrome
 DevTools homepage
 
@@ -6767,6 +6771,8 @@ browser
 L<https://multilogin.com/why-mimicking-a-device-is-almost-impossible/>
 
 L<https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth>
+
+L<https://rebrowser.net/blog/how-to-access-main-context-objects-from-isolated-context-in-puppeteer-and-playwright>
 
 =head1 REPOSITORY
 
