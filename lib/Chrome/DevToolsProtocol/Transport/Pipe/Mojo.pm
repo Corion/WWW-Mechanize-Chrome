@@ -88,7 +88,10 @@ sub close( $self ) {
 }
 
 sub future {
-    Future::Mojo->new
+    my $f = Future::Mojo->new;
+    # for tracing where futures get lost later
+    # use Carp 'cluck'; cluck "new: $f";
+    return $f
 }
 
 =head2 C<< $transport->sleep( $seconds ) >>
