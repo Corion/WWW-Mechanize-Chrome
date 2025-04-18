@@ -6601,7 +6601,9 @@ sub _handleScreencastFrame( $self, $frame ) {
         sessionId => 0+$frame->{params}->{sessionId} )->then(sub {
             $s->log('trace', 'Screencast frame acknowledged');
             $frame->{params}->{data} = decode_base64( $frame->{params}->{data} );
-            $s->{ screenFrameCallback }->( $s, $frame->{params} );
+            if( my $cb = $s->{ screenFrameCallback }) {
+                $cb->( $s, $frame->{params} );
+            }
             Future->done();
     })->retain;
 }
