@@ -2059,14 +2059,20 @@ Tear down all connections and shut down Chrome.
 
 =cut
 
+my @closing;
 sub close {
     my $pids = delete $_[0]->{pid};
     #if( $_[0]->{autoclose} and $_[0]->tab and my $tab_id = $_[0]->tab->{id} ) {
     #    $_[0]->target->close_tab({ id => $tab_id })->get();
     #};
     if( $_[0]->{autoclose} and $_[0]->target and $_[0]->tab  ) {
-        $_[0]->target->close->retain();
-        #$_[0]->target->close->get(); # just to see if there is an error
+        my $c = $_[0]->target->close;
+        $c->set_label('close()');
+        if( ${^GLOBAL_PHASE} eq 'DESTRUCT' ) {
+            $c->retain();
+        } else {
+            $c->get; # just to see if there is an error
+        }
     };
 
     #if( $pid and $_[0]->{cached_version} > 65) {
