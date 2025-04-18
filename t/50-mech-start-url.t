@@ -38,6 +38,7 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
 
+    $mech->sleep(1);
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     is $mech->uri, $url, "We moved to the start URL instead of about:blank";
 });

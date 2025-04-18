@@ -224,7 +224,8 @@ will be C<TERM>, on OSX and Windows it will be C<KILL>.
 
 By default, the browser will open with a blank tab. Use the C<start_url> option
 to open the browser to the specified URL. More typically, the C<< ->get >>
-method is use to navigate to URLs.
+method is use to navigate to URLs. Using C<start_url> means you don't
+get notified when the URL has finished loading.
 
 =item B<launch_arg>
 
@@ -1165,6 +1166,7 @@ sub _setup_driver_future( $self, %options ) {
         # starts slow
         sleep 1;
     };
+
     $self->target->connect(
         new_tab          => !$options{ existing_tab } || $options{ new_tab },
         tab              => $options{ tab },
