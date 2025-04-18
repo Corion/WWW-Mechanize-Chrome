@@ -165,6 +165,9 @@ them in a Perl object to provide the easy-to-use methods documented here.
     executable if you are having issues. You can also set the name of the executable
     file with the `$ENV{CHROME_BIN}` environment variable.
 
+    Additional arguments for the command are also read from the `<$ENV{WWW_MECHANIZE_CHROME_ARGS}`>
+    variable and prepended to the `launch_arg` array.
+
 - **cleanup\_signal**
 
         cleanup_signal => 'SIGKILL'
@@ -197,7 +200,19 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
         '--load-extension'
         '--no-sandbox'
+
+    If you don't want the browser to use your OS password store, add:
+
         '--password-store=basic'
+
+    Also see
+    [https://peter.sh/experiments/chromium-command-line-switches/](https://peter.sh/experiments/chromium-command-line-switches/)
+    for a list of command line arguments that Chrome actually has in the source
+    code.
+
+    Additional arguments for the command are also read from the
+    `<$ENV{WWW_MECHANIZE_CHROME_ARGS}`>
+    variable and prepended to the `launch_arg` array.
 
 - **separate\_session**
 
@@ -1901,6 +1916,7 @@ See [WWW::Mechanize::Chrome::Install](https://metacpan.org/pod/WWW%3A%3AMechaniz
 
 # SEE ALSO
 
+- [https://chromedevtools.github.io/devtools-protocol/](https://chromedevtools.github.io/devtools-protocol/) - the Chrome DevTools Protocol
 - [https://developer.chrome.com/devtools/docs/debugging-clients](https://developer.chrome.com/devtools/docs/debugging-clients) - the Chrome
 DevTools homepage
 - [https://github.com/GoogleChrome/lighthouse](https://github.com/GoogleChrome/lighthouse) - Google Lighthouse, the main
@@ -1921,6 +1937,8 @@ browser
 [https://multilogin.com/why-mimicking-a-device-is-almost-impossible/](https://multilogin.com/why-mimicking-a-device-is-almost-impossible/)
 
 [https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth](https://github.com/berstend/puppeteer-extra/tree/master/packages/puppeteer-extra-plugin-stealth)
+
+[https://rebrowser.net/blog/how-to-access-main-context-objects-from-isolated-context-in-puppeteer-and-playwright](https://rebrowser.net/blog/how-to-access-main-context-objects-from-isolated-context-in-puppeteer-and-playwright)
 
 # REPOSITORY
 

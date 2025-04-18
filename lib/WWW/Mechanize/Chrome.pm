@@ -28,6 +28,7 @@ use POSIX ':sys_wait_h';
 use Future::Utils 'repeat';
 use Time::HiRes ();
 use Encode 'encode';
+use Text::ParseWords 'shellwords';
 
 our $VERSION = '0.73';
 our @CARP_NOT;
@@ -207,6 +208,9 @@ Results my vary for your operating system. Use the full path to the browser's
 executable if you are having issues. You can also set the name of the executable
 file with the C<$ENV{CHROME_BIN}> environment variable.
 
+Additional arguments for the command are also read from the C<<$ENV{WWW_MECHANIZE_CHROME_ARGS}>>
+variable and prepended to the C<launch_arg> array.
+
 =item B<cleanup_signal>
 
     cleanup_signal => 'SIGKILL'
@@ -239,12 +243,20 @@ Examples of other useful parameters include:
 
     '--load-extension'
     '--no-sandbox'
+
+If you don't want the browser to use your OS password store, add:
+
     '--password-store=basic'
 
 Also see
 L<https://peter.sh/experiments/chromium-command-line-switches/>
 for a list of command line arguments that Chrome actually has in the source
 code.
+
+Additional arguments for the command are also read from the
+C<<$ENV{WWW_MECHANIZE_CHROME_ARGS}>>
+variable and prepended to the C<launch_arg> array.
+
 
 =item B<separate_session>
 
@@ -448,8 +460,12 @@ sub build_command_line {
     $options->{ no_sandbox } = 1
         if $is_root;     # We need this when running as root
 
-    $options->{ launch_arg } ||= [];
+    $options->{ launch_arg } //= [];
     $options->{ exclude_switches } ||= [];
+
+    if( my $env = $ENV{WWW_MECHANIZE_CHROME_ARGS}) {
+        unshift $options->{launch_arg}->@*, shellwords( $env );
+    }
 
     # We want to read back the URL we can use to talk to Chrome
     if( $^O =~ /mswin/i ) {
