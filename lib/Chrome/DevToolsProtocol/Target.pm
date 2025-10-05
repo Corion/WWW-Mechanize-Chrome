@@ -392,7 +392,9 @@ Shut down the connection to our tab and close it.
 =cut
 
 sub close( $self ) {
-    $self->transport->closeTarget(targetId => $self->targetId );
+    if( my $t = $self->transport) {
+        $t->closeTarget(targetId => $self->targetId );
+    }
 }
 
 sub DESTROY( $self ) {
