@@ -1227,8 +1227,8 @@ sub _connect( $self, %options ) {
             $s->target->send_message('Page.enable'),    # capture DOMLoaded
             $s->target->send_message('Network.enable'), # capture network
             $s->target->send_message('Runtime.enable'), # capture console messages
-            #$self->target->send_message('Debugger.enable'), # capture "script compiled" messages
-            $s->set_download_directory_future($self->{download_directory}),
+            $s->target->send_message('Debugger.enable'), # capture "script compiled" messages
+            $s->set_download_directory_future($s->{download_directory}),
 
             $s->_listen_for_popup_f(1),
 
