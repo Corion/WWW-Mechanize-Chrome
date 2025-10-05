@@ -2154,7 +2154,6 @@ sub kill_child( $self, $signal, $pids, $wait_file ) {
 }
 
 sub DESTROY {
-    #warn "Closing mechanize";
     $_[0]->close();
     %{ $_[0] }= (); # clean out all other held references
 }
