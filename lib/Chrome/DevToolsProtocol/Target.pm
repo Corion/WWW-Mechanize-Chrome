@@ -613,8 +613,9 @@ sub _send_packet( $self, $response, $method, %params ) {
             targetId => $s->targetId,
             maybe sessionId => $s->sessionId,
         );
+        $result->set_label('Target.sendMessageToTarget');
     } catch {
-        $self->log('error', $_ );
+        $s->log('error', $_ );
         $result = Future->fail( $_ );
     };
     return $result
