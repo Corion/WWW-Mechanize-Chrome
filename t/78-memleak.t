@@ -19,7 +19,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
-my $testcount = 13;
+my $testcount = 14;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -80,15 +80,21 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $mech = new_mech( headless => 1 );
     no_memory_cycles_ok( $mech, "at the start" );
     my $old_destroy = $mech->can('DESTROY');
+
     my $called = 0;
     no warnings 'redefine';
     local *WWW::Mechanize::Chrome::DESTROY = sub {
         $called++;
         goto &$old_destroy;
     };
+    undef $mech;
+    is $called, 1, "We destroyed our object immediately after loading";
 
+    note "Constructing fresh mechanize";
+    $mech = new_mech( headless => 1 );
     load_file_ok($mech, 'xhtml.xhtml', javascript => 1);
     no_memory_cycles_ok( $mech, "after loading a page" );
+    $called = 0;
     undef $mech;
     is $called, 1, "We destroyed our object after loading";
 
