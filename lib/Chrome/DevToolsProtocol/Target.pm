@@ -210,7 +210,7 @@ sub add_listener( $self, $event, $callback ) {
     $self->listener->{ $event } ||= [];
     push @{ $self->listener->{ $event }}, $listener;
     weaken $self->listener->{ $event }->[-1];
-    $listener
+    return $listener
 }
 
 =head2 C<< ->remove_listener >>
