@@ -1257,6 +1257,7 @@ sub _connect( $self, %options ) {
                 $s->_clear_cached_document;
             });
         });
+        return $res
     });
 
     return $res
@@ -2976,19 +2977,21 @@ about the current directory of your Perl script.
 =cut
 
 sub set_download_directory_future( $self, $dir="" ) {
+    warn "Set_download_directory '$dir'";
     $self->{download_directory} = $dir;
     my $res;
     if( "" eq $dir ) {
         $res = $self->target->send_message('Page.setDownloadBehavior',
             behavior => 'deny',
-        )
+        );
+
     } else {
         $res = $self->target->send_message('Page.setDownloadBehavior',
             behavior => 'allow',
             downloadPath => $dir
         )
     };
-    $res
+    return $res
 };
 
 sub set_download_directory( $self, $dir="" ) {
