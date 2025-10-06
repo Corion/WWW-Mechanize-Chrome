@@ -521,6 +521,8 @@ sub on_response( $self, $connection, $message ) {
 
         } elsif( $response->{error} ) {
             $self->log( 'debug', "Replying to error $response->{id}", $response );
+            # It would be nice if Future had ->croak(), so we could report
+            # the error on the line that originally called us maybe
             $receiver->die( join "\n", $response->{error}->{message},$response->{error}->{data} // '',$response->{error}->{code} // '');
         } else {
             $self->log( 'trace', "Replying to $response->{id}", $response );
@@ -587,18 +589,18 @@ sub _send_packet( $self, $response, $method, %params ) {
     weaken $s;
 
     my $payload = eval {
-        $self->json->encode({
+        $s->json->encode({
             id     => 0+$id,
             method => $method,
             params => \%params
         });
     };
     if( my $err = $@ ) {
-        $self->log('error', $@ );
-        $self->log('error', Dumper \%params );
+        $s->log('error', $@ );
+        $s->log('error', Dumper \%params );
     };
 
-    $self->log( 'trace', "Sent message", $payload );
+    $s->log( 'trace', "Sent message", $payload );
     my $result;
     try {
         # this is half right - we get an ack when the message was accepted
