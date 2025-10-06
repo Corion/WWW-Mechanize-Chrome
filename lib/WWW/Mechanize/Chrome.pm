@@ -30,7 +30,7 @@ use Time::HiRes ();
 use Encode 'encode';
 use Text::ParseWords 'shellwords';
 
-our $VERSION = '0.73';
+our $VERSION = '0.74';
 our @CARP_NOT;
 
 # We don't yet inherit from Moo 2, so patch up things manually
@@ -2976,7 +2976,6 @@ about the current directory of your Perl script.
 =cut
 
 sub set_download_directory_future( $self, $dir="" ) {
-    warn "Set_download_directory '$dir'";
     $self->{download_directory} = $dir;
     my $res;
     if( "" eq $dir ) {

@@ -44,6 +44,16 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.74 2025-10-06
+    * Fix (small, but persistent) memory leak. Letting $mech go out of scope
+      should now destroy it again properly. (Andrew Ruthven)
+    * Support the WWW_MECHANIZE_CHROME_ARGS environment variable
+    * Documentation updates
+    * Allow connecting to Chrome Apps
+    * Support --silent-launch Chrome option
+    * Update for the Test::More::isnt() function
+    * Support setting browser window bounds using ->setWindowBounds()
+
 0.73 2024-03-29
     * Tests should not hang when run as root now
     * Sandbox is automatically disabled when running as root

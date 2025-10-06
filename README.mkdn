@@ -181,7 +181,8 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
     By default, the browser will open with a blank tab. Use the `start_url` option
     to open the browser to the specified URL. More typically, the `->get`
-    method is use to navigate to URLs.
+    method is use to navigate to URLs. Using `start_url` means you don't
+    get notified when the URL has finished loading.
 
 - **launch\_arg**
 
