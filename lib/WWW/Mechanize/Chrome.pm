@@ -3343,6 +3343,9 @@ sub _cached_document($self) {
             #warn "Have fresh document";
             $s->{_document} = $d;
             Future->done( $s->{_document} )
+        })->catch(sub(@error) {
+            use Data::Dumper;
+            warn "Error while retrieving document:".Dumper \@error;
         });
     }
 }
@@ -3526,6 +3529,10 @@ sub update_html_future( $self, $content ) {
                 warn Dumper $nodeInfo;
                 $self->target->send_message('DOM.requestNode', objectId => $nodeInfo->{object}->{objectId})
                 #return Future->done( $nodeInfo->{node}->{nodeId} )
+            })->catch(sub( @error ) {
+                use Data::Dumper;
+                warn "Couldn't find node: @error";
+                warn Dumper \@error;
             })->then(sub ( $node ) {
 
                 # Implicitly, @parentNodes has been filled ...
