@@ -44,6 +44,10 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.75 to be released
+    * When encountering bad/unknown Chrome behaviour, return error 599 instead
+      of crashing the script using C<die>.
+
 0.74 2025-10-06
     * Fix (small, but persistent) memory leak. Letting $mech go out of scope
       should now destroy it again properly. (Andrew Ruthven)

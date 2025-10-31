@@ -161,7 +161,10 @@ sub fetchNode( $class, %options ) {
             %info = (%info, %{$info->{node}}, nodeId => 0+$nodeId);
 
             Future->done( \%info );
-        });
+        })->catch( sub(@error) {
+            warn "Couldn't resolve node $nodeId!";
+            use Data::Dumper; warn Dumper \@error;
+        })
     };
     if( $attributes ) {
         $attributes = Future->done( $attributes )
@@ -218,10 +221,17 @@ sub _fetchObjectId( $self ) {
         return Future->done( $self->{objectId} )
     } else {
         weaken(my $s=$self);
-        $self->driver->send_message('DOM.resolveNode', nodeId => 0+$self->nodeId)->then(sub( $obj ) {
+        my $nodeId = 0+$s->nodeId;
+        $s->{_fetchObjectId} =
+        $self->driver->send_message('DOM.resolveNode', nodeId => $nodeId)->then(sub( $obj ) {
             $s->{objectId} = $obj->{object}->{objectId};
             Future->done( $obj->{object}->{objectId} );
+        })->catch(sub(@error) {
+            # ignore this error here and silence it
+            $s->{_fetchObjectId}->cancel;
+            delete $s->{_fetchObjectId};
         });
+        #);
     }
 }
 

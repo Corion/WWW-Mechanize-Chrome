@@ -2846,11 +2846,18 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
 
     } else {
         require Data::Dumper;
-        warn Data::Dumper::Dumper( $events );
-        die join " ", "Chrome behaviour problem: Didn't see a",
+        $response = HTTP::Response->new(
+            599, # internal error
+            'Cannot synthesize response',
+            HTTP::Headers->new(),
+            join "\n",
+                Data::Dumper::Dumper( $events ),
+                join " ", "Chrome behaviour problem: Didn't see a",
                       "'Network.responseReceived' event for frameId $frameId,",
                       "requestId $requestId, cannot synthesize response.",
                       "I saw " . join ",", sort keys %events;
+
+        );
     };
     $response
 }
