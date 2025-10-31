@@ -30,7 +30,7 @@ use Time::HiRes ();
 use Encode 'encode';
 use Text::ParseWords 'shellwords';
 
-our $VERSION = '0.74';
+our $VERSION = '0.75';
 our @CARP_NOT;
 
 # We don't yet inherit from Moo 2, so patch up things manually
@@ -2855,8 +2855,7 @@ sub httpMessageFromEvents( $self, $frameId, $events, $url ) {
                 join " ", "Chrome behaviour problem: Didn't see a",
                       "'Network.responseReceived' event for frameId $frameId,",
                       "requestId $requestId, cannot synthesize response.",
-                      "I saw " . join ",", sort keys %events;
-
+                      "I saw " . join ",", sort keys %events
         );
     };
     $response

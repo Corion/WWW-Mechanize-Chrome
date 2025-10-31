@@ -197,8 +197,8 @@ sub print_example {
 
     print $verbatim, "\n\n";
 
-    print 'Download this example: L<http://cpansearch.perl.org/src/CORION/';
-    print "WWW-Mechanize-Chrome-$version/examples/$example>\n\n";
+    print 'Download this example: L<https://metacpan.org/release/CORION/';
+    print "WWW-Mechanize-Chrome-$version/source/examples/$example>\n\n";
 }
 
 ###############################################################################

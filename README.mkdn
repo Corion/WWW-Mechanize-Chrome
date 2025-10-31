@@ -1994,7 +1994,7 @@ Joshua Pollack
 
 # COPYRIGHT (c)
 
-Copyright 2010-2024 by Max Maischein `corion@cpan.org`.
+Copyright 2010-2026 by Max Maischein `corion@cpan.org`.
 
 # LICENSE
 
