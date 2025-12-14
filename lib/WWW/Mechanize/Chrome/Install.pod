@@ -11,7 +11,7 @@ C<WWW::Mechanize::Chrome> will do its best to locate Chrome's executable file
 on your system. With any luck, it will find the executable you want to use. If
 C<WWW::Mechanize::Chrome> does not find Chrome on your system or you want to
 use a different executable, you can use the C<launch_exe> constructor argument
-to tell C<WWW::Mechanize::Chrome> where to find it. You can alse set the
+to tell C<WWW::Mechanize::Chrome> where to find it. You can also set the
 C<CHROME_BIN> environment variable to the absolute path of the executable.
 
 =head2 Test the C<chrome> executable
@@ -24,7 +24,7 @@ C<chrome-browser --version>
 
 and you should see something like C<Google Chrome 67.0.3396.99> returned.
 
-Note that the command you run will vary based on your operating sytem and
+Note that the command you run will vary based on your operating system and
 possibly the version of Chrome installed.
 
 On a Debian system, for example, the command will most likely be something

@@ -98,7 +98,7 @@ run with with DevTools.
 =head2 A Brief Operational Overview
 
 C<WWW::Mechanize::Chrome> (WMC) leverages developer tools built into Chrome and
-Chrome-like browsers to control a browser instance programatically. You can use
+Chrome-like browsers to control a browser instance programmatically. You can use
 WMC to automate tedious tasks, test web applications, and perform web scraping
 operations.
 
@@ -3260,7 +3260,7 @@ sub uri( $self ) {
 Loads content into pages that have "infinite scroll" capabilities by scrolling
 to the bottom of the web page and waiting up to the number of seconds, as set by
 the optional C<$wait_time_in_seconds> argument, for the browser to load more
-content. The default is to wait up to 20 seconds. For reasonbly fast sites,
+content. The default is to wait up to 20 seconds. For reasonably fast sites,
 the wait time can be set much lower.
 
 The method returns a boolean C<true> if new content is loaded, C<false>
