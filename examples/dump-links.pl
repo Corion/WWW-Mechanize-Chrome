@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use strict;
 use Log::Log4perl qw(:easy);
 use WWW::Mechanize::Chrome;

@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use strict;
 use File::Spec;
 use File::Basename 'dirname';
