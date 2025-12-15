@@ -880,6 +880,10 @@ sub read_devtools_url( $self, $fh, $lines = 50 ) {
     my $devtools_url;
 
     my %pids;
+    for my $pid ($self->{pid}->@*) {
+        $pids{ $pid }++;
+    }
+
     while( $lines-- and ! defined $devtools_url and ! eof($fh)) {
         my $line = <$fh>;
         last unless defined $line;
