@@ -205,8 +205,14 @@ warn Dumper $heap->get_object( $obj );
 
 dump_object(22391);
 warn Dumper $heap->get_object( 22391 ); # complex_struct
+# baz.__proto__.constructor.proto === Object()
+# complex_struct.items.__proto__.constructor.proto === Array ?!
 
-dump_object(24229); # a closure
+dump_object(24229); # window.baz
+warn Dumper $heap->get_object( 24229 ); # window.baz
+
+#dump_object(6139); # "Window / File://"
+#dump_object(7); # "(External strings)"
 
 
 # turn into view, node_children / child_nodes
@@ -606,3 +612,15 @@ sub node_path( $heap, $start_node, $end_node, $parents_s = {}, $parents_e = {} )
         my @q = parents_idx( $heap, $end_node );
     }
 }
+
+__END__
+
+# (manually) extracted information from a Chrome heapdump
+
+Window / @6139
+(GC roots) @3
+    - (Read-only roots) @9
+        - wasm_null :: system / WasmNull @373
+    - (Builtins) @27
+
+window.baz @24229
