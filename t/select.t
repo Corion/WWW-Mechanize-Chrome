@@ -4,10 +4,6 @@
 use strict;
 use Test::More;
 
-BEGIN {
-    delete @ENV{qw(PATH IFS CDPATH ENV BASH_ENV)};  # Placates taint-unsafe Cwd.pm in 5.6.1
-}
-
 use Log::Log4perl qw(:easy);
 
 use WWW::Mechanize::Chrome;
@@ -38,8 +34,10 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
 #my $uri = URI::file->new_abs( 't/select.html' )->as_string;
-my $response = $mech->get_local( 'select.html' );
+my $response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 
 my ($sendsingle, @sendmulti, %sendsingle, %sendmulti,
@@ -51,64 +49,64 @@ $sendsingle = 'aaa';
 %sendsingle = (n => 1);
 %sendmulti = (n => [2, 3]);
 
-ok($mech->form_number(1), 'set form to number 1');
+ok(t::helper::safe_form_number($mech, 1), 'set form to number 1');
 $form = $mech->current_form();
 
 # Multi-select
 
 # pass multiple values to a multi select
 $mech->select('multilist', \@sendmulti);
-@return = $mech->value('multilist');
+@return = t::helper::safe_value($mech, 'multilist', { all => 1 });
 is_deeply(\@return, \@sendmulti, 'multi->multi value is ' . join(' ', @sendmulti));
 
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $mech->select('multilist', \%sendmulti);
-@return = $mech->value('multilist');
+@return = t::helper::safe_value($mech, 'multilist', { all => 1 });
 is_deeply(\@return, \@sendmulti, 'multi->multi value is ' . join(' ', @sendmulti));
 
 # pass a single value to a multi select
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $mech->select('multilist', $sendsingle);
 #$return = $form->param('multilist');
-$return = $mech->value('multilist');
+$return = t::helper::safe_value($mech, 'multilist', { all => 1 });
 is($return, $sendsingle, "single->multi value is '$sendsingle'");
 
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $mech->select('multilist', \%sendsingle);
-$return = $mech->value('multilist');
+$return = t::helper::safe_value($mech, 'multilist', { all => 1 });
 is($return, $sendsingle, "single->multi value is '$sendsingle'");
 
 
 # Single select
 
 # pass multiple values to a single select (only the _first_ should be set)
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $mech->select('singlelist', \@sendmulti);
-@return = $mech->value('singlelist');
+@return = t::helper::safe_value($mech, 'singlelist');
 is_deeply(\@return, \@singlereturn, 'multi->single value is ' . join(' ', @singlereturn));
 
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $mech->select('singlelist', \%sendmulti);
-@return = $mech->value('singlelist');
+@return = t::helper::safe_value($mech, 'singlelist');
 is_deeply(\@return, \@singlereturn, 'multi->single value is ' . join(' ', @singlereturn));
 
 
 # pass a single value to a single select
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $rv = $mech->select('singlelist', $sendsingle);
-$return = $mech->value('singlelist');
+$return = t::helper::safe_value($mech, 'singlelist');
 is($return, $sendsingle, "single->single value is '$sendsingle'");
 
-$response = $mech->get_local( 'select.html' );
+$response = t::helper::safe_get_local($mech,  'select.html' );
 ok( $response->is_success, "Fetched select.html" );
 $rv = $mech->select('singlelist', \%sendsingle);
-$return = $mech->value('singlelist');
+$return = t::helper::safe_value($mech, 'singlelist');
 is($return, $sendsingle, "single->single value is '$sendsingle'");
 
 # test return value from $mech->select
@@ -124,3 +122,5 @@ is $lived, 1, 'We can ->select() on a missing field'
 is($rv, undef, 'return undef after failed select');
 
 });
+
+alarm(0);

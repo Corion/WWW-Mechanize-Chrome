@@ -126,6 +126,16 @@ my %module = (
     test            => { TESTS => join( ' ', @tests ) },
 );
 
+package MY;
+sub test {
+    my $self = shift;
+    my $test = $self->SUPER::test(@_);
+    $test =~ s!\$\(TEST_VERBOSE\)!-It/lib $(TEST_VERBOSE)!g;
+    return $test;
+}
+
+package main;
+
 # This is so that we can do
 #     require 'Makefile.PL'
 # and then call get_module_info

@@ -10,7 +10,11 @@ use lib '.';
 
 use t::helper;
 
-use Time::HiRes qw(ualarm sleep time);
+use Time::HiRes qw(sleep time);
+if( $^O !~ /mswin/i ) {
+    require Time::HiRes;
+    Time::HiRes->import('ualarm');
+}
 Log::Log4perl->easy_init($ERROR);
 
 # What instances of Chrome will we try?
@@ -39,12 +43,8 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
     
-    # KILL THE SUBTEST if it takes more than 2 seconds total for this instance
-    local $SIG{ALRM} = sub { 
-        diag "Instance test run timed out after 2s! KILLING.";
-        CORE::exit(1);
-    };
-    ualarm(2000000);
+    t::helper::set_watchdog($t::helper::is_slow ? 90 : 30);
+
     if( $ENV{WWW_MECHANIZE_CHROME_TRANSPORT}
         and $ENV{WWW_MECHANIZE_CHROME_TRANSPORT} eq 'Chrome::DevToolsProtocol::Transport::Mojo'
     ) {
@@ -114,10 +114,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         %args,
     );
     is $mech->{pid}, undef, "We didn't start a new process when reusing a pre-existing transport";
-    $mech->update_html(<<HTML);
+    t::helper::safe_update_html($mech, <<HTML);
     <html><head><title>$magic</title></head><body>Test</body></html>
 HTML
-    my $c = $mech->content;
+    my $c = t::helper::safe_content($mech);
     like $c, qr/\Q$magic/, "We can read our content back immediately";
 
     undef $mech;
@@ -133,7 +133,7 @@ HTML
         %args,
     );
     is $mech->{pid}, undef, "We didn't start a new process when reusing a pre-existing transport";
-    $c = $mech->content;
+    $c = t::helper::safe_content($mech);
     like $c, qr/\Q$magic/, "We selected the existing tab"
         or do { diag $_->{title} for $mech->driver->getTargets()->get };
 
@@ -156,8 +156,8 @@ HTML
     );
     is $mech->{pid}, undef, "We didn't start a new process when reusing a pre-existing transport";
 #is $mech->{pid}, undef, "We didn't start a new process when connecting to the current tab";
-    $c = $mech->content;
-    like $mech->content, qr/\Q$magic/, "We connected to the current tab"
+    $c = t::helper::safe_content($mech);
+    like t::helper::safe_content($mech), qr/\Q$magic/, "We connected to the current tab"
         or do { diag $_->{title} for $mech->driver->getTargets()->get() };
     $mech->autoclose_tab(1);
 
@@ -190,4 +190,8 @@ HTML
         WWW::Mechanize::Chrome->kill_child('SIGKILL', $pid, undef);
     };
     };
+
+    note "End of test sub for $file";
 });
+
+alarm(0);

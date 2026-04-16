@@ -21,7 +21,7 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => $testcount*@instances;
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1
 );
 
@@ -37,15 +37,16 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get($url);
+    t::helper::safe_get($mech, $url);
     my $org_uri = $mech->uri;
 
     my $tab = $mech->new_tab();
     isa_ok $tab, 'WWW::Mechanize::Chrome';
-    $tab->get('about:blank');
+    t::helper::safe_get($tab, 'about:blank');
 
     is $mech->uri, $org_uri, "The URI of the original mech remains unchanged";
 
@@ -57,15 +58,16 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is $new_count, $old_count, "We have the same number of cookies in the two tabs";
 
     # Now, move one, to see that the tabs are independent
-    $tab->get($url);
-    $mech->submit_form( with_fields => { query => 'original mech' });
-    $tab->submit_form( with_fields => { query => 'secondary mech' });
+    t::helper::safe_get($tab, $url);
+    t::helper::safe_submit_form($mech, { with_fields => { query => 'original mech' } });
+    t::helper::safe_submit_form($tab, { with_fields => { query => 'secondary mech' } });
 
     $mech->sleep(1); # to give the tabs a chance to catch up
     is $mech->uri, "${url}formsubmit", "We moved the original tab";
-    like $mech->content, qr/\boriginal mech\b/, "The original tab has the new content";
+    like t::helper::safe_content($mech), qr/\boriginal mech\b/, "The original tab has the new content";
     is $tab->uri, "${url}formsubmit", "We moved the second tab";
-    like $tab->content, qr/\bsecondary mech\b/, "The second tab has the other content";
+    like t::helper::safe_content($tab), qr/\bsecondary mech\b/, "The second tab has the other content";
 });
 
 $server->stop;
+alarm(0);

@@ -31,15 +31,19 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    my $html = $mech->content;
+    $mech->sleep(1); # Allow about:blank to stabilize
+
+    my $html = t::helper::safe_content($mech);
     like $html, qr!<html><head></head><body></body></html>!, "We can get the plain HTML";
 
-    my $html2 = $mech->content( format => 'html' );
+    my $html2 = t::helper::safe_content($mech, format => 'html' );
     is $html2, $html, "When asking for HTML explicitly, we get the same text";
 
-    my $text = $mech->content( format => 'text' );
+    my $text = t::helper::safe_content($mech, format => 'text' );
     is $text, '', "We can get the plain text";
 
     my $version = $mech->chrome_version;
@@ -48,27 +52,29 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             skip "Chrome version is $version, need Chrome version 80 for MHTML", 2;
         };
     } else {
-        my $mhtml = $mech->content( format => 'mhtml' );
+        my $mhtml = t::helper::safe_content($mech, format => 'mhtml' );
         like $mhtml, qr/^Snapshot-Content-Location:/m, "We can get the MHTML of the whole page";
 
-        $mech->get_local('52-frameset.html');
-        $mhtml = $mech->content( format => 'mhtml' );
+        t::helper::safe_get_local($mech, '52-frameset.html');
+        $mhtml = t::helper::safe_content($mech, format => 'mhtml' );
         like $mhtml, qr!<title>52-subframe.html</title>!, "We can get the MHTML of the whole page, including frames";
     };
 
     my $text2;
-    my $lives = eval { $mech->content( format => 'bogus' ); 1 };
+    my $lives = eval { t::helper::safe_content($mech, format => 'bogus' ); 1 };
     ok !$lives, "A bogus content format raises an error";
 
     {
         local $TODO = "Chrome devtools doesn't return the XML declaration of a document";
-        $mech->get_local('xhtml.xhtml');
-        $html = $mech->content;
+        t::helper::safe_get_local($mech, 'xhtml.xhtml');
+        $html = t::helper::safe_content($mech);
         like $html, qr/^<?xml\b/, "->content preserves the XHTML directive";
     }
 
     # pm11123357
-    $mech->get_local('scripttag.html');
-    $text = $mech->content( format => 'text' );
+    t::helper::safe_get_local($mech, 'scripttag.html');
+    $text = t::helper::safe_content($mech, format => 'text' );
     like $text, qr/^\s*This should appear.\s+This should also appear.\s*$/, "<script> tag contents are not included in text";
 });
+
+alarm(0);

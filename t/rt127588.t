@@ -33,5 +33,10 @@ sub new_mech {
 };
 
 t::helper::run_across_instances(\@instances, \&new_mech, 1, sub {
+    my ($file, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
     pass "We didn't crash when disabling the suid sandbox";
+    note "End of test sub for $file";
 });
+
+alarm(0);

@@ -51,9 +51,11 @@ sub image_dimensions_are {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->update_html(<<'HTML');
+    t::helper::safe_update_html($mech, <<'HTML');
     <html>
     <head><title>Hello PNG!</title></head>
     <body>
@@ -63,12 +65,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 HTML
     #ok $mech->success, 'We got the page';
 
-    my $pngData = $mech->content_as_png();
+    my $pngData = t::helper::safe_content_as_png($mech);
 
     like $pngData, '/^.PNG/', "The result looks like a PNG format file";
     #save $pngData, 'tmp.png';
 
-    my $pngName = $mech->selector("#my_name", single => 1);
+    my $pngName = t::helper::safe_selector($mech, "#my_name", single => 1);
     $pngData = $mech->element_as_png($pngName);
     like $pngData, '/^.PNG/', "The result looks like a PNG format file";
     #save $pngData, 'tmp.png';
@@ -78,7 +80,7 @@ HTML
         width  => 200,
         height => 200,
     };
-    my $topleft = $mech->content_as_png($rect);
+    my $topleft = t::helper::safe_content_as_png($mech, $rect);
     like $topleft, '/^.PNG/', "The result looks like a PNG format file";
     image_dimensions_are( $topleft, { width => 200, height => 200 }, "Partial image" );
 
@@ -90,7 +92,7 @@ HTML
     my $target = {
         scalex => 2,
     };
-    $topleft = $mech->content_as_png($rect, $target);
+    $topleft = t::helper::safe_content_as_png($mech, $rect, $target);
     like $topleft, '/^.PNG/', "The result looks like a PNG format file";
     image_dimensions_are( $topleft, { width => 400, height => 400 }, "Blown up (scalex)" );
 
@@ -102,7 +104,7 @@ HTML
     $target = {
         width => 150,
     };
-    $topleft = $mech->content_as_png($rect, $target);
+    $topleft = t::helper::safe_content_as_png($mech, $rect, $target);
     like $topleft, '/^.PNG/', "The result looks like a PNG format file";
     image_dimensions_are( $topleft, { width => 150, height => 225 }, "Scaled down via fixed with" );
 
@@ -114,9 +116,13 @@ HTML
     $target = {
         height => 150,
     };
-    $topleft = $mech->content_as_png($rect, $target);
+    $topleft = t::helper::safe_content_as_png($mech, $rect, $target);
     like $topleft, '/^.PNG/', "The result looks like a PNG format file";
     image_dimensions_are( $topleft, { width => 225, height => 150 }, "Scaled down via fixed height" );
     #save($pngData,"Topleft-".$i++.".png");
     #};
-})
+
+    note "End of test sub for $browser_instance";
+});
+
+alarm(0);

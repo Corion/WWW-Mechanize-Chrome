@@ -11,7 +11,7 @@ with 'MooX::Role::EventEmitter';
 use Net::Async::WebSocket::Client;
 Net::Async::WebSocket::Client->VERSION(0.12); # fixes some errors with masked frames
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 
 =head1 NAME
 

@@ -32,23 +32,24 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1,
 );
 
 sub get_viewport_size {
     my( $mech ) = @_;
     my ($width,$height,$wwidth,$wheight,$type);
-    ($width,$type)  = $mech->eval_in_page( 'window.screen.width' );
-    ($height,$type) = $mech->eval_in_page( 'window.screen.height' );
-    ($wwidth,$type)  = $mech->eval_in_page( 'window.innerWidth' );
-    ($wheight,$type) = $mech->eval_in_page( 'window.innerHeight' );
+    ($width,$type)  = t::helper::safe_eval_in_page($mech, 'window.screen.width' );
+    ($height,$type) = t::helper::safe_eval_in_page($mech, 'window.screen.height' );
+    ($wwidth,$type)  = t::helper::safe_eval_in_page($mech, 'window.innerWidth' );
+    ($wheight,$type) = t::helper::safe_eval_in_page($mech, 'window.innerHeight' );
     my $res = { width => $wwidth, height => $wheight, screenWidth => $width, screenHeight => $height };
     return $res;
 }
 
 t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     my $version = $mech->chrome_version;
 
@@ -69,7 +70,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
         return
     }
 
-    $mech->get( $server->url );
+    t::helper::safe_get($mech, $server->url );
 
     my $start_size = get_viewport_size( $mech );
 
@@ -122,4 +123,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
 });
 
 $server->stop;
+alarm(0);
 

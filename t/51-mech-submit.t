@@ -32,11 +32,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, 19, sub {
     my ($browser_instance, $mech) = @_;
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get_local('51-mech-submit.html');
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
 
     my ($triggered,$type,$ok);
     eval {
-        ($triggered) = $mech->eval_in_page('myevents');
+        ($triggered) = t::helper::safe_eval_in_page($mech, 'myevents');
         $ok = 1;
     };
     if (! $triggered) {
@@ -46,61 +48,63 @@ t::helper::run_across_instances(\@instances, \&new_mech, 19, sub {
     ok $triggered, "We have JS enabled";
 
     $mech->allow('javascript' => 1);
-    $mech->form_id('testform');
+    t::helper::safe_form_id($mech, 'testform');
 
-    $mech->field('q','1');
-    $mech->submit();
+    t::helper::safe_field($mech, 'q','1');
+    t::helper::safe_submit($mech);
 
-    ($triggered) = $mech->eval_in_page('myevents');
+    ($triggered) = t::helper::safe_eval_in_page($mech, 'myevents');
 
     is $triggered->{action}, 1, 'Action   was triggered';
     is $triggered->{submit}, 0, 'OnSubmit was not triggered (no user interaction)';
     is $triggered->{click},  0, 'Click    was not triggered';
 
-    $mech->get_local('51-mech-submit.html');
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
     $mech->allow('javascript' => 1);
-    $mech->submit_form(
+    t::helper::safe_submit_form($mech, 
         with_fields => {
             r => 'Hello Chrome',
         },
     );
-    ($triggered) = $mech->eval_in_page('myevents');
+    ($triggered) = t::helper::safe_eval_in_page($mech, 'myevents');
     ok $triggered, "We found 'myevents'";
 
     is $triggered->{action}, 1, 'Action   was triggered';
     is $triggered->{submit}, 0, 'OnSubmit was triggered (no user interaction)';
     is $triggered->{click},  0, 'Click    was not triggered';
-    my $r = $mech->xpath('//input[@name="r"]', single => 1 );
+    my $r = t::helper::safe_xpath($mech, '//input[@name="r"]', single => 1 );
     is $r->get_attribute('value'), 'Hello Chrome', "We set the new value";
     $r->set_attribute('value', 'Hello Chrome2');
     # Somehow we lose the node id resp. fetch a stale value here without re-fetching
-    $r = $mech->xpath('//input[@name="r"]', single => 1 );
+    $r = t::helper::safe_xpath($mech, '//input[@name="r"]', single => 1 );
     is $r->get_attribute('value'), 'Hello Chrome2', "We retrieve the new value via ->get_attribute";
-    $mech->form_number(2);
-    is $mech->value('r'), 'Hello Chrome2', "We retrieve set the new value via ->value()";
+    t::helper::safe_form_number($mech, 2);
+    is t::helper::safe_value($mech, 'r'), 'Hello Chrome2', "We retrieve set the new value via ->value()";
 
-    $mech->get_local('51-mech-submit.html');
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
     $mech->allow('javascript' => 1);
-    $mech->submit_form(button => 's');
-    ($triggered) = $mech->eval_in_page('myevents');
+    t::helper::safe_submit_form($mech, button => 's');
+    ($triggered) = t::helper::safe_eval_in_page($mech, 'myevents');
     ok $triggered, "We found 'myevents'";
 
     is $triggered->{action}, 1, 'Action   was triggered';
     is $triggered->{submit}, 1, 'OnSubmit was triggered';
     is $triggered->{click},  1, 'Click    was triggered';
 
-    $mech->get_local('51-mech-submit.html');
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
     $mech->allow('javascript' => 1);
-    $mech->form_number(1);
-    $mech->submit_form();
-    ($triggered) = $mech->eval_in_page('myevents');
+    t::helper::safe_form_number($mech, 1);
+    t::helper::safe_submit_form($mech);
+    ($triggered) = t::helper::safe_eval_in_page($mech, 'myevents');
     ok $triggered, "We can submit an empty form";
 
-    $mech->get_local('51-mech-submit.html');
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
     $mech->allow('javascript' => 1);
-    $mech->form_number(3);
-    $mech->submit_form();
+    t::helper::safe_form_number($mech, 3);
+    t::helper::safe_submit_form($mech);
     like $mech->uri, qr/q2=Hello(%20|\+)World(%20|\+)C/, "We submit the proper GET request";
-    ($triggered) = $mech->eval_in_page('myevents');
+    ($triggered) = t::helper::safe_eval_in_page($mech, 'myevents');
     ok $triggered, "We can submit a form without an onsubmit handler";
 });
+
+alarm(0);

@@ -30,12 +30,16 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get('https://corion.net/style.css');
+    t::helper::safe_get($mech, 'https://corion.net/style.css');
+    $mech->sleep(2); # Generous moment for body arrival on Windows
 
-    my $body = $mech->decoded_content();
+    my $body = t::helper::safe_decoded_content($mech);
 
     like $body, qr!^/\*!, "We retrieve the raw CSS";
 });
+
+alarm(0);

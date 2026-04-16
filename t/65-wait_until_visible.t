@@ -46,14 +46,17 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, 4*@files+5, sub {
     my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     # Check that we can execute JS
-    $mech->get_local($files[0]);
+    t::helper::safe_get_local($mech, $files[0]);
     $mech->allow('javascript' => 1);
     my ($triggered,$type,$ok);
     eval {
-        ($triggered, $type) = $mech->eval_in_page('timer');
+        ($triggered, $type) = t::helper::safe_eval_in_page($mech, 'timer');
         $ok = 1;
     };
     if (! $triggered) {
@@ -64,12 +67,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4*@files+5, sub {
     };
     # Check that we can trigger the timeout
     for my $file ($files[0]) {
-        $mech->get_local($file);
+        t::helper::safe_get_local($mech, $file);
         is $mech->title, $file, "We loaded the right file ($file)";
         $mech->allow('javascript' => 1);
         ok !$mech->is_visible(selector => '#retry'), "The element is invisible";
         my $finished = eval {
-            $mech->wait_until_visible(selector => '#retry', timeout => 1);
+            $mech->wait_until_visible(selector => '#retry', timeout => ($t::helper::is_slow ? 10 : 1));
             1;
         };
         is $finished, undef, "We got an exception";
@@ -77,14 +80,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4*@files+5, sub {
     };
 
     for my $file (@files) {
-        $mech->get_local($file);
+        t::helper::safe_get_local($mech, $file);
         is $mech->title, $file, "We loaded the right file ($file)";
         $mech->allow('javascript' => 1);
-        my ($timer,$type) = $mech->eval_in_page('timer');
+        my ($timer,$type) = t::helper::safe_eval_in_page($mech, 'timer');
         ok $mech->is_visible(selector => 'body'), "We can see the body";
 
         if(! ok !$mech->is_visible(selector => '#retry'), "We can't see #retry") {
-            my $standby = $mech->by_id('standby', single=>1);
+            my $standby = t::helper::safe_by_id($mech, 'standby', single=>1);
             my $style = $standby->{style};
             diag "style.visibility          <" . $style->{visibility} . ">";
             diag "style.display             <" . $style->{display} . ">";
@@ -92,8 +95,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4*@files+5, sub {
             diag "computed-style.visibility <" . $style->{visibility} . ">";
             diag "computed-style.display    <" . $style->{display} . ">";
         };
-        $mech->click({ selector => '#start' });
+        t::helper::safe_click($mech, { selector => '#start' });
         $mech->wait_until_visible( selector => "#retry" );
         ok $mech->is_visible(selector => '#retry'), "We can see #retry now";
     };
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);

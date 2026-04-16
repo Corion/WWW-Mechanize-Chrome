@@ -28,14 +28,14 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
 
-    $mech->get($server->url);
+    t::helper::safe_get($mech, $server->url);
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 

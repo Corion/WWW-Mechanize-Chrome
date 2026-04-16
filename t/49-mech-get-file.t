@@ -41,40 +41,43 @@ sub load_file_ok {
              );
     #$mech->allow(@options);
     note "Loading $fn";
-    $mech->get_local($fn);
+    t::helper::safe_get_local($mech, $fn);
     ok $mech->success, "Loading $htmlfile is considered a success";
     is $mech->title, $htmlfile, "We loaded the right file (@options)"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
 };
 
 t::helper::run_across_instances(\@instances, \&new_mech, 14, sub {
     my ($firefox_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 90 : 30);
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     load_file_ok($mech, '49-mech-get-file.html', javascript => 0);
 
     is $mech->content_type, 'text/html', "HTML content type";
 
-    $mech->get('about:blank');
+    t::helper::safe_get($mech, 'about:blank');
     load_file_ok($mech, '49-mech-get-file.html', javascript => 1);
-    $mech->get('about:blank');
+    t::helper::safe_get($mech, 'about:blank');
 
-    $mech->get_local('49-mech-get-file.html');
+    t::helper::safe_get_local($mech, '49-mech-get-file.html');
     ok $mech->success, '49-mech-get-file.html';
     is $mech->title, '49-mech-get-file.html', "We loaded the right file";
 
     ok $mech->is_html, "The local file gets identified as HTML"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
 
-    $mech->get_local('49-mech-get-file-lc-ct.html');
+    t::helper::safe_get_local($mech, '49-mech-get-file-lc-ct.html');
     ok $mech->success, '49-mech-get-file-lc-ct.html';
     is $mech->title, '49-mech-get-file-lc-ct.html', "We loaded the right file";
     ok $mech->is_html, "The local file gets identified as HTML even with a weird-cased http-equiv attribute"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
     is $mech->content_type, 'text/html', "HTML content type is read from http-equiv meta tag";
 
-    $mech->get_local('file-does-not-exist.html');
+    t::helper::safe_get_local($mech, 'file-does-not-exist.html');
     ok !$mech->success, 'We fail on non-existing file';
         #or diag $mech->content;
 });
+
+alarm(0);

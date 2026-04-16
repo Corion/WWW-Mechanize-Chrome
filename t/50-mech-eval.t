@@ -31,15 +31,20 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    my ($val, $type) = $mech->eval('new Object');
+    my ($val, $type) = t::helper::safe_eval($mech, 'new Object');
     is $type, "object", "We can create simple objects and serialize them as JSON";
 
-    ($val, $type) = $mech->eval('window', returnByValue => JSON::false);
+    ($val, $type) = t::helper::safe_eval($mech, 'window', returnByValue => JSON::false);
     is $type, "object", "We can also return (proxies for) unserializable objects";
 
-    ($val, $type) = $mech->callFunctionOn('function add(a,b){ return a+b }', arguments => [ {value => 2 }, { value => 2 }]);
+    ($val, $type) = t::helper::safe_callFunctionOn($mech, 'function add(a,b){ return a+b }', arguments => [ {value => 2 }, { value => 2 }]);
     is $val, 4, "We can call functions without manually encoding parameters";
 
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);

@@ -36,11 +36,14 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 90 : 30);
     for (@tests) {
             my ($file,$encoding,$content_re) = @$_;
-            $mech->get_local($file);
+            t::helper::safe_get_local($mech, $file);
             is uc $mech->content_encoding, $encoding, "$file has encoding $encoding";
             note "Length of content", length $mech->content;
             like $mech->content, $content_re, "Partial expression gets found in UTF-8 content";
     };
 });
+
+alarm(0);

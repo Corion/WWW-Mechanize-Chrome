@@ -30,14 +30,17 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get_local('50-form2.html');
+    t::helper::safe_get_local($mech, '50-form2.html');
     # A second attempt, to cycle the node ids quickly to avoid a node id 0
-    $mech->get_local('50-form2.html');
+    t::helper::safe_get_local($mech, '50-form2.html');
 
-    my $node = $mech->selector('#target_select',single=>1);
+    my $node = t::helper::safe_selector($mech, '#target_select',single=>1);
     like $node->get_text, qr!\A\s*Mercanti 20/20\s+Villaggio:\s+oppure\s+X:\s+Y:\s*\z!sm, "We retrieve text, not HTML";
 });
+
+alarm(0);
 

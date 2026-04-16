@@ -45,12 +45,14 @@ END {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get_local('50-click.html');
+    t::helper::safe_get_local($mech, '50-click.html');
     for my $test ( @tests ) {
         my $format= $test->{format};
-        my $content= eval { $mech->render_content( format => $format ); };
+        my $content= eval { t::helper::safe_render_content($mech, format => $format ); };
         SKIP: {
             if( $@ ) {
                 skip "$@", 2;
@@ -63,9 +65,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             my( $tempfh,$outfile )= tempfile;
             close $tempfh;
             push @delete, $outfile;
-            $mech->render_content( format => $format, filename => $outfile );
+            eval { t::helper::safe_render_content($mech, format => $format, filename => $outfile ); };
             my($res, $reason)= (undef, "Outfile '$outfile' was not created");
-            if(-f $outfile) {
+            if( $@ ) {
+                $reason = $@;
+            } elsif(-f $outfile) {
                 if( open my $fh, '<:raw', $outfile ) {
                     local $/;
                     my $content= <$fh>;
@@ -80,7 +84,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         };
     };
 
-    my $content= eval { $mech->content_as_pdf( format => 'A4' ); };
+    my $content= eval { t::helper::safe_content_as_pdf($mech, format => 'A4' ); };
     SKIP: {
         if( $@ ) {
             skip "$@", 1;
@@ -93,9 +97,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         my( $tempfh,$outfile )= tempfile;
         close $tempfh;
         push @delete, $outfile;
-        $mech->content_as_pdf( format => 'A4', filename => $outfile );
+        eval { t::helper::safe_content_as_pdf($mech, format => 'A4', filename => $outfile ); };
         my($res, $reason)= (undef, "Outfile '$outfile' was not created");
-        if(-f $outfile) {
+        if( $@ ) {
+            $reason = $@;
+        } elsif(-f $outfile) {
             if( open my $fh, '<:raw', $outfile ) {
                 local $/;
                 my $content= <$fh>;
@@ -109,3 +115,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             or diag $reason;
     };
 });
+
+alarm(0);

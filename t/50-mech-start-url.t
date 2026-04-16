@@ -20,7 +20,7 @@ if (my $err = t::helper::default_unavailable) {
     plan tests => 2*@instances;
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1
 );
 

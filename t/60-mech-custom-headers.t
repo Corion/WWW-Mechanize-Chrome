@@ -38,11 +38,13 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
+    my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     # See https://bugs.chromium.org/p/chromium/issues/detail?id=795336
     #     https://bugs.chromium.org/p/chromium/issues/detail?id=767683
@@ -50,13 +52,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     # Chrome 63 and Chrome 64 are broken but Chrome 65 sends custom headers
     # again, but does not allow to update the Referer: header
 
-    my ($browser_instance, $mech) = @_;
-
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     # First get a clean check without the changed headers
     my ($site,$estatus) = ($server->url,200);
-    my $res = $mech->get($site);
+    my $res = t::helper::safe_get($mech, $site);
     isa_ok $res, 'HTTP::Response', 'Response';
 
     is $mech->uri, $site, 'Navigated to ' . $site;
@@ -89,13 +89,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     note "Using Referer: $ref" if $ref;
     note "Using Host: $host[1]" if @host;
 
-    $res = $mech->get($site);
+    $res = t::helper::safe_get($mech, $site);
     isa_ok $res, 'HTTP::Response', "Response";
 
     is $mech->uri, $site, "Navigated to $site"
         or diag $mech->content;
     # Now check for the changes
-    my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
+    my $headers = t::helper::safe_selector($mech, '#request_headers', single => 1)->get_attribute('innerText');
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
@@ -115,8 +115,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 76);
         like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
     }
-    $mech->submit_form; # retrieve the JS window.navigator.userAgent value
-    is $mech->value('navigator'), $ua, "JS window.navigator.userAgent gets set as well";
+    t::helper::safe_submit_form($mech); # retrieve the JS window.navigator.userAgent value
+    is t::helper::safe_value($mech, 'navigator'), $ua, "JS window.navigator.userAgent gets set as well";
     # diag $mech->content;
 
     $mech->delete_header(
@@ -126,13 +126,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         'X-Another-Header' => 'Oh yes',
     );
 
-    $res = $mech->get($site);
+    $res = t::helper::safe_get($mech, $site);
     isa_ok $res, 'HTTP::Response', "Response";
 
     is $mech->uri, $site, "Navigated to $site";
 
     # Now check for the changes
-    $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
+    $headers = t::helper::safe_selector($mech, '#request_headers', single => 1)->get_attribute('innerText');
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
             if $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
@@ -149,13 +149,13 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     # Now check that the custom headers go away if we uninstall them
     $mech->reset_headers();
 
-    $res = $mech->get($site);
+    $res = t::helper::safe_get($mech, $site);
     isa_ok $res, 'HTTP::Response', "Response";
 
     is $mech->uri, $site, "Navigated to $site";
 
     # Now check for the changes
-    $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
+    $headers = t::helper::safe_selector($mech, '#request_headers', single => 1)->get_attribute('innerText');
     #diag $headers;
     # Chrome doesn't reset the Referer header...
     #unlike $headers, qr!^Referer: \Q$ref\E$!m, "We restored the old Referer header";

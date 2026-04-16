@@ -52,9 +52,11 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
-    $mech->get_local('50-form-with-fields-gh48.html');
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
+    t::helper::safe_get_local($mech, '50-form-with-fields-gh48.html');
     # A second attempt, to cycle the node ids quickly to avoid a node id 0
-    $mech->get_local('50-form-with-fields-gh48.html');
+    t::helper::safe_get_local($mech, '50-form-with-fields-gh48.html');
     note "Loaded page";
 #$mech->dump_forms;
     my $f;
@@ -76,7 +78,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     ## Works:
     $ok = eval {
-        $mech->form_name('signIn');
+        t::helper::safe_form_name($mech, 'signIn');
         1;
     };
     $err = $@;
@@ -91,7 +93,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     # Works
     $ok = eval {
-        $mech->form_with_fields('email', 'password');
+        t::helper::safe_form_with_fields($mech, 'email', 'password');
         1
     };
     $err = $@;
@@ -100,8 +102,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     #print $mech->current_form()->get_attribute('outerHTML');
     # Fails! (well, no more)
     $ok = eval {
-        $mech->submit_form(with_fields => {email => 'foo@bar.baz'});
+        t::helper::safe_submit_form($mech, { with_fields => {email => 'foo@bar.baz'}});
     };
     $err = $@;
     is $err, '', "We got no error on submitting the form by field name";
 });
+
+alarm(0);

@@ -33,6 +33,8 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     SKIP: {
         my $version = $mech->chrome_version;
 
@@ -42,12 +44,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
             # https://bugs.chromium.org/p/chromium/issues/detail?id=728451
             skip "Chrome before v63.0.3239 doesn't know about online/offline mode or can do throttling", 4;
         } else {
-            $mech->get_local('50-click.html');
+            t::helper::safe_get_local($mech, '50-click.html');
 
             my ($value,$type);
-            ($value, $type) = $mech->eval_in_page('window.navigator.connection.effectiveType');
+            ($value, $type) = t::helper::safe_eval_in_page($mech, 'window.navigator.connection.effectiveType');
             #is( $value, '4g', "We are online");
-            ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
+            ($value, $type) = t::helper::safe_eval_in_page($mech, 'window.navigator.onLine');
             is( $value, JSON::true, "We are online (.onLine)");
 
             $mech->emulateNetworkConditions(
@@ -57,24 +59,27 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
                 uploadThroughput => 0,
                 #connectionType => 'none',
             );
-            ($value, $type) = $mech->eval('navigator.connection.effectiveType');
+            ($value, $type) = t::helper::safe_eval($mech, 'navigator.connection.effectiveType');
             #is( $value, 'offline', "We are offline");
-            ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
+            ($value, $type) = t::helper::safe_eval_in_page($mech, 'window.navigator.onLine');
             is( $value, JSON::false, "We are offline (.onLine)");
 
-            my $res = $mech->get('https://google.de');
+            my $res = t::helper::safe_get($mech, 'https://google.de');
             ok !$res->is_success, "We can't fetch pages while offline";
             #$mech->eval_in_page(sprintf 'window.location="%s"', '49-mech-get-file.html');
 
             $mech->emulateNetworkConditions(
                 offline => JSON::false,
             );
-            ($value, $type) = $mech->eval('navigator.connection.effectiveType');
+            ($value, $type) = t::helper::safe_eval($mech, 'navigator.connection.effectiveType');
             #is( $value, '4g', "We are online again");
-            ($value, $type) = $mech->eval_in_page('window.navigator.onLine');
+            ($value, $type) = t::helper::safe_eval_in_page($mech, 'window.navigator.onLine');
             is( $value, JSON::true, "We are online (.onLine)");
         }
     }
 
-    undef $mech;
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);
+

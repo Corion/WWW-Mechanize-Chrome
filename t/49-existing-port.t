@@ -54,13 +54,11 @@ sub new_mech {
         autodie => 1,
         headless => 1,
         connection_style => 'websocket',
-        autoclose => 0, # Manual cleanup
-        autoclose_tab => 0,
+        autoclose => 1, # Library will handle cleanup
+        autoclose_tab => 1,
     );
 
     $existing_mech->get($expected_location);
-    #my $existing_mech;
-    #my $instance_port = 9222;
 
     $instance_port = $existing_mech->{ port };
     $instance_host = $existing_mech->{ host };
@@ -70,19 +68,16 @@ sub new_mech {
         autodie => 1,
         port    => $instance_port,
         host    => $instance_host,
-        autoclose => 0, # Manual cleanup
+        autoclose => 0, # Manual cleanup NOT needed for this instance
         autoclose_tab => 0,
-        # tab     => 'current',
         @_,
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
-    #debug => 1,
-);
-
 t::helper::run_across_instances(\@instances, \&new_mech, $test_count, sub {
-    my ($browser_instance, $mech) = splice @_;
+    my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     pass "We can connect to port $instance_port";
     is $browser_launched, 1, q{We didn't spawn a second process};
@@ -95,31 +90,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, $test_count, sub {
     is $location, $expected_location, 'We connect to the same tab';
     note $mech->title;
 
-    my $pids = $existing_mech->{pid};
-
-    # Explicit cleanup with error handling
-    eval {
-        $mech->close() if $mech;
-        undef $mech;
-    };
-    eval {
-        $existing_mech->close() if $existing_mech;
-        undef $existing_mech;
-    };
-
-    # Hard kill if still alive to release files
-    if ($pids && ref $pids eq 'ARRAY') {
-        for my $pid (@$pids) {
-            if ($pid && kill(0, $pid)) {
-                kill('KILL', $pid);
-                waitpid($pid, 0);
-            }
-        }
-    }
+    # Explicit cleanup
+    eval { $mech->close() if $mech; };
+    eval { $existing_mech->close() if $existing_mech; };
+    undef $mech;
+    undef $existing_mech;
 
     $browser_launched = 0;
+    note "End of test sub for $browser_instance";
 });
 
-undef $existing_mech;
-
-$server->stop;
+alarm(0);

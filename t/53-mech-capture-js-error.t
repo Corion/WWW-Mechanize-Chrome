@@ -41,7 +41,7 @@ sub load_file_ok {
     my ($mech, $htmlfile,@options) = @_;
     $mech->clear_js_errors;
     $mech->allow(@options);
-    $mech->get_local($htmlfile);
+    t::helper::safe_get_local($mech, $htmlfile);
     ok $mech->success, $htmlfile;
     is $mech->title, $htmlfile, "We loaded the right file (@options)";
 };
@@ -49,6 +49,7 @@ sub load_file_ok {
 t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
 
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 90 : 30);
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     can_ok $mech, 'js_errors','clear_js_errors';
 
@@ -64,7 +65,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
         or diag Dumper [$mech->js_errors];
 
     load_file_ok($mech, '53-mech-capture-js-noerror.html', javascript => 1);
-    my ($js_ok) = eval { $mech->eval_in_page('js_ok') };
+    my ($js_ok) = eval { t::helper::safe_eval_in_page($mech, 'js_ok') };
     if (! $js_ok) {
         SKIP: { skip "Couldn't get at 'js_ok' variable. Do you have a Javascript blocker enabled for file:// URLs?", 14; };
         undef $mech;
@@ -120,3 +121,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 25, sub {
     undef $mech; # global destruction ...
 
 });
+
+alarm(0);

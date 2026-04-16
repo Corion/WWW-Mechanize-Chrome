@@ -33,12 +33,18 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, 1, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
-	$mech->get_local('test-input-with-class.html');
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
+	t::helper::safe_get_local($mech, 'test-input-with-class.html');
 
 	my $lives = eval {
-		$mech->field('username', 'foobar');
+		t::helper::safe_field($mech, 'username', 'foobar');
 		1
 	};
 	ok $lives
 	    or diag $@;
-})
+
+    note "End of test sub for $file";
+});
+
+alarm(0);

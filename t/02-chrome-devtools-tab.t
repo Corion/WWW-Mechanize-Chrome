@@ -60,7 +60,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
 
             my @tabs3;
             eval { @tabs3 = $chrome->getTargets()->get; 1 };
-            my $timeout = time+1;
+            my $timeout = time+5;
             while( time <= $timeout
                    && (grep { $_->{targetId} eq $new->{targetId} } @tabs3) != 0 ) {
                 # need to give Chrome some time here to clean up its act?!

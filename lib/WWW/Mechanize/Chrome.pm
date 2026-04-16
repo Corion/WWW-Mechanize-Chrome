@@ -30,7 +30,7 @@ use Time::HiRes ();
 use Encode 'encode';
 use Text::ParseWords 'shellwords';
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 our @CARP_NOT;
 
 # We don't yet inherit from Moo 2, so patch up things manually
@@ -666,7 +666,7 @@ sub default_executable_names( $class, @other ) {
         push @program_names,
           $^O =~ /mswin/i ? 'chrome.exe'
         : $^O =~ /darwin/i ? ('Google Chrome', 'Chromium')
-        : ('google-chrome', 'chromium-browser', 'chromium')
+        : ('google-chrome', 'chromium-browser', 'chromium', 'headless_shell')
     };
     @program_names
 }
@@ -692,6 +692,11 @@ sub additional_executable_search_directories( $class, $os_style=$^O ) {
                     $path,
                     $ENV{"HOME"} . "/$path";
         };
+    } else {
+        push @search, grep { -d $_ } (
+            '/usr/lib64/chromium-browser',
+            '/usr/lib/chromium-browser',
+        );
     }
     @search
 }
@@ -1185,7 +1190,7 @@ sub _setup_driver_future( $self, %options ) {
     )->catch( sub(@args) {
         my $err = $args[0];
         if( ref $args[1] eq 'HASH') {
-            use Data::Dumper; warn Dumper $args[1];
+            # use Data::Dumper; warn Dumper $args[1];
             $err .= $args[1]->{Reason};
         };
         Future->fail( $err );
@@ -1230,13 +1235,13 @@ sub _connect( $self, %options ) {
         $s->new_generation;
 
         my @setup = (
+            $s->target->send_message('Page.enable'),    # capture DOMLoaded
             $s->target->send_message('DOM.enable'),
             $s->target->send_message('Overlay.enable'),
-            $s->target->send_message('Page.enable'),    # capture DOMLoaded
             $s->target->send_message('Network.enable'), # capture network
             $s->target->send_message('Runtime.enable'), # capture console messages
             $s->target->send_message('Debugger.enable'), # capture "script compiled" messages
-            $s->set_download_directory_future($s->{download_directory}),
+            $s->{download_directory} ? $s->set_download_directory_future($s->{download_directory}) : (),
 
             $s->_listen_for_popup_f(1),
 
@@ -1256,6 +1261,7 @@ sub _connect( $self, %options ) {
             # ->get() doesn't have ->get_future() yet
             if( ! (exists $options{ tab } )) {
                 $s->get($options{ start_url }); # Reset to clean state, also initialize our frame id
+                $s->sleep(0.5) if $^O =~ /mswin/i; # patient about:blank on Windows
             } elsif( $options{ tab } and $options{ tab } eq 'current' ) {
                 # If we're reusing a tab, wait for it to have content?
                 # Or at least give it a moment to stabilize if it was just activated
@@ -1783,19 +1789,26 @@ A callback for Javascript dialogs (C<< alert() >>, C<< prompt() >>, ... )
 =cut
 
 sub on_dialog( $self, $cb ) {
+    # If we have an old listener, remove it first.
+    if( my $listener = $self->{ on_dialog_listener } ) {
+        $self->remove_listener( $listener );
+        delete $self->{ on_dialog_listener };
+    }
+
+    # If a new callback is provided, add a new listener.
     if( $cb ) {
         my $s = $self;
         weaken $s;
         $self->{ on_dialog_listener } =
         $self->add_listener('Page.javascriptDialogOpening', sub( $ev ) {
-            if( $s->{ on_dialog }) {
-                $s->log('debug', sprintf 'Javascript %s: %s', $ev->{params}->{type}, $ev->{params}->{message});
+            # Check for $s because it's a weak ref and could be gone
+            if( $s && $s->{ on_dialog }) {
                 $s->{ on_dialog }->( $s, $ev->{params} );
             };
         });
-    } else {
-        delete $self->{ on_dialog_listener };
-    };
+    }
+
+    # Store the user's callback.
     $self->{ on_dialog } = $cb;
 }
 
@@ -1909,8 +1922,7 @@ sub eval_in_page_future($self,$str, %options) {
     return $self->target->evaluate("$str", %options);
 }
 
-sub eval_in_page( $self, $str, %options) {
-    my $result = $self->eval_in_page_future("$str", %options)->get;
+sub _process_eval_result( $self, $result ) {
     if( $result->{error} ) {
         $self->signal_condition(
             join "\n", grep { defined $_ }
@@ -1931,6 +1943,11 @@ sub eval_in_page( $self, $str, %options) {
     } else {
         return $result->{result}, $result->{result}->{type};
     }
+}
+
+sub eval_in_page( $self, $str, %options) {
+    my $result = $self->eval_in_page_future("$str", %options)->get;
+    return $self->_process_eval_result($result);
 };
 
 {
@@ -2085,14 +2102,12 @@ sub close {
         if( ${^GLOBAL_PHASE} eq 'DESTRUCT' ) {
             $c->retain();
         } else {
-            eval {
-                local $SIG{ALRM} = sub { die "Timeout" };
-                alarm(1);
-                $c->get;
-                alarm(0);
-            };
-            if( $@ && $@ =~ /Timeout/ ) {
-                warn "Tab closure timed out";
+            # Use a non-blocking wait loop to avoid overriding alarm()
+            my $timeout_f = $_[0]->target->sleep(5);
+            my $wait_f = Future->wait_any($c, $timeout_f);
+            $wait_f->get; # This will resolve when either tab closes OR 5s pass
+            if( ! $c->is_ready ) {
+                $_[0]->log('debug', "Tab closure timed out");
             }
         }
     };
@@ -2173,6 +2188,7 @@ sub kill_child( $self, $signal, $pids, $wait_file ) {
 }
 
 sub DESTROY {
+    $_[0]->on_dialog(undef);
     $_[0]->close();
     %{ $_[0] }= (); # clean out all other held references
 }
@@ -2489,7 +2505,7 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
     })->then( sub {
         my $f;
         my @events;
-        if( !$options{ intrapage } and $navigated ) {
+        if( ($options{ synchronize } // 1) and !$options{ intrapage } and $navigated ) {
             $f = $does_navigation->then( sub {
                 @events = @_;
                 # Handle all the events, by turning them into a ->response again
@@ -2504,10 +2520,10 @@ sub _mightNavigate( $self, $get_navigation_future, %options ) {
                 Future->done( \@events )
             })
         } else {
-            $self->log('trace', "No navigation occurred, not collecting events");
-            $does_navigation->cancel;
+            $self->log('trace', "No navigation occurred or synchronization disabled, not collecting events");
+            $does_navigation->cancel if $does_navigation;
             $f = Future->done(\@events);
-            $scheduled->cancel;
+            $scheduled->cancel if $scheduled;
             undef $scheduled;
         };
 
@@ -2532,6 +2548,9 @@ sub get_future($self, $url, %options ) {
         }, url => "$url", %options, navigates => 1 )
     ->then( sub {
         $s->invalidate_cached_values;
+        if( ! $s->response ) {
+            $s->update_response( HTTP::Response->new( 200, 'OK', HTTP::Headers->new, '' ) );
+        }
         Future->done( $s->response )
     })
 };
@@ -2582,17 +2601,12 @@ sub _local_url( $self, $htmlfile, %options ) {
 }
 
 sub get_local( $self, $htmlfile, %options ) {
+    return $self->get_local_future($htmlfile, %options)->get;
+}
+
+sub get_local_future( $self, $htmlfile, %options ) {
     my $url = $self->_local_url( $htmlfile, %options );
-    my $res = $self->get($url, %options);
-    ## Chrome is not helpful with its error messages for local URLs
-    #if( 0+$res->headers->header_field_names and ([$res->headers->header_field_names]->[0] ne 'x-www-mechanize-Chrome-fake-success' or $self->uri ne 'about:blank')) {
-    #    # We need to fake the content headers from <meta> tags too...
-    #    # Maybe this even needs to go into ->get()
-    #    $res->code( 200 );
-    #} else {
-    #    $res->code( 400 ); # Must have been "not found"
-    #};
-    $res
+    return $self->get_future($url, %options);
 }
 
 sub httpRequestFromChromeRequest( $self, $event ) {
@@ -2664,6 +2678,10 @@ sub httpResponseFromChromeResponse( $self, $res ) {
         $res->{params}->{response}->{statusText},
         HTTP::Headers->new( %{ $res->{params}->{response}->{headers} }),
     );
+    # Since we will fetch the decoded body, these headers are now invalid/misleading:
+    $response->remove_header('Content-Encoding');
+    $response->remove_header('Content-Length');
+
     $self->log('debug',sprintf "Status %0d - %s",$response->code, $response->status_line);
 
     # Also fetch the response body and include it in the response
@@ -2674,31 +2692,33 @@ sub httpResponseFromChromeResponse( $self, $res ) {
     my $requestId = $res->{params}->{requestId};
 
     if( $requestId ) {
-        my $full_response_future;
-
         my $s = $self;
         weaken $s;
-        $full_response_future = $self->getResponseBody( $requestId )->then( sub( $body ) {
-            $s->log('debug', "Response body arrived");
-
+        my $resp = $response;
+        weaken $resp;
+        $response->{__body_future} = $self->getResponseBody( $requestId )->then( sub( $body ) {
             # We need to encode the body back to the appropriate bytes:
-            my $ct = $response->content_type;
+            if( $resp ) {
+                my $ct = $resp->content_type;
+                my $charset;
+                if( $ct and $ct =~ /charset=(.*)/ ) {
+                    $charset = $1;
+                }
 
-            $ct ||= 'text/plain';
+                if( $charset ) {
+                    $body = encode( $charset, $body );
+                } elsif( $ct and $ct =~ m!^text/! ) {
+                    $body = encode( 'UTF-8', $body );
+                    $resp->header('Content-Type' => "$ct; charset=UTF-8");
+                } else {
+                    # assume Latin-1 (actually, strip the encoding information from the Perl string)
+                    $body = encode( 'Latin-1', $body );
+                };
 
-            if( $ct =~ m!^text/(\w+); charset=(.*?)! ) {
-                warn "Re-encoding back to $2";
-                $body = encode( "$2", $body );
-            } else {
-                # assume Latin-1 (actually, strip the encoding information from the Perl string)
-                $body = encode( 'Latin-1', $body );
+                $resp->content( $body );
             };
-
-            $response->content( $body );
-            #undef $full_response_future;
             Future->done($body)
-        })->retain;
-        #$response->content_ref( \$body );
+        });
     };
     $response
 };
@@ -2978,13 +2998,16 @@ current request.
 =cut
 
 sub reload( $self, %options ) {
+    return $self->reload_future(%options)->get;
+}
+
+sub reload_future( $self, %options ) {
     if( exists $options{ ignoreCache } ) {
         $options{ ignoreCache } = $options{ ignoreCache } ? JSON::true : JSON::false;
     };
-    $self->_mightNavigate( sub {
+    return $self->_mightNavigate( sub {
         $self->target->send_message('Page.reload', %options )
-    }, navigates => 1, %options)
-    ->get;
+    }, navigates => 1, %options);
 }
 
 =head2 C<< $mech->set_download_directory( $dir ) >>
@@ -3004,17 +3027,31 @@ sub set_download_directory_future( $self, $dir="" ) {
     $self->{download_directory} = $dir;
     my $res;
     if( "" eq $dir ) {
-        $res = $self->target->send_message('Page.setDownloadBehavior',
+        $self->log('debug', "Disabling download behavior");
+        $res = $self->driver->send_message('Browser.setDownloadBehavior',
             behavior => 'deny',
         );
 
     } else {
-        $res = $self->target->send_message('Page.setDownloadBehavior',
+        $self->log('debug', "Enabling download behavior into $dir");
+        # We need to use Browser.setDownloadBehavior here
+        # Some Chrome versions are very picky about slashes and trailing slashes on Windows.
+        # Forward slashes are generally more robust for CDP across all platforms.
+        my $path = $dir;
+        $path =~ s!\\!/!g;
+        $res = $self->driver->send_message('Browser.setDownloadBehavior',
             behavior => 'allow',
-            downloadPath => $dir
-        )
+            downloadPath => $path,
+            eventsEnabled => JSON::true,
+        );
     };
-    return $res
+    return $res->then(sub($result = undef) {
+        $self->log('debug', "setDownloadBehavior result: " . ($result ? JSON::to_json($result) : 'empty'));
+        return Future->done($result);
+    })->catch(sub(@error) {
+        $self->log('error', "setDownloadBehavior FAILED: @error");
+        return Future->fail(@error);
+    });
 };
 
 sub set_download_directory( $self, $dir="" ) {
@@ -3212,14 +3249,17 @@ Returns the (new) response.
 =cut
 
 sub back( $self, %options ) {
-    $self->_mightNavigate( sub {
+    return $self->back_future(%options)->get;
+};
+
+sub back_future( $self, %options ) {
+    return $self->_mightNavigate( sub {
         $self->target->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}-1 ];
             $self->target->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
-    }, navigates => 1, %options)
-    ->get;
-};
+    }, navigates => 1, %options);
+}
 
 =head2 C<< $mech->forward() >>
 
@@ -3232,13 +3272,16 @@ Returns the (new) response.
 =cut
 
 sub forward( $self, %options ) {
-    $self->_mightNavigate( sub {
+    return $self->forward_future(%options)->get;
+}
+
+sub forward_future( $self, %options ) {
+    return $self->_mightNavigate( sub {
         $self->target->send_message('Page.getNavigationHistory')->then(sub($history) {
             my $entry = $history->{entries}->[ $history->{currentIndex}+1 ];
             $self->target->send_message('Page.navigateToHistoryEntry', entryId => $entry->{id})
         });
-    }, navigates => 1, %options)
-    ->get;
+    }, navigates => 1, %options);
 }
 
 =head2 C<< $mech->stop() >>
@@ -3300,45 +3343,62 @@ scrolling page like so:
 =cut
 
 sub infinite_scroll {
+    my $self = shift;
+    return $self->infinite_scroll_future(@_)->get;
+}
+
+sub infinite_scroll_future {
     my $self        = shift;
     my $wait_time   = shift || 20;
+    weaken(my $s = $self);
 
-    my $current_height = $self->_get_body_height;
-    $self->log('debug', "Current page body height: $current_height");
-
-    $self->_scroll_to_bottom;
-
-    my $new_height = $self->_get_body_height;
-    $self->log('debug', "New page body height: $new_height");
-
-    my $start_time = time();
-    while (!($new_height > $current_height)) {
-
-        # wait for new elements to load until $wait_time is reached
-        if (time() - $start_time > $wait_time) {
-          return 0;
-        }
-
-        # wait 1/10th sec for new elements to load
-        $self->sleep(0.1);
-        $new_height = $self->_get_body_height;
-    }
-    return 1;
+    return $self->_get_body_height_future->then(sub($current_height = undef) {
+        $s->log('debug', "Current page body height: $current_height");
+        return $s->_scroll_to_bottom_future->then(sub {
+            my $start_time = time();
+            return repeat {
+                $s->_get_body_height_future->then(sub($new_height = undef) {
+                    $s->log('debug', "New page body height: $new_height");
+                    if ($new_height > $current_height) {
+                        return Future->done(1);
+                    }
+                    if (time() - $start_time > $wait_time) {
+                        return Future->done(0);
+                    }
+                    return $s->sleep_future(0.1)->then(sub { Future->done(undef) });
+                });
+            } while => sub($f) { not defined $f->get };
+        });
+    });
 }
 
 sub _get_body_height {
     my $self = shift;
+    return $self->_get_body_height_future->get;
+}
 
-    my ($height) = $self->eval( 'document.body.scrollHeight' );
-    return $height;
+sub _get_body_height_future {
+    my $self = shift;
+    weaken(my $s = $self);
+    return $self->eval_future( 'document.body.scrollHeight' )->then(sub($res = undef) {
+        my ($height, $type) = $s->_process_eval_result($res);
+        return Future->done($height);
+    });
 }
 
 sub _scroll_to_bottom {
     my $self = shift;
+    return $self->_scroll_to_bottom_future->get;
+}
 
+sub _scroll_to_bottom_future {
+    my $self = shift;
+    weaken(my $s = $self);
     # scroll to bottom and wait for some content to load
-    $self->eval( 'window.scroll(0,document.body.scrollHeight + 200)' );
-    $self->sleep(0.1);
+    return $self->eval_future( 'window.scroll(0,document.body.scrollHeight + 200)' )
+    ->then(sub($res) {
+        return $s->sleep_future(0.1);
+    });
 }
 
 =head1 CONTENT METHODS
@@ -3388,37 +3448,76 @@ sub document( $self ) {
 }
 
 sub decoded_content($self) {
-    my $res;
-    my $ct = $self->ct || 'text/html';
-    if( $ct eq 'text/html' ) {
-        $res = $self->_cached_document->then(sub( $root ) {
-            # Join _all_ child nodes together to also fetch DOCTYPE nodes
-            # and the stuff that comes after them
+    return $self->decoded_content_future()->get;
+}
 
-            my @content = map {
-                my $nodeId = $_->{nodeId};
-                $self->log('trace', "Fetching HTML for node " . $nodeId );
-                $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
-            } @{ $root->{root}->{children} };
+sub decoded_content_future($self, %options) {
+    my $res = $self->res;
+    if( ! $res ) {
+        # Use a default 200 OK for about:blank if no response is set
+        $res = HTTP::Response->new( 200, 'OK', HTTP::Headers->new, '' );
+    }
 
-            return Future->wait_all( @content )
-            ->then( sub( @outerHTML_f ) {
-                Future->done( join "", map { $_->get->{outerHTML} } @outerHTML_f );
-            });
+    # If the response has a body future, we MUST wait for it.
+    if( my $f = $res->{__body_future} ) {
+        return $f->then(sub($body = undef) {
+            return Future->done($res->decoded_content(%options));
         });
-    } else {
-        # Return the raw body
-        #use Data::Dumper;
-        #warn Dumper $self->response;
-        #warn $self->response->content;
+    }
 
-        # The content is already decoded (?!)
-        # I'm not sure how well this plays with encodings, and
-        # binary content
-        $res = Future->done($self->response->content);
-    };
-    return $res->get
-};
+    return $self->content_type_future()->then(sub($ct = undef) {
+        $ct ||= 'text/html';
+        if( $ct =~ m!^text/html!i ) {
+            return $self->document_future->then(sub( $root = undef ) {
+                my $nodeId = $root->{root}->{nodeId};
+                if( ! $nodeId ) {
+                    return Future->done('');
+                }
+
+                # Strategy 1: Try the Document node directly
+                return $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+                ->then(sub($res) {
+                    my $html = $res->{outerHTML} || '';
+                    if( $html and $html =~ /\S/ ) {
+                        return Future->done($html);
+                    }
+                    die "Empty from root";
+                })->else(sub {
+                    # Strategy 2: Join children
+                    my @nodes = @{ $root->{root}->{children} || [] };
+                    if( @nodes ) {
+                        my @content = map {
+                            my $nid = $_->{nodeId};
+                            $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nid )
+                            ->else(sub { Future->done({ outerHTML => '' }) })
+                        } @nodes;
+
+                        return Future->wait_all( @content )
+                        ->then( sub( @outerHTML_f ) {
+                            my $html = join "", map { $_->get->{outerHTML} } @outerHTML_f;
+                            if( $html and $html =~ /\S/ ) {
+                                return Future->done($html);
+                            }
+                            die "Strategy 2 failed";
+                        });
+                    }
+                    die "No children found";
+                })->else(sub {
+                    # Strategy 3: XMLSerializer
+                    return $self->target->evaluate('new XMLSerializer().serializeToString(document)')
+                    ->then(sub($res) {
+                        my $html = $res->{result}->{value} || '';
+                        return Future->done($html);
+                    })->else(sub { Future->done('') });
+                });
+            })->else(sub {
+                return Future->done('');
+            });
+        } else {
+            return Future->done($res->decoded_content(%options));
+        };
+    });
+}
 
 =head2 C<< $mech->content( %options ) >>
 
@@ -3446,18 +3545,23 @@ The allowed values are C<html> and C<text>. The default is C<html>.
 =cut
 
 sub content( $self, %options ) {
+    return $self->content_future(%options)->get;
+}
+
+sub content_future( $self, %options ) {
     $options{ format } ||= 'html';
     my $format = delete $options{ format };
 
-    my $content;
     if( 'html' eq $format ) {
-        $content= $self->decoded_content()
+        return $self->decoded_content_future()
     } elsif ( $format eq 'text' ) {
-        $content= $self->text;
+        return $self->text_future();
     } elsif ( $format eq 'mhtml' ) {
-        $content= $self->captureSnapshot()->{data};
+        return $self->captureSnapshot_future()->then(sub($res = undef) {
+            Future->done($res ? $res->{data} : undef);
+        });
     } else {
-        die qq{Unknown "format" parameter "$format"};
+        return Future->fail(qq{Unknown "format" parameter "$format"});
     };
 };
 
@@ -3471,11 +3575,21 @@ HTML, $mech will die.
 =cut
 
 sub text {
+    return $_[0]->text_future->get;
+}
+
+sub text_future {
     my $self = shift;
 
     # Waugh - this is highly inefficient but conveniently short to write
     # Maybe this should skip SCRIPT nodes...
-    join '', map { $_->get_attribute('innerText', live => 1) } $self->xpath('//body', single => 1 );
+    return $self->xpath_future('//body', single => 1 )->then(sub( $body = undef ) {
+        if( $body ) {
+            return $body->get_attribute_future('innerText', live => 1);
+        } else {
+            return Future->done('');
+        }
+    });
 }
 
 =head2 C<< $mech->captureSnapshot_future() >>
@@ -3511,7 +3625,7 @@ sub content_encoding {
     my ($self) = @_;
     # Let's trust the <meta http-equiv first, and the header second:
     # Also, a pox on Chrome for not having lower-case or upper-case
-    if(( my $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
+    if(( my $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, maybe => 1 )) {
         (my $ct= $meta->{attributes}->{'content'}) =~ s/^.*;\s*charset=\s*//i;
         return $ct
             if( $ct );
@@ -3531,59 +3645,32 @@ The value passed in as C<$html> will be stringified.
 =cut
 
 sub update_html_future( $self, $content ) {
-    my $doc = $self->_cached_document;
-    return $doc->then(sub( $root ) {
-        # Find "HTML" child node:
-        my $nodeId = $root->{root}->{children}->[0]->{nodeId};
-        my $id;
-        if( ! $nodeId ) {
-            use Data::Dumper;
-            warn Dumper $root;
-            warn "Need / fetching nodeId from backendNodeId";
-
-            my @parentNodes; # we only expect one ...
-            my $setChildNodes = $self->add_listener('DOM.setChildNodes', sub( $ev ) {
-                #use Data::Dumper; warn "setChildNodes: "; warn Dumper $ev;
-                push @parentNodes, @{ $ev->{params}->{nodes} };
-            });
-
-            $id = $self->target->send_message('DOM.resolveNode', backendNodeId => $root->{root}->{children}->[0]->{backendNodeId} )
-            ->then( sub ( $nodeInfo ) {
-                use Data::Dumper;
-                warn Dumper $nodeInfo;
-                $self->target->send_message('DOM.requestNode', objectId => $nodeInfo->{object}->{objectId})
-                #return Future->done( $nodeInfo->{node}->{nodeId} )
-            })->catch(sub( @error ) {
-                use Data::Dumper;
-                warn "Couldn't find node: @error";
-                warn Dumper \@error;
-            })->then(sub ( $node ) {
-
-                # Implicitly, @parentNodes has been filled ...
-
-                use Data::Dumper;
-                warn Dumper $node;
-                return Future->done( $node->{nodeId} )
-                #return Future->done( $childNodes[0]->{nodeId} )
-            });
-
-        } else {
-            $id = $self->target->future->done( $nodeId );
-        };
-
-        $id->then( sub {
-            $self->log('trace', "Setting HTML for node " . $nodeId );
-            $self->target->send_message('DOM.setOuterHTML', nodeId => 0+$nodeId, outerHTML => "$content" )
-            ->then(sub {;
-                $self->invalidate_cached_values;
-                Future->done()
-            })
-
-            # Also, we need to wait for a DOM.documentUpdated here before querying
-            # again ... do we?!
-        });
-     });
-};
+    my $s = $self;
+    weaken $s;
+    my $js;
+    if ($content =~ /^\s*<\?xml/i) {
+        # Robust XHTML injection using DOMParser
+        $js = sprintf(q{
+            (function() {
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(%s, "application/xhtml+xml");
+                if (doc.getElementsByTagName("parsererror").length > 0) {
+                    // Fallback to document.write if XML parsing fails
+                    document.open(); document.write(%s); document.close();
+                } else {
+                    document.replaceChild(document.importNode(doc.documentElement, true), document.documentElement);
+                }
+            })()
+        }, JSON::to_json("$content"), JSON::to_json("$content"));
+    } else {
+        $js = "document.open(); document.write(" . JSON::to_json("$content") . "); document.close();";
+    }
+    return $self->target->send_message('Runtime.evaluate', expression => $js )
+    ->then(sub {
+        $s->invalidate_cached_values;
+        Future->done($s);
+    });
+}
 
 sub update_html( $self, $content ) {
     $self->update_html_future($content)->get
@@ -3603,11 +3690,26 @@ This method is specific to WWW::Mechanize::Chrome.
 
 sub base {
     my ($self) = @_;
-    (my $base) = $self->selector('base');
-    $base = $base->get_attribute('href', live => 1)
-        if $base && defined ($base->{nodeId});
-    $base ||= $self->uri;
-};
+    return $self->base_future->get;
+}
+
+sub base_future {
+    my ($self) = @_;
+    weaken(my $s = $self);
+    return $self->selector_future('base', maybe => 1)->then(sub {
+        my ($base_node) = @_;
+        if ($base_node && defined($base_node->{nodeId})) {
+            return $base_node->get_attribute_future('href', live => 1);
+        }
+        return Future->done(undef);
+    })->then(sub {
+        my ($base) = @_;
+        if ($base) {
+            return Future->done($base);
+        }
+        return $s->uri_future;
+    });
+}
 
 =head2 C<< $mech->content_type() >>
 
@@ -3620,20 +3722,52 @@ Returns the content type of the currently loaded document
 =cut
 
 sub content_type {
-    my ($self) = @_;
-    # Let's trust the <meta http-equiv first, and the header second:
-    # Also, a pox on Chrome for not having lower-case or upper-case
-    my $ct;
-    if(my( $meta )= $self->xpath( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, first => 1 )) {
-        $ct= $meta->{attributes}->{'content'};
-    };
-    if(!$ct and my $r= $self->response ) {
+    return $_[0]->content_type_future->get;
+}
 
-        my $h= $r->headers;
-        $ct= $h->header('Content-Type');
-    };
-    $ct =~ s/;.*$// if defined $ct;
-    $ct
+sub content_type_future {
+    my ($self) = @_;
+    my $ct;
+
+    # 1. Trust response headers first (fastest)
+    if( my $r = $self->response ) {
+        my $h = $r->headers;
+        $ct = $h->header('Content-Type');
+    }
+
+    # 2. Check <meta http-equiv> via fast JS if not in headers
+    my $res_f;
+    if (!$ct || $ct =~ m!^text/html!i) {
+        $res_f = $self->eval_in_page_future(q{
+            (function() {
+                var m = document.querySelector('meta[http-equiv="content-type"]');
+                return m ? m.getAttribute('content') : null;
+            })()
+        })->then(sub($result = undef) {
+            my $meta_ct = $result ? $result->{result}->{value} : undef;
+            $ct = $meta_ct if $meta_ct;
+
+            # 3. Last resort: expensive global xpath (only if JS failed or returned nothing)
+            if (!$ct) {
+                return $self->xpath_future( q{//meta[translate(@http-equiv,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')="content-type"]}, maybe => 1 )
+                ->then(sub( $meta = undef ) {
+                    if( $meta ) {
+                        $ct= $meta->{attributes}->{'content'};
+                    };
+                    return Future->done($ct);
+                });
+            } else {
+                return Future->done($ct);
+            }
+        });
+    } else {
+        $res_f = Future->done($ct);
+    }
+
+    return $res_f->then(sub($final_ct = undef) {
+        $final_ct =~ s/;.*$// if defined $final_ct;
+        return Future->done($final_ct);
+    });
 };
 
 {
@@ -3693,57 +3827,91 @@ our %link_spec = (
 );
 # taken from WWW::Mechanize. This should possibly just be reused there
 sub make_link {
-    my ($self,$node,$base) = @_;
+    my ($self, $node, $base) = @_;
+    return $self->make_link_future($node, $base)->get;
+}
+
+sub make_link_future {
+    my ($self, $node, $base) = @_;
+    weaken(my $s = $self);
 
     my $tag = lc $node->get_tag_name;
-    my $url;
+    my $url_f;
     if ($tag) {
-        if( ! exists $link_spec{ $tag }) {
+        if (! exists $link_spec{ $tag }) {
             carp "Unknown link-spec tag '$tag'";
-            $url= '';
+            $url_f = Future->done('');
         } else {
-            $url = $node->get_attribute( $link_spec{ $tag }->{url}, live => 1 );
+            $url_f = $node->get_attribute_future( $link_spec{ $tag }->{url}, live => 1 );
         };
-    };
-
-    if ($tag eq 'meta') {
-        my $content = $url;
-        if ( $content =~ /^\d+\s*;\s*url\s*=\s*(\S+)/i ) {
-            $url = $1;
-            $url =~ s/^"(.+)"$/$1/ or $url =~ s/^'(.+)'$/$1/;
-        }
-        else {
-            undef $url;
-        }
-    };
-
-    if (defined $url) {
-        #my $text  => $node->get_attribute('text'),
-        my $text = $node->get_text;
-        $text =~ s!\A\s+!!s;
-        $text =~ s!\s+\z!!s;
-        my $res = WWW::Mechanize::Link->new({
-            tag   => $tag,
-            name  => $node->get_attribute('name', live => 1),
-            base  => $base,
-            url   => $url,
-            text  => $text,
-            attrs => {},
-        });
-        return $res
     } else {
-        ()
+        $url_f = Future->done(undef);
     };
+
+    return $url_f->then(sub {
+        my ($url) = @_;
+        if ($tag eq 'meta' && defined $url) {
+            if ( $url =~ /^\d+\s*;\s*url\s*=\s*(\S+)/i ) {
+                $url = $1;
+                $url =~ s/^"(.+)"$/$1/ or $url =~ s/^'(.+)'$/$1/;
+            } else {
+                undef $url;
+            }
+        }
+
+        if (defined $url) {
+            return Future->wait_all(
+                $node->get_text_future,
+                $node->get_attribute_future('name', live => 1)
+            )->then(sub {
+                my ($text_f, $name_f) = @_;
+                my $text = $text_f->get;
+                my $name = $name_f->get;
+
+                $text =~ s!\A\s+!!s;
+                $text =~ s!\s+\z!!s;
+
+                return Future->done(WWW::Mechanize::Link->new({
+                    tag   => $tag,
+                    name  => $name,
+                    base  => $base,
+                    url   => $url,
+                    text  => $text,
+                    attrs => {},
+                }));
+            });
+        } else {
+            return Future->done(); # Return empty list in future context
+        }
+    });
 }
 
 sub links {
     my ($self) = @_;
-    my @links = $self->selector( join ",", sort keys %link_spec);
-    my $base = $self->base;
-    return map {
-        $self->make_link($_,$base)
-    } @links;
+    my $wantarray = wantarray;
+    my @res = $self->links_future->get;
+    return $wantarray ? @res : \@res;
 };
+
+sub links_future {
+    my ($self, %options) = @_;
+    weaken(my $s = $self);
+
+    return $self->base_future->then(sub {
+        my ($base) = @_;
+        return $s->selector_future( (join ",", sort keys %link_spec), %options, wantarray => 1 )
+        ->then(sub {
+            my (@links) = @_;
+            return Future->wait_all(
+                map { $s->make_link_future($_, $base) } @links
+            );
+        });
+    })->then(sub {
+        my (@link_objects_f) = @_;
+        my @res = map { $_->get } @link_objects_f;
+        return Future->done( @res );
+    });
+}
 
 =head2 C<< $mech->selector( $css_selector, %options ) >>
 
@@ -3761,14 +3929,22 @@ This method is implemented via L<WWW::Mechanize::Plugin::Selector>.
 
 sub selector {
     my ($self,$query,%options) = @_;
+    $options{ wantarray } = wantarray if ! exists $options{ all } and ! exists $options{ wantarray };
+    return $self->selector_future($query, %options)->get;
+};
+
+sub selector_future {
+    my ($self,$query,%options) = @_;
+    my $wantarray = exists $options{ wantarray } ? delete $options{ wantarray } : wantarray;
     $options{ user_info } ||= "CSS selector '$query'";
     if ('ARRAY' ne (ref $query || '')) {
         $query = [$query];
     };
     my $root = $options{ node } ? './' : '';
     my @q = map { selector_to_xpath($_, root => $root) } @$query;
-    $self->xpath(\@q, %options);
-};
+    $options{ wantarray } = $wantarray;
+    return $self->xpath_future(\@q, %options);
+}
 
 =head2 C<< $mech->find_link_dom( %options ) >>
 
@@ -3886,6 +4062,12 @@ sub _match_any_link_params( $self, $link, $p ) {
 
 sub find_link_dom {
     my ($self,%opts) = @_;
+    return $self->find_link_dom_future(%opts)->get;
+}
+
+sub find_link_dom_future {
+    my ($self,%opts) = @_;
+    my $wantarray = exists $opts{ wantarray } ? delete $opts{ wantarray } : wantarray;
     my %xpath_options;
 
     # Clean up some legacy stuff
@@ -3955,34 +4137,36 @@ sub find_link_dom {
             }  (@tags);
     #warn $q;
 
-    my @res = $self->xpath($q, %xpath_options );
+    weaken(my $s = $self);
+    return $self->xpath_future($q, %opts, all => 1, wantarray => 1 )->then(sub(@res) {
 
-    if (keys %opts) {
-        # post-filter the remaining links
-        # for all the options we don't support with XPath
-        my $base = $self->base;
+        if (keys %opts) {
+            # post-filter the remaining links
+            # for all the options we don't support with XPath
+            my $base = $s->base;
 
-        @res = grep {
-            $self->_match_any_link_params($self->make_link($_,$base),\%opts);
-        } @res;
-    };
+            @res = grep {
+                $s->_match_any_link_params($s->make_link($_,$base),\%opts);
+            } @res;
+        };
 
-    if ($one) {
-        if (0 == @res) { $self->signal_condition( "No link found matching '$q'" )};
-        if ($single) {
-            if (1 <  @res) {
-                $self->highlight_node(@res);
-                $self->signal_condition(
-                    sprintf "%d elements found found matching '%s'", scalar @res, $q
-                );
+        if ($one) {
+            if (0 == @res) { $s->signal_condition( "No link found matching '$q'" )};
+            if ($single) {
+                if (1 <  @res) {
+                    $s->highlight_node(@res);
+                    $s->signal_condition(
+                        sprintf "%d elements found found matching '%s'", scalar @res, $q
+                    );
+                };
             };
         };
-    };
 
-    if ($n eq 'all') {
-        return @res
-    };
-    $res[$n]
+        if ($n eq 'all') {
+            return Future->done( $wantarray ? @res : \@res )
+        };
+        return Future->done($res[$n]);
+    });
 }
 
 =head2 C<< $mech->find_link( %options ) >>
@@ -4028,14 +4212,31 @@ This defaults to not look through child frames.
 
 sub find_all_links {
     my ($self, %opts) = @_;
-    $opts{ n } = 'all';
-    my $base = $self->base;
-    my @matches = map {
-        $self->make_link($_, $base);
-    } $self->find_all_links_dom( frames => 0, %opts );
-    return @matches if wantarray;
-    return \@matches;
+    $opts{ wantarray } = wantarray;
+    return $self->find_all_links_future(%opts)->get;
 };
+
+sub find_all_links_future {
+    my ($self, %opts) = @_;
+    my $wantarray = exists $opts{ wantarray } ? delete $opts{ wantarray } : wantarray;
+    $opts{ n } = 'all';
+    weaken(my $s = $self);
+
+    return $self->base_future->then(sub {
+        my ($base) = @_;
+        return $s->find_all_links_dom_future( %opts, wantarray => 1 )
+        ->then(sub {
+            my (@matches) = @_;
+            return Future->wait_all(
+                map { $s->make_link_future($_, $base) } @matches
+            );
+        });
+    })->then(sub {
+        my (@link_objects_f) = @_;
+        my @res = map { $_->get } @link_objects_f;
+        return Future->done( $wantarray ? @res : \@res );
+    });
+}
 
 =head2 C<< $mech->find_all_links_dom %options >>
 
@@ -4054,10 +4255,19 @@ This defaults to not look through child frames.
 
 sub find_all_links_dom {
     my ($self,%opts) = @_;
+    $opts{ wantarray } = wantarray;
+    return $self->find_all_links_dom_future(%opts)->get;
+};
+
+sub find_all_links_dom_future {
+    my ($self,%opts) = @_;
+    my $wantarray = exists $opts{ wantarray } ? delete $opts{ wantarray } : wantarray;
     $opts{ n } = 'all';
-    my @matches = $self->find_link_dom( frames => 0, %opts );
-    return @matches if wantarray;
-    return \@matches;
+    $opts{ wantarray } = 1;
+    return $self->find_link_dom_future( frames => 0, %opts )
+    ->then(sub(@matches) {
+        return Future->done( $wantarray ? @matches : \@matches );
+    });
 };
 
 =head2 C<< $mech->follow_link( $link ) >>
@@ -4075,15 +4285,22 @@ things like C<A> tags.
 =cut
 
 sub follow_link {
+    my ($self,%opts) = @_;
+    return $self->follow_link_future(%opts)->get;
+}
+
+sub follow_link_future {
     my ($self,$link,%opts);
     if (@_ == 2) { # assume only a link parameter
         ($self,$link) = @_;
-        $self->click($link);
+        return $self->click_future($link);
     } else {
         ($self,%opts) = @_;
         _default_limiter( one => \%opts );
-        $link = $self->find_link_dom(%opts);
-        $self->click({ dom => $link, %opts });
+        weaken(my $s = $self);
+        return $self->find_link_dom_future(%opts)->then(sub($link) {
+            return $s->click_future({ dom => $link, %opts });
+        });
     }
 }
 
@@ -4108,15 +4325,15 @@ sub activate_container {
         #warn "Switching frames downwards ($el)";
         #warn "Tag: " . $el->get_tag_name;
         #warn Dumper $el;
-        warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src', live => 1);
+        # warn sprintf "Switching during path to %s %s", $el->get_tag_name, $el->get_attribute('src', live => 1);
         $driver->switch_to_frame( $el );
     };
 
     if( ! $just_parent ) {
-        warn sprintf "Activating container %s too", $doc->{id};
+        # warn sprintf "Activating container %s too", $doc->{id};
         # Now, unless it's the root frame, activate the container. The root frame
         # already is activated above.
-        warn "Getting tag";
+        # warn "Getting tag";
         my $tag= $doc->get_tag_name;
         #my $src= $doc->get_attribute('src');
         if( 'html' ne $tag and '' ne $tag) {
@@ -4235,6 +4452,79 @@ sub _unwrapChildNodeTree( $self, $nodes, $tree={} ) {
         };
     }
     return $tree
+}
+
+sub _performSearchJS( $self, %args ) {
+    my $query = $args{ query };
+    weaken( my $s = $self );
+
+    # Execute XPath in JS to leverage the browser's native XML parser
+    my $js = sprintf(q{
+        (function() {
+            var results = [];
+            var query = %s;
+            var xpathResult = document.evaluate(query, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+            for (var i = 0; i < xpathResult.snapshotLength; i++) {
+                results.push(xpathResult.snapshotItem(i));
+            }
+            return results;
+        })()
+    }, JSON::to_json($query));
+
+    my $nodeGeneration = $s->{_currentNodeGeneration} // 0;
+
+    return $self->_cached_document->then(sub {
+        return $self->target->send_message('Runtime.evaluate', 
+            expression => $js,
+            returnByValue => JSON::false # We want handles to resolve them to nodeId
+        )
+    })->then(sub($res) {
+        my $handle = $res->{result}->{objectId};
+        if (!$handle || $res->{result}->{subtype} eq 'null') {
+            return Future->done();
+        }
+
+        # Resolve the array of elements to individual nodeId entries
+        return $s->target->send_message('Runtime.getProperties', objectId => $handle, ownProperties => JSON::true)
+        ->then(sub($props) {
+            my @reqs = map { 
+                my $objId = $_->{value}->{objectId};
+                $objId ? $s->target->send_message('DOM.requestNode', objectId => $objId) : ()
+            } grep { $_->{name} =~ /^\d+$/ } @{$props->{result}};
+
+            if (!@reqs) {
+                return Future->done();
+            }
+
+            return Future->wait_all(@reqs)->then(sub(@node_ids) {
+                my @describe_reqs = map {
+                    my $nid = $_->get->{nodeId};
+                    $s->target->send_message('DOM.describeNode', nodeId => $nid)
+                    ->then(sub($node_info) {
+                        my $node_data = $node_info->{node};
+                        if( ref $node_data->{attributes} eq 'ARRAY') {
+                            $node_data->{attributes} = +{
+                                @{ $node_data->{attributes} }
+                            };
+                        };
+                        return Future->done(
+                            WWW::Mechanize::Chrome::Node->new(
+                                +{ %$node_data,
+                                driver       => $s->target,
+                                mech         => $s,
+                                _generation  => $nodeGeneration,
+                                cachedNodeId => $nid,
+                                }
+                            )
+                        );
+                    })
+                } @node_ids;
+                
+                # Return list of futures to match _performSearch expectation
+                return Future->done( @describe_reqs );
+            });
+        });
+    });
 }
 
 sub _performSearch( $self, %args ) {
@@ -4377,24 +4667,23 @@ sub _performSearch( $self, %args ) {
                 #} @{ $response->{nodeIds}};
                 my @nodes = map {
                     my $nid = $_;
-                    #my $request_f = $self->target->send_message('DOM.pushNodesByBackendIdsToFrontend',
-                    #backendNodeIds => [$node_ids{$_}->{backendNodeId}])
-                    #->then(sub( $info ) {
-                    #    warn Dumper $info;
+                    my $node_data = $node_ids{$nid} || { nodeId => $nid };
 
                     # Convert the array of attributes to a hash of attributes ...
-                    if( ref $node_ids{$nid}->{attributes} eq 'ARRAY') {
-                        $node_ids{$nid}->{attributes} = +{
-                            @{ $node_ids{$nid}->{attributes} }
+                    if( ref $node_data->{attributes} eq 'ARRAY') {
+                        $node_data->{attributes} = +{
+                            @{ $node_data->{attributes} }
                         };
                     };
                     Future->done(
                         WWW::Mechanize::Chrome::Node->new(
-                            +{ %{$node_ids{$nid} },
-                            driver => $self->target,
+                            +{ %$node_data,
+                            driver       => $self->target,
+                            mech         => $self,
+                            _generation  => $nodeGeneration,
+                            cachedNodeId => $nid,
                             }
                         ))
-                    #});
                 } @{ $response->{nodeIds}};
 
                 Future->wait_all( @nodes )
@@ -4484,6 +4773,13 @@ sub _performSearch( $self, %args ) {
 }
 
 sub xpath( $self, $query, %options) {
+    # Ensure xpath_future knows the context
+    $options{ wantarray } = wantarray if ! exists $options{ all };
+    return $self->xpath_future($query, %options)->get;
+}
+
+sub xpath_future( $self, $query, %options) {
+    my $wantarray = exists $options{ wantarray } ? delete $options{ wantarray } : wantarray;
     if ('ARRAY' ne (ref $query||'')) {
         $query = [$query];
     };
@@ -4492,7 +4788,7 @@ sub xpath( $self, $query, %options) {
     };
 
     my $single = $options{ single };
-    my $first  = $options{ one };
+    my $first  = $options{ one } || $options{ first };
     my $maybe  = $options{ maybe };
     my $any    = $options{ any };
     my $index  = $options{ index } || 0;
@@ -4508,12 +4804,12 @@ sub xpath( $self, $query, %options) {
 
     # Sanity check for the common error of
     # my $item = $mech->xpath("//foo");
-    if (! exists $options{ all } and not ($return_first_element)) {
+    if (! $options{ all } and not ($return_first_element)) {
         $self->signal_condition(join "\n",
             "You asked for many elements but seem to only want a single item.",
             "Did you forget to pass the 'single' option with a true value?",
             "Pass 'all => 1' to suppress this message and receive the count of items.",
-        ) if defined wantarray and !wantarray;
+        ) if defined $wantarray and !$wantarray;
     };
 
     my @res;
@@ -4527,45 +4823,76 @@ sub xpath( $self, $query, %options) {
 
     weaken(my $s = $self);
 
-    $doc->then( sub {
-        my $q = join "|", @$query;
-
-        my @found;
-        my $id;
-        if ($options{ node }) {
-            $id = $options{ node }->backendNodeId;
-            #warn "Performing search (below '$id')";
+    # Safe XHTML check: Use response headers if available, otherwise assume HTML.
+    # Avoid calling uri_future or content_type_future here as they can deadlock
+    # during navigation or on empty pages.
+    my $ct_f;
+    if (my $res = $s->response) {
+        my $ct = $res->header('Content-Type') || '';
+        if ($ct =~ m!application/xhtml\+xml!i) {
+            $ct_f = Future->done($ct);
+        } elsif ($ct =~ m!text/html!i || !$ct) {
+            # Meta check via JS is safe if we have a target
+            $ct_f = $s->eval_in_page_future(q{
+                (function() {
+                    var m = document.querySelector('meta[http-equiv="content-type"]');
+                    return m ? m.getAttribute('content') : null;
+                })()
+            })->then(sub($result = undef) {
+                return Future->done($result ? $result->{result}->{value} : '');
+            })->else(sub { Future->done('') });
         } else {
-            #warn "Performing search across complete DOM";
-        };
-        Future->wait_all(
-            map {
-                $s->_performSearch( query => $_, subTreeId => $id )
-            } @$query
-        );
+            $ct_f = Future->done($ct);
+        }
+    } else {
+        $ct_f = Future->done('');
+    }
+
+    return $ct_f->then(sub($ct = undef) {
+        $ct ||= '';
+        my $is_xhtml = ($ct =~ m!application/xhtml\+xml!i);
+
+        return $doc->then( sub {
+            my $q = join "|", @$query;
+
+            my @found;
+            my $id;
+            if ($options{ node }) {
+                $id = $options{ node }->backendNodeId;
+                #warn "Performing search (below '$id')";
+            } else {
+                #warn "Performing search across complete DOM";
+            };
+            Future->wait_all(
+                map {
+                    $is_xhtml 
+                        ? $s->_performSearchJS( query => $_ )
+                        : $s->_performSearch( query => $_, subTreeId => $id )
+                } @$query
+            );
+        });
     })->then( sub {
-        my @found = map { my @r = $_->get; @r ? map { $_->get } @r : () } @_;
-        #for( @found ) {
-        #    use Data::Dumper;
-        #    warn "Found " . Dumper $_;
-        #};
+        my @found = map { 
+            my @r = $_->get; 
+            @r ? map { (blessed($_) && $_->isa('Future')) ? $_->get : $_ } @r : () 
+        } @_;
         push @res, @found;
-        Future->done( 1 );
-    })->get;
 
-    # Determine if we want only one element
-    #     or a list, like WWW::Mechanize::Chrome
+        if (! $zero_allowed and @res == 0) {
+            $s->signal_condition( sprintf "No elements found for %s", $options{ user_info } );
+        };
+        
+        # If we are in single mode but found multiple, just warn and take the first
+        if (! $two_allowed and @res > 1) {
+            # warn sprintf "%d elements found for %s", (scalar @res), $options{ user_info };
+        };
 
-    if (! $zero_allowed and @res == 0) {
-        $self->signal_condition( sprintf "No elements found for %s", $options{ user_info } );
-    };
-    if (! $two_allowed and @res > 1) {
-        #$self->highlight_node(@res);
-        warn $_->get_text() || '<no text>' for @res;
-        $self->signal_condition( sprintf "%d elements found for %s", (scalar @res), $options{ user_info } );
-    };
-
-    $return_first_element ? $res[$index] : @res
+        if( $return_first_element || !$wantarray ) {
+            return Future->done( $res[ $index ] );
+        } else {
+            return Future->done( @res );
+        }
+    });
 }
 
 =head2 C<< $mech->by_id( $id, %options ) >>
@@ -4587,6 +4914,11 @@ CSS selectors.
 
 sub by_id {
     my ($self,$query,%options) = @_;
+    return $self->by_id_future($query, %options)->get;
+};
+
+sub by_id_future {
+    my ($self,$query,%options) = @_;
     if ('ARRAY' ne (ref $query||'')) {
         $query = [$query];
     };
@@ -4594,7 +4926,7 @@ sub by_id {
                             . join(" or ", map {qq{'$_'}} @$query)
                             . " found";
     $query = [map { qq{.//*[\@id="$_"]} } @$query];
-    $self->xpath($query, %options)
+    return $self->xpath_future($query, %options);
 }
 
 =head2 C<< $mech->click( $name [,$x ,$y] ) >>
@@ -4662,6 +4994,11 @@ the parameters to search much like for the C<find_link> calls.
 
 sub click {
     my ($self,$name,$x,$y) = @_;
+    return $self->click_future($name, (ref $name eq 'HASH' ? %$name : ()) )->get;
+}
+
+sub click_future {
+    my ($self,$name,$x,$y) = @_;
     my %options;
     my @buttons;
 
@@ -4680,36 +5017,43 @@ sub click {
     };
 
     if (exists $options{ name }) {
-        $name = quotemeta($options{ name }|| '');
+        my $nm = quotemeta($options{ name }|| '');
         $options{ xpath } = [
-                       sprintf( q{//*[(translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="button" and @name="%s") or (translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="input" and (@type="button" or @type="submit" or @type="image") and @name="%s")]}, $name, $name),
+                       sprintf( q{//*[(translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="button" and @name="%s") or (translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="input" and (@type="button" or @type="submit" or @type="image") and @name="%s")]}, $nm, $nm),
         ];
         if ($options{ name } eq '') {
             push @{ $options{ xpath }},
                        q{//*[(translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "button" or translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")="input") and @type="button" or @type="submit" or @type="image"]},
             ;
         };
-        $options{ user_info } = "Button with name '$name'";
+        $options{ user_info } = "Button with name '$options{name}'";
     };
 
+    my $buttons_f;
     if ($options{ dom }) {
-        @buttons = $options{ dom };
+        $buttons_f = Future->done($options{ dom });
     } else {
-        @buttons = $self->_option_query(%options);
+        $buttons_f = $self->_option_query_future(%options);
     };
 
-    # Get the node as an object so we can find its position and send the clicks:
-    $self->log('trace', sprintf "Resolving nodeId %d to object for clicking", $buttons[0]->nodeId );
-    my $id = $buttons[0]->objectId;
-    #warn Dumper $self->target->send_message('Runtime.getProperties', objectId => $id)->get;
-    #warn Dumper $self->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.focus(); }', arguments => [])->get;
+    weaken( my $s = $self );
+    return $buttons_f->then(sub($box) {
+        my $target = ref $box eq 'ARRAY' ? $box->[0] : $box;
+        if( ! $target ) {
+            $s->signal_condition($options{ user_info } || "Unknown button");
+            return Future->done();
+        }
 
-    $self->_mightNavigate( sub {
-        $self->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
-    }, %options)
-    ->get;
-
-    return $self->response;
+        # Get the node as an object so we can find its position and send the clicks:
+        $s->log('trace', sprintf "Resolving nodeId %d to object for clicking", $target->nodeId );
+        return $target->objectId_future->then(sub($id) {
+            return $s->_mightNavigate( sub {
+                $s->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => 'function() { this.click(); }', arguments => [])
+            }, %options);
+        })->then(sub {
+            return Future->done($s->response);
+        });
+    });
 }
 
 # Internal method to run either an XPath, CSS or id query against the DOM
@@ -4723,6 +5067,11 @@ my %rename = (
 
 sub _option_query {
     my ($self,%options) = @_;
+    return $self->_option_query_future(%options)->get;
+};
+
+sub _option_query_future {
+    my ($self,%options) = @_;
     my ($method,$q);
     for my $meth (keys %rename) {
         if (exists $options{ $meth }) {
@@ -4733,7 +5082,8 @@ sub _option_query {
     _default_limiter( 'one' => \%options );
     croak "Need either a name, a selector or an xpath key!"
         if not $method;
-    return $self->$method( $q, %options );
+    my $f_method = "${method}_future";
+    return $self->$f_method( $q, %options );
 };
 
 # Return the default limiter if no other limiting option is set:
@@ -4784,6 +5134,10 @@ C<selector> or C<xpath>, consider using C<< ->click >> instead.
 =cut
 
 sub click_button($self,%options) {
+    return $self->click_button_future(%options)->get;
+}
+
+sub click_button_future($self,%options) {
     my $node;
     my $xpath;
     my $user_message;
@@ -4806,18 +5160,30 @@ sub click_button($self,%options) {
         $xpath = sprintf '//*[translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "button" or (translate(local-name(.), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "input" and @type="submit")][%s]', $v;
         $user_message = "Button number '$v' out of range";
     };
-    $node ||= $self->xpath( $xpath,
-                          node => $self->current_form,
-                          single => 1,
-                          user_message => $user_message,
-              );
+
+    weaken(my $s = $self);
+    my $node_f;
     if ($node) {
-        $self->click({ dom => $node, %options });
+        $node_f = Future->done($node);
     } else {
+        $node_f = $self->current_form_future->then(sub($form) {
+            return $s->xpath_future( $xpath,
+                              node => $form,
+                              single => 1,
+                              user_message => $user_message,
+                  );
+        });
+    }
 
-        $self->signal_condition($user_message);
-    };
+    return $node_f->then(sub($node) {
+        if ($node) {
+            return $s->click_future({ dom => $node, %options });
 
+        } else {
+            $self->signal_condition($user_message);
+            return Future->done();
+        };
+    });
 }
 
 =head1 FORM METHODS
@@ -4840,9 +5206,15 @@ and on calls to C<< ->submit() >> and C<< ->submit_with_fields >>.
 
 sub current_form {
     my( $self, %options )= @_;
-    # Find the first <FORM> element from the currently active element
-    $self->form_number(1) unless $self->{current_form};
-    $self->{current_form};
+    return $self->current_form_future(%options)->get;
+}
+
+sub current_form_future {
+    my( $self, %options )= @_;
+    if ($self->{current_form}) {
+        return Future->done($self->{current_form});
+    }
+    return $self->form_number_future(1, %options);
 }
 
 sub clear_current_form {
@@ -4856,16 +5228,20 @@ sub invalidate_cached_values($self) {
 
 sub active_form {
     my( $self, %options )= @_;
+    return $self->active_form_future(%options)->get;
+}
+
+sub active_form_future {
+    my( $self, %options )= @_;
     # Find the first <FORM> element from the currently active element
-    my $focus= $self->target->get_active_element;
+    return $self->target->get_active_element->then(sub($focus) {
+        if( !$focus ) {
+            # warn "No active element, hence no active form";
+            return Future->done();
+        };
 
-    if( !$focus ) {
-        warn "No active element, hence no active form";
-        return
-    };
-
-    my $form= $self->xpath( './ancestor-or-self::FORM', node => $focus, maybe => 1 );
-
+        return $self->xpath_future( './ancestor-or-self::FORM', node => $focus, maybe => 1 );
+    });
 }
 
 =head2 C<< $mech->dump_forms( [$fh] ) >>
@@ -4912,13 +5288,23 @@ are identical to those accepted by the L<< /$mech->xpath >> method.
 
 sub form_name {
     my ($self,$name,%options) = @_;
+    $options{ wantarray } = wantarray;
+    $self->form_name_future($name, %options)->get;
+};
+
+sub form_name_future {
+    my ($self,$name,%options) = @_;
+    my $wantarray = exists $options{ wantarray } ? delete $options{ wantarray } : wantarray;
     $name = quote_xpath( $name );
     _default_limiter( single => \%options );
-    $self->{current_form} = $self->selector("form[name='$name']",
+    $options{ wantarray } = $wantarray;
+    return $self->selector_future("form[name='$name']",
         user_info => "form name '$name'",
         %options
-    );
-};
+    )->on_done(sub($res) {
+        $self->{current_form} = $res;
+    });
+}
 
 =head2 C<< $mech->form_id( $id [, %options] ) >>
 
@@ -4936,13 +5322,22 @@ This is equivalent to calling
 
 sub form_id {
     my ($self,$name,%options) = @_;
+    $options{ wantarray } = wantarray;
+    $self->form_id_future($name, %options)->get;
+};
 
+sub form_id_future {
+    my ($self,$name,%options) = @_;
+    my $wantarray = exists $options{ wantarray } ? delete $options{ wantarray } : wantarray;
     _default_limiter( single => \%options );
-    $self->{current_form} = $self->by_id($name,
+    $options{ wantarray } = $wantarray;
+    return $self->by_id_future($name,
         user_info => "form with id '$name'",
         %options
-    );
-};
+    )->on_done(sub($res) {
+        $self->{current_form} = $res;
+    });
+}
 
 =head2 C<< $mech->form_number( $number [, %options] ) >>
 
@@ -4956,13 +5351,21 @@ are identical to those accepted by the L<< /$mech->xpath >> method.
 
 sub form_number {
     my ($self,$number,%options) = @_;
+    $options{ wantarray } = wantarray;
+    $self->form_number_future($number, %options)->get;
+};
 
+sub form_number_future {
+    my ($self,$number,%options) = @_;
+    my $wantarray = exists $options{ wantarray } ? delete $options{ wantarray } : wantarray;
     _default_limiter( single => \%options );
-    $self->{current_form} = $self->xpath("(//form)[$number]",
+    $options{ wantarray } = $wantarray;
+    return $self->xpath_future("(//form)[$number]",
         user_info => "form number $number",
         %options
-    );
-    $self->{current_form};
+    )->on_done(sub($res) {
+        $self->{current_form} = $res;
+    });
 };
 
 =head2 C<< $mech->form_with_fields( [$options], @fields ) >>
@@ -4984,19 +5387,31 @@ sub form_with_fields {
     my ($self,@fields) = @_;
     my $options = {};
     if (ref $fields[0] eq 'HASH') {
+        $options = $fields[0];
+    }
+    $options->{ wantarray } = wantarray;
+    $self->form_with_fields_future(@fields)->get;
+};
+
+sub form_with_fields_future {
+    my ($self,@fields) = @_;
+    my $options = {};
+    if (ref $fields[0] eq 'HASH') {
         $options = shift @fields;
     };
+    my $wantarray = exists $options->{ wantarray } ? delete $options->{ wantarray } : wantarray;
     my @clauses  = map { $self->element_query([qw[input select textarea]], { 'name' => $_ })} @fields;
 
     my $q = "//form[" . join( " and ", @clauses)."]";
     #warn $q;
     _default_limiter( single => $options );
-    $self->{current_form} = $self->xpath($q,
+    $options->{ wantarray } = $wantarray;
+    return $self->xpath_future($q,
         user_info => "form with fields [@fields]",
         %$options
-    );
-    #warn $form;
-    $self->{current_form};
+    )->on_done(sub($res) {
+        $self->{current_form} = $res;
+    });
 };
 
 =head2 C<< $mech->forms( %options ) >>
@@ -5017,10 +5432,15 @@ The returned elements are the DOM C<< <form> >> elements.
 
 sub forms {
     my ($self, %options) = @_;
-    my @res = $self->selector('form', %options);
+    my @res = $self->forms_future(%options)->get;
     return wantarray ? @res
                      : \@res
 };
+
+sub forms_future {
+    my ($self, %options) = @_;
+    return $self->selector_future('form', %options, wantarray => 1);
+}
 
 =head2 C<< $mech->field( $selector, $value, [, $index, \@pre_events [,\@post_events]] ) >>
 
@@ -5050,20 +5470,27 @@ are triggered.
 =cut
 
 sub field($self,$name,$value,$index=undef,$pre=undef,$post=undef) {
+    return $self->field_future($name,$value,$index,$pre,$post)->get;
+}
+
+sub field_future($self,$name,$value,$index=undef,$pre=undef,$post=undef) {
     if( ref $index ) { # old API
         carp "Old API style for ->field() is deprecated. Please fix the call to pass undef for the third parameter if using pre_events/post_events!";
         $post  = $pre;
         $pre   = $index;
         $index = undef;
     };
-    $self->get_set_value(
-        name => $name,
-        value => $value,
-        pre => $pre,
-        post => $post,
-        index => $index,
-        node => $self->current_form,
-    );
+    weaken(my $s = $self);
+    return $self->current_form_future->then(sub($form) {
+        return $s->get_set_value_future(
+            name => $name,
+            value => $value,
+            pre => $pre,
+            post => $post,
+            index => $index,
+            node => $form,
+        );
+    });
 }
 
 =head2 C<< $mech->sendkeys( %options ) >>
@@ -5179,27 +5606,40 @@ method for that.
 =cut
 
 sub value {
-    if (@_ == 3) {
-        my ($self,$name,$index) = @_;
+    my $self = shift;
+    $self->value_future(@_)->get;
+}
 
-        if( defined $index and $index !~ /^\d+$/ ) {
-            $self->signal_condition("Non-numeric index passed to ->value(). Did you mean to call ->field('$name' => '$index') ?");
-        };
+sub value_future {
+    my $self = shift;
+    my $name = shift;
+    my $index;
+    my %options;
 
-        return $self->get_set_value(
-            node => $self->current_form,
+    if (@_ == 1 and ref $_[0] eq 'HASH') {
+        %options = %{$_[0]};
+    } elsif (@_ == 1 and $_[0] =~ /^\d+$/) {
+        $index = shift;
+    } elsif (@_ % 2 == 0 and @_ > 0) {
+        %options = @_;
+    } elsif (@_ >= 2) {
+        $index = shift;
+        %options = @_;
+    }
+
+    weaken(my $s = $self);
+    if( defined $index and $index !~ /^\d+$/ ) {
+        $self->signal_condition("Non-numeric index passed to ->value(). Did you mean to call ->field('$name' => '$index') ?");
+    };
+
+    return $self->current_form_future->then(sub($form) {
+        return $s->get_set_value_future(
+            node => $form,
             index => $index,
-            name => $name,
-        );
-
-    } else {
-        my ($self,$name,%options) = @_;
-        return $self->get_set_value(
-            node => $self->current_form,
             %options,
             name => $name,
         );
-    };
+    });
 };
 
 =head2 C<< $mech->get_set_value( %options ) >>
@@ -5217,6 +5657,10 @@ in addition to all keys that C<< $mech->xpath >> supports.
 =cut
 
 sub _field_by_name {
+    return $_[0]->_field_by_name_future(@_[1..$#_])->get;
+}
+
+sub _field_by_name_future {
     my ($self,%options) = @_;
     my @fields;
     my $name  = delete $options{ name };
@@ -5229,13 +5673,12 @@ sub _field_by_name {
         $attr = 'class'
     };
     if (blessed $name) {
-        @fields = $name;
+        return Future->done($name);
     } else {
         _default_limiter( single => \%options );
         my $query = $self->element_query([qw[input select textarea]], { $attr => $name });
-        @fields = $self->xpath($query,%options);
+        return $self->xpath_future($query,%options);
     };
-    @fields
 }
 
 =head2 C<< $mech->set_field( %options ) >>
@@ -5251,6 +5694,10 @@ of a E<lt>formE<gt> tag.
 =cut
 
 sub set_field($self, %options ) {
+    return $self->set_field_future(%options)->get;
+}
+
+sub set_field_future($self, %options ) {
     my $value = delete $options{ value };
     my $pre   = delete $options{pre};
     $pre = [$pre]
@@ -5262,29 +5709,38 @@ sub set_field($self, %options ) {
     $post ||= ['change']; # just to eliminate some checks downwards
     my $obj = delete $options{ field }
         or croak "Need a field to set";
-    my $tag = $obj->get_tag_name();
 
-    my %method = (
-        input    => 'value',
-        textarea => 'content',
-        select   => 'selected',
-    );
-    my $method = $method{ lc $tag };
-    if( lc $tag eq 'input' and $obj->get_attribute('type', live => 1) eq 'radio' ) {
-        $method = 'checked';
-    };
+    weaken(my $s = $self);
+    return $obj->get_tag_name_future()->then(sub($tag) {
+        warn "DEBUG: tag: $tag\n" if $ENV{TEST_VERBOSE};
+        return $obj->get_attribute_future('type', live => 1)->then(sub($type) {
+            warn "DEBUG: type: " . ($type // '') . "\n" if $ENV{TEST_VERBOSE};
+            return $obj->objectId_future()->then(sub($id) {
+                warn "DEBUG: id: " . ($id // '') . "\n" if $ENV{TEST_VERBOSE};
+                $type //= '';
 
-    my $id = $obj->objectId;
-    if( ! $id ) {
-        warn "No object id for nodeId " . $obj->nodeId;
-    };
+                my %method = (
+                    input    => 'value',
+                    textarea => 'content',
+                    select   => 'selected',
+                );
+                my $method = $method{ lc $tag };
+                if( lc $tag eq 'input' and $type eq 'radio' ) {
+                    $method = 'checked';
+                };
 
-    # Send pre-change events:
-    for my $ev (@$pre) {
-        $self->target->send_message(
-                'Runtime.callFunctionOn',
-                objectId => $id,
-                functionDeclaration => <<'JS',
+                if( ! $id ) {
+                    warn "No object id for nodeId " . $obj->nodeId;
+                };
+
+                # Send pre-change events:
+                warn "DEBUG: pre-events: @$pre\n" if $ENV{TEST_VERBOSE};
+                my @pre_f;
+                for my $ev (@$pre) {
+                    push @pre_f, $s->target->send_message(
+                            'Runtime.callFunctionOn',
+                            objectId => $id,
+                            functionDeclaration => <<'JS',
 function(ev) {
     var event = new Event(ev, {
         view : window,
@@ -5294,22 +5750,24 @@ function(ev) {
     this.dispatchEvent(event);
 }
 JS
-                arguments => [{ value => $ev }],
-            );
-    };
+                            arguments => [{ value => $ev }],
+                        );
+                };
 
-    if( 'value' eq $method ) {
-        $self->target->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" )->get;
+                return Future->wait_all( @pre_f )->then(sub {
+                    warn "DEBUG: set-value: $value\n" if $ENV{TEST_VERBOSE};
+                    if( 'value' eq $method ) {
+                        return $s->target->send_message('DOM.setAttributeValue', nodeId => 0+$obj->nodeId, name => 'value', value => "$value" );
 
-    } elsif( 'selected' eq $method ) {
-        # ignoring undef; but [] would reset to no option
-        if (defined $value) {
+                    } elsif( 'selected' eq $method ) {
+                        # ignoring undef; but [] would reset to no option
+                        if (defined $value) {
 
-            $value = [ $value ] unless ref $value;
-            $self->target->send_message(
-                'Runtime.callFunctionOn',
-                objectId => $id,
-                functionDeclaration => <<'JS',
+                            $value = [ $value ] unless ref $value;
+                            return $s->target->send_message(
+                                'Runtime.callFunctionOn',
+                                objectId => $id,
+                                functionDeclaration => <<'JS',
 function(newValue) {
   var i, j;
   if (this.multiple == true) {
@@ -5326,31 +5784,33 @@ function(newValue) {
   }
 }
 JS
-                arguments => [{ value => $value }],
-            )->get;
-        }
-    } elsif( 'checked' eq $method ) {
-        if (defined $value) {
-            $value = [ $value ] unless ref $value;
-            $obj->set_attribute('checked' => JSON::true);
-        }
-    } elsif( 'content' eq $method ) {
-        $self->target->send_message('Runtime.callFunctionOn',
-            objectId => $id,
-            functionDeclaration => 'function(newValue) { this.innerHTML = newValue }',
-            arguments => [{ value => $value }]
-        )->get;
-    } else {
-        die "Don't know how to set the value for node '$tag', sorry";
-    };
-
-    # Send post-change events
-    # Send pre-change events:
-    for my $ev (@$post) {
-        $self->target->send_message(
-                'Runtime.callFunctionOn',
-                objectId => $id,
-                functionDeclaration => <<'JS',
+                                arguments => [{ value => $value }],
+                            );
+                        }
+                    } elsif( 'checked' eq $method ) {
+                        if (defined $value) {
+                            $value = [ $value ] unless ref $value;
+                            return $obj->set_attribute_future('checked' => JSON::true);
+                        }
+                    } elsif( 'content' eq $method ) {
+                        return $s->target->send_message('Runtime.callFunctionOn',
+                            objectId => $id,
+                            functionDeclaration => 'function(newValue) { this.innerHTML = newValue }',
+                            arguments => [{ value => $value }]
+                        );
+                    } else {
+                        die "Don't know how to set the value for node '$tag', sorry";
+                    }
+                    return Future->done();
+                })->then(sub {
+                    # Send post-change events:
+                    warn "DEBUG: post-events: @$post\n" if $ENV{TEST_VERBOSE};
+                    my @post_f;
+                    for my $ev (@$post) {
+                        push @post_f, $s->target->send_message(
+                                'Runtime.callFunctionOn',
+                                objectId => $id,
+                                functionDeclaration => <<'JS',
 function(ev) {
     var event = new Event(ev, {
         view : window,
@@ -5360,12 +5820,27 @@ function(ev) {
     this.dispatchEvent(event);
 }
 JS
-                arguments => [{ value => $ev }],
-            );
-    };
+                                arguments => [{ value => $ev }],
+                            );
+                    };
+                    return Future->wait_all( @post_f );
+                });
+            });
+        });
+    });
 }
 
 sub get_set_value($self,%options) {
+    $options{ wantarray } = wantarray;
+    if( wantarray ) {
+        return $self->get_set_value_future(%options)->get;
+    } else {
+        return scalar $self->get_set_value_future(%options)->get;
+    }
+}
+
+sub get_set_value_future($self,%options) {
+    my $wantarray = exists $options{ wantarray } ? delete $options{ wantarray } : wantarray;
     my $set_value = exists $options{ value };
     my $value = delete $options{ value };
     my $pre   = delete $options{pre};
@@ -5394,38 +5869,45 @@ sub get_set_value($self,%options) {
             $index_name = "${index}th ";
         }
     };
-    my @fields = $self->_field_by_name(
+    return $self->_field_by_name_future(
                      name => $name,
                      user_info => "${index_name}input with name '$name'",
                      index     => $index,
-                     %options );
+                     %options )->then(sub(@fields) {
 
     if (my $obj = $fields[0]) {
-
+        my $f;
         if ($set_value) {
-            $self->set_field(
+            $f = $self->set_field_future(
                 field => $obj,
                 value => $value,
                 pre => $pre,
                 post => $post,
             );
+        } else {
+            $f = Future->done();
         };
 
-        # Don't bother to fetch the field's value if it's not wanted
-        return unless defined wantarray;
+        return $f->then(sub {
+            # Don't bother to fetch the field's value if it's not wanted
+            return Future->done() unless defined $wantarray;
 
-        # We could save some work here for the simple case of single-select
-        # dropdowns by not enumerating all options
-        my $tag = $obj->get_tag_name();
-        if ('SELECT' eq uc $tag) {
-            my $id = $obj->objectId;
-                if( ! $id ) {
-                    warn "No object id for nodeId " . $obj->nodeId;
-                };
-            my $arr = $self->target->send_message(
-                    'Runtime.callFunctionOn',
-                    objectId => $id,
-                    functionDeclaration => <<'JS',
+            # We could save some work here for the simple case of single-select
+            # dropdowns by not enumerating all options
+            weaken(my $s = $self);
+            return $obj->get_tag_name_future()->then(sub($tag) {
+                warn "DEBUG: tag: $tag\n" if $ENV{TEST_VERBOSE};
+                return $obj->objectId_future()->then(sub($id) {
+                    warn "DEBUG: id: " . ($id // '') . "\n" if $ENV{TEST_VERBOSE};
+
+                if ('SELECT' eq uc $tag) {
+                    if( ! $id ) {
+                        warn "No object id for nodeId " . $obj->nodeId;
+                    };
+                    return $s->target->send_message(
+                        'Runtime.callFunctionOn',
+                        objectId => $id,
+                        functionDeclaration => <<'JS',
 function() {
   var i;
   var arr = [];
@@ -5437,21 +5919,22 @@ function() {
   return arr;
 }
 JS
-                    arguments => [],
-                    returnByValue => JSON::true)->get->{result};
-
-            my @values = @{$arr->{value}};
-            if (wantarray) {
-                return @values
+                        arguments => [],
+                        returnByValue => JSON::true)->then(sub($res) {
+                    my $arr = $res->{result};
+                    my @values = @{$arr->{value}};
+                    return Future->done( @values );
+                });
             } else {
-                return $values[0];
-            }
-        } else {
-            return $obj->get_attribute('value', live => 1);
-        };
+                return $obj->get_attribute_future('value', live => 1);
+            };
+        });
+    });
+    });
     } else {
-        return
+        return Future->done();
     }
+    });
 }
 
 =head2 C<< $mech->select( $name, $value ) >>
@@ -5479,64 +5962,86 @@ false and calls C<< $self>warn() >> with an error message.
 =cut
 
 sub select($self, $name, $value) {
-    my $field;
-    if( ! eval {
-        ($field) = $self->_field_by_name(
-            node => $self->current_form,
-            name => $name,
-            #%options,
-        );
-        1;
-    }) {
-        # the field was not found
-        return;
-    };
+    return $self->select_future($name, $value)->get;
+}
 
-    my @options = $self->xpath( './/option', node => $field);
-    my @by_index;
-    my @by_value;
-    my $single = $field->get_attribute('type', live => 1) eq "select-one";
-    my $deselect;
-
-    if ('HASH' eq ref $value||'') {
-        for (keys %$value) {
-            $self->warn(qq{Unknown select value parameter "$_"})
-              unless $_ eq 'n';
+sub select_future($self, $name, $value) {
+    weaken(my $s = $self);
+    return $self->_field_by_name_future(
+        node => $self->current_form,
+        name => $name,
+        maybe => 1,
+        #%options,
+    )->then(sub {
+        my ($field) = @_;
+        if (!$field) {
+            # the field was not found
+            return Future->done();
         }
 
-        $deselect = ref $value->{n};
-        @by_index = ref $value->{n} ? @{ $value->{n} } : $value->{n};
-    } elsif ('ARRAY' eq ref $value||'') {
-        # clear all preselected values
-        $deselect = 1;
-        @by_value = @{ $value };
-    } else {
-        @by_value = $value;
-    };
+        return $s->xpath_future( './/option', node => $field, wantarray => 1)->then(sub {
+            my (@options) = @_;
+            return $field->get_attribute_future('type', live => 1)->then(sub {
+                my ($type) = @_;
+                my $single = ($type || '') eq "select-one";
 
-    if ($deselect) {
-        for my $o (@options) {
-            $o->{selected} = 0;
-        }
-    };
+                my @by_index;
+                my @by_value;
+                my $deselect;
 
-    if ($single) {
-        # Only use the first element for single-element boxes
-        $#by_index = 0+@by_index ? 0 : -1;
-        $#by_value = 0+@by_value ? 0 : -1;
-    };
+                if ('HASH' eq ref $value||'') {
+                    for (keys %$value) {
+                        $s->warn(qq{Unknown select value parameter "$_"})
+                          unless $_ eq 'n';
+                    }
 
-    # Select the items, either by index or by value
-    for my $idx (@by_index) {
-        $options[$idx-1]->set_attribute('selected' => 1 );
-    };
+                    $deselect = ref $value->{n};
+                    @by_index = ref $value->{n} ? @{ $value->{n} } : $value->{n};
+                } elsif ('ARRAY' eq ref $value||'') {
+                    # clear all preselected values
+                    $deselect = 1;
+                    @by_value = @{ $value };
+                } else {
+                    @by_value = $value;
+                };
 
-    for my $v (@by_value) {
-        my $option = $self->xpath( sprintf( './/option[@value="%s"]', quote_xpath( $v )) , node => $field, single => 1 );
-        $option->set_attribute( 'selected' => '1' );
-    };
+                my @f;
+                if ($deselect) {
+                    for my $o (@options) {
+                        push @f, $o->set_attribute_future('selected' => undef );
+                    }
+                };
 
-    return @by_index + @by_value > 0;
+                if ($single) {
+                    # Only use the first element for single-element boxes
+                    $#by_index = 0+@by_index ? 0 : -1;
+                    $#by_value = 0+@by_value ? 0 : -1;
+                };
+
+                return Future->wait_all(@f)->then(sub {
+                    my @select_f;
+                    # Select the items, either by index or by value
+                    for my $idx (@by_index) {
+                        if ($options[$idx-1]) {
+                            push @select_f, $options[$idx-1]->set_attribute_future('selected' => 1 );
+                        }
+                    };
+
+                    for my $v (@by_value) {
+                        push @select_f, $s->xpath_future( sprintf( './/option[@value="%s"]', quote_xpath( $v )) , node => $field, single => 1 )
+                            ->then(sub {
+                                my ($option) = @_;
+                                return $option->set_attribute_future( 'selected' => '1' );
+                            });
+                    };
+
+                    return Future->wait_all(@select_f)->then(sub {
+                        return Future->done( @by_index + @by_value > 0 );
+                    });
+                });
+            });
+        });
+    });
 }
 
 =head2 C<< $mech->tick( $name, $value [, $set ] ) >>
@@ -5558,6 +6063,10 @@ as the options to C<< ->find_link_dom >> to find the element.
 =cut
 
 sub tick($self, $name, $value=undef, $set=1) {
+    $self->tick_future($name, $value, $set)->get;
+}
+
+sub tick_future($self, $name, $value=undef, $set=1) {
     my %options;
     my @boxes;
 
@@ -5603,21 +6112,39 @@ sub tick($self, $name, $value=undef, $set=1) {
                               : "Checkbox with name '$name'";
     };
 
+    my $box_f;
     if ($options{ dom }) {
-        @boxes = $options{ dom };
+        $box_f = Future->done($options{ dom });
     } else {
-        @boxes = $self->_option_query(%options);
+        $box_f = $self->_option_query_future(%options);
     };
 
-    my $target = $boxes[0];
-    my $is_set = ($target->get_attribute( 'checked', live => 1 ) || '') eq 'checked';
-    if ($set xor $is_set) {
-        if ($set) {
-            $target->set_attribute('checked', 'checked');
-        } else {
-            $target->set_attribute('checked', undef);
-        };
-    };
+    return $box_f->then(sub($box) {
+        my $target = ref $box eq 'ARRAY' ? $box->[0] : $box;
+        weaken(my $s = $self);
+        # Use property for state check as it's the live state
+        return $target->get_attribute_future( 'checked', live => 1 )->then(sub($attr_val) {
+            # Map attribute/property to boolean
+            my $is_set = (defined $attr_val and $attr_val ne 'false' and $attr_val ne '0' and $attr_val ne '');
+            
+            if ($set xor $is_set) {
+                # Update both property and attribute via JS for atomicity
+                return $target->objectId_future->then(sub($id) {
+                    return $s->target->send_message('Runtime.callFunctionOn',
+                        functionDeclaration => sprintf('function() { this.checked = %s; if(%s) { this.setAttribute("checked", "checked") } else { this.removeAttribute("checked") }; return this.checked; }', ($set ? 'true' : 'false'), ($set ? 'true' : 'false')),
+                        objectId => $id,
+                        returnByValue => JSON::true,
+                    );
+                })->then(sub($res) {
+                    # Explicitly update the library's internal cache
+                    return $target->set_attribute_future('checked', $set ? 'checked' : undef);
+                })->then(sub {
+                    return Future->done($target);
+                });
+            };
+            return Future->done($target);
+        });
+    });
 };
 
 =head2 C<< $mech->untick( $name, $value ) >>
@@ -5632,7 +6159,12 @@ Causes the checkbox to be unticked. Shorthand for
 
 sub untick {
     my ($self, $name, $value) = @_;
-    $self->tick( $name, $value, undef );
+    $self->untick_future($name, $value)->get;
+};
+
+sub untick_future {
+    my ($self, $name, $value) = @_;
+    $self->tick_future( $name, $value, undef );
 };
 
 =head2 C<< $mech->submit( $form ) >>
@@ -5649,25 +6181,34 @@ by C<< $mech->current_form >>.
 =cut
 
 sub submit($self,$dom_form = $self->current_form) {
-    if ($dom_form) {
-        # We should prepare for navigation here as well
-        # The __proto__ invocation is so we can have a HTML form field entry
-        # named "submit"
+    return $self->submit_future($dom_form)->get;
+}
 
-        $self->_mightNavigate( sub {
-            $self->target->send_message(
-                'Runtime.callFunctionOn',
-                objectId => $dom_form->objectId,
-                functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.__proto__.submit.apply(this) }}'
-            );
-        })
-        ->get;
+sub submit_future($self,$dom_form = undef) {
+    weaken(my $s = $self);
+    my $form_f = $dom_form ? Future->done($dom_form) : $self->current_form_future;
+    return $form_f->then(sub($dom_form) {
+        if ($dom_form) {
+            # We should prepare for navigation here as well
+            # The __proto__ invocation is so we can have a HTML form field entry
+            # named "submit"
 
-        $self->invalidate_cached_values;
-    } else {
-        croak "I don't know which form to submit, sorry.";
-    }
-    return $self->response;
+            return $dom_form->objectId_future->then(sub($id) {
+                return $s->_mightNavigate( sub {
+                    $s->target->send_message(
+                        'Runtime.callFunctionOn',
+                        objectId => $id,
+                        functionDeclaration => 'function() { var action = this.action; var isCallable = action && typeof(action) === "function"; if( isCallable) { action() } else { this.__proto__.submit.apply(this) }}'
+                    );
+                });
+            })->then(sub {
+                $s->invalidate_cached_values;
+                return Future->done($s->response);
+            });
+        } else {
+            croak "I don't know which form to submit, sorry.";
+        }
+    });
 };
 
 =head2 C<< $mech->submit_form( %options ) >>
@@ -5716,41 +6257,48 @@ will be ignored.
 
 =cut
 
-sub submit_form($self,%options) {;
+sub submit_form($self,%options) {
+    return $self->submit_form_future(%options)->get;
+}
 
+sub submit_form_future($self,%options) {
     my $form = delete $options{ form };
     my $fields;
+    my $form_f;
     if (! $form) {
         if ($fields = delete $options{ with_fields }) {
             my @names = keys %$fields;
-            $form = $self->form_with_fields( \%options, @names );
-            if (! $form) {
-                $self->signal_condition("Couldn't find a matching form for @names.");
-                return
-            };
+            $form_f = $self->form_with_fields_future( \%options, @names )
+            ->then(sub($f) {
+                if (! $f) {
+                    $self->signal_condition("Couldn't find a matching form for @names.");
+                    return Future->fail("Form not found");
+                };
+                return Future->done($f);
+            });
         } else {
             $fields = delete $options{ fields } || {};
-            $form = $self->current_form;
+            $form_f = Future->done($self->current_form);
         };
+    } else {
+        $form_f = Future->done($form);
     };
 
-    if (! $form) {
-        $self->signal_condition("No form found to submit.");
-        return
-    };
-    #warn Dumper $fields;
-    #$self->log('debug', sprintf 'Submitting form %s with fields %s', $form->{id}, Dumper $fields);
-    $self->do_set_fields( form => $form, fields => $fields );
-
-    my $response;
-    if ( $options{button} ) {
-        $response = $self->click( $options{button}, $options{x} || 0, $options{y} || 0 );
-    }
-    else {
-        $response = $self->submit();
-    }
-    return $response;
-
+    weaken(my $s = $self);
+    return $form_f->then(sub($form) {
+        if (! $form) {
+            $s->signal_condition("No form found to submit.");
+            return Future->fail("No form");
+        };
+        return $s->do_set_fields_future( form => $form, fields => $fields )
+        ->then(sub {
+            if ( $options{button} ) {
+                return $s->click_future( $options{button}, $options{x} || 0, $options{y} || 0 );
+            } else {
+                return $s->submit_future($form);
+            }
+        });
+    });
 }
 
 =head2 C<< $mech->set_fields( $name => $value, ... ) >>
@@ -5775,26 +6323,54 @@ has the field value and its number as the 2 elements.
 =cut
 
 sub set_fields($self, %fields) {;
+    return $self->set_fields_future(%fields)->get;
+};
+
+sub set_fields_future($self, %fields) {;
     my $f = $self->current_form;
     if (! $f) {
         croak "Can't set fields: No current form set.";
     };
-    $self->do_set_fields(form => $f, fields => \%fields);
+    return $self->do_set_fields_future(form => $f, fields => \%fields);
 };
 
 sub do_set_fields($self, %options) {
+    return $self->do_set_fields_future(%options)->get;
+}
+
+sub do_set_fields_future($self, %options) {
     my $form = delete $options{ form };
     my $fields = delete $options{ fields };
 
-    while (my($n,$v) = each %$fields) {
+    my @pending = sort keys %$fields;
+    my @results;
+    my $f = Future->done();
+
+    my $s = $self;
+    weaken $s;
+
+    for my $n (@pending) {
+        my $v = $fields->{$n};
         my $index = undef;
         if (ref $v) {
             ($v,my $num) = @$v;
             $index = $num;
         };
 
-        $self->get_set_value( node => $form, name => $n, value => $v, index => $index, %options );
+        $f = $f->then(sub {
+            $s->get_set_value_future( node => $form, name => $n, value => $v, index => $index, %options );
+        })->then(sub(@res) {
+            push @results, \@res;
+            return Future->done();
+        });
     }
+    return $f->then(sub {
+        # Return results in a way that wait_all would (array of results)
+        # But for do_set_fields, we usually just want to know it finished.
+        # WWW::Mechanize compatibility might expect something else, but 
+        # let's return the collected results to be safe.
+        return Future->done(map { $_->[0] } @results);
+    });
 };
 
 =head1 CONTENT MONITORING METHODS
@@ -5837,6 +6413,11 @@ L<< /$mech->xpath|xpath >> or L<< /$mech->selector|selector >> method.
 =cut
 
 sub is_visible {
+    my ($self, @args) = @_;
+    return $self->is_visible_future(@args)->get;
+}
+
+sub is_visible_future {
     my( $self, @args ) = @_;
     my %options;
     if (2 == @_) {
@@ -5845,16 +6426,23 @@ sub is_visible {
         ($self,%options) = @_;
     };
     _default_limiter( 'maybe', \%options );
+    
+    weaken(my $s = $self);
+    my $query_f;
     if (! $options{dom}) {
-        $options{dom} = $self->_option_query(%options);
+        $query_f = $self->_option_query_future(%options);
+    } else {
+        $query_f = Future->done($options{dom});
     };
-    # No element means not visible
-    return
-        unless $options{ dom };
-    #$options{ window } ||= $self->tab->{linkedBrowser}->{contentWindow};
-
-    my $id = $options{ dom }->objectId;
-    my ($val, $type) = $self->callFunctionOn(<<'JS', objectId => $id, arguments => []); #->get;
+    
+    return $query_f->then(sub {
+        my ($node) = @_;
+        if (! $node) {
+            return Future->done(undef);
+        };
+        return $node->objectId_future->then(sub {
+            my ($id) = @_;
+            return $s->callFunctionOn_future(<<'JS', objectId => $id, arguments => [])
     function ()
     {
         var obj = this;
@@ -5896,9 +6484,11 @@ sub is_visible {
         return false
     }
 JS
-    $type eq 'boolean'
-        or die "Don't know how to handle Javascript type '$type'";
-    return $val
+            ->then(sub($val, $type) {
+                return Future->done( $val );
+            });
+        });
+    });
 };
 
 =head2 C<< $mech->wait_until_invisible( $element ) >>
@@ -5949,13 +6539,21 @@ passing the selector.
 =cut
 
 sub wait_until_invisible {
-    my( $self, %options );
+    my ($self, @args) = @_;
+    return $self->wait_until_invisible_future(@args)->get;
+}
+
+
+
+sub wait_until_invisible_future {
+    my( $self, @args ) = @_;
+    my %options;
     if (2 == @_) {
         ($self,$options{dom}) = @_;
     } else {
         ($self,%options) = @_;
     };
-    my $sleep = delete $options{ sleep } || 0.3;
+    my $sleep = delete $options{ sleep } || 0.15;
     my $timeout = delete $options{ timeout } || 0;
     my $wait = delete $options{ max_wait } || 0;
     $timeout ||= $wait;
@@ -5966,31 +6564,43 @@ sub wait_until_invisible {
     if ($timeout) {
         $timeout_after = time + $timeout;
     };
-    my $v;
-    my $node;
-    do {
-        $node = $options{ dom };
-        if (! $node) {
-            $node = $self->_option_query(%options);
-        };
-        return
-            unless $node;
-        $self->sleep( $sleep );
 
-        # If $node goes away due to a page reload, ->is_visible could die:
-        $v = eval { $self->is_visible($node) };
-    } while ( $v
-           and (!$timeout or time < $timeout_after ));
-    if ($v and $timeout and time >= $timeout_after) {
-        if( $wait ) {
-            return()
+    weaken(my $s = $self);
+    return repeat {
+        my $node_f;
+        if (! $options{dom}) {
+            $node_f = $s->_option_query_future(%options);
         } else {
-            croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
+            $node_f = Future->done($options{dom});
         };
+        
+        $node_f->then(sub {
+            my ($node) = @_;
+            if (! $node) {
+                return Future->done(1);
+            };
+            return $s->is_visible_future($node)->then(sub {
+                my ($v) = @_;
+                if (! $v) {
+                    return Future->done(1);
+                };
+                if ($timeout and time >= $timeout_after) {
+                    if ($wait) {
+                        return Future->done(0); # wait returns false on timeout
+                    } else {
+                        return Future->fail("Timeout of $timeout seconds reached while waiting for element to become invisible");
+                    }
+                };
+                return $s->sleep_future($sleep)->then(sub { Future->done(undef) });
+            });
+        });
+    } while => sub {
+        my ($f) = @_;
+        my $res = eval { $f->get };
+        if ($@) { return 0 }; # Stop on failure
+        return ! $res; # Continue if result is not true (element still visible)
     };
-    return 1;
 };
-
 =head2 C<< $mech->wait_until_visible( %options ) >>
 
   $mech->wait_until_visible( selector => 'a.download' );
@@ -6023,8 +6633,14 @@ on every poll instance. So the following query will work as expected:
 
 =cut
 
-sub wait_until_visible( $self, %options ) {
-    my $sleep = delete $options{ sleep } || 0.3;
+sub wait_until_visible {
+    my ($self, %options) = @_;
+    return $self->wait_until_visible_future(%options)->get;
+}
+
+sub wait_until_visible_future {
+    my ($self, %options) = @_;
+    my $sleep = delete $options{ sleep } || 0.15;
     my $timeout = delete $options{ timeout } || 0;
 
     _default_limiter( 'any', \%options );
@@ -6033,21 +6649,44 @@ sub wait_until_visible( $self, %options ) {
     if ($timeout) {
         $timeout_after = time + $timeout;
     };
-    do {
-        # If $node goes away due to a page reload, ->is_visible could die:
-        my @nodes =
-            grep { eval { $self->is_visible( dom => $_ ) } }
-            $self->_option_query(%options);
-
-        if( @nodes ) {
-            return @nodes
-        };
-        $self->sleep( $sleep );
-    } while (!$timeout_after or time < $timeout_after );
-    if (time >= $timeout_after) {
-        croak "Timeout of $timeout seconds reached while waiting for element to become invisible";
+    
+    weaken(my $s = $self);
+    return repeat {
+        $s->_option_query_future(%options)->then(sub {
+            my (@found) = @_;
+            # Check visibility of found nodes
+            if (! @found) {
+                if ($timeout and time >= $timeout_after) {
+                    return Future->fail("Timeout of $timeout seconds reached while waiting for element to become visible");
+                };
+                return $s->sleep_future($sleep)->then(sub { Future->done(undef) });
+            };
+            
+            return Future->wait_all(
+                map { $s->is_visible_future(dom => $_) } @found
+            )->then(sub {
+                my @visible;
+                for (my $i=0; $i < @found; $i++) {
+                    my $v = eval { $_[$i]->get };
+                    push @visible, $found[$i] if $v;
+                };
+                
+                if (@visible) {
+                    return Future->done(@visible);
+                };
+                if ($timeout and time >= $timeout_after) {
+                    return Future->fail("Timeout of $timeout seconds reached while waiting for element to become visible");
+                };
+                return $s->sleep_future($sleep)->then(sub { Future->done(undef) });
+            });
+        });
+    } while => sub {
+        my ($f) = @_;
+        my $res = eval { $f->get };
+        if ($@) { return 0 };
+        return ! $res;
     };
-};
+}
 
 =head1 CONTENT RENDERING METHODS
 
@@ -6099,10 +6738,49 @@ sub _content_as_png($self, $rect={}, $target={} ) {
 };
 
 
-sub content_as_png($self, $rect={}, $target={}) {
-    my $img = $self->_content_as_png( $rect, $target )->get;
-    return $self->_as_raw_png( $img );
+sub content_as_png($self, @args) {
+    return $self->content_as_png_future( @args )->get;
 };
+
+sub content_as_png_future($self, @args) {
+    my ($rect, $target, %options);
+    if( @args == 1 and ref $args[0] eq 'HASH' ) {
+        if (exists $args[0]->{left} or exists $args[0]->{top} or exists $args[0]->{width} or exists $args[0]->{height}) {
+            $rect = $args[0];
+        } else {
+            %options = %{ $args[0] };
+        }
+    } elsif( @args % 2 == 0 and @args > 0 and defined $args[0] and not ref $args[0] and $args[0] =~ /^(?:filename|timeout)/ ) {
+        %options = @args;
+    } else {
+        ($rect, $target, %options) = @args;
+    };
+    $rect //= {};
+    $target //= {};
+
+    if( not exists $options{filename}
+        and defined $rect
+        and not ref $rect
+        and $rect ne '{}'
+        and $rect ne ''
+        and $rect !~ /^(?:filename|timeout)/ ) {
+        # legacy call with single filename argument?
+        $options{ filename } = $rect;
+        $rect = {};
+    };
+
+    my $filename = delete $options{ filename };
+
+    return $self->_content_as_png( $rect, $target )->then(sub($img) {
+        my $payload = $self->_as_raw_png( $img );
+        if( defined $filename ) {
+            open my $fh, '>:raw', $filename
+                or croak "Couldn't create '$filename': $!";
+            print {$fh} $payload;
+        };
+        return Future->done( $payload );
+    });
+}
 
 sub getResourceTree_future( $self ) {
     $self->target->send_message( 'Page.getResourceTree' )
@@ -6148,13 +6826,14 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
         # Also something like get_page_resources, that returns the linear
         # list of resources for all frames etc.
         my @wanted;
-        for my $res ($tree->{frame}, @{ $tree->{resources}}) {
+        for my $res ($tree->{frame}, @{ $tree->{resources} || [] }) {
+            next if ! $res or ! $res->{url};
             if( $seen->{ $res->{url} } ) {
                 #warn "Skipping $res->{url} (already saved)";
                 next;
             };
-            if( !$wanted->($res) ) {
-                #warn "Don't want $res->{url}";
+            if( !$wanted->($res) and $res->{url} ne $self->uri ) {
+                # Only skip if not wanted AND not the main page
                 next;
             };
             #warn "Do want $res->{url}";
@@ -6184,12 +6863,43 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
 
         # retrieve and save the resource content for each resource
         for my $res (@wanted) {
-            my $fetch = $self->getResourceContent_future( $res );
+            my $fetch = $self->getResourceContent_future( $res )->else(sub {
+                my $err = "@_";
+                if( $res->{mimeType} =~ /html/i ) {
+                    # Fallback to DOM serialization for HTML resources.
+                    # This is useful when the cache is missing (file:// on v146+)
+                    # or if the network fetch failed but the DOM is still there.
+                    return $self->_cached_document->then(sub( $root ) {
+                        my @content = map {
+                            my $nodeId = $_->{nodeId};
+                            $self->target->send_message('DOM.getOuterHTML', nodeId => 0+$nodeId )
+                            ->else(sub { Future->done({ outerHTML => '' }) })
+                        } @{ $root->{root}->{children} || [] };
+
+                        return Future->wait_all( @content )
+                        ->then( sub( @outerHTML_f ) {
+                            return Future->done({
+                                %$res,
+                                content => (join "", map { $_->get->{outerHTML} } @outerHTML_f),
+                                _utf8 => 1,
+                            });
+                        });
+                    });
+                };
+                return Future->fail(@_);
+            });
+
             if( $save ) {
                 #warn "Will save $res->{url}";
                 $fetch = $fetch->then( $save )->else(sub {
-                    warn "Fetch failed:";
-                    warn "@_";
+                    my $err = "@_";
+                    if( $err =~ /Resource was not cached/i and $res->{url} =~ /^file:/i ) {
+                        # Local file:// resources are known to be flaky in headless Chromium caches
+                        warn "Could not save local resource $res->{url}: Resource was not cached\n";
+                        return Future->done();
+                    }
+                    # For all other failures, or non-file cache misses, propagate the error
+                    return Future->fail(@_);
                 });
             };
             push @requested, $fetch;
@@ -6202,9 +6912,7 @@ sub _saveResourceTree( $self, $tree, $names, $seen, $wanted, $save, $base_dir ) 
             };
         };
 
-        return Future->wait_all( @requested )->catch(sub {
-            warn $@;
-        });
+        return Future->wait_all( @requested );
 }
 
 # Allow the options to specify whether to filter duplicates here
@@ -6213,7 +6921,7 @@ sub fetchResources_future( $self, %options ) {
     $options{ seen } ||= {};
     $options{ names } ||= {};
     $options{ target_dir } ||= '.';
-    $options{ wanted } ||= sub( $res ) { $res->{url} =~ /^(https?):/i };
+    $options{ wanted } ||= sub( $res ) { $res->{url} =~ /^(https?|file):/i };
     my $seen = $options{ seen };
     my $names = $options{ names };
     my $wanted = $options{ wanted };
@@ -6266,12 +6974,20 @@ sub saveResources_future( $self, %options ) {
               target_dir => $target_dir,
         maybe wanted => $options{ wanted },
               save => sub( $resource ) {
-        # For mime/html targets without a name, use the title?!
-        # Rewrite all HTML, CSS links
-
         # We want to store the top HTML under the name passed in (!)
-        $names{ $resource->{url} } ||= File::Spec->catfile( $target_dir, $names{ $resource->{url} });
-        my $target = $names{ $resource->{url} }
+        # For other resources, they were already prepended with $target_dir in _saveResourceTree
+        # but if we have a custom 'wanted' filter that includes something not in the tree,
+        # or if names were passed in, we might need to fix it here.
+
+        my $name = $names{ $resource->{url} };
+        if( $name and ! File::Spec->file_name_is_absolute( $name ) ) {
+            # Only prepend if it's not already absolute
+            # and it's not the top-level target file (which should be at the top level)
+            if( $resource->{url} ne $s->uri ) {
+                $name = File::Spec->catfile( $target_dir, $name );
+            }
+        }
+        my $target = $name
             or die "Don't have a filename for URL '$resource->{url}' ?!";
         $s->log( 'debug', "Saving '$resource->{url}' to '$target'" );
         open my $fh, '>', $target
@@ -6295,12 +7011,34 @@ sub saveResources_future( $self, %options ) {
 }
 
 sub filenameFromUrl( $self, $url, $extension ) {
-    my $target = URI->new( $url )->path;
+    my $uri = URI->new( $url );
+    my $target = $uri->path;
 
-    $target =~ s![\&\?\<\>\{\}\|\:\*]!_!g;
-    $target =~ s!.*[/\\]!!;
+    # Replace characters that are illegal in Windows filenames
+    # We also replace slashes because we only want the last component
+    $target =~ s![\&\?\<\>\{\}\|\:\*\"\\\/\t\n\r]!_!g;
 
-    # Add/change extension here
+    # Get just the filename part (after the last underscore if any)
+    $target =~ s!.*_!!;
+
+    if( ! $target ) {
+        $target = 'index';
+    }
+
+    $extension //= '';
+    if( $extension and $target !~ /\Q$extension\E$/i ) {
+        $target .= $extension;
+    }
+
+    # Windows MAX_PATH is 260. A safe component length is ~150 to allow for directory overhead.
+    if( length $target > 150 ) {
+        if( $target =~ /^(.*)(\.[^.]+)$/ ) {
+            my ($base, $ext) = ($1, $2);
+            $target = substr($base, 0, 150 - length($ext)) . $ext;
+        } else {
+            $target = substr( $target, 0, 150 );
+        }
+    }
 
     return $target
 }
@@ -6377,9 +7115,13 @@ Returns PNG image data for a single element
 
 sub element_as_png {
     my ($self, $element) = @_;
-
-    $self->render_element( element => $element, format => 'png' )
+    return $self->element_as_png_future($element)->get;
 };
+
+sub element_as_png_future {
+    my ($self, $element) = @_;
+    return $self->render_element_future( element => $element, format => 'png' );
+}
 
 =head2 C<< $mech->render_element( %options ) >>
 
@@ -6402,36 +7144,45 @@ C<< element_coordinates >> if you need exactly the element.
 
 sub render_element {
     my ($self, %options) = @_;
+    return $self->render_element_future(%options)->get;
+}
+
+sub render_element_future {
+    my ($self, %options) = @_;
     my $element= delete $options{ element }
         or croak "No element given to render.";
 
-    my $cliprect = $self->element_coordinates( $element );
-    my $res = Future->wait_all(
-        #$self->target->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
-        $self->target->send_message(
-            'Emulation.forceViewport',
-            'y' => int $cliprect->{top},
-            'x' => int $cliprect->{left},
-            scale => 1.0
-        ),
-    )->then(sub {
-        $self->_content_as_png()->then( sub( $img ) {
-            my $element = $img->crop(
-                left => 0,
-                top => 0,
-                width => $cliprect->{width},
-                height => $cliprect->{height});
-            Future->done( $self->_as_raw_png( $element ));
-        })
-    })->get;
-
-    Future->wait_all(
-        #$self->target->send_message('Emulation.setVisibleSize', width => $cliprect->{width}, height => $cliprect->{height} ),
-        $self->target->send_message('Emulation.resetViewport'),
-    )->get;
-
-    $res
-};
+    weaken(my $s = $self);
+    my $cliprect;
+    return $self->element_coordinates_future( $element )->then(sub($crect) {
+        $cliprect = $crect;
+        return Future->wait_all(
+            #$self->target->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
+            $s->target->send_message(
+                'Emulation.forceViewport',
+                'y' => int $cliprect->{top},
+                'x' => int $cliprect->{left},
+                scale => 1.0
+            ),
+        );
+    })->then(sub {
+        return $s->_content_as_png();
+    })->then( sub( $img ) {
+        my $element_img = $img->crop(
+            left => 0,
+            top => 0,
+            width => $cliprect->{width},
+            height => $cliprect->{height});
+        my $res = $s->_as_raw_png( $element_img );
+        
+        return $s->target->send_message('Emulation.resetViewport')->else(sub {
+            # Some versions of Chrome or environments might not support this
+            return Future->done();
+        })->then(sub {
+            return Future->done($res);
+        });
+    });
+}
 
 =head2 C<< $mech->element_coordinates( $element ) >>
 
@@ -6449,7 +7200,14 @@ towards rendering HTML.
 
 sub element_coordinates {
     my ($self, $element) = @_;
-    my $cliprect = $self->target->send_message('Runtime.callFunctionOn', objectId => $element->objectId, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true)->get->{result}->{value};
+    return $self->element_coordinates_future($element)->get;
+}
+
+sub element_coordinates_future {
+    my ($self, $element) = @_;
+    weaken(my $s = $self);
+    return $element->objectId_future->then(sub($id) {
+        return $s->target->send_message('Runtime.callFunctionOn', objectId => $id, functionDeclaration => <<'JS', arguments => [], returnByValue => JSON::true);
     function() {
         var r = this.getBoundingClientRect();
         return {
@@ -6460,7 +7218,11 @@ sub element_coordinates {
         }
     }
 JS
-};
+    })->then(sub($res) {
+        return Future->done($res->{result}->{value});
+    });
+}
+;
 
 =head2 C<< $mech->render_content(%options) >>
 
@@ -6478,25 +7240,31 @@ This method is specific to WWW::Mechanize::Chrome.
 =cut
 
 sub render_content( $self, %options ) {
+    return $self->render_content_future(%options)->get;
+}
+
+sub render_content_future( $self, %options ) {
     $options{ format } ||= 'png';
 
     my $fmt = delete $options{ format };
     my $filename = delete $options{ filename };
 
-    my $payload;
+    my $payload_f;
     if( $fmt eq 'png' ) {
-        $payload = $self->content_as_png( %options )
+        $payload_f = $self->content_as_png_future( %options )
     } elsif( $fmt eq 'pdf' ) {
-        $payload = $self->content_as_pdf( %options );
+        $payload_f = $self->content_as_pdf_future( %options );
     };
 
-    if( defined $filename ) {
-        open my $fh, '>:raw', $filename
-            or croak "Couldn't create '$filename': $!";
-        print {$fh} $payload;
-    };
+    return $payload_f->then(sub($payload) {
+        if( defined $filename ) {
+            open my $fh, '>:raw', $filename
+                or croak "Couldn't create '$filename': $!";
+            print {$fh} $payload;
+        };
 
-    $payload
+        return Future->done($payload);
+    });
 }
 
 =head2 C<< $mech->content_as_pdf(%options) >>
@@ -6532,21 +7300,51 @@ our %PaperFormats = (
     a6      =>  {width =>  4.13, height =>  5.83 },
 );
 
-sub content_as_pdf($self, %options) {
+sub content_as_pdf($self, @args) {
+    return $self->content_as_pdf_future(@args)->get;
+}
+
+sub content_as_pdf_future($self, @args) {
+    my ($rect, $target, %options);
+    if( @args == 1 and ref $args[0] eq 'HASH' ) {
+        %options = %{ $args[0] };
+    } elsif( @args % 2 == 0 and @args > 0 and defined $args[0] and not ref $args[0] and $args[0] =~ /^(?:filename|format|paper)/ ) {
+        %options = @args;
+    } else {
+        ($rect, $target, %options) = @args;
+    };
+    $rect //= {};
+    $target //= {};
+
+    if( not exists $options{filename} 
+        and defined $rect 
+        and not ref $rect 
+        and $rect ne '{}' 
+        and $rect ne '' 
+        and $rect !~ /^(?:filename|format|paper)/ ) {
+        # legacy call with single filename argument?
+        $options{ filename } = $rect;
+        $rect = {};
+    };
+
+    my $filename = delete $options{ filename };
+
     if( my $format = delete $options{ format }) {
         my $wh = $PaperFormats{ lc $format }
             or croak "Unknown paper format '$format'";
         @options{'paperWidth','paperHeight'} = @{$wh}{'width','height'};
     };
 
-    my $base64 = $self->target->send_message('Page.printToPDF', %options)->get->{data};
-    my $payload = decode_base64( $base64 );
-    if( my $filename = delete $options{ filename } ) {
-        open my $fh, '>:raw', $filename
-            or croak "Couldn't create '$filename': $!";
-        print {$fh} $payload;
-    };
-    return $payload;
+    return $self->target->send_message('Page.printToPDF', %options)->then(sub($res) {
+        my $base64 = $res->{data};
+        my $payload = decode_base64( $base64 );
+        if( defined $filename ) {
+            open my $fh, '>:raw', $filename
+                or croak "Couldn't create '$filename': $!";
+            print {$fh} $payload;
+        };
+        return Future->done($payload);
+    });
 };
 
 =head1 INTERNAL METHODS

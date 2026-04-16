@@ -17,7 +17,7 @@ if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 2*@instances;
+    plan tests => 3*@instances;
 };
 
 sub new_mech {
@@ -28,21 +28,27 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
     my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     $mech->autodie(1);
     $mech->allow('javascript' => 1);
-    $mech->get_local('76-infinite-scroll.html');
+    t::helper::safe_get_local($mech, '76-infinite-scroll.html');
 
-    is ($mech->infinite_scroll, 1, 'Can scroll down and retrieve new content');
+    is (t::helper::safe_eval_in_page($mech, 'scroll_count'), 0, 'Initial scroll count');
+    is (t::helper::safe_infinite_scroll($mech, 1), 1, 'Can scroll down and retrieve new content');
     is (scroll_to_bottom($mech), 0, 'Can scroll to end of infinite scroll');
 
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);
 
 sub scroll_to_bottom {
   my $self = shift;
-  while ($self->infinite_scroll(2)) {
+  while (t::helper::safe_infinite_scroll($self, 2)) {
   }
 }
 

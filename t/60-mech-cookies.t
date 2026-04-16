@@ -32,7 +32,7 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn;
+my $server = t::helper->safe_server;
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
@@ -120,8 +120,8 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         is $count, 1, 'We replaced all the cookies with our single cookie from the (manual) jar'
             or diag Dumper \@c;
         $mech->cookie_jar->load;
-        $mech->get($server->url);
-        like $mech->content, qr/\btasty2\b/, "Our cookie gets sent";
+        t::helper::safe_get($mech, $server->url);
+        like t::helper::safe_content($mech), qr/\btasty2\b/, "Our cookie gets sent";
         $mech->cookie_jar->load;
 
         $count = 0;

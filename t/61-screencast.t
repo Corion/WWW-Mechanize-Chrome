@@ -34,7 +34,7 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1
 );
 
@@ -49,6 +49,7 @@ sub save {
 t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
 
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
@@ -61,10 +62,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
 
     # First get a clean check without the changed headers
     my ($site,$estatus) = ($server->url,200);
-    my $res = $mech->get($site);
+    my $res = t::helper::safe_get($mech, $site);
     isa_ok $res, 'HTTP::Response', "Response";
 
-    $mech->field('query','Hello World');
+    t::helper::safe_field($mech, 'query', 'Hello World');
 
     # Wait for things to settle down?!
     $mech->sleep( 5 );
@@ -79,4 +80,5 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
 });
 
 $server->stop;
+alarm(0);
 

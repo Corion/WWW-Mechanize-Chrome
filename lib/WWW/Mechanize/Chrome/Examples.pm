@@ -15,7 +15,7 @@ package WWW::Mechanize::Chrome::Examples;
 #
 
 use strict;
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 
 1;
 
@@ -95,7 +95,7 @@ The following is a list of the 5 example programs that are included in the WWW::
     in the script's directory.
 
 
-Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.76/source/examples/url-to-image.pl>
+Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.77/source/examples/url-to-image.pl>
 
 =head2 Example: html-to-pdf.pl
 
@@ -134,7 +134,7 @@ Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrom
     saves it as a PDF file in the current directory.
 
 
-Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.76/source/examples/html-to-pdf.pl>
+Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.77/source/examples/html-to-pdf.pl>
 
 =head2 Example: dump-links.pl
 
@@ -172,7 +172,7 @@ Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrom
     =cut
 
 
-Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.76/source/examples/dump-links.pl>
+Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.77/source/examples/dump-links.pl>
 
 =head2 Example: sendkeys.pl
 
@@ -206,7 +206,7 @@ Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrom
     =cut
 
 
-Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.76/source/examples/sendkeys.pl>
+Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.77/source/examples/sendkeys.pl>
 
 =head2 Example: javascript.pl
 
@@ -240,7 +240,7 @@ Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrom
     =cut
 
 
-Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.76/source/examples/javascript.pl>
+Download this example: L<https://metacpan.org/release/CORION/WWW-Mechanize-Chrome-0.77/source/examples/javascript.pl>
 
 =head1 AUTHOR
 

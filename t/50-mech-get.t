@@ -30,40 +30,46 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1,
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     my ($site,$estatus) = ($server->url,200);
 
-    my $res = $mech->get($site);
+    my $res = t::helper::safe_get($mech, $site);
     isa_ok $res, 'HTTP::Response', "Response";
 
     is $mech->uri, $site, "Navigated to $site";
 
     is $res->code, $estatus, "GETting $site returns HTTP code $estatus from response"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
 
     is $mech->status, $estatus, "GETting $site returns HTTP status $estatus from mech"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
 
     ok $mech->success, 'We consider this response successful';
 
     # Check that we can GET a binary file and see its content for download
     note my $url = $server->local('blank.jpg');
-    $res = $mech->get($url);
+    $res = t::helper::safe_get($mech, $url);
     isa_ok $res, 'HTTP::Response', "We get a response for a direct image URL";
     is $res->code, $estatus, "GETting image returns 200"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
 
     #like $mech->content, qr/^<html/ms, "We have automatic HTML framing the image in the browser";
-    $mech->sleep(0.1); # we need to give the response body time to arrive :(
+    $mech->sleep(2); # we need to give the response body time to arrive :(
     like $res->decoded_content, qr/^\xff\xd8\xff.*?JFIF/ms, "We have an image in the response";
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);
 
 $server->stop;

@@ -34,17 +34,17 @@ sub new_mech {
 
 sub WWW::Mechanize::chrome_version { "62.0.0.0" }
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1,
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
 
-    $mech->get($server->url);
+    t::helper::safe_get($mech, $server->url);
     my $url = $server->url;
 
-    my $links = $mech->find_all_links();
+    my $links = t::helper::safe_find_all_links($mech);
 
     for my $link (@$links) {
         like $link->url_abs, qr!^\Q$url!, "Link is absolute";

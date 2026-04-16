@@ -35,13 +35,14 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = splice @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
-    $mech->get($server->url);
+    t::helper::safe_get($mech, $server->url);
     pass "We launch Chrome and control it via two filehandles";
 
     my $pids = $mech->{pid};
@@ -54,3 +55,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 });
 
 $server->stop;
+alarm(0);

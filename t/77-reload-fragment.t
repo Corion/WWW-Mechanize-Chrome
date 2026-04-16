@@ -41,7 +41,7 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1
 );
 
@@ -53,6 +53,7 @@ my @urls = (
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
     SKIP: {
         my $version = $mech->chrome_version;
 
@@ -60,7 +61,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
             skip "Chrome 64 doesn't handle self-navigating well", 2;
         } else {
             for my $url (@urls) {
-                $mech->get( $url );
+                t::helper::safe_get($mech, $url );
                 pass "We retrieved $url";
             };
         };
@@ -68,3 +69,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
 });
 
 $server->stop;
+alarm(0);

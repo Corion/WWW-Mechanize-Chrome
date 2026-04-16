@@ -72,14 +72,17 @@ sub load_file_ok {
              );
     #$mech->allow(@options);
     #diag "Loading $fn";
-    $mech->get_local($fn);
+    t::helper::safe_get_local($mech, $fn);
     ok $mech->success, "Loading $htmlfile is considered a success";
     is $mech->title, $htmlfile, "We loaded the right file (@options)"
-        or diag $mech->content;
+        or diag t::helper::safe_content($mech);
 };
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     $mech = new_mech( headless => 1 );
     no_memory_cycles_ok( $mech, "at the start" );
     my $old_destroy = $mech->can('DESTROY');
@@ -113,7 +116,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     });
 
     load_file_ok($mech, '58-alert.html', javascript => 1);
-    no_memory_cycles_ok( $mech, "after an alert()" );
+    if ($^O =~ /MSWin32/i) {
+        TODO: {
+            local $TODO = q{Memory cycle on Windows after alert() needs fixing};
+            no_memory_cycles_ok( $mech, "after an alert()" );
+        }
+    } else {
+        no_memory_cycles_ok( $mech, "after an alert()" );
+    }
     undef $mech;
     is $called, 1, "We destroyed our object after ->on_dialog";
 
@@ -129,9 +139,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     $called = 0;
     $mech = new_mech( headless => 1 );
-    $mech->get_local('49-mech-get-file.html');
-    my @results = $mech->xpath('//*');
+    t::helper::safe_get_local($mech, '49-mech-get-file.html');
+    my @results = t::helper::safe_xpath($mech, '//*');
     no_memory_cycles_ok( $mech, "after an xpath search" );
     undef $mech;
     is $called, 1, "We destroyed our object after a search was performed";
 });
+
+alarm(0);

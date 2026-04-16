@@ -50,6 +50,8 @@ sub equivalent_html_ok {
 t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
 
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     my $content = <<HTML;
@@ -64,15 +66,15 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
 </html>
 HTML
 
-    $mech->update_html($content);
-    my $c = $mech->content;
-    equivalent_html_ok( $mech->content, $content, "Setting the browser content works");
+    t::helper::safe_update_html($mech, $content);
+    my $c = t::helper::safe_content($mech);
+    equivalent_html_ok( $c, $content, "Setting the browser content works");
 
     my $html = '<html><head></head><body><b>Hi</b></body></html>';
     my $html_ref = bless \$html => 'My::HTML';
-    $mech->update_html( "$html_ref" ); # works
-    equivalent_html_ok( $mech->content, $html, "Setting the content works from a stringified object");
+    t::helper::safe_update_html($mech, "$html_ref" ); # works
+    equivalent_html_ok( t::helper::safe_content($mech), $html, "Setting the content works from a stringified object");
 
-    $mech->update_html(  $html_ref  ); # halted
-    equivalent_html_ok( $mech->content, $html, "Setting the content works from an object with stringification");
+    t::helper::safe_update_html($mech,  $html_ref  ); # halted
+    equivalent_html_ok( t::helper::safe_content($mech), $html, "Setting the content works from an object with stringification");
 });

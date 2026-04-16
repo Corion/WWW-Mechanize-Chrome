@@ -36,6 +36,9 @@ my $imported;
 
 t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
     my( $file, $mymech ) = splice @_; # so we move references
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     $mech = $mymech;
     undef $mymech;
 
@@ -44,11 +47,15 @@ t::helper::run_across_instances(\@instances, \&new_mech, 2, sub {
         Object::Import->import( \$mech, deref => 1 );
     };
 
-    get_local( '49-mech-get-file.html' );
+    t::helper::safe_get_local($mech, '49-mech-get-file.html');
     is title(), '49-mech-get-file.html', 'We opened the right page';
     is ct(), 'text/html', "Content-Type is text/html";
 
     $mech->DESTROY;
 
     undef $mech;
+
+    note "End of test sub for $file";
 });
+
+alarm(0);

@@ -14,12 +14,13 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
+my $testcount = 6;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 6*@instances;
+    plan tests => $testcount*@instances;
 };
 
 sub new_mech {
@@ -30,22 +31,25 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1,
 );
 
-t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
-    $mech->get_local('51-mech-submit.html');
-    my $f = $mech->form_with_fields(
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
+    my $f = t::helper::safe_form_with_fields($mech,
        'r',
     );
     ok $f, "We found the form";
 
-    $mech->get_local('51-mech-submit.html');
-    $f = $mech->form_with_fields(
+    t::helper::safe_get_local($mech, '51-mech-submit.html');
+    $f = t::helper::safe_form_with_fields($mech,
        'q','r',
     );
     ok $f, "We found the form";
@@ -53,16 +57,16 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     SKIP: {
         #skip "Chrome frame support is wonky.", 2;
 
-        $mech->get_local('52-frameset.html');
-        $f = $mech->form_with_fields(
+        t::helper::safe_get_local($mech, '52-frameset.html');
+        $f = t::helper::safe_form_with_fields($mech,
            'baz','bar',
         );
         ok $f, "We found the form in a frame";
 
-        $mech->get($server->local('52-iframeset.html'));
+        t::helper::safe_get($mech, $server->local('52-iframeset.html'));
         $mech->sleep(1); # debug for AppVeyor failures?!
         my $ok = eval {
-            $f = $mech->form_with_fields(
+            $f = t::helper::safe_form_with_fields($mech,
                 'baz','bar',
             );
             1;
@@ -71,5 +75,11 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
             or diag $@;
         ok $f, "We found the form in an iframe";
     };
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);
+
 $server->stop;
+

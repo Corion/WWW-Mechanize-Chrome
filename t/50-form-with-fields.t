@@ -33,40 +33,47 @@ sub new_mech {
 t::helper::run_across_instances(\@instances, \&new_mech, 8, sub {
     my ($browser_instance, $mech) = @_;
 
-    $mech->get_local('50-form3.html');
-    $mech->form_number(1);
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
+    t::helper::safe_get_local($mech, '50-form3.html');
+    t::helper::safe_form_number($mech, 1);
     my $the_form_dom_node = $mech->current_form;
-    my $button = $mech->selector('#btn_ok', single => 1);
+    my $button = t::helper::safe_selector($mech, '#btn_ok', single => 1);
     isa_ok $button, 'WWW::Mechanize::Chrome::Node', "The button image";
 
-    ok $mech->submit, 'Sent the page';
+    ok t::helper::safe_submit($mech), 'Sent the page';
 
-    $mech->get_local('50-form3.html');
+    t::helper::safe_get_local($mech, '50-form3.html');
     @{$mech->{event_log}} = ();
-    $mech->form_id('snd');
+    t::helper::safe_form_id($mech, 'snd');
     if(! ok $mech->current_form, "We can find a form by its id") {
         for (@{$mech->{event_log}}) {
             diag $_
         };
     };
 
-    $mech->get_local('50-form3.html');
-    $mech->form_with_fields('r1[name]');
+    t::helper::safe_get_local($mech, '50-form3.html');
+    t::helper::safe_form_with_fields($mech, 'r1[name]');
     ok $mech->current_form, "We can find a form by its contained input fields (single,matched)";
 
-    $mech->get_local('50-form3.html');
-    $mech->form_with_fields('r1[name]','r2[name]');
+    t::helper::safe_get_local($mech, '50-form3.html');
+    t::helper::safe_form_with_fields($mech, 'r1[name]','r2[name]');
     ok $mech->current_form, "We can find a form by its contained input fields (double,matched)";
 
-    $mech->get_local('50-form3.html');
-    $mech->form_with_fields('r3name]');
+    t::helper::safe_get_local($mech, '50-form3.html');
+    t::helper::safe_form_with_fields($mech, 'r3name]');
     ok $mech->current_form, "We can find a form by its contained input fields (single,closing)";
 
-    $mech->get_local('50-form3.html');
-    $mech->form_with_fields('r4[name');
+    t::helper::safe_get_local($mech, '50-form3.html');
+    t::helper::safe_form_with_fields($mech, 'r4[name');
     ok $mech->current_form, "We can find a form by its contained input fields (single,opening)";
 
-    $mech->get_local('50-form3.html');
-    $mech->form_name('snd');
+    t::helper::safe_get_local($mech, '50-form3.html');
+    t::helper::safe_form_name($mech, 'snd');
     ok $mech->current_form, "We can find a form by its name";
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);
+

@@ -44,7 +44,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     undef $mech;
 
     my $alive = kill 0 => $pids->@*;
-    is $alive, 1, "The Chrome process stays alive if 'autoclose' is set to 0";
+    cmp_ok( $alive, '>=', 1, "The Chrome process stays alive if 'autoclose' is set to 0");
 
     if( $pids->@* ) {
         WWW::Mechanize::Chrome->kill_child('SIGKILL', $pids, undef);

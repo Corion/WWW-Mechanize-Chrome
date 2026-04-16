@@ -44,6 +44,27 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.77 2026-03-16
+    * Support Fedora 43, CentOS Stream 10, and Chromium v146+.
+    * Improve browser discovery on Linux: search for 'headless_shell' and
+      include common RHEL/CentOS paths (/usr/lib64/chromium-browser).
+    * Implement DOM serialization fallback in _saveResourceTree for HTML
+      resources when Page.getResourceContent fails (fixes "Resource was
+      not cached" errors in modern headless Chromium).
+    * Harden saveResources to ensure the main document is always included
+      regardless of the 'wanted' filter.
+    * Truncate generated filenames to 240 characters in filenameFromUrl
+      to prevent filesystem "File name too long" errors on complex URLs.
+    * Update default fetchResources filter to include file:// URIs.
+    * Refine saveResources error handling to be scheme-aware: report
+      file:// cache misses as warnings while maintaining strict error
+      propagation for HTTP/HTTPS.
+    * Harden saveResources to handle nodeId invalidation and absolute
+      path mappings on Windows.
+    * Refine filenameFromUrl to use a safer truncation limit (150 chars)
+      and preserve extensions.
+    * Stabilize t/51-mech-links.t with increased (0.5s) wait for DOM.
+
 0.76 2026-03-13
     * Harden test suite against Chromium process leaks and hangs by
       implementing aggressive SIGKILL cleanup and global PID tracking in

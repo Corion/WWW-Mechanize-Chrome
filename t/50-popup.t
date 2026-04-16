@@ -12,12 +12,13 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
+my $testcount = 3;
 
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
 } else {
-    plan tests => 3*@instances;
+    plan tests => $testcount*@instances;
 };
 
 sub new_mech {
@@ -28,26 +29,29 @@ sub new_mech {
     );
 };
 
-t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
+t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     my $version = $mech->chrome_version;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     $mech->autodie(1);
 
-    $mech->get_local('50-click.html');
+    t::helper::safe_get_local($mech, '50-click.html');
     $mech->allow('javascript' => 1);
 
     my ($win,$type,$ok);
 
     eval {
-        $win = $mech->selector('#open_window', single => 1);
+        $win = t::helper::safe_selector($mech, '#open_window', single => 1);
         $ok = 1;
     };
 
     if (! $win) {
         SKIP: { skip "Couldn't get at 'open_window'. Do you have a Javascript blocker?", 15; };
-        exit;
+        return;
     };
 
     ok $win, "We found 'open_window'";
@@ -58,10 +62,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, 3, sub {
             # t/56-*.t
         };
     } else {
-        $mech->click($win, synchronize => 0);
+        t::helper::safe_click($mech, $win, synchronize => 0);
         ok 1, "We get here";
     };
     note "But we don't know what window was opened";
     #sleep 10;
     # or how to close it
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);

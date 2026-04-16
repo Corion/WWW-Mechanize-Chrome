@@ -3,7 +3,7 @@ use strict;
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 
 =head1 NAME
 

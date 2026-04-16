@@ -30,17 +30,18 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1,
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
     my ($browser_instance, $mech) = @_;
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
 
     my ($site,$estatus) = ($server->url,200);
-    my $res = $mech->get($server->redirect(''));
+    my $res = t::helper::safe_get($mech, $server->redirect(''));
     isa_ok $res, 'HTTP::Response', "Response";
 
     is $mech->uri, $site, "Navigated to $site";
@@ -55,3 +56,4 @@ t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {
 });
 
 $server->stop;
+alarm(0);

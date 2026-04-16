@@ -30,13 +30,16 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     my ($browser_instance, $mech) = @_;
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     my $version = $mech->chrome_version;
 
     isa_ok $mech, 'WWW::Mechanize::Chrome';
-    $mech->get_local('50-click.html');
+    t::helper::safe_get_local($mech, '50-click.html');
     my ($ok, $clicked, $type);
     eval {
-        ($clicked, $type) = $mech->eval_in_page('clicked');
+        ($clicked, $type) = t::helper::safe_eval_in_page($mech, 'clicked');
         $ok = 1;
     };
     diag $@ if $@;
@@ -49,8 +52,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, 4, sub {
     ok $clicked, "We found 'clicked'";
 
     #$mech->click({ selector => '#a_div', intrapage => 1 });
-    $mech->click({ selector => '#a_div' });
+    t::helper::safe_click($mech, { selector => '#a_div' });
     pass "We can click on elements that only perform an intrapage action and not wait";
-    ($clicked,$type) = $mech->eval_in_page('clicked');
+    ($clicked,$type) = t::helper::safe_eval_in_page($mech, 'clicked');
     is $clicked, 'a_div', "We register the click";
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);

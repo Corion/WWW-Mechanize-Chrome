@@ -31,22 +31,30 @@ sub new_mech {
     );
 };
 
-my $server = Test::HTTP::LocalServer->spawn(
+my $server = t::helper->safe_server(
     #debug => 1,
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
-    $mech->get($server->url);
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
+    t::helper::safe_get($mech, $server->url);
     #$mech->sleep(1);
     my $text;
     my $ok = eval {
-        $text = $mech->text;
+        $text = t::helper::safe_text($mech);
         1;
     };
     my $err = $@;
     is $ok, 1, "We lived";
     is $err, '', "No error";
     like $text, qr/Request headers/, "We fetch some text";
+
+    note "End of test sub for $browser_instance";
 });
+
+alarm(0);
+
 $server->stop;

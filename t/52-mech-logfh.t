@@ -38,6 +38,9 @@ sub new_mech {
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my( $file, $mech ) = splice @_; # so we move references
+
+    t::helper::set_watchdog($t::helper::is_slow ? 180 : 60);
+
     isa_ok $mech, 'WWW::Mechanize::Chrome';
     my $info = $mech->driver->createTarget()->get;
     my $targetId = $mech->driver->targetId; # this one should close once we discard it
@@ -46,6 +49,10 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
 
     ok -f $fn, "JSON logfile exists";
     ok -s $fn, "We wrote something into the logfile";
+
+    note "End of test sub for $file";
 });
+
+alarm(0);
 
 unlink $fn;
