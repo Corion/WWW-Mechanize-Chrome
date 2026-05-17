@@ -6077,7 +6077,19 @@ sub _as_raw_png( $self, $image ) {
 }
 
 sub _content_as_png($self, $rect={}, $target={} ) {
-    $self->target->send_message('Page.captureScreenshot', format => 'png' )->then( sub( $res ) {
+    if( !keys $rect->%* ) {
+        undef $rect;
+    } else {
+        $rect->{scale} //= 1;
+
+        $rect->{x} //= delete $rect->{left};
+        $rect->{y} //= delete $rect->{top};
+    };
+    $self->target->send_message('Page.captureScreenshot',
+            format => 'png',
+            maybe clip => $rect,
+            captureBeyondViewport => JSON::true
+    )->then( sub( $res ) {
         require Imager;
         my $img = Imager->new ( data => decode_base64( $res->{data} ), format => 'png' );
         # Cut out the wanted part
@@ -6406,31 +6418,15 @@ sub render_element {
         or croak "No element given to render.";
 
     my $cliprect = $self->element_coordinates( $element );
-    my $res = Future->wait_all(
-        #$self->target->send_message('Emulation.setVisibleSize', width => int $cliprect->{width}, height => int $cliprect->{height} ),
-        $self->target->send_message(
-            'Emulation.forceViewport',
-            'y' => int $cliprect->{top},
-            'x' => int $cliprect->{left},
-            scale => 1.0
-        ),
-    )->then(sub {
-        $self->_content_as_png()->then( sub( $img ) {
-            my $element = $img->crop(
-                left => 0,
-                top => 0,
-                width => $cliprect->{width},
-                height => $cliprect->{height});
-            Future->done( $self->_as_raw_png( $element ));
-        })
+    $cliprect->{scale} //= 1;
+    $cliprect->{ x } = delete $cliprect->{ left };
+    $cliprect->{ y } = delete $cliprect->{ top };
+
+    my $res = $self->_content_as_png($cliprect,)->then( sub( $img ) {
+        Future->done( $self->_as_raw_png( $img ));
     })->get;
 
-    Future->wait_all(
-        #$self->target->send_message('Emulation.setVisibleSize', width => $cliprect->{width}, height => $cliprect->{height} ),
-        $self->target->send_message('Emulation.resetViewport'),
-    )->get;
-
-    $res
+    return $res
 };
 
 =head2 C<< $mech->element_coordinates( $element ) >>
