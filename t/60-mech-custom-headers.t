@@ -62,11 +62,12 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     is $mech->uri, $site, 'Navigated to ' . $site;
 
     my $ua = 'WWW::Mechanize::Chrome ' . $0 . ' ' . $$;
-    my $version = $mech->chrome_version;
+    my ($version) = $mech->chrome_version =~ m!/([\d.]+)\z!;
+    $version = sprintf '%04d.%04d.%04d.%04d', split /\./, $version; # pad out for easy version comparisons
     my $ref;
-    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" eq '64.3275')) {
+    if( $version =~ /^0064.3275./) {
         $ref = ''; # Chrome v64 crashes on a referer
-    } elsif( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" >= 63.84)) {
+    } elsif( $version gt '0063.0084.') {
         # Use the same protocol as the test server to avoid security blocks
         $ref = $site;
         $ref =~ s!/$!/referer-test!;
@@ -74,7 +75,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
         $ref = 'http://example.com/'; # earlier versions crash on https referrer ...
     };
     my @host;
-    if( $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ("$1.$2" < 76.00)) {
+    if( $version lt '0076.0000') {
         @host = (Host => 'www.example.com'); # later versions won't fetch a page with a "wrong" Host: header
     };
 
@@ -98,7 +99,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
+            if $version gt '0063.3239.';
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     }
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
@@ -112,7 +113,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
             if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
         like $headers, qr!^X-My-Initial-Header: 1$!m, "We can add completely custom headers at start";
         local $TODO = "Chrome v76+ doesn't set (or send) the Host header anymore..."
-            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 >= 76);
+            if $version gt '0076.';
         like $headers, qr!^Host: www.example.com\s*$!m, "We can add custom Host: headers";
     }
     $mech->submit_form; # retrieve the JS window.navigator.userAgent value
@@ -135,14 +136,14 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version =~ /\b(\d+)\.\d+\.(\d+)\b/ and ($1 >= 62 or $2 >= 3239);
+            if $version gt '0062.3239.';
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     };
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
     unlike $headers, qr!^X-WWW-Mechanize-Chrome: !m, "We can delete completely custom headers";
     {
         local $TODO = "Chrome v63.0.84+ doesn't set custom headers..."
-            if $version =~ /\b(\d+)\.\d+\.(\d+)\.(\d+)\b/ and ($1 == 63 and $3 >= 84);
+            if $version gt '0063.0000.0084' and $version lt '0148.0000.7778.0167';
         like $headers, qr!^X-Another-Header: !m, "We can add other headers and still keep the current header settings";
     };
 
