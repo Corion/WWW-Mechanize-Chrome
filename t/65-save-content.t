@@ -18,7 +18,7 @@ Log::Log4perl->easy_init($ERROR);  # Set priority of root logger to ERROR
 # What instances of Chrome will we try?
 my @instances = t::helper::browser_instances();
 
-my $testcount = 1+ 4*2;
+my $testcount = 1+ 4;
 if (my $err = t::helper::default_unavailable) {
     plan skip_all => "Couldn't connect to Chrome: $@";
     exit
@@ -42,7 +42,9 @@ my $server = Test::HTTP::LocalServer->spawn(
     #debug => 1,
 );
 
-my @test_urls = ($server->url, WWW::Mechanize::Chrome->_local_url( '52-iframeset.html' ));
+my @test_urls = ($server->url);
+# Chrome before v148 also supported file:// URIs
+# WWW::Mechanize::Chrome->_local_url( '52-iframeset.html'
 
 t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my ($browser_instance, $mech) = @_;
