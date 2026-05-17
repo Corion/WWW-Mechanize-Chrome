@@ -30,7 +30,7 @@ use Time::HiRes ();
 use Encode 'encode';
 use Text::ParseWords 'shellwords';
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 our @CARP_NOT;
 
 # We don't yet inherit from Moo 2, so patch up things manually

@@ -141,7 +141,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2024 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2026 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
@@ -150,5 +150,5 @@ This module is released under the same terms as Perl itself.
 =cut
 
 package WWW::Mechanize::Chrome::Cookbook;
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 1;

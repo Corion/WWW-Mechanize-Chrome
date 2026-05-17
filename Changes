@@ -44,6 +44,12 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.77 2026-05-17
+    * Reinstate screenshot facility in ->content_as_png
+      This may break with some older Chrome versions.
+    * Test suite cleanup, Chrome 148+ can now send custom Referer headers
+      Reported by Puck, thanks!
+
 0.76 2026-03-13
     * Harden test suite against Chromium process leaks and hangs by
       implementing aggressive SIGKILL cleanup and global PID tracking in

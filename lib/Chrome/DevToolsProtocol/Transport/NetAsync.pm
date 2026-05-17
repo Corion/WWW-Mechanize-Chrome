@@ -11,7 +11,7 @@ with 'MooX::Role::EventEmitter';
 use Net::Async::WebSocket::Client;
 Net::Async::WebSocket::Client->VERSION(0.12); # fixes some errors with masked frames
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 
 =head1 NAME
 
@@ -140,7 +140,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2024 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2026 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 

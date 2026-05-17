@@ -18,7 +18,7 @@ use PerlX::Maybe;
 
 with 'MooX::Role::EventEmitter';
 
-our $VERSION = '0.76';
+our $VERSION = '0.77';
 our @CARP_NOT;
 
 =head1 NAME
@@ -873,7 +873,7 @@ Max Maischein C<corion@cpan.org>
 
 =head1 COPYRIGHT (c)
 
-Copyright 2010-2024 by Max Maischein C<corion@cpan.org>.
+Copyright 2010-2026 by Max Maischein C<corion@cpan.org>.
 
 =head1 LICENSE
 
