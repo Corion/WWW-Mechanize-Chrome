@@ -99,7 +99,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     my $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version gt '0063.3239.';
+            if $version gt '0063.3239.' and $version lt '0148.0000.7778.0167';
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     }
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
@@ -136,7 +136,7 @@ t::helper::run_across_instances(\@instances, \&new_mech, $testcount, sub {
     $headers = $mech->selector('#request_headers', single => 1)->get_attribute('innerText');
     {
         local $TODO = "Chrome v63+ doesn't send the Referer header..."
-            if $version gt '0062.3239.';
+            if $version gt '0063.3239.' and $version lt '0148.0000.7778.0167';
         like $headers, qr!^Referer: \Q$ref\E$!m, "We sent the correct Referer header";
     };
     like $headers, qr!^User-Agent: \Q$ua\E$!m, "We sent the correct User-Agent header";
