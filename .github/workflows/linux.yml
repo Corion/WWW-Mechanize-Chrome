@@ -49,4 +49,4 @@ jobs:
             perl Makefile.PL && make
       - name: Run Tests
         run: |
-            prove --nocount --jobs 3 -I local/ -bl xt t
+            make test

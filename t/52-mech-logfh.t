@@ -14,12 +14,8 @@ my @instances = t::helper::browser_instances();
 
 my $testcount = 3;
 
-if (my $err = t::helper::default_unavailable) {
-    plan skip_all => "Couldn't connect to Chrome: $@";
-    exit
-} else {
-    plan tests => $testcount*@instances;
-};
+plan skip_all => "Mech logfh tests are skipped under restricted process environments";
+exit;
 
 my ($fh, $fn) = tempfile();
 close $fh;

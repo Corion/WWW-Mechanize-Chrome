@@ -31,7 +31,7 @@ sub new_mech {
 };
 
 my $server = t::helper->safe_server(
-    #debug => 1,
+    debug => 1,
 );
 
 t::helper::run_across_instances(\@instances, \&new_mech, 6, sub {

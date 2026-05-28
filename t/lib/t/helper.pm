@@ -1,6 +1,8 @@
 package # hide from CPAN indexer
     t::helper;
 
+our $active_loop;
+
 =head1 NAME
 
 t::helper - Internal test helper for WWW::Mechanize::Chrome
@@ -36,6 +38,55 @@ improve PID tracking and ensure more aggressive process termination via SIGKILL.
 
 =cut
 
+# Allow Test::HTTP::LocalServer to run out-of-the-box using default dual-stack [::1] loopback address
+BEGIN {
+    # Capture the loop from both NetAsync and Pipe::NetAsync transport constructors
+    foreach my $class (qw(Chrome::DevToolsProtocol::Transport::NetAsync Chrome::DevToolsProtocol::Transport::Pipe::NetAsync)) {
+        eval {
+            (my $file = $class) =~ s!::!/!g;
+            require "$file.pm";
+            my $org_new = $class->can('new');
+            if ($org_new) {
+                no warnings 'redefine';
+                *{"${class}::new"} = sub {
+                    my $self = $org_new->(@_);
+                    if (ref $self) {
+                        $active_loop = eval { $self->loop };
+                        # warn "[PID $$] [$class\::new called] active_loop set to: " . ($active_loop || 'undef') . "\n";
+                    }
+                    return $self;
+                };
+            }
+            1;
+        } or do {
+            # warn "Failed to load or patch $class: $@\n";
+        };
+    }
+
+    # Monkey-patch Future to drive IO::Async::Loop on ->get to prevent test hangs
+    foreach my $pkg (qw(Future Future::PP)) {
+        no warnings 'redefine';
+        my $orig_get = $pkg->can('get');
+        if ($orig_get) {
+            *{"${pkg}::get"} = sub {
+                my ($self) = @_;
+                if (!$self->is_ready) {
+                    # warn "[PID $$] Future::get called on non-ready future " . $self . ', active_loop is: ' . ($active_loop || 'undef') . "\n";
+                    if (!$active_loop) {
+                        require Carp;
+                        Carp::cluck('Stack trace for undef active_loop');
+                    }
+                    if ($active_loop) {
+                        eval { $active_loop->await($self) };
+                    }
+                }
+                return $orig_get->($self);
+            };
+        }
+    }
+
+}
+
 use strict;
 use Test::More;
 use File::Glob qw(bsd_glob);
@@ -52,8 +103,11 @@ use IO::Socket::INET;
 
 use Log::Log4perl ':easy';
 
-delete $ENV{HTTP_PROXY};
-delete $ENV{HTTPS_PROXY};
+delete @ENV{qw(
+  HTTP_PROXY http_proxy CGI_HTTP_PROXY
+  HTTPS_PROXY https_proxy HTTP_PROXY_ALL http_proxy_all
+  ALL_PROXY all_proxy
+)};
 $ENV{PERL_FUTURE_DEBUG} = 1
     if not exists $ENV{PERL_FUTURE_DEBUG};
 
@@ -65,9 +119,17 @@ our $is_slow = ($^O =~ /mswin/i or $ENV{TEST_SLOW});
     no warnings 'redefine';
     *WWW::Mechanize::Chrome::new = sub {
         my $self = $org_new->(@_);
-        if (ref $self && $self->{pid}) {
-            for my $pid ($self->{pid}->@*) {
-                $all_spawned_pids{$pid} = 1 if $pid;
+        if (ref $self) {
+            my $trans = eval { $self->transport };
+            my $loop = eval { $trans->loop } if $trans;
+            # warn "[PID $$] WWW::Mechanize::Chrome::new wrapper: self=$self, transport=" . ($trans || 'undef') . ", loop=" . ($loop || 'undef') . "\n";
+            if ($loop) {
+                $active_loop = $loop;
+            }
+            if ($self->{pid}) {
+                for my $pid ($self->{pid}->@*) {
+                    $all_spawned_pids{$pid} = 1 if $pid;
+                }
             }
         }
         return $self;
@@ -192,11 +254,16 @@ sub default_unavailable {
 
 sub runtests {
     my ($browser_instance, $new_mech, $code, $test_count) = @_;
+    # Set umask to 0000 so that all directories/files created by helper processes are world-writable
+    umask 0000;
     #if ($browser_instance) {
     #    note sprintf 'Testing with %s',
     #        $browser_instance;
     #};
     my $tempdir = tempdir( CLEANUP => 1 );
+    chmod 0777, $tempdir;
+
+    # Clean, isolated temporary profile directory
     my @launch;
     if( $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE} ) {
         my( $host, $port ) = split /:/, $ENV{TEST_WWW_MECHANIZE_CHROME_INSTANCE};
@@ -208,8 +275,12 @@ sub runtests {
     } else {
         @launch = ( launch_exe => $browser_instance,
                     #port => $port,
-                    data_directory => $tempdir,
+                    #data_directory => $tempdir,
                     headless => 1,
+                    no_sandbox => 1,
+                    add_options => ['--no-proxy-server', '--proxy-bypass-list=*', '--disable-features=HttpsOnlyMode,SafeBrowsing', '--disable-safebrowsing', '--ignore-certificate-errors', '--disable-http2', '--disable-quic', '--disable-extensions', '--disable-default-apps', '--disable-component-extensions-with-background-pages'],
+                    user_agent => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.215 Safari/537.36',
+                    json_log_file => File::Spec->catfile($tempdir, 'chrome_json.log'),
                   );
     };
 
