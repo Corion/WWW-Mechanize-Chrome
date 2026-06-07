@@ -29,6 +29,7 @@ use Future::Utils 'repeat';
 use Time::HiRes ();
 use Encode 'encode';
 use Text::ParseWords 'shellwords';
+use File::Temp 'tempdir';
 
 our $VERSION = '0.77';
 our @CARP_NOT;
@@ -278,11 +279,11 @@ Most likely, you want to use B<separate_session> instead.
 
   data_directory => '/path/to/data/directory'  #  set the data directory
 
-By default, an empty data directory is used. Use this setting to change the
+By default, a temporary data directory is used. Use this setting to change the
 base data directory for the browsing session.
 
   use File::Temp 'tempdir';
-  # create a fresh Chrome every time
+  # create a fresh Chrome every time, this is the default
   my $mech = WWW::Mechanize::Chrome->new(
       data_directory => tempdir(CLEANUP => 1 ),
   );
@@ -495,6 +496,10 @@ sub build_command_line {
 
     if ($options->{incognito}) {
         push @{ $options->{ launch_arg }}, "--incognito";
+    };
+
+    if( ! exists $options->{data_directory}) {
+        $options->{data_directory} = tempdir( CLEANUP => 1 );
     };
 
     if ($options->{data_directory}) {

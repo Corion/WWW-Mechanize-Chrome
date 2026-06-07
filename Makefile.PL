@@ -58,6 +58,7 @@ my %module = (
         'POSIX'              => 0, # for 'setsid' on POSIXish systems
         'IPC::Open3'         => 0, # for IPC on Windows
         'File::Spec'         => 0,
+        'File::Temp'         => 0,
 
         'Carp'               => 0,
         'Future'             => '0.35', # Some smokers have 0.25 which lacks many features
