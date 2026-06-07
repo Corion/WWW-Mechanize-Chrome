@@ -31,7 +31,7 @@ use Encode 'encode';
 use Text::ParseWords 'shellwords';
 use File::Temp 'tempdir';
 
-our $VERSION = '0.77';
+our $VERSION = '0.78';
 our @CARP_NOT;
 
 # We don't yet inherit from Moo 2, so patch up things manually

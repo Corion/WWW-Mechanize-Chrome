@@ -234,11 +234,11 @@ them in a Perl object to provide the easy-to-use methods documented here.
 
         data_directory => '/path/to/data/directory'  #  set the data directory
 
-    By default, an empty data directory is used. Use this setting to change the
+    By default, a temporary data directory is used. Use this setting to change the
     base data directory for the browsing session.
 
         use File::Temp 'tempdir';
-        # create a fresh Chrome every time
+        # create a fresh Chrome every time, this is the default
         my $mech = WWW::Mechanize::Chrome->new(
             data_directory => tempdir(CLEANUP => 1 ),
         );

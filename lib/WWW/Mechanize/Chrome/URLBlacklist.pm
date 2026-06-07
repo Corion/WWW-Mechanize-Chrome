@@ -3,7 +3,7 @@ use Moo 2;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.77';
+our $VERSION = '0.78';
 
 =head1 NAME
 
