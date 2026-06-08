@@ -1,6 +1,7 @@
 package # hide from CPAN indexer
     t::helper;
-use strict;
+use 5.020;
+use feature 'postderef';
 use Test::More;
 use File::Glob qw(bsd_glob);
 use Config '%Config';
