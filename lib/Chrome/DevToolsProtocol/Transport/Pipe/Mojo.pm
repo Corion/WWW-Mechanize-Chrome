@@ -8,7 +8,7 @@ use Scalar::Util 'weaken';
 use Mojo::IOLoop::Stream;
 use Future::Mojo;
 
-our $VERSION = '0.78';
+our $VERSION = '0.79';
 
 =head1 NAME
 

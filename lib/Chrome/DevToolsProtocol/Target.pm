@@ -18,7 +18,7 @@ use PerlX::Maybe;
 
 with 'MooX::Role::EventEmitter';
 
-our $VERSION = '0.78';
+our $VERSION = '0.79';
 our @CARP_NOT;
 
 =head1 NAME

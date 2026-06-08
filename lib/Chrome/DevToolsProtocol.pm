@@ -18,7 +18,7 @@ use URI;
 
 with 'MooX::Role::EventEmitter';
 
-our $VERSION = '0.78';
+our $VERSION = '0.79';
 our @CARP_NOT;
 
 =head1 NAME
@@ -942,7 +942,7 @@ use Carp 'croak';
 no warnings 'experimental::signatures';
 use feature 'signatures';
 
-our $VERSION = '0.78';
+our $VERSION = '0.79';
 
 has 'protocol' => (
     is => 'ro',

@@ -44,6 +44,10 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
+0.78 2026-06-08
+    * Restore syntax compatibility with 5.020
+      A "use feature 'postderef'" was missing
+
 0.78 2026-06-07
     * Use a temp directory for the data directory for default, as Chrome
       148+ does not like to use the default data directory anymore. Most likely
