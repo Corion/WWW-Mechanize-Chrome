@@ -3056,7 +3056,10 @@ sub cookie_jar( $self ) {
     );
 
 This method sets up custom headers that will be sent with B<every> HTTP(S)
-request that Chrome makes.
+request that Chrome makes. If you are sending host-sensitive headers, these
+will also be sent again if the host issues a redirect. B<Avoid> setting
+an C<Authorization> header here, for example, if you are not certain that
+the receiving host will not redirect Chrome.
 
 Note that currently, we only support one value per header.
 
