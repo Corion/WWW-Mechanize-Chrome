@@ -887,7 +887,10 @@ loaded. To manually refresh the state of the cookie jar, use:
     );
 
 This method sets up custom headers that will be sent with **every** HTTP(S)
-request that Chrome makes.
+request that Chrome makes. If you are sending host-sensitive headers, these
+will also be sent again if the host issues a redirect. **Avoid** setting
+an `Authorization` header here, for example, if you are not certain that
+the receiving host will not redirect Chrome.
 
 Note that currently, we only support one value per header.
 

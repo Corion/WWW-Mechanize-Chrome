@@ -44,7 +44,12 @@
     * Tested against Chromium Chromium/111.0.5563.65
     * Tested against Chromium Chromium/112.0.5615.121
 
-0.78 2026-06-08
+0.80 2026-09-07
+    * Be even more explicit in the warning about ->add_header()
+      The header will be sent with every request that Chrome issues. Also
+      across redirects. So don't put passwords in there.
+
+0.79 2026-06-08
     * Restore syntax compatibility with 5.020
       A "use feature 'postderef'" was missing
 
